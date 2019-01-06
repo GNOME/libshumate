@@ -1,6 +1,0 @@
-[options]
-memphis = false
-prefix = /home/marcus/shumate
-
-[properties]
-
