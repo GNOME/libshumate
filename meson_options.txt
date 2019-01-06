@@ -1,7 +1,3 @@
-option('memphis',
-       type: 'boolean', value: false,
-       description: 'Enable Memphis support (requires libmemphis)')
-
 option('gir',
        type: 'boolean', value: true,
        description: 'Generate gir data (requires gobject-introspection)')

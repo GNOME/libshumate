@@ -62,7 +62,6 @@ clutter_gtk_req = '>= 0.90'
 cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
 libsoup_req = '>= 2.42'
-memphis_req = '>=0.2.1'
 introspection_req = '>= 0.6.3'
 vala_req = '>= 0.11.0'
 gtk_doc_req = '>= 1.9'
@@ -77,7 +76,6 @@ libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
 
 gtk_dep = dependency('gtk+-3.0', version: gtk_req, required: false)
 clutter_gtk_dep = dependency('clutter-gtk-1.0', version: clutter_gtk_req, required: false)
-memphis_dep = dependency('memphis-0.2', version: memphis_req, required: false)
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
@@ -112,11 +110,6 @@ if generate_gir and not introspection_dep.found()
   generate_gir = false
 endif
 
-build_with_memphis = get_option('memphis')
-if build_with_memphis and not memphis_dep.found()
-  build_with_memphis = false
-endif
-
 generate_vapi = generate_gir and get_option('vapi')
 if generate_vapi and not vapigen_dep.found()
   generate_vapi = false
@@ -142,7 +135,6 @@ summary = [
   '     Documentation: @0@'.format(build_gtk_doc),
   '     GTK+ widgetry: @0@'.format(build_gtk_widgetry),
   '     Introspection: @0@'.format(generate_gir),
-  '  Memphis renderer: @0@'.format(build_with_memphis),
   '          Vala API: @0@'.format(generate_vapi),
   '',
   'Directories:',

@@ -36,12 +36,6 @@ libchamplain_public_h = [
   'champlain.h',
 ]
 
-if build_with_memphis == true
-  libchamplain_public_h += [
-    'champlain-memphis-renderer.h',
-  ]
-endif
-
 libchamplain_private_h = [
   'champlain-debug.h',
   'champlain-private.h',
@@ -84,12 +78,6 @@ libchamplain_sources = [
   'champlain-viewport.c',
 ]
 
-if build_with_memphis == true
-  libchamplain_sources += [
-    'champlain-memphis-renderer.c',
-  ]
-endif
-
 libchamplain_deps = [
   libm_dep,
   glib_dep,
@@ -101,10 +89,6 @@ libchamplain_deps = [
   libsoup_dep,
 ]
 
-if build_with_memphis == true
-  libchamplain_deps += memphis_dep
-endif
-
 libchamplain_c_args = [
   '-DHAVE_CONFIG_H',
   '-DCHAMPLAIN_COMPILATION',
@@ -115,9 +99,6 @@ libchamplain_link_args = [
 ]
 
 features_h = configuration_data()
-if build_with_memphis == true
-  features_h.set('CHAMPLAIN_HAS_MEMPHIS', '1')
-endif
 
 libchamplain_features_h = configure_file(
   output: 'champlain-features.h',
@@ -214,10 +195,6 @@ if generate_gir == true
     'GObject-2.0',
     'Clutter-1.0',
   ]
-
-  if build_with_memphis == true
-    libchamplain_gir_includes += 'Memphis-0.2'
-  endif
 
   libchamplain_gir = gnome.generate_gir(
     libchamplain_sha,
