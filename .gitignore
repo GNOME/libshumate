@@ -16,6 +16,7 @@ autom4te.cache
 *#*
 *.sw?
 *.pyc
+build
 champlain-gtk/champlain-gtk-marshal.c
 champlain-gtk/champlain-gtk-marshal.h
 champlain-gtk/stamp-marshal
