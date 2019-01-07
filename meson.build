@@ -28,8 +28,6 @@ lib_version = '0.10.0'
 
 package_name = meson.project_name().strip('lib')
 package_string = '@0@-@1@'.format(package_name, api_version)
-package_gtk_name = '@0@-gtk'.format(package_name)
-package_gtk_string = '@0@-@1@'.format(package_gtk_name, api_version)
 
 # Paths
 rootdir = include_directories('.')
@@ -56,9 +54,7 @@ cc = meson.get_compiler('c')
 libm_dep = cc.find_library('m', required: true)
 
 glib_req = '>= 2.16.0'
-gtk_req = '>= 2.90.0'
 clutter_req = '>= 1.12'
-clutter_gtk_req = '>= 0.90'
 cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
 libsoup_req = '>= 2.42'
@@ -73,9 +69,6 @@ clutter_dep = dependency('clutter-1.0', version: clutter_req)
 cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
-
-gtk_dep = dependency('gtk+-3.0', version: gtk_req, required: false)
-clutter_gtk_dep = dependency('clutter-gtk-1.0', version: clutter_gtk_req, required: false)
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
@@ -98,13 +91,6 @@ if build_gtk_doc and not gtk_doc_dep.found()
   build_gtk_doc = false
 endif
 
-build_gtk_widgetry = get_option('widgetry')
-if build_gtk_widgetry and not gtk_doc_dep.found()
-  build_gtk_widgetry = false
-elif build_gtk_widgetry and not clutter_gtk_dep.found()
-  build_gtk_widgetry = false
-endif
-
 generate_gir = get_option('gir')
 if generate_gir and not introspection_dep.found()
   generate_gir = false
@@ -116,9 +102,6 @@ if generate_vapi and not vapigen_dep.found()
 endif
 
 subdir('champlain')
-if build_gtk_widgetry == true
-  subdir('champlain-gtk')
-endif
 
 subdir('docs')
 
@@ -133,7 +116,6 @@ summary = [
   '',
   '             Demos: @0@'.format(build_demos),
   '     Documentation: @0@'.format(build_gtk_doc),
-  '     GTK+ widgetry: @0@'.format(build_gtk_widgetry),
   '     Introspection: @0@'.format(generate_gir),
   '          Vala API: @0@'.format(generate_vapi),
   '',

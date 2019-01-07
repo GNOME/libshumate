@@ -5,10 +5,6 @@ option('vapi',
        type: 'boolean', value: true,
        description: 'Generate vapi data (requires vapigen)')
 
-option('widgetry',
-       type: 'boolean', value: true,
-       description: 'Build GTK+ widgetry')
-
 option('gtk_doc',
        type: 'boolean', value: false,
        description: 'Build reference manual (requires gtk-doc)')

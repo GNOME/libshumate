@@ -23,28 +23,6 @@ endforeach
 
 subdir('icons')
 
-if build_gtk_widgetry == true
-  libchamplain_gtk_demos = [
-    ['minimal-gtk', 'minimal-gtk.c'],
-    ['launcher-gtk', ['launcher-gtk.c', 'markers.c']],
-  ]
-
-  foreach demo: libchamplain_gtk_demos
-    demo_name = demo.get(0)
-    demo_sources = demo.get(1)
-
-    executable(
-      demo_name,
-      demo_sources,
-      install: false,
-      dependencies: [
-        libchamplain_dep,
-        libchamplain_gtk_dep,
-      ]
-    )
-  endforeach
-endif
-
 if generate_vapi == true
   libchamplain_vala_demos = [
     ['launcher-vala', ['launcher-vala.vala', 'markers-vala.vala']],
@@ -62,7 +40,6 @@ if generate_vapi == true
       install: false,
       dependencies: [
         libchamplain_dep,
-        libchamplain_gtk_dep,
         libchamplain_vapi,
       ]
     )
