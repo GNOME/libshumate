@@ -1,6 +1,6 @@
 project(
-  'libchamplain', 'c',
-  version: '0.12.17',
+  'libshumate', 'c',
+  version: '0.0.0',
   license: 'LGPLv2.1+',
   meson_version: '>= 0.46.1',
   default_options: [
@@ -24,7 +24,7 @@ else
   api_version = '.'.join([version_major, version_minor])
 endif
 
-lib_version = '0.10.0'
+lib_version = '0.0'
 
 package_name = meson.project_name().strip('lib')
 package_string = '@0@-@1@'.format(package_name, api_version)
