@@ -19,12 +19,12 @@
 using GLib;
 using Clutter;
 
-class DemoLayer : Champlain.MarkerLayer
+class DemoLayer : Shumate.MarkerLayer
 {
   public DemoLayer ()
   {
     Clutter.Color orange = { 0xf3, 0x94, 0x07, 0xbb };
-    var marker = new Champlain.Label.with_text (
+    var marker = new Shumate.Label.with_text (
         "Montréal\n<span size=\"xx-small\">Québec</span>",
         "Serif 14", null, null);
     marker.set_use_markup (true);
@@ -34,7 +34,7 @@ class DemoLayer : Champlain.MarkerLayer
     add_marker (marker);
 
     try {
-      marker = new Champlain.Label.from_file (
+      marker = new Shumate.Label.from_file (
           "icons/emblem-generic.png");
     } catch (GLib.Error e) {
       GLib.warning ("%s", e.message);
@@ -44,7 +44,7 @@ class DemoLayer : Champlain.MarkerLayer
     add_marker (marker);
 
     try {
-      marker = new Champlain.Label.from_file (
+      marker = new Shumate.Label.from_file (
           "icons/emblem-important.png");
     } catch (GLib.Error e) {
       GLib.warning ("%s", e.message);
@@ -53,7 +53,7 @@ class DemoLayer : Champlain.MarkerLayer
     add_marker (marker);
 
     try {
-      marker = new Champlain.Label.from_file (
+      marker = new Shumate.Label.from_file (
           "icons/emblem-favorite.png");
     } catch (GLib.Error e) {
       GLib.warning ("%s", e.message);

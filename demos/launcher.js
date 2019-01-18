@@ -18,20 +18,20 @@
  */
 
 /**
- * Champlain launcher example in Javascript.
+ * Shumate launcher example in Javascript.
  *
  * Dependencies:
  *  * gobject-introspection
- *  * Build Champlain with '--enable-introspection'
+ *  * Build Shumate with '--enable-introspection'
  *  * Gjs: http://live.gnome.org/Gjs
  *
- * If you installed Champlain in /usr/local you have to run:
+ * If you installed Shumate in /usr/local you have to run:
  * export GI_TYPELIB_PATH=$GI_TYPELIB_PATH:/usr/local/lib/girepository-1.0/
  */
 
 const Lang = imports.lang;
 const Clutter = imports.gi.Clutter;
-const Champlain = imports.gi.Champlain;
+const Shumate = imports.gi.Shumate;
 
 Clutter.init (null);
 
@@ -75,11 +75,11 @@ function map_view_button_release_cb (actor, event)
 }
 
 let stage = new Clutter.Stage ();
-stage.title = "Champlain Javascript Example";
+stage.title = "Shumate Javascript Example";
 stage.set_size (800, 600);
 
 /* Create the map view */
-let view = new Champlain.View();
+let view = new Shumate.View();
 view.set_size (800, 600);
 stage.add_actor (view);
 
@@ -119,8 +119,8 @@ stage.add_child (buttons);
 
 /* Create the markers and marker layer */
 let orange= Clutter.Color.new(0xf3,0x94,0x07,0xbb);
-let layer=new Champlain.MarkerLayer();
-let marker=Champlain.Label.new_with_text("Sample Marker","Serif 14",null,orange);
+let layer=new Shumate.MarkerLayer();
+let marker=Shumate.Label.new_with_text("Sample Marker","Serif 14",null,orange);
 marker.set_location(45.466, -73.75);
 layer.add_marker(marker);
 marker.set_reactive(true);

@@ -18,12 +18,12 @@
 
 using GLib;
 using Clutter;
-using Champlain;
+using Shumate;
 
 public class Launcher : GLib.Object
 {
   private const int PADDING = 10;
-  private Champlain.View view;
+  private Shumate.View view;
   private Clutter.Stage stage;
 
   public Launcher ()
@@ -31,11 +31,11 @@ public class Launcher : GLib.Object
     float width, total_width = 0;
 
     stage = new Clutter.Stage ();
-    stage.title = "Champlain Vala Example";
+    stage.title = "Shumate Vala Example";
     stage.set_size (800, 600);
 
     /* Create the map view */
-    view = new Champlain.View ();
+    view = new Shumate.View ();
     view.set_size (800, 600);
     stage.add_child (view);
 

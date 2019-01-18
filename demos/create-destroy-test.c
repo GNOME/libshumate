@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 
 static ClutterActor *stage;
 
@@ -26,12 +26,12 @@ create_actor ()
   ClutterActor *actor;
 
   /* Create the map view */
-  actor = champlain_view_new ();
+  actor = shumate_view_new ();
   clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
   clutter_actor_add_child (stage, actor);
 
-  champlain_view_set_zoom_level (CHAMPLAIN_VIEW (actor), 12);
-  champlain_view_center_on (CHAMPLAIN_VIEW (actor), 45.466, -73.75);
+  shumate_view_set_zoom_level (SHUMATE_VIEW (actor), 12);
+  shumate_view_center_on (SHUMATE_VIEW (actor), 45.466, -73.75);
   
   return actor;
 }

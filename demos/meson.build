@@ -1,4 +1,4 @@
-libchamplain_demos = [
+libshumate_demos = [
   ['minimal', 'minimal.c'],
   ['launcher', ['launcher.c', 'markers.c']],
   ['animated-marker', 'animated-marker.c'],
@@ -7,7 +7,7 @@ libchamplain_demos = [
   ['create_destroy_test', 'create-destroy-test.c'],
 ]
 
-foreach demo: libchamplain_demos
+foreach demo: libshumate_demos
   demo_name = demo.get(0)
   demo_sources = demo.get(1)
 
@@ -16,7 +16,7 @@ foreach demo: libchamplain_demos
     demo_sources,
     install: false,
     dependencies: [
-      libchamplain_dep,
+      libshumate_dep,
     ]
   )
 endforeach
@@ -24,13 +24,13 @@ endforeach
 subdir('icons')
 
 if generate_vapi == true
-  libchamplain_vala_demos = [
+  libshumate_vala_demos = [
     ['launcher-vala', ['launcher-vala.vala', 'markers-vala.vala']],
   ]
 
   add_languages('vala')
 
-  foreach demo: libchamplain_vala_demos
+  foreach demo: libshumate_vala_demos
     demo_name = demo.get(0)
     demo_sources = demo.get(1)
 
@@ -39,8 +39,8 @@ if generate_vapi == true
       demo_sources,
       install: false,
       dependencies: [
-        libchamplain_dep,
-        libchamplain_vapi,
+        libshumate_dep,
+        libshumate_vapi,
       ]
     )
   endforeach

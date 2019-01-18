@@ -7,28 +7,28 @@ gobject_docpath = join_paths(gobject_prefix, 'share', 'gtk-doc', 'html', 'gobjec
 clutter_prefix = clutter_dep.get_pkgconfig_variable('prefix')
 clutter_docpath = join_paths(clutter_prefix, 'share', 'gtk-doc', 'html', 'clutter')
 
-libchamplain_reference_ignored_h = [
-  'champlain-adjustment.h',
-  'champlain-debug.h',
-  'champlain-defines.h',
-  'champlain-enum-types.h',
-  'champlain-features.h',
-  'champlain-kinetic-scroll-view.h',
-  'champlain-marshal.h',
-  'champlain-private.h',
-  'champlain-viewport.h',
-  'champlain.h',
+libshumate_reference_ignored_h = [
+  'shumate-adjustment.h',
+  'shumate-debug.h',
+  'shumate-defines.h',
+  'shumate-enum-types.h',
+  'shumate-features.h',
+  'shumate-kinetic-scroll-view.h',
+  'shumate-marshal.h',
+  'shumate-private.h',
+  'shumate-viewport.h',
+  'shumate.h',
 ]
 
 if build_with_memphis == false
-  libchamplain_reference_ignored_h += [
-    'champlain-memphis-renderer.h',
+  libshumate_reference_ignored_h += [
+    'shumate-memphis-renderer.h',
   ]
 endif
 
-libchamplain_reference_source_folders = [
-  join_paths(srcdir, 'champlain'),
-  join_paths(builddir, 'champlain'),
+libshumate_reference_source_folders = [
+  join_paths(srcdir, 'shumate'),
+  join_paths(builddir, 'shumate'),
 ]
 
 version_xml = configuration_data()
@@ -41,19 +41,19 @@ configure_file(
   install: false,
 )
 
-libchamplain_reference_scan_args = [
+libshumate_reference_scan_args = [
   '--rebuild-types',
   '--deprecated-guards=GTK_DISABLE_DEPRECATED',
-  '--ignore-headers=' + ' '.join(libchamplain_reference_ignored_h),
+  '--ignore-headers=' + ' '.join(libshumate_reference_ignored_h),
 ]
 
-libchamplain_reference_mkdb_args = [
+libshumate_reference_mkdb_args = [
   '--sgml-mode',
   '--output-format=xml',
-  '--name-space=champlain',
+  '--name-space=shumate',
 ]
 
-libchamplain_reference_fixxref_args = [
+libshumate_reference_fixxref_args = [
   '--html-dir=@0@'.format(join_paths(gtkdocdir, 'html', package_string)),
   '--extra-dir=@0@'.format(glib_docpath),
   '--extra-dir=@0@'.format(gobject_docpath),
@@ -62,13 +62,13 @@ libchamplain_reference_fixxref_args = [
 
 gnome.gtkdoc(
   package_name,
-  main_sgml: 'libchamplain-docs.sgml',
-  gobject_typesfile: files('libchamplain.types'),
-  src_dir: libchamplain_reference_source_folders,
-  dependencies: libchamplain_dep,
-  scan_args: libchamplain_reference_scan_args,
-  mkdb_args: libchamplain_reference_mkdb_args,
-  fixxref_args: libchamplain_reference_fixxref_args,
+  main_sgml: 'libshumate-docs.sgml',
+  gobject_typesfile: files('libshumate.types'),
+  src_dir: libshumate_reference_source_folders,
+  dependencies: libshumate_dep,
+  scan_args: libshumate_reference_scan_args,
+  mkdb_args: libshumate_reference_mkdb_args,
+  fixxref_args: libshumate_reference_fixxref_args,
   install: true,
   install_dir: join_paths(
     gtkdocdir,

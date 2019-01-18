@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 #include <math.h>
 
 #define MARKER_SIZE 10
@@ -77,7 +77,7 @@ create_marker ()
   ClutterTransition *transition;
 
   /* Create the marker */
-  marker = champlain_custom_marker_new ();
+  marker = shumate_custom_marker_new ();
 
   /* Static filled circle ----------------------------------------------- */
   canvas = clutter_canvas_new ();
@@ -143,8 +143,8 @@ double lon = -73.75;
 
 typedef struct
 {
-  ChamplainView *view;
-  ChamplainMarker *marker;
+  ShumateView *view;
+  ShumateMarker *marker;
 } GpsCallbackData;
 
 static gboolean
@@ -152,8 +152,8 @@ gps_callback (GpsCallbackData *data)
 {
   lat += 0.005;
   lon += 0.005;
-  champlain_view_center_on (data->view, lat, lon);
-  champlain_location_set_location (CHAMPLAIN_LOCATION (data->marker), lat, lon);
+  shumate_view_center_on (data->view, lat, lon);
+  shumate_location_set_location (SHUMATE_LOCATION (data->marker), lat, lon);
   return TRUE;
 }
 
@@ -162,7 +162,7 @@ int
 main (int argc, char *argv[])
 {
   ClutterActor *actor, *marker, *stage;
-  ChamplainMarkerLayer *layer;
+  ShumateMarkerLayer *layer;
   GpsCallbackData callback_data;
 
   if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
@@ -173,27 +173,27 @@ main (int argc, char *argv[])
   g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
   /* Create the map view */
-  actor = champlain_view_new ();
+  actor = shumate_view_new ();
   clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
   clutter_actor_add_child (stage, actor);
 
   /* Create the marker layer */
-  layer = champlain_marker_layer_new_full (CHAMPLAIN_SELECTION_SINGLE);
+  layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
   clutter_actor_show (CLUTTER_ACTOR (layer));
-  champlain_view_add_layer (CHAMPLAIN_VIEW (actor), CHAMPLAIN_LAYER (layer));
+  shumate_view_add_layer (SHUMATE_VIEW (actor), SHUMATE_LAYER (layer));
 
   /* Create a marker */
   marker = create_marker ();
-  champlain_marker_layer_add_marker (layer, CHAMPLAIN_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
 
   /* Finish initialising the map view */
   g_object_set (G_OBJECT (actor), "zoom-level", 12,
       "kinetic-mode", TRUE, NULL);
-  champlain_view_center_on (CHAMPLAIN_VIEW (actor), lat, lon);
+  shumate_view_center_on (SHUMATE_VIEW (actor), lat, lon);
 
   /* Create callback that updates the map periodically */
-  callback_data.view = CHAMPLAIN_VIEW (actor);
-  callback_data.marker = CHAMPLAIN_MARKER (marker);
+  callback_data.view = SHUMATE_VIEW (actor);
+  callback_data.marker = SHUMATE_MARKER (marker);
 
   g_timeout_add (1000, (GSourceFunc) gps_callback, &callback_data);
 

@@ -16,16 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 
 #define PADDING 10
 
 static gboolean
 zoom_in (G_GNUC_UNUSED ClutterActor *actor,
     G_GNUC_UNUSED ClutterButtonEvent *event,
-    ChamplainView *view)
+    ShumateView *view)
 {
-  champlain_view_zoom_in (view);
+  shumate_view_zoom_in (view);
   return TRUE;
 }
 
@@ -33,9 +33,9 @@ zoom_in (G_GNUC_UNUSED ClutterActor *actor,
 static gboolean
 zoom_out (G_GNUC_UNUSED ClutterActor *actor,
     G_GNUC_UNUSED ClutterButtonEvent *event,
-    ChamplainView *view)
+    ShumateView *view)
 {
-  champlain_view_zoom_out (view);
+  shumate_view_zoom_out (view);
   return TRUE;
 }
 
@@ -68,12 +68,12 @@ make_button (char *text)
 
 
 static void
-append_point (ChamplainPathLayer *layer, gdouble lon, gdouble lat)
+append_point (ShumatePathLayer *layer, gdouble lon, gdouble lat)
 {
-  ChamplainCoordinate *coord;  
+  ShumateCoordinate *coord;
   
-  coord = champlain_coordinate_new_full (lon, lat);
-  champlain_path_layer_add_node (layer, CHAMPLAIN_LOCATION (coord));
+  coord = shumate_coordinate_new_full (lon, lat);
+  shumate_path_layer_add_node (layer, SHUMATE_LOCATION (coord));
 }
 
 
@@ -82,7 +82,7 @@ main (int argc,
     char *argv[])
 {
   ClutterActor *actor, *stage, *buttons, *button;
-  ChamplainPathLayer *layer;
+  ShumatePathLayer *layer;
   gfloat width, total_width = 0;;
   GList *dash = NULL;
 
@@ -94,7 +94,7 @@ main (int argc,
   g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
   /* Create the map view */
-  actor = champlain_view_new ();
+  actor = shumate_view_new ();
   clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
   clutter_actor_add_child (stage, actor);
 
@@ -123,7 +123,7 @@ main (int argc,
   clutter_actor_add_child (stage, buttons);
 
   /* draw a line */
-  layer = champlain_path_layer_new ();
+  layer = shumate_path_layer_new ();
   /* Cheap approx of Highway 10 */
   append_point (layer, 45.4104, -73.2846);
   append_point (layer, 45.4178, -73.2239);
@@ -133,15 +133,15 @@ main (int argc,
   append_point (layer, 45.3994, -73.1877);
   append_point (layer, 45.4000, -73.1815);
   append_point (layer, 45.4151, -73.1218);
-  champlain_path_layer_set_stroke_width (layer, 4.0);
-  champlain_view_add_layer (CHAMPLAIN_VIEW (actor), CHAMPLAIN_LAYER (layer));
+  shumate_path_layer_set_stroke_width (layer, 4.0);
+  shumate_view_add_layer (SHUMATE_VIEW (actor), SHUMATE_LAYER (layer));
 
   dash = g_list_append(dash, GUINT_TO_POINTER(6));
   dash = g_list_append(dash, GUINT_TO_POINTER(2));
-  champlain_path_layer_set_dash (layer, dash);
+  shumate_path_layer_set_dash (layer, dash);
   
   /* draw a path */
-  layer = champlain_path_layer_new ();
+  layer = shumate_path_layer_new ();
   append_point (layer, 45.1386, -73.9196);
   append_point (layer, 45.1229, -73.8991);
   append_point (layer, 45.0946, -73.9531);
@@ -149,13 +149,13 @@ main (int argc,
   append_point (layer, 45.1104, -73.9761);
   g_object_set (layer, "closed", TRUE, NULL);
   g_object_set (layer, "fill", TRUE, NULL);
-  champlain_path_layer_set_visible (layer, TRUE);
-  champlain_view_add_layer (CHAMPLAIN_VIEW (actor), CHAMPLAIN_LAYER (layer));
+  shumate_path_layer_set_visible (layer, TRUE);
+  shumate_view_add_layer (SHUMATE_VIEW (actor), SHUMATE_LAYER (layer));
 
   /* Finish initialising the map view */
   g_object_set (G_OBJECT (actor), "zoom-level", 8,
       "kinetic-mode", TRUE, NULL);
-  champlain_view_center_on (CHAMPLAIN_VIEW (actor), 45.466, -73.75);
+  shumate_view_center_on (SHUMATE_VIEW (actor), 45.466, -73.75);
 
   clutter_actor_show (stage);
   clutter_main ();

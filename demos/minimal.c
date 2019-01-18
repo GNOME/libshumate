@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 
 int
 main (int argc, char *argv[])
@@ -31,7 +31,7 @@ main (int argc, char *argv[])
   g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
   /* Create the map view */
-  actor = champlain_view_new ();
+  actor = shumate_view_new ();
   clutter_actor_set_size (actor, 800, 600);
   clutter_actor_add_child (stage, actor);
 

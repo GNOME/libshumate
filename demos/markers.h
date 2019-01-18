@@ -16,11 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 
 #ifndef MARKERS_H
 #define MARKERS_H
 
-ChamplainMarkerLayer *create_marker_layer (ChamplainView *view, ChamplainPathLayer **path);
+ShumateMarkerLayer *create_marker_layer (ShumateView *view, ShumatePathLayer **path);
 
 #endif

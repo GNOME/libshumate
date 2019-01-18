@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 #include "markers.h"
 
 #define PADDING 10
@@ -24,15 +24,15 @@
 static gboolean
 map_view_button_release_cb (G_GNUC_UNUSED ClutterActor *actor,
     ClutterButtonEvent *event,
-    ChamplainView *view)
+    ShumateView *view)
 {
   gdouble lat, lon;
 
   if (event->button != 1 || event->click_count > 1)
     return FALSE;
 
-  lon = champlain_view_x_to_longitude (view, event->x);
-  lat = champlain_view_y_to_latitude (view, event->y);
+  lon = shumate_view_x_to_longitude (view, event->x);
+  lat = shumate_view_y_to_latitude (view, event->y);
 
   g_print ("Map clicked at %f, %f \n", lat, lon);
 
@@ -43,9 +43,9 @@ map_view_button_release_cb (G_GNUC_UNUSED ClutterActor *actor,
 static gboolean
 zoom_in (G_GNUC_UNUSED ClutterActor *actor,
     G_GNUC_UNUSED ClutterButtonEvent *event,
-    ChamplainView *view)
+    ShumateView *view)
 {
-  champlain_view_zoom_in (view);
+  shumate_view_zoom_in (view);
   return TRUE;
 }
 
@@ -53,9 +53,9 @@ zoom_in (G_GNUC_UNUSED ClutterActor *actor,
 static gboolean
 zoom_out (G_GNUC_UNUSED ClutterActor *actor,
     G_GNUC_UNUSED ClutterButtonEvent *event,
-    ChamplainView *view)
+    ShumateView *view)
 {
-  champlain_view_zoom_out (view);
+  shumate_view_zoom_out (view);
   return TRUE;
 }
 
@@ -137,8 +137,8 @@ main (int argc,
     char *argv[])
 {
   ClutterActor *actor, *stage, *buttons, *button;
-  ChamplainMarkerLayer *layer;
-  ChamplainPathLayer *path;
+  ShumateMarkerLayer *layer;
+  ShumatePathLayer *path;
   gfloat width, total_width = 0;
 
   if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
@@ -149,7 +149,7 @@ main (int argc,
   g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
   /* Create the map view */
-  actor = champlain_view_new ();
+  actor = shumate_view_new ();
   clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
   clutter_actor_add_child (stage, actor);
 
@@ -182,11 +182,11 @@ main (int argc,
   clutter_canvas_set_size (CLUTTER_CANVAS (canvas), 512, 256);
   g_signal_connect (canvas, "draw", G_CALLBACK (draw_background_tile), NULL);
   clutter_content_invalidate (canvas);
-  champlain_view_set_background_pattern (CHAMPLAIN_VIEW (actor), canvas);
+  shumate_view_set_background_pattern (SHUMATE_VIEW (actor), canvas);
 
   /* Create the markers and marker layer */
-  layer = create_marker_layer (CHAMPLAIN_VIEW (actor), &path);
-  champlain_view_add_layer (CHAMPLAIN_VIEW (actor), CHAMPLAIN_LAYER (layer));
+  layer = create_marker_layer (SHUMATE_VIEW (actor), &path);
+  shumate_view_add_layer (SHUMATE_VIEW (actor), SHUMATE_LAYER (layer));
 
   /* Connect to the click event */
   clutter_actor_set_reactive (actor, TRUE);
@@ -197,7 +197,7 @@ main (int argc,
   /* Finish initialising the map view */
   g_object_set (G_OBJECT (actor), "zoom-level", 12,
       "kinetic-mode", TRUE, NULL);
-  champlain_view_center_on (CHAMPLAIN_VIEW (actor), 45.466, -73.75);
+  shumate_view_center_on (SHUMATE_VIEW (actor), 45.466, -73.75);
 
   clutter_actor_show (stage);
   clutter_main ();

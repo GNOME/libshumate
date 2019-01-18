@@ -101,7 +101,7 @@ if generate_vapi and not vapigen_dep.found()
   generate_vapi = false
 endif
 
-subdir('champlain')
+subdir('shumate')
 
 subdir('docs')
 
@@ -112,7 +112,7 @@ endif
 summary = [
   '',
   '------',
-  'libchamplain @0@ (@1@)'.format(version, api_version),
+  'libshumate @0@ (@1@)'.format(version, api_version),
   '',
   '             Demos: @0@'.format(build_demos),
   '     Documentation: @0@'.format(build_gtk_doc),

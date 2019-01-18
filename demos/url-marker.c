@@ -16,14 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <champlain/champlain.h>
+#include <shumate/shumate.h>
 #include <libsoup/soup.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 /* The data needed for constructing a marker */
 typedef struct
 {
-  ChamplainMarkerLayer *layer;
+  ShumateMarkerLayer *layer;
   gdouble latitude;
   gdouble longitude;
 } MarkerData;
@@ -123,7 +123,7 @@ texture_new_from_pixbuf (GdkPixbuf *pixbuf, GError **error)
  * actor (a texture) and will use this as the source image for a new marker.
  * The marker will then be added to an existing layer.
  *
- * This callback expects the parameter data to be a valid ChamplainMarkerLayer.
+ * This callback expects the parameter data to be a valid ShumateMarkerLayer.
  */
 static void
 image_downloaded_cb (SoupSession *session,
@@ -169,11 +169,11 @@ image_downloaded_cb (SoupSession *session,
     }
 
   /* Finally create a marker with the texture */
-  marker = champlain_label_new_with_image (texture);
+  marker = shumate_label_new_with_image (texture);
   texture = NULL;
-  champlain_location_set_location (CHAMPLAIN_LOCATION (marker),
+  shumate_location_set_location (SHUMATE_LOCATION (marker),
       marker_data->latitude, marker_data->longitude);
-  champlain_marker_layer_add_marker (marker_data->layer, CHAMPLAIN_MARKER (marker));
+  shumate_marker_layer_add_marker (marker_data->layer, SHUMATE_MARKER (marker));
 
 cleanup:
   if (marker_data)
@@ -198,7 +198,7 @@ cleanup:
  *
  */
 static void
-create_marker_from_url (ChamplainMarkerLayer *layer,
+create_marker_from_url (ShumateMarkerLayer *layer,
     SoupSession *session,
     gdouble latitude,
     gdouble longitude,
@@ -221,7 +221,7 @@ int
 main (int argc, char *argv[])
 {
   ClutterActor *view, *stage;
-  ChamplainMarkerLayer *layer;
+  ShumateMarkerLayer *layer;
   SoupSession *session;
 
   if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
@@ -232,13 +232,13 @@ main (int argc, char *argv[])
   g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
   /* Create the map view */
-  view = champlain_view_new ();
+  view = shumate_view_new ();
   clutter_actor_set_size (CLUTTER_ACTOR (view), 800, 600);
   clutter_actor_add_child (stage, view);
 
   /* Create the markers and marker layer */
-  layer = champlain_marker_layer_new_full (CHAMPLAIN_SELECTION_SINGLE);
-  champlain_view_add_layer (CHAMPLAIN_VIEW (view), CHAMPLAIN_LAYER (layer));
+  layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
+  shumate_view_add_layer (SHUMATE_VIEW (view), SHUMATE_LAYER (layer));
   session = soup_session_async_new ();
   create_marker_from_url (layer, session, 48.218611, 17.146397,
       "http://hexten.net/cpan-faces/potyl.jpg");
@@ -250,7 +250,7 @@ main (int argc, char *argv[])
   /* Finish initialising the map view */
   g_object_set (G_OBJECT (view), "zoom-level", 10,
       "kinetic-mode", TRUE, NULL);
-  champlain_view_center_on (CHAMPLAIN_VIEW (view), 48.22, 16.8);
+  shumate_view_center_on (SHUMATE_VIEW (view), 48.22, 16.8);
 
   clutter_actor_show (stage);
   clutter_main ();

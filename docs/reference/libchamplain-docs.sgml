@@ -5,17 +5,17 @@
 ]>
 <book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
   <bookinfo>
-    <title>libchamplain Reference Manual</title>
+    <title>libshumate Reference Manual</title>
     <releaseinfo>
-      for libchamplain &version;
+      for libshumate &version;
       <para>
       The latest version of this documentation can be found on-line at
-      <ulink role="online-location" url="http://library.gnome.org/devel/libchamplain/unstable/">http://library.gnome.org/devel/libchamplain/unstable/</ulink>.
+      <ulink role="online-location" url="http://library.gnome.org/devel/libshumate/unstable/">http://library.gnome.org/devel/libshumate/unstable/</ulink>.
       </para>
     </releaseinfo>
     <copyright>
       <year>2008-2013</year>
-      <holder>libchamplain contributors</holder>
+      <holder>libshumate contributors</holder>
     </copyright>
     <legalnotice>
       <para>
@@ -42,70 +42,70 @@
 
   <part>
     <title>Basic API</title>
-    <xi:include href="xml/champlain-view.xml"/>
+    <xi:include href="xml/shumate-view.xml"/>
   </part>
   <part>
     <title>Layers, Markers and Locations</title>
     <chapter>
       <title>Layers</title>
-      <xi:include href="xml/champlain-layer.xml"/>
-      <xi:include href="xml/champlain-marker-layer.xml"/>
-      <xi:include href="xml/champlain-path-layer.xml"/>
+      <xi:include href="xml/shumate-layer.xml"/>
+      <xi:include href="xml/shumate-marker-layer.xml"/>
+      <xi:include href="xml/shumate-path-layer.xml"/>
     </chapter>
     <chapter>
       <title>Markers</title>
-      <xi:include href="xml/champlain-marker.xml"/>
-      <xi:include href="xml/champlain-label.xml"/>
-      <xi:include href="xml/champlain-point.xml"/>
-      <xi:include href="xml/champlain-custom-marker.xml"/>
+      <xi:include href="xml/shumate-marker.xml"/>
+      <xi:include href="xml/shumate-label.xml"/>
+      <xi:include href="xml/shumate-point.xml"/>
+      <xi:include href="xml/shumate-custom-marker.xml"/>
     </chapter>
     <chapter>
       <title>Locations</title>
-      <xi:include href="xml/champlain-location.xml"/>
-      <xi:include href="xml/champlain-coordinate.xml"/>
+      <xi:include href="xml/shumate-location.xml"/>
+      <xi:include href="xml/shumate-coordinate.xml"/>
     </chapter>
   </part>
   <part>
     <title>Widgets</title>
-    <xi:include href="xml/champlain-license.xml"/>
-    <xi:include href="xml/champlain-scale.xml"/>
+    <xi:include href="xml/shumate-license.xml"/>
+    <xi:include href="xml/shumate-scale.xml"/>
   </part>
   <part>
     <title>Map Source API</title>
-    <xi:include href="xml/champlain-map-source.xml"/>
+    <xi:include href="xml/shumate-map-source.xml"/>
     <chapter>
       <title>Tile Sources</title>
-      <xi:include href="xml/champlain-tile-source.xml"/>
-      <xi:include href="xml/champlain-network-tile-source.xml"/>
-      <xi:include href="xml/champlain-null-tile-source.xml"/>
-      <xi:include href="xml/champlain-file-tile-source.xml"/>
-      <xi:include href="xml/champlain-network-bbox-tile-source.xml"/>
+      <xi:include href="xml/shumate-tile-source.xml"/>
+      <xi:include href="xml/shumate-network-tile-source.xml"/>
+      <xi:include href="xml/shumate-null-tile-source.xml"/>
+      <xi:include href="xml/shumate-file-tile-source.xml"/>
+      <xi:include href="xml/shumate-network-bbox-tile-source.xml"/>
     </chapter>
     <chapter>
       <title>Tile Caches</title>
-      <xi:include href="xml/champlain-tile-cache.xml"/>
-      <xi:include href="xml/champlain-file-cache.xml"/>
-      <xi:include href="xml/champlain-memory-cache.xml"/>
+      <xi:include href="xml/shumate-tile-cache.xml"/>
+      <xi:include href="xml/shumate-file-cache.xml"/>
+      <xi:include href="xml/shumate-memory-cache.xml"/>
     </chapter>
     <chapter>
       <title>Map Source Utilities</title>
-      <xi:include href="xml/champlain-map-source-chain.xml"/>
-      <xi:include href="xml/champlain-map-source-factory.xml"/>
-      <xi:include href="xml/champlain-map-source-desc.xml"/>
+      <xi:include href="xml/shumate-map-source-chain.xml"/>
+      <xi:include href="xml/shumate-map-source-factory.xml"/>
+      <xi:include href="xml/shumate-map-source-desc.xml"/>
     </chapter>
   </part>
   <part>
     <title>Renderer API</title>
-    <xi:include href="xml/champlain-renderer.xml"/>
-    <xi:include href="xml/champlain-image-renderer.xml"/>
-    <xi:include href="xml/champlain-error-tile-renderer.xml"/>
+    <xi:include href="xml/shumate-renderer.xml"/>
+    <xi:include href="xml/shumate-image-renderer.xml"/>
+    <xi:include href="xml/shumate-error-tile-renderer.xml"/>
   </part>
   <part>
     <title>Others</title>
-    <xi:include href="xml/champlain-tile.xml"/>
-    <xi:include href="xml/champlain-bounding-box.xml"/>
-    <xi:include href="xml/champlain-exportable.xml"/>
-    <xi:include href="xml/champlain-version.xml"/>
+    <xi:include href="xml/shumate-tile.xml"/>
+    <xi:include href="xml/shumate-bounding-box.xml"/>
+    <xi:include href="xml/shumate-exportable.xml"/>
+    <xi:include href="xml/shumate-version.xml"/>
   </part>
   <part>
     <title>Annotation Glossary</title>

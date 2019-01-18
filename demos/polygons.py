@@ -17,9 +17,9 @@
 #
 
 import gi
-gi.require_version('Champlain', '0.12')
+gi.require_version('Shumate', '0.12')
 gi.require_version('Clutter', '1.0')
-from gi.repository import Clutter, Champlain
+from gi.repository import Clutter, Shumate
 Clutter.init([])
 
 PADDING = 10
@@ -52,7 +52,7 @@ def make_button(text):
 	return button
 	
 def append_point(layer, lon, lat):
-	coord = Champlain.Coordinate.new_full(lon, lat)
+	coord = Shumate.Coordinate.new_full(lon, lat)
 	layer.add_node(coord)
 
 def main_quit(data):
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 	stage.connect('destroy', main_quit)
 	
 	# Create the map view
-	view = Champlain.View()
+	view = Shumate.View()
 	view.set_size(800, 600)
 	stage.add_child(view)
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
 	stage.add_child(buttons)
 
 	# Draw a line
-	layer = Champlain.PathLayer()
+	layer = Shumate.PathLayer()
 	# Cheap approx of Highway 10
 	append_point(layer, 45.4104, -73.2846)
 	append_point(layer, 45.4178, -73.2239)
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 	layer.set_dash(dash)
 
 	# Draw a path
-	layer = Champlain.PathLayer()
+	layer = Shumate.PathLayer()
 	append_point(layer, 45.1386, -73.9196)
 	append_point(layer, 45.1229, -73.8991)
 	append_point(layer, 45.0946, -73.9531)
