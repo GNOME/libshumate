@@ -20,12 +20,6 @@ libshumate_reference_ignored_h = [
   'shumate.h',
 ]
 
-if build_with_memphis == false
-  libshumate_reference_ignored_h += [
-    'shumate-memphis-renderer.h',
-  ]
-endif
-
 libshumate_reference_source_folders = [
   join_paths(srcdir, 'shumate'),
   join_paths(builddir, 'shumate'),
