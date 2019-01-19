@@ -69,6 +69,7 @@ clutter_dep = dependency('clutter-1.0', version: clutter_req)
 cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
+gtk_dep = dependency('gtk+-4.0')
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
