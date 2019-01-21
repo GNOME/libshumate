@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008-2009 Pierre-Luc Beaudoin <pierre-luc@pierlux.com>
+ * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

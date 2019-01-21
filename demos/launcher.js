@@ -1,6 +1,7 @@
 #!/usr/bin/env gjs
 /*
  * Copyright (C) 2010 Simon Wenner <simon@wenner.ch>
+ * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

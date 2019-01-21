@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Copyright (C) 2012 Pablo Castellano <pablog@gnome.org>
+# Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

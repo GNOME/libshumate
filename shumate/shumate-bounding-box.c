@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Simon Wenner <simon@wenner.ch>
+ * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
  *
  * This file is inspired by clutter-color.c which is
  * Copyright (C) 2006 OpenedHand, and has the same license.
