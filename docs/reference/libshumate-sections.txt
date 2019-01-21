@@ -703,24 +703,6 @@ ShumateMapSourceDescPrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-custom-marker</FILE>
-<TITLE>ShumateCustomMarker</TITLE>
-ShumateCustomMarker
-shumate_custom_marker_new
-<SUBSECTION Standard>
-SHUMATE_CUSTOM_MARKER
-SHUMATE_IS_CUSTOM_MARKER
-SHUMATE_TYPE_CUSTOM_MARKER
-shumate_custom_marker_get_type
-SHUMATE_CUSTOM_MARKER_CLASS
-SHUMATE_IS_CUSTOM_MARKER_CLASS
-SHUMATE_CUSTOM_MARKER_GET_CLASS
-<SUBSECTION Private>
-ShumateCustomMarkerClass
-ShumateCustomMarkerPrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-path-layer</FILE>
 <TITLE>ShumatePathLayer</TITLE>
 ShumatePathLayer

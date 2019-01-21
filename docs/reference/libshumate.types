@@ -1,6 +1,5 @@
 shumate_bounding_box_get_type
 shumate_coordinate_get_type
-shumate_custom_marker_get_type
 shumate_error_tile_renderer_get_type
 shumate_exportable_get_type
 shumate_file_cache_get_type

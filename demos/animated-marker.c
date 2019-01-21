@@ -78,7 +78,7 @@ create_marker ()
   ClutterTransition *transition;
 
   /* Create the marker */
-  marker = shumate_custom_marker_new ();
+  marker = shumate_marker_new ();
 
   /* Static filled circle ----------------------------------------------- */
   canvas = clutter_canvas_new ();

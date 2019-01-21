@@ -34,7 +34,6 @@
 #include "shumate/shumate-marker-layer.h"
 #include "shumate/shumate-path-layer.h"
 #include "shumate/shumate-point.h"
-#include "shumate/shumate-custom-marker.h"
 #include "shumate/shumate-location.h"
 #include "shumate/shumate-coordinate.h"
 #include "shumate/shumate-marker.h"

@@ -46,12 +46,6 @@ namespace Shumate {
 		[CCode (has_construct_function = false)]
 		public Coordinate.full (double latitude, double longitude);
 	}
-	[CCode (cheader_filename = "shumate/shumate.h", type_id = "shumate_custom_marker_get_type ()")]
-	[Deprecated (since = "0.12.4")]
-	public class CustomMarker : shumate.Marker, Atk.Implementor, shumate.Location, Clutter.Animatable, Clutter.Container, Clutter.Scriptable {
-		[CCode (has_construct_function = false, type = "ClutterActor*")]
-		public CustomMarker ();
-	}
 	[CCode (cheader_filename = "shumate/shumate.h", type_id = "shumate_error_tile_renderer_get_type ()")]
 	public class ErrorTileRenderer : shumate.Renderer {
 		[CCode (has_construct_function = false)]
