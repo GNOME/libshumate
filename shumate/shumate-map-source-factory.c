@@ -54,7 +54,6 @@
 #include "shumate-map-source-chain.h"
 #include "shumate-error-tile-renderer.h"
 #include "shumate-image-renderer.h"
-#include "shumate-file-tile-source.h"
 
 #include <glib.h>
 #include <string.h>
@@ -625,57 +624,3 @@ shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
   return map_source;
 }
 
-
-#ifdef SHUMATE_HAS_MEMPHIS
-static ShumateMapSource *
-shumate_map_source_new_memphis (ShumateMapSourceDesc *desc)
-{
-  ShumateMapSource *map_source;
-  ShumateRenderer *renderer;
-  const gchar *id, *name, *license, *license_uri;
-  guint min_zoom, max_zoom, tile_size;
-  ShumateMapProjection projection;
-
-  id = shumate_map_source_desc_get_id (desc);
-  name = shumate_map_source_desc_get_name (desc);
-  license = shumate_map_source_desc_get_license (desc);
-  license_uri = shumate_map_source_desc_get_license_uri (desc);
-  min_zoom = shumate_map_source_desc_get_min_zoom_level (desc);
-  max_zoom = shumate_map_source_desc_get_max_zoom_level (desc);
-  tile_size = shumate_map_source_desc_get_tile_size (desc);
-  projection = shumate_map_source_desc_get_projection (desc);
-
-  renderer = SHUMATE_RENDERER (shumate_memphis_renderer_new_full (tile_size));
-
-  if (g_strcmp0 (id, SHUMATE_MAP_SOURCE_MEMPHIS_LOCAL) == 0)
-    {
-      map_source = SHUMATE_MAP_SOURCE (shumate_file_tile_source_new_full (
-                id,
-                name,
-                license,
-                license_uri,
-                min_zoom,
-                max_zoom,
-                tile_size,
-                projection,
-                renderer));
-    }
-  else
-    {
-      map_source = SHUMATE_MAP_SOURCE (shumate_network_bbox_tile_source_new_full (
-                id,
-                name,
-                license,
-                license_uri,
-                min_zoom,
-                max_zoom,
-                tile_size,
-                projection,
-                renderer));
-    }
-
-  return map_source;
-}
-
-
-#endif

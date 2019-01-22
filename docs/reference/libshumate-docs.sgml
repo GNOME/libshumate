@@ -77,7 +77,6 @@
       <xi:include href="xml/shumate-tile-source.xml"/>
       <xi:include href="xml/shumate-network-tile-source.xml"/>
       <xi:include href="xml/shumate-null-tile-source.xml"/>
-      <xi:include href="xml/shumate-file-tile-source.xml"/>
       <xi:include href="xml/shumate-network-bbox-tile-source.xml"/>
     </chapter>
     <chapter>

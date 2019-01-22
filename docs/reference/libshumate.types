@@ -3,7 +3,6 @@ shumate_coordinate_get_type
 shumate_error_tile_renderer_get_type
 shumate_exportable_get_type
 shumate_file_cache_get_type
-shumate_file_tile_source_get_type
 shumate_image_renderer_get_type
 shumate_label_get_type
 shumate_layer_get_type

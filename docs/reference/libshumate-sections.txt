@@ -215,25 +215,6 @@ ShumateNetworkTileSourcePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-file-tile-source</FILE>
-<TITLE>ShumateFileTileSource</TITLE>
-ShumateFileTileSource
-shumate_file_tile_source_new_full
-shumate_file_tile_source_load_map_data
-<SUBSECTION Standard>
-SHUMATE_FILE_TILE_SOURCE
-SHUMATE_IS_FILE_TILE_SOURCE
-SHUMATE_TYPE_FILE_TILE_SOURCE
-shumate_file_tile_source_get_type
-SHUMATE_FILE_TILE_SOURCE_CLASS
-SHUMATE_IS_FILE_TILE_SOURCE_CLASS
-SHUMATE_FILE_TILE_SOURCE_GET_CLASS
-<SUBSECTION Private>
-ShumateFileTileSourceClass
-ShumateFileTileSourcePrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-network-bbox-tile-source</FILE>
 <TITLE>ShumateNetworkBboxTileSource</TITLE>
 ShumateNetworkBboxTileSource

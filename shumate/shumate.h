@@ -53,7 +53,6 @@
 
 #include "shumate/shumate-network-tile-source.h"
 #include "shumate/shumate-network-bbox-tile-source.h"
-#include "shumate/shumate-file-tile-source.h"
 #include "shumate/shumate-null-tile-source.h"
 
 #include "shumate/shumate-memory-cache.h"
