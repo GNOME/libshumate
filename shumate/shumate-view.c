@@ -3769,39 +3769,6 @@ bin_alignment_to_actor_align (ClutterBinAlignment alignment)
       }
 }
 
-
-/**
- * shumate_view_bin_layout_add:
- * @view: a #ShumateView
- * @child: The child to be inserted
- * @x_align: x alignment
- * @y_align: y alignment
- *
- * This function inserts a custom actor to the undrelying #ClutterBinLayout
- * manager. The inserted actors appear on top of the map. See clutter_bin_layout_add()
- * for reference.
- *
- * Deprecated: 0.12.4: Use #ClutterActorAlign and the #ClutterActor
- * API instead.
- */
-void
-shumate_view_bin_layout_add (ShumateView *view,
-    ClutterActor *child,
-    ClutterBinAlignment x_align,
-    ClutterBinAlignment y_align)
-{
-  DEBUG_LOG ()
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  clutter_actor_set_x_expand (child, TRUE);
-  clutter_actor_set_y_expand (child, TRUE);
-  clutter_actor_set_x_align (child, bin_alignment_to_actor_align (x_align));
-  clutter_actor_set_y_align (child, bin_alignment_to_actor_align (y_align));
-  clutter_actor_add_child (CLUTTER_ACTOR (view), child);
-}
-
-
 /**
  * shumate_view_get_license_actor:
  * @view: a #ShumateView

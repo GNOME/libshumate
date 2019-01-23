@@ -168,12 +168,6 @@ void shumate_view_get_viewport_origin (ShumateView *view,
     gint *x,
     gint *y);
 
-#ifndef GTK_DISABLE_DEPRECATED
-void shumate_view_bin_layout_add (ShumateView *view,
-    ClutterActor *child,
-    ClutterBinAlignment x_align,
-    ClutterBinAlignment y_align);
-#endif
 ShumateLicense *shumate_view_get_license_actor (ShumateView *view);
 
 ShumateBoundingBox *shumate_view_get_bounding_box (ShumateView *view);
