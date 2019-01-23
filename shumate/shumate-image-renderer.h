@@ -56,8 +56,6 @@ typedef struct _ShumateImageRendererClass ShumateImageRendererClass;
  *
  * The #ShumateImageRenderer structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.8
  */
 struct _ShumateImageRenderer
 {

@@ -59,8 +59,6 @@ typedef struct _ShumateCoordinateClass ShumateCoordinateClass;
  *
  * The #ShumateCoordinate structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.10
  */
 struct _ShumateCoordinate
 {

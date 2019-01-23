@@ -63,8 +63,6 @@ shumate_renderer_class_init (ShumateRendererClass *klass)
  * @size: size of the data in bytes
  *
  * Sets the data which is used to render tiles by the renderer.
- *
- * Since: 0.8
  */
 void
 shumate_renderer_set_data (ShumateRenderer *renderer,
@@ -86,8 +84,6 @@ shumate_renderer_set_data (ShumateRenderer *renderer,
  * to set the content of the tile. When the rendering is finished, the renderer
  * emits the #ShumateTile::render-complete signal. The tile has to be displayed manually by
  * calling shumate_tile_display_content().
- *
- * Since: 0.8
  */
 void
 shumate_renderer_render (ShumateRenderer *renderer,

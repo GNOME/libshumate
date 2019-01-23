@@ -191,8 +191,6 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * ShumateMapSource:next-source:
    *
    * Next source in the loading chain.
-   *
-   * Since: 0.6
    */
   pspec = g_param_spec_object ("next-source",
         "Next Source",
@@ -205,8 +203,6 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * ShumateMapSource:renderer:
    *
    * Renderer used for tiles rendering.
-   *
-   * Since: 0.8
    */
   pspec = g_param_spec_object ("renderer",
         "Tile renderer",
@@ -236,8 +232,6 @@ shumate_map_source_init (ShumateMapSource *map_source)
  * Get the next source in the chain.
  *
  * Returns: (transfer none): the next source in the chain.
- *
- * Since: 0.6
  */
 ShumateMapSource *
 shumate_map_source_get_next_source (ShumateMapSource *map_source)
@@ -255,8 +249,6 @@ shumate_map_source_get_next_source (ShumateMapSource *map_source)
  * Get the renderer used for tiles rendering.
  *
  * Returns: (transfer none): the renderer.
- *
- * Since: 0.8
  */
 ShumateRenderer *
 shumate_map_source_get_renderer (ShumateMapSource *map_source)
@@ -273,8 +265,6 @@ shumate_map_source_get_renderer (ShumateMapSource *map_source)
  * @next_source: the next #ShumateMapSource in the chain
  *
  * Sets the next map source in the chain.
- *
- * Since: 0.6
  */
 void
 shumate_map_source_set_next_source (ShumateMapSource *map_source,
@@ -306,8 +296,6 @@ shumate_map_source_set_next_source (ShumateMapSource *map_source,
  * @renderer: the renderer
  *
  * Sets the renderer used for tiles rendering.
- *
- * Since: 0.8
  */
 void
 shumate_map_source_set_renderer (ShumateMapSource *map_source,
@@ -335,8 +323,6 @@ shumate_map_source_set_renderer (ShumateMapSource *map_source,
  * Gets map source's id.
  *
  * Returns: the map source's id.
- *
- * Since: 0.4
  */
 const gchar *
 shumate_map_source_get_id (ShumateMapSource *map_source)
@@ -354,8 +340,6 @@ shumate_map_source_get_id (ShumateMapSource *map_source)
  * Gets map source's name.
  *
  * Returns: the map source's name.
- *
- * Since: 0.4
  */
 const gchar *
 shumate_map_source_get_name (ShumateMapSource *map_source)
@@ -373,8 +357,6 @@ shumate_map_source_get_name (ShumateMapSource *map_source)
  * Gets map source's license.
  *
  * Returns: the map source's license.
- *
- * Since: 0.4
  */
 const gchar *
 shumate_map_source_get_license (ShumateMapSource *map_source)
@@ -392,8 +374,6 @@ shumate_map_source_get_license (ShumateMapSource *map_source)
  * Gets map source's license URI.
  *
  * Returns: the map source's license URI.
- *
- * Since: 0.4
  */
 const gchar *
 shumate_map_source_get_license_uri (ShumateMapSource *map_source)
@@ -411,8 +391,6 @@ shumate_map_source_get_license_uri (ShumateMapSource *map_source)
  * Gets map source's minimum zoom level.
  *
  * Returns: the miminum zoom level this map source supports
- *
- * Since: 0.4
  */
 guint
 shumate_map_source_get_min_zoom_level (ShumateMapSource *map_source)
@@ -430,8 +408,6 @@ shumate_map_source_get_min_zoom_level (ShumateMapSource *map_source)
  * Gets map source's maximum zoom level.
  *
  * Returns: the maximum zoom level this map source supports
- *
- * Since: 0.4
  */
 guint
 shumate_map_source_get_max_zoom_level (ShumateMapSource *map_source)
@@ -449,8 +425,6 @@ shumate_map_source_get_max_zoom_level (ShumateMapSource *map_source)
  * Gets map source's tile size.
  *
  * Returns: the tile's size (width and height) in pixels for this map source
- *
- * Since: 0.4
  */
 guint
 shumate_map_source_get_tile_size (ShumateMapSource *map_source)
@@ -468,8 +442,6 @@ shumate_map_source_get_tile_size (ShumateMapSource *map_source)
  * Gets map source's projection.
  *
  * Returns: the map source's projection.
- *
- * Since: 0.4
  */
 ShumateMapProjection
 shumate_map_source_get_projection (ShumateMapSource *map_source)
@@ -490,8 +462,6 @@ shumate_map_source_get_projection (ShumateMapSource *map_source)
  * (0, 0) is located at the top left.
  *
  * Returns: the x position
- *
- * Since: 0.4
  */
 gdouble
 shumate_map_source_get_x (ShumateMapSource *map_source,
@@ -517,8 +487,6 @@ shumate_map_source_get_x (ShumateMapSource *map_source,
  * (0, 0) is located at the top left.
  *
  * Returns: the y position
- *
- * Since: 0.4
  */
 gdouble
 shumate_map_source_get_y (ShumateMapSource *map_source,
@@ -545,8 +513,6 @@ shumate_map_source_get_y (ShumateMapSource *map_source,
  * projection.
  *
  * Returns: the longitude
- *
- * Since: 0.4
  */
 gdouble
 shumate_map_source_get_longitude (ShumateMapSource *map_source,
@@ -574,8 +540,6 @@ shumate_map_source_get_longitude (ShumateMapSource *map_source,
  * projection.
  *
  * Returns: the latitude
- *
- * Since: 0.4
  */
 gdouble
 shumate_map_source_get_latitude (ShumateMapSource *map_source,
@@ -602,8 +566,6 @@ shumate_map_source_get_latitude (ShumateMapSource *map_source,
  * Gets the number of tiles in a row at this zoom level for this map source.
  *
  * Returns: the number of tiles in a row
- *
- * Since: 0.4
  */
 guint
 shumate_map_source_get_row_count (ShumateMapSource *map_source,
@@ -624,8 +586,6 @@ shumate_map_source_get_row_count (ShumateMapSource *map_source,
  * source.
  *
  * Returns: the number of tiles in a column
- *
- * Since: 0.4
  */
 guint
 shumate_map_source_get_column_count (ShumateMapSource *map_source,
@@ -649,8 +609,6 @@ shumate_map_source_get_column_count (ShumateMapSource *map_source,
  * Gets meters per pixel at the position on the map using this map source's projection.
  *
  * Returns: the meters per pixel
- *
- * Since: 0.4.3
  */
 gdouble
 shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
@@ -681,8 +639,6 @@ shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
  *
  * Fills the tile with image data (either from cache, network or rendered
  * locally).
- *
- * Since: 0.4
  */
 void
 shumate_map_source_fill_tile (ShumateMapSource *map_source,

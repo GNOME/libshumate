@@ -57,8 +57,6 @@ typedef struct _ShumateMapSourceDescClass ShumateMapSourceDescClass;
  *
  * The #ShumateMapSourceDesc structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.10
  */
 struct _ShumateMapSourceDesc
 {
@@ -80,8 +78,6 @@ struct _ShumateMapSourceDescClass
  * #ShumateMapSource.
  *
  * Returns: A fully constructed #ShumateMapSource ready to be used.
- *
- * Since: 0.10
  */
 typedef ShumateMapSource* (*ShumateMapSourceConstructor) (ShumateMapSourceDesc *desc);
 
@@ -89,8 +85,6 @@ typedef ShumateMapSource* (*ShumateMapSourceConstructor) (ShumateMapSourceDesc *
  * SHUMATE_MAP_SOURCE_CONSTRUCTOR:
  *
  * Conversion macro to #ShumateMapSourceConstructor.
- *
- * Since: 0.10
  */
 #define SHUMATE_MAP_SOURCE_CONSTRUCTOR (f) ((ShumateMapSourceConstructor) (f))
 

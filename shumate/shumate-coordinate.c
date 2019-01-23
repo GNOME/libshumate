@@ -216,8 +216,6 @@ shumate_coordinate_init (ShumateCoordinate *coordinate)
  * Creates a new instance of #ShumateCoordinate.
  *
  * Returns: the created instance.
- *
- * Since: 0.10
  */
 ShumateCoordinate *
 shumate_coordinate_new ()
@@ -235,8 +233,6 @@ shumate_coordinate_new ()
  * coordinates.
  *
  * Returns: the created instance.
- *
- * Since: 0.10
  */
 ShumateCoordinate *
 shumate_coordinate_new_full (gdouble latitude,

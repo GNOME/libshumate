@@ -56,8 +56,6 @@ typedef struct _ShumateErrorTileRendererClass ShumateErrorTileRendererClass;
  *
  * The #ShumateErrorTileRenderer structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.8
  */
 struct _ShumateErrorTileRenderer
 {

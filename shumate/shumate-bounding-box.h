@@ -40,8 +40,6 @@ typedef struct _ShumateBoundingBox ShumateBoundingBox;
  * @bottom: bottom coordinate
  *
  * Defines the area of a ShumateMapDataSource that contains data.
- *
- * Since: 0.6
  */
 struct _ShumateBoundingBox
 {

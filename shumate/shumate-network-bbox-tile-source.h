@@ -55,8 +55,6 @@ typedef struct _ShumateNetworkBboxTileSourceClass ShumateNetworkBboxTileSourceCl
  *
  * The #ShumateNetworkBboxTileSource structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.8
  */
 struct _ShumateNetworkBboxTileSource
 {

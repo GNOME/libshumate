@@ -239,8 +239,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:x:
    *
    * The x position of the tile
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_X,
@@ -256,8 +254,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:y:
    *
    * The y position of the tile
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_Y,
@@ -273,8 +269,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:zoom-level:
    *
    * The zoom level of the tile
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_ZOOM_LEVEL,
@@ -290,8 +284,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:size:
    *
    * The size of the tile in pixels
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_SIZE,
@@ -307,8 +299,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:state:
    *
    * The state of the tile
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_STATE,
@@ -324,8 +314,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    *
    * The #ClutterActor with the specific image content.  When changing this
    * property, the new actor will be faded in.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_CONTENT,
@@ -341,8 +329,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The tile's ETag. This information is sent by some web servers as a mean
    * to identify if a tile has changed.  This information is saved in the cache
    * and sent in GET queries.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_ETAG,
@@ -356,8 +342,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:fade-in:
    *
    * Specifies whether the tile should fade in when loading
-   *
-   * Since: 0.6
    */
   g_object_class_install_property (object_class,
       PROP_FADE_IN,
@@ -380,8 +364,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
    *
    * The #ShumateTile::render-complete signal is emitted when rendering of the tile is
    * completed by the renderer.
-   *
-   * Since: 0.10
    */
   shumate_tile_signals[RENDER_COMPLETE] =
     g_signal_new ("render-complete",
@@ -459,8 +441,6 @@ exportable_interface_init (ShumateExportableIface *iface)
  * Creates an instance of #ShumateTile.
  *
  * Returns: a new #ShumateTile
- *
- * Since: 0.4
  */
 ShumateTile *
 shumate_tile_new (void)
@@ -476,8 +456,6 @@ shumate_tile_new (void)
  * Gets the tile's x position.
  *
  * Returns: the tile's x position
- *
- * Since: 0.4
  */
 guint
 shumate_tile_get_x (ShumateTile *self)
@@ -495,8 +473,6 @@ shumate_tile_get_x (ShumateTile *self)
  * Gets the tile's y position.
  *
  * Returns: the tile's y position
- *
- * Since: 0.4
  */
 guint
 shumate_tile_get_y (ShumateTile *self)
@@ -514,8 +490,6 @@ shumate_tile_get_y (ShumateTile *self)
  * Gets the tile's zoom level.
  *
  * Returns: the tile's zoom level
- *
- * Since: 0.4
  */
 guint
 shumate_tile_get_zoom_level (ShumateTile *self)
@@ -533,8 +507,6 @@ shumate_tile_get_zoom_level (ShumateTile *self)
  * Gets the tile's size.
  *
  * Returns: the tile's size in pixels
- *
- * Since: 0.4
  */
 guint
 shumate_tile_get_size (ShumateTile *self)
@@ -552,8 +524,6 @@ shumate_tile_get_size (ShumateTile *self)
  * Gets the current state of tile loading.
  *
  * Returns: the tile's #ShumateState
- *
- * Since: 0.4
  */
 ShumateState
 shumate_tile_get_state (ShumateTile *self)
@@ -570,8 +540,6 @@ shumate_tile_get_state (ShumateTile *self)
  * @x: the position
  *
  * Sets the tile's x position
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_x (ShumateTile *self,
@@ -591,8 +559,6 @@ shumate_tile_set_x (ShumateTile *self,
  * @y: the position
  *
  * Sets the tile's y position
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_y (ShumateTile *self,
@@ -612,8 +578,6 @@ shumate_tile_set_y (ShumateTile *self,
  * @zoom_level: the zoom level
  *
  * Sets the tile's zoom level
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_zoom_level (ShumateTile *self,
@@ -633,8 +597,6 @@ shumate_tile_set_zoom_level (ShumateTile *self,
  * @size: the size in pixels
  *
  * Sets the tile's size
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_size (ShumateTile *self,
@@ -654,8 +616,6 @@ shumate_tile_set_size (ShumateTile *self,
  * @state: a #ShumateState
  *
  * Sets the tile's #ShumateState
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_state (ShumateTile *self,
@@ -683,8 +643,6 @@ shumate_tile_set_state (ShumateTile *self,
  * Creates an instance of #ShumateTile.
  *
  * Returns: a #ShumateTile
- *
- * Since: 0.4
  */
 ShumateTile *
 shumate_tile_new_full (guint x,
@@ -708,8 +666,6 @@ shumate_tile_new_full (guint x,
  * Gets the tile's last modified time.
  *
  * Returns: the tile's last modified time
- *
- * Since: 0.4
  */
 G_CONST_RETURN GTimeVal *
 shumate_tile_get_modified_time (ShumateTile *self)
@@ -726,8 +682,6 @@ shumate_tile_get_modified_time (ShumateTile *self)
  * @time: a #GTimeVal, the value will be copied
  *
  * Sets the tile's modified time
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_modified_time (ShumateTile *self,
@@ -750,8 +704,6 @@ shumate_tile_set_modified_time (ShumateTile *self,
  * Gets the tile's ETag.
  *
  * Returns: the tile's ETag
- *
- * Since: 0.4
  */
 G_CONST_RETURN gchar *
 shumate_tile_get_etag (ShumateTile *self)
@@ -768,8 +720,6 @@ shumate_tile_get_etag (ShumateTile *self)
  * @etag: the tile's ETag as sent by the server
  *
  * Sets the tile's ETag
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_etag (ShumateTile *self,
@@ -792,8 +742,6 @@ shumate_tile_set_etag (ShumateTile *self,
  *
  * Sets the tile's content. To also disppay the tile, you have to call
  * shumate_tile_display_content() in addition.
- *
- * Since: 0.4
  */
 void
 shumate_tile_set_content (ShumateTile *self,
@@ -832,8 +780,6 @@ fade_in_completed (ClutterActor *actor,
  * @self: the #ShumateTile
  *
  * Displays the tile's content.
- *
- * Since: 0.8
  */
 void
 shumate_tile_display_content (ShumateTile *self)
@@ -876,8 +822,6 @@ shumate_tile_display_content (ShumateTile *self)
  *
  * Returns: (transfer none): the tile's content, this actor will change each time the tile's content changes.
  * You should not unref this content, it is owned by the tile.
- *
- * Since: 0.4
  */
 ClutterActor *
 shumate_tile_get_content (ShumateTile *self)
@@ -895,8 +839,6 @@ shumate_tile_get_content (ShumateTile *self)
  * Checks whether the tile should fade in.
  *
  * Returns: the return value determines whether the tile should fade in when loading.
- *
- * Since: 0.6
  */
 gboolean
 shumate_tile_get_fade_in (ShumateTile *self)
@@ -913,8 +855,6 @@ shumate_tile_get_fade_in (ShumateTile *self)
  * @fade_in: determines whether the tile should fade in when loading
  *
  * Sets the flag determining whether the tile should fade in when loading
- *
- * Since: 0.6
  */
 void
 shumate_tile_set_fade_in (ShumateTile *self,

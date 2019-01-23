@@ -249,8 +249,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:id:
    *
    * The id of the map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_ID,
@@ -264,8 +262,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:name:
    *
    * The name of the map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_NAME,
@@ -279,8 +275,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:license:
    *
    * The license of the map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_LICENSE,
@@ -294,8 +288,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:license-uri:
    *
    * The license's uri for more information
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_LICENSE_URI,
@@ -309,8 +301,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:uri-format:
    *
    * The URI format of a network map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_URI_FORMAT,
@@ -324,8 +314,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:min-zoom-level:
    *
    * The minimum zoom level
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_MIN_ZOOM_LEVEL,
@@ -341,8 +329,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:max-zoom-level:
    *
    * The maximum zoom level
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_MAX_ZOOM_LEVEL,
@@ -358,8 +344,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:projection:
    *
    * The map projection of the map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_PROJECTION,
@@ -374,8 +358,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:tile-size:
    *
    * The tile size of the map source
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_TILE_SIZE,
@@ -391,8 +373,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:constructor:
    *
    * The map source constructor
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_CONSTRUCTOR,
@@ -405,8 +385,6 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
    * ShumateMapSourceDesc:data:
    *
    * User data passed to the constructor
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_DATA,
@@ -456,8 +434,6 @@ shumate_map_source_desc_init (ShumateMapSourceDesc *desc)
  * This is returned by #shumate_map_source_factory_get_registered
  *
  * Returns: a constructed #ShumateMapSourceDesc object
- *
- * Since: 0.10
  */
 ShumateMapSourceDesc *
 shumate_map_source_desc_new_full (
@@ -496,8 +472,6 @@ shumate_map_source_desc_new_full (
  * Gets map source's id.
  *
  * Returns: the map source's id.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
@@ -515,8 +489,6 @@ shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
  * Gets map source's name.
  *
  * Returns: the map source's name.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
@@ -534,8 +506,6 @@ shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
  * Gets map source's license.
  *
  * Returns: the map source's license.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
@@ -553,8 +523,6 @@ shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
  * Gets map source's license URI.
  *
  * Returns: the map source's license URI.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
@@ -572,8 +540,6 @@ shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
  * Gets network map source's URI format.
  *
  * Returns: the URI format.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
@@ -591,8 +557,6 @@ shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
  * Gets map source's minimum zoom level.
  *
  * Returns: the miminum zoom level this map source supports
- *
- * Since: 0.10
  */
 guint
 shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc)
@@ -610,8 +574,6 @@ shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc)
  * Gets map source's maximum zoom level.
  *
  * Returns: the maximum zoom level this map source supports
- *
- * Since: 0.10
  */
 guint
 shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc)
@@ -629,8 +591,6 @@ shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc)
  * Gets map source's tile size.
  *
  * Returns: the tile's size (width and height) in pixels for this map source
- *
- * Since: 0.10
  */
 guint
 shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc)
@@ -648,8 +608,6 @@ shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc)
  * Gets map source's projection.
  *
  * Returns: the map source's projection.
- *
- * Since: 0.10
  */
 ShumateMapProjection
 shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc)
@@ -667,8 +625,6 @@ shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc)
  * Gets user data.
  *
  * Returns: (transfer none): the user data.
- *
- * Since: 0.10
  */
 gpointer
 shumate_map_source_desc_get_data (ShumateMapSourceDesc *desc)
@@ -686,8 +642,6 @@ shumate_map_source_desc_get_data (ShumateMapSourceDesc *desc)
  * Gets the map source constructor.
  *
  * Returns: the constructor.
- *
- * Since: 0.10
  */
 ShumateMapSourceConstructor
 shumate_map_source_desc_get_constructor (ShumateMapSourceDesc *desc)

@@ -62,8 +62,6 @@ typedef struct _ShumateViewPrivate ShumateViewPrivate;
  *
  * The #ShumateView structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.1
  */
 struct _ShumateView
 {

@@ -339,8 +339,6 @@ exportable_interface_init (ShumateExportableIface *iface)
  * Creates an instance of #ShumatePoint with default size and color.
  *
  * Returns: a new #ShumatePoint.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_point_new (void)
@@ -357,8 +355,6 @@ shumate_point_new (void)
  * Creates an instance of #ShumatePoint with the specified size and color.
  *
  * Returns: a new #ShumatePoint.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_point_new_full (gdouble size,
@@ -379,8 +375,6 @@ shumate_point_new_full (gdouble size,
  * @size: The size of the point.
  *
  * Set the size of the point.
- *
- * Since: 0.10
  */
 void
 shumate_point_set_size (ShumatePoint *point,
@@ -406,8 +400,6 @@ shumate_point_set_size (ShumatePoint *point,
  * Gets the size of the point.
  *
  * Returns: the size.
- *
- * Since: 0.10
  */
 gdouble
 shumate_point_get_size (ShumatePoint *point)
@@ -425,8 +417,6 @@ shumate_point_get_size (ShumatePoint *point)
  *         default color. The color parameter is copied.
  *
  * Set the color of the point.
- *
- * Since: 0.10
  */
 void
 shumate_point_set_color (ShumatePoint *point,
@@ -455,8 +445,6 @@ shumate_point_set_color (ShumatePoint *point,
  * Gets the color of the point.
  *
  * Returns: the color.
- *
- * Since: 0.10
  */
 ClutterColor *
 shumate_point_get_color (ShumatePoint *point)

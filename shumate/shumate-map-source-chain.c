@@ -124,8 +124,6 @@ shumate_map_source_chain_init (ShumateMapSourceChain *source_chain)
  * Constructor of #ShumateMapSourceChain.
  *
  * Returns: a new empty #ShumateMapSourceChain.
- *
- * Since: 0.6
  */
 ShumateMapSourceChain *
 shumate_map_source_chain_new (void)
@@ -292,8 +290,6 @@ assign_cache_of_next_source_sequence (ShumateMapSourceChain *source_chain,
  * @map_source: the #ShumateMapSource to be pushed into the chain
  *
  * Pushes a map source into the chain.
- *
- * Since: 0.6
  */
 void
 shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
@@ -340,8 +336,6 @@ shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
  * @source_chain: a #ShumateMapSourceChain
  *
  * Pops a map source from the top of the stack from the chain.
- *
- * Since: 0.6
  */
 void
 shumate_map_source_chain_pop (ShumateMapSourceChain *source_chain)

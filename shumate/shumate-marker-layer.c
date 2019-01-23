@@ -169,8 +169,6 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
    * ShumateMarkerLayer:selection-mode:
    *
    * Determines the type of selection that will be performed.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_SELECTION_MODE,
@@ -276,8 +274,6 @@ exportable_interface_init (ShumateExportableIface *iface)
  * Creates a new instance of #ShumateMarkerLayer.
  *
  * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
- *
- * Since: 0.10
  */
 ShumateMarkerLayer *
 shumate_marker_layer_new ()
@@ -293,8 +289,6 @@ shumate_marker_layer_new ()
  * Creates a new instance of #ShumateMarkerLayer with the specified selection mode.
  *
  * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
- *
- * Since: 0.10
  */
 ShumateMarkerLayer *
 shumate_marker_layer_new_full (ShumateSelectionMode mode)
@@ -402,8 +396,6 @@ marker_move_by_cb (ShumateMarker *marker,
  * @marker: a #ShumateMarker
  *
  * Adds the marker to the layer.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
@@ -433,8 +425,6 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
  * @layer: a #ShumateMarkerLayer
  *
  * Removes all markers from the layer.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
@@ -471,8 +461,6 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
  * free the list but not its contents.
  *
  * Returns: (transfer container) (element-type ShumateMarker): the list
- *
- * Since: 0.10
  */
 GList *
 shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
@@ -491,8 +479,6 @@ shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
  * Gets a list of selected markers in the layer.
  *
  * Returns: (transfer container) (element-type ShumateMarker): the list
- *
- * Since: 0.10
  */
 GList *
 shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
@@ -523,8 +509,6 @@ shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
  * @marker: a #ShumateMarker
  *
  * Removes the marker from the layer.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
@@ -551,8 +535,6 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
  * @layer: a #ShumateMarkerLayer
  *
  * Fade in all markers in the layer with an animation
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer)
@@ -579,8 +561,6 @@ shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Fade out all markers in the layer with an animation
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer)
@@ -607,8 +587,6 @@ shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Shows all markers in the layer
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer)
@@ -633,8 +611,6 @@ shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Hides all the markers in the layer
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer)
@@ -659,8 +635,6 @@ shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Sets all markers draggable in the layer
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer)
@@ -685,8 +659,6 @@ shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Sets all markers undraggable in the layer
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer)
@@ -711,8 +683,6 @@ shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Unselects all markers in the layer.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer)
@@ -728,8 +698,6 @@ shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer)
  * @layer: a #ShumateMarkerLayer
  *
  * Selects all markers in the layer.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer)
@@ -749,8 +717,6 @@ shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer)
  *
  * NOTE: changing selection mode to SHUMATE_SELECTION_NONE or
  * SHUMATE_SELECTION_SINGLE will clear all previously selected markers.
- *
- * Since: 0.10
  */
 void
 shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
@@ -776,8 +742,6 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
  * Gets the selection mode of the layer.
  *
  * Returns: the selection mode of the layer.
- *
- * Since: 0.10
  */
 ShumateSelectionMode
 shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer)

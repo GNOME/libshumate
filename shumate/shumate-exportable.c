@@ -40,8 +40,6 @@ shumate_exportable_default_init (ShumateExportableInterface *iface)
    * ShumateExportable:surface:
    *
    * A #cairo_surface_t representation
-   *
-   * Since: 0.12.12
    */
   g_object_interface_install_property (iface,
       g_param_spec_boxed ("surface",
@@ -58,8 +56,6 @@ shumate_exportable_default_init (ShumateExportableInterface *iface)
  * @surface: the #cairo_surface_t
  *
  * Set a #cairo_surface_t to be associated with this tile.
- *
- * Since: 0.12.12
  */
 void
 shumate_exportable_set_surface (ShumateExportable *exportable,
@@ -79,8 +75,6 @@ shumate_exportable_set_surface (ShumateExportable *exportable,
  * Gets the surface
  *
  * Returns: (transfer none): the #cairo_surface_t of the object
- *
- * Since: 0.12.12
  */
 cairo_surface_t *
 shumate_exportable_get_surface (ShumateExportable *exportable)

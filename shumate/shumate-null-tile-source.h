@@ -53,8 +53,6 @@ typedef struct _ShumateNullTileSourcePrivate ShumateNullTileSourcePrivate;
  *
  * The #ShumateNullTileSource structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.8
  */
 typedef struct _ShumateNullTileSource ShumateNullTileSource;
 typedef struct _ShumateNullTileSourceClass ShumateNullTileSourceClass;

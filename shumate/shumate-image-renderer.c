@@ -108,8 +108,6 @@ shumate_image_renderer_init (ShumateImageRenderer *self)
  * Constructor of #ShumateImageRenderer.
  *
  * Returns: a constructed #ShumateImageRenderer object
- *
- * Since: 0.8
  */
 ShumateImageRenderer *
 shumate_image_renderer_new (void)

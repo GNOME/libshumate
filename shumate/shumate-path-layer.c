@@ -302,8 +302,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:closed:
    *
    * The shape is a closed path
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_CLOSED_PATH,
@@ -317,8 +315,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:fill:
    *
    * The shape should be filled
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_FILL,
@@ -332,8 +328,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:stroke:
    *
    * The shape should be stroked
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_STROKE,
@@ -347,8 +341,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:stroke-color:
    *
    * The path's stroke color
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_STROKE_COLOR,
@@ -362,8 +354,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:fill-color:
    *
    * The path's fill color
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_FILL_COLOR,
@@ -377,8 +367,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:stroke-width:
    *
    * The path's stroke width (in pixels)
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_STROKE_WIDTH,
@@ -394,8 +382,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * ShumatePathLayer:visible:
    *
    * Wether the path is visible
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_VISIBLE,
@@ -571,8 +557,6 @@ exportable_interface_init (ShumateExportableIface *iface)
  * Creates a new instance of #ShumatePathLayer.
  *
  * Returns: a new instance of #ShumatePathLayer.
- *
- * Since: 0.10
  */
 ShumatePathLayer *
 shumate_path_layer_new ()
@@ -701,8 +685,6 @@ add_node (ShumatePathLayer *layer,
  *
  * Adds a #ShumateLocation object to the layer.
  * The node is prepended to the list.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_add_node (ShumatePathLayer *layer,
@@ -720,8 +702,6 @@ shumate_path_layer_add_node (ShumatePathLayer *layer,
  * @layer: a #ShumatePathLayer
  *
  * Removes all #ShumateLocation objects from the layer.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_remove_all (ShumatePathLayer *layer)
@@ -755,8 +735,6 @@ shumate_path_layer_remove_all (ShumatePathLayer *layer)
  * free the list but not its contents.
  *
  * Returns: (transfer container) (element-type ShumateLocation): the list
- *
- * Since: 0.10
  */
 GList *
 shumate_path_layer_get_nodes (ShumatePathLayer *layer)
@@ -774,8 +752,6 @@ shumate_path_layer_get_nodes (ShumatePathLayer *layer)
  * @location: a #ShumateLocation
  *
  * Removes the #ShumateLocation object from the layer.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_remove_node (ShumatePathLayer *layer,
@@ -802,8 +778,6 @@ shumate_path_layer_remove_node (ShumatePathLayer *layer,
  * @position: position in the list where the #ShumateLocation object should be inserted
  *
  * Inserts a #ShumateLocation object to the specified position.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_insert_node (ShumatePathLayer *layer,
@@ -1033,8 +1007,6 @@ get_bounding_box (ShumateLayer *layer)
  *         default color. The color parameter is copied.
  *
  * Set the path's fill color.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
@@ -1064,8 +1036,6 @@ shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
  * Gets the path's fill color.
  *
  * Returns: the path's fill color.
- *
- * Since: 0.10
  */
 ClutterColor *
 shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
@@ -1083,8 +1053,6 @@ shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
  *         default color. The color parameter is copied.
  *
  * Set the path's stroke color.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
@@ -1114,8 +1082,6 @@ shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
  * Gets the path's stroke color.
  *
  * Returns: the path's stroke color.
- *
- * Since: 0.10
  */
 ClutterColor *
 shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
@@ -1132,8 +1098,6 @@ shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
  * @value: if the path is stroked
  *
  * Sets the path to be stroked
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_stroke (ShumatePathLayer *layer,
@@ -1155,8 +1119,6 @@ shumate_path_layer_set_stroke (ShumatePathLayer *layer,
  * Checks whether the path is stroked.
  *
  * Returns: TRUE if the path is stroked, FALSE otherwise.
- *
- * Since: 0.10
  */
 gboolean
 shumate_path_layer_get_stroke (ShumatePathLayer *layer)
@@ -1173,8 +1135,6 @@ shumate_path_layer_get_stroke (ShumatePathLayer *layer)
  * @value: if the path is filled
  *
  * Sets the path to be filled
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_fill (ShumatePathLayer *layer,
@@ -1196,8 +1156,6 @@ shumate_path_layer_set_fill (ShumatePathLayer *layer,
  * Checks whether the path is filled.
  *
  * Returns: TRUE if the path is filled, FALSE otherwise.
- *
- * Since: 0.10
  */
 gboolean
 shumate_path_layer_get_fill (ShumatePathLayer *layer)
@@ -1214,8 +1172,6 @@ shumate_path_layer_get_fill (ShumatePathLayer *layer)
  * @value: the width of the stroke (in pixels)
  *
  * Sets the width of the stroke
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
@@ -1237,8 +1193,6 @@ shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
  * Gets the width of the stroke.
  *
  * Returns: the width of the stroke
- *
- * Since: 0.10
  */
 gdouble
 shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
@@ -1255,8 +1209,6 @@ shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
  * @value: TRUE to make the path visible
  *
  * Sets path visibility.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_visible (ShumatePathLayer *layer,
@@ -1280,8 +1232,6 @@ shumate_path_layer_set_visible (ShumatePathLayer *layer,
  * Gets path visibility.
  *
  * Returns: TRUE when the path is visible, FALSE otherwise
- *
- * Since: 0.10
  */
 gboolean
 shumate_path_layer_get_visible (ShumatePathLayer *layer)
@@ -1298,8 +1248,6 @@ shumate_path_layer_get_visible (ShumatePathLayer *layer)
  * @value: TRUE to make the path closed
  *
  * Makes the path closed.
- *
- * Since: 0.10
  */
 void
 shumate_path_layer_set_closed (ShumatePathLayer *layer,
@@ -1321,8 +1269,6 @@ shumate_path_layer_set_closed (ShumatePathLayer *layer,
  * Gets information whether the path is closed.
  *
  * Returns: TRUE when the path is closed, FALSE otherwise
- *
- * Since: 0.10
  */
 gboolean
 shumate_path_layer_get_closed (ShumatePathLayer *layer)
@@ -1344,8 +1290,6 @@ shumate_path_layer_get_closed (ShumatePathLayer *layer)
  * passed inside the data pointer of the list (using the GUINT_TO_POINTER conversion)
  *
  * Pass NULL to use solid line.
- *
- * Since: 0.12.4
  */
 void
 shumate_path_layer_set_dash (ShumatePathLayer *layer,
@@ -1379,8 +1323,6 @@ shumate_path_layer_set_dash (ShumatePathLayer *layer,
  * Returns the list of dash segment lengths.
  *
  * Returns: (transfer container) (element-type guint): the list
- *
- * Since: 0.12.4
  */
 GList *
 shumate_path_layer_get_dash (ShumatePathLayer *layer)

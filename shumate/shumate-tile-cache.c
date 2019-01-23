@@ -107,8 +107,6 @@ shumate_tile_cache_init (ShumateTileCache *tile_cache)
  * @size: size of the contents in bytes
  *
  * Stores the tile including the metadata into the cache.
- *
- * Since: 0.6
  */
 void
 shumate_tile_cache_store_tile (ShumateTileCache *tile_cache,
@@ -128,8 +126,6 @@ shumate_tile_cache_store_tile (ShumateTileCache *tile_cache,
  * @tile: a #ShumateTile
  *
  * Refreshes the tile access time in the cache.
- *
- * Since: 0.6
  */
 void
 shumate_tile_cache_refresh_tile_time (ShumateTileCache *tile_cache,
@@ -153,8 +149,6 @@ shumate_tile_cache_refresh_tile_time (ShumateTileCache *tile_cache,
  * In addition, the call of this function should be chained so within the
  * implementation of this function it should be called on the next source
  * in the chain when next source is a tile cache.
- *
- * Since: 0.6
  */
 void
 shumate_tile_cache_on_tile_filled (ShumateTileCache *tile_cache,

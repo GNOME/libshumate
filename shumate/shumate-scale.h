@@ -71,8 +71,6 @@ typedef enum
  *
  * The #ShumateScale structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.10
  */
 struct _ShumateScale
 {

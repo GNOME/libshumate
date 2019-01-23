@@ -241,8 +241,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    * ShumateNetworkTileSource:uri-format:
    *
    * The uri format of the tile source, see #shumate_network_tile_source_set_uri_format
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("uri-format",
         "URI Format",
@@ -255,8 +253,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    * ShumateNetworkTileSource:offline:
    *
    * Specifies whether the network tile source can access network
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_boolean ("offline",
         "Offline",
@@ -269,8 +265,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    * ShumateNetworkTileSource:proxy-uri:
    *
    * Used to override the default proxy for accessing the network.
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("proxy-uri",
         "Proxy URI",
@@ -287,8 +281,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    *
    * Before changing this remember to verify how many simultaneous connections
    * your tile provider allows you to make.
-   *
-   * Since: 0.12.14
    */
   pspec = g_param_spec_int ("max-conns",
         "Max Connection Count",
@@ -305,8 +297,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    * ShumateNetworkTileSource:user-agent:
    *
    * The HTTP user agent used for requests
-   *
-   * Since: 0.12.16
    */
   pspec = g_param_spec_string ("user-agent",
         "HTTP User Agent",
@@ -363,8 +353,6 @@ shumate_network_tile_source_init (ShumateNetworkTileSource *tile_source)
  * Constructor of #ShumateNetworkTileSource.
  *
  * Returns: a constructed #ShumateNetworkTileSource object
- *
- * Since: 0.4
  */
 ShumateNetworkTileSource *
 shumate_network_tile_source_new_full (const gchar *id,
@@ -404,8 +392,6 @@ shumate_network_tile_source_new_full (const gchar *id,
  *
  * Returns: A URI format used for URI creation when downloading tiles. See
  * shumate_network_tile_source_set_uri_format() for more information.
- *
- * Since: 0.6
  */
 const gchar *
 shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source)
@@ -429,8 +415,6 @@ shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_sourc
  *
  * For example, this is the OpenStreetMap URI format:
  * "http://tile.openstreetmap.org/\#Z\#/\#X\#/\#Y\#.png"
- *
- * Since: 0.4
  */
 void
 shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
@@ -454,8 +438,6 @@ shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_sourc
  * Gets the proxy uri used to access network.
  *
  * Returns: the proxy uri
- *
- * Since: 0.6
  */
 const gchar *
 shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source)
@@ -472,8 +454,6 @@ shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source
  * @proxy_uri: the proxy uri used to access network
  *
  * Override the default proxy for accessing the network.
- *
- * Since: 0.6
  */
 void
 shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source,
@@ -509,8 +489,6 @@ shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source
  * Gets offline status.
  *
  * Returns: TRUE when the tile source is set to be offline; FALSE otherwise.
- *
- * Since: 0.6
  */
 gboolean
 shumate_network_tile_source_get_offline (ShumateNetworkTileSource *tile_source)
@@ -527,8 +505,6 @@ shumate_network_tile_source_get_offline (ShumateNetworkTileSource *tile_source)
  * @offline: TRUE when the tile source should be offline; FALSE otherwise
  *
  * Sets offline status.
- *
- * Since: 0.6
  */
 void
 shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
@@ -551,8 +527,6 @@ shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
  *
  * Returns: the max number of allowed simultaneous connections for this tile
  * source.
- *
- * Since: 0.12.14
  */
 gint
 shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source)
@@ -572,8 +546,6 @@ shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source
  *
  * Before changing this remember to verify how many simultaneous connections
  * your tile provider allows you to make.
- *
- * Since: 0.12.14
  */
 void
 shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source,
@@ -598,7 +570,6 @@ shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source
  * @user_agent: A User-Agent string
  *
  * Sets the User-Agent header used communicating with the server.
- * Since: 0.12.16
  */
 void
 shumate_network_tile_source_set_user_agent (

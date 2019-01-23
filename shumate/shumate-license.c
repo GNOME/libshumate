@@ -229,8 +229,6 @@ shumate_license_class_init (ShumateLicenseClass *klass)
    * Sets additional text to be displayed in the license area.  The map's
    * license will be added below it. Your text can have multiple lines, just use
    * "\n" in between.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_LICENSE_EXTRA,
@@ -244,8 +242,6 @@ shumate_license_class_init (ShumateLicenseClass *klass)
    * ShumateLicense:alignment:
    *
    * The license's alignment
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_ALIGNMENT,
@@ -282,8 +278,6 @@ shumate_license_init (ShumateLicense *license)
  * Creates an instance of #ShumateLicense.
  *
  * Returns: a new #ShumateLicense.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_license_new (void)
@@ -299,8 +293,6 @@ shumate_license_new (void)
  *
  * This method connects to the necessary signals of #ShumateView to make the
  * license change automatically when the map source changes.
- *
- * Since: 0.10
  */
 void
 shumate_license_connect_view (ShumateLicense *license,
@@ -325,8 +317,6 @@ shumate_license_connect_view (ShumateLicense *license,
  * @license: The license
  *
  * This method disconnects from the signals previously connected by shumate_license_connect_view().
- *
- * Since: 0.10
  */
 void
 shumate_license_disconnect_view (ShumateLicense *license)
@@ -348,8 +338,6 @@ shumate_license_disconnect_view (ShumateLicense *license)
  *
  * Show the additional license text on the map view.  The text will preceed the
  * map's licence when displayed. Use "\n" to separate the lines.
- *
- * Since: 0.10
  */
 void
 shumate_license_set_extra_text (ShumateLicense *license,
@@ -375,8 +363,6 @@ shumate_license_set_extra_text (ShumateLicense *license,
  * Gets the additional license text.
  *
  * Returns: the additional license text
- *
- * Since: 0.10
  */
 const gchar *
 shumate_license_get_extra_text (ShumateLicense *license)
@@ -393,8 +379,6 @@ shumate_license_get_extra_text (ShumateLicense *license)
  * @alignment: The license's text alignment
  *
  * Set the license's text alignment.
- *
- * Since: 0.10
  */
 void
 shumate_license_set_alignment (ShumateLicense *license,
@@ -415,8 +399,6 @@ shumate_license_set_alignment (ShumateLicense *license,
  * Get the license's text alignment.
  *
  * Returns: the license's text alignment.
- *
- * Since: 0.10
  */
 PangoAlignment
 shumate_license_get_alignment (ShumateLicense *license)

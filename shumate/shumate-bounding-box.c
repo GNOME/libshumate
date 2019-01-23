@@ -55,8 +55,6 @@ shumate_bounding_box_get_type (void)
  * with shumate_bounding_box_free().
  *
  * Returns: a #ShumateBoundingBox
- *
- * Since: 0.6
  */
 ShumateBoundingBox *
 shumate_bounding_box_new (void)
@@ -82,8 +80,6 @@ shumate_bounding_box_new (void)
  * freed using shumate_bounding_box_free().
  *
  * Returns: an allocated copy of @bbox.
- *
- * Since: 0.6
  */
 ShumateBoundingBox *
 shumate_bounding_box_copy (const ShumateBoundingBox *bbox)
@@ -101,8 +97,6 @@ shumate_bounding_box_copy (const ShumateBoundingBox *bbox)
  *
  * Frees a bounding box structure created with shumate_bounding_box_new() or
  * shumate_bounding_box_copy().
- *
- * Since: 0.6
  */
 void
 shumate_bounding_box_free (ShumateBoundingBox *bbox)
@@ -121,8 +115,6 @@ shumate_bounding_box_free (ShumateBoundingBox *bbox)
  * @longitude: (out): the longitude of the box center
  *
  * Gets the center's latitude and longitude of the box to @latitude and @longitude.
- *
- * Since: 0.6
  */
 void
 shumate_bounding_box_get_center (ShumateBoundingBox *bbox,
@@ -142,8 +134,6 @@ shumate_bounding_box_get_center (ShumateBoundingBox *bbox,
  * @other: a #ShumateBoundingBox
  *
  * Sets bbox equal to the bounding box containing both @bbox and @other.
- *
- * Since: 0.10
  */
 void
 shumate_bounding_box_compose (ShumateBoundingBox *bbox,
@@ -173,8 +163,6 @@ shumate_bounding_box_compose (ShumateBoundingBox *bbox,
  *
  * Extend the bounding box so it contains a point with @latitude and @longitude.
  * Do nothing if the point is already inside the bounding box.
- *
- * Since: 0.10
  */
 void
 shumate_bounding_box_extend (ShumateBoundingBox *bbox,
@@ -203,8 +191,6 @@ shumate_bounding_box_extend (ShumateBoundingBox *bbox,
  * Checks whether @bbox represents a valid bounding box on the map.
  *
  * Returns: TRUE when the bounding box is valid, FALSE otherwise.
- *
- * Since: 0.10
  */
 gboolean
 shumate_bounding_box_is_valid (ShumateBoundingBox *bbox)
@@ -227,8 +213,6 @@ shumate_bounding_box_is_valid (ShumateBoundingBox *bbox)
  * Checks whether @bbox covers the given coordinates.
  *
  * Returns: TRUE when the bounding box covers given coordinates, FALSE otherwise.
- *
- * Since: 0.12.4
  */
 gboolean
 shumate_bounding_box_covers(ShumateBoundingBox *bbox,

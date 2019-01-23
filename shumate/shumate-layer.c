@@ -66,8 +66,6 @@ shumate_layer_class_init (ShumateLayerClass *klass)
  * view, it passes NULL to the layer. Custom layers can implement this method
  * and perform the necessary initialization. This method should not be called
  * by user code.
- *
- * Since: 0.10
  */
 void
 shumate_layer_set_view (ShumateLayer *layer,
@@ -86,8 +84,6 @@ shumate_layer_set_view (ShumateLayer *layer,
  * Gets the bounding box occupied by the elements inside the layer.
  *
  * Returns: The bounding box.
- *
- * Since: 0.10
  */
 ShumateBoundingBox *
 shumate_layer_get_bounding_box (ShumateLayer *layer)

@@ -132,8 +132,6 @@ shumate_error_tile_renderer_class_init (ShumateErrorTileRendererClass *klass)
    * ShumateErrorTileRenderer:tile-size:
    *
    * The size of the rendered tile.
-   *
-   * Since: 0.8
    */
   g_object_class_install_property (object_class,
       PROP_TILE_SIZE,
@@ -168,8 +166,6 @@ shumate_error_tile_renderer_init (ShumateErrorTileRenderer *self)
  * Constructor of a #ShumateErrorTileRenderer.
  *
  * Returns: a constructed #ShumateErrorTileRenderer
- *
- * Since: 0.8
  */
 ShumateErrorTileRenderer *
 shumate_error_tile_renderer_new (guint tile_size)
@@ -270,8 +266,6 @@ render (ShumateRenderer *renderer, ShumateTile *tile)
  * @size: the size of the rendered error tiles
  *
  * Sets the size of the rendered error tile.
- *
- * Since: 0.8
  */
 void
 shumate_error_tile_renderer_set_tile_size (ShumateErrorTileRenderer *renderer,
@@ -292,8 +286,6 @@ shumate_error_tile_renderer_set_tile_size (ShumateErrorTileRenderer *renderer,
  * Gets the size of the rendered error tiles.
  *
  * Returns: the size of the rendered error tiles
- *
- * Since: 0.8
  */
 guint
 shumate_error_tile_renderer_get_tile_size (ShumateErrorTileRenderer *renderer)

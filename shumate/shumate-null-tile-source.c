@@ -80,8 +80,6 @@ shumate_null_tile_source_init (ShumateNullTileSource *self)
  * Constructor of #ShumateNullTileSource.
  *
  * Returns: a constructed #ShumateNullTileSource object
- *
- * Since: 0.8
  */
 ShumateNullTileSource *
 shumate_null_tile_source_new_full (ShumateRenderer *renderer)

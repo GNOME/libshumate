@@ -315,8 +315,6 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * The cache size limit in bytes.
    *
    * Note: this new value will not be applied until you call shumate_file_cache_purge()
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_uint ("size-limit",
         "Size Limit",
@@ -331,8 +329,6 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * ShumateFileCache:cache-dir:
    *
    * The directory where the tile database is stored.
-   *
-   * Since: 0.6
    */
   pspec = g_param_spec_string ("cache-dir",
         "Cache Directory",
@@ -375,8 +371,6 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  * Constructor of #ShumateFileCache.
  *
  * Returns: a constructed #ShumateFileCache
- *
- * Since: 0.8
  */
 ShumateFileCache *
 shumate_file_cache_new_full (guint size_limit,
@@ -401,8 +395,6 @@ shumate_file_cache_new_full (guint size_limit,
  * Gets the cache size limit in bytes.
  *
  * Returns: size limit
- *
- * Since: 0.4
  */
 guint
 shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
@@ -420,8 +412,6 @@ shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
  * Gets the directory where the cache database is stored.
  *
  * Returns: the directory
- *
- * Since: 0.6
  */
 const gchar *
 shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
@@ -438,8 +428,6 @@ shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
  * @size_limit: the cache limit in bytes
  *
  * Sets the cache size limit in bytes.
- *
- * Since: 0.4
  */
 void
 shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
@@ -912,8 +900,6 @@ purge_on_idle (gpointer data)
  *
  * Purge the cache from the less popular tiles until cache's size limit is reached.
  * This is a non blocking call as the purge will happen when the application is idle
- *
- * Since: 0.4
  */
 void
 shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache)
@@ -931,8 +917,6 @@ shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache)
  * @file_cache: a #ShumateFileCache
  *
  * Purge the cache from the less popular tiles until cache's size limit is reached.
- *
- * Since: 0.4
  */
 void
 shumate_file_cache_purge (ShumateFileCache *file_cache)

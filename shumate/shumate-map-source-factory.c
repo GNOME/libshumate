@@ -372,8 +372,6 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
  *
  * Returns: (transfer full): the singleton #ShumateMapSourceFactory, it should be freed
  * using #g_object_unref() when not needed.
- *
- * Since: 0.4
  */
 ShumateMapSourceFactory *
 shumate_map_source_factory_dup_default (void)
@@ -390,8 +388,6 @@ shumate_map_source_factory_dup_default (void)
  *
  * Returns: (transfer container) (element-type ShumateMapSourceDesc): the list of registered map sources, the items should not be freed,
  * the list should be freed with #g_slist_free.
- *
- * Since: 0.4
  */
 GSList *
 shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
@@ -410,8 +406,6 @@ shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
  *
  * Returns: (transfer none): a ready to use #ShumateMapSource matching the given name;
  * returns NULL if the source with the given name doesn't exist.
- *
- * Since: 0.4
  */
 ShumateMapSource *
 shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
@@ -449,8 +443,6 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
  * #ShumateMemoryCache, #ShumateFileCache, #ShumateMapSource matching the given name, and
  * an error tile source created with shumate_map_source_factory_create_error_source ().
  * Returns NULL if the source with the given name doesn't exist.
- *
- * Since: 0.6
  */
 ShumateMapSource *
 shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
@@ -497,8 +489,6 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
  * Returns: (transfer none): a ready to use #ShumateMapSourceChain consisting of
  * #ShumateMemoryCache and #ShumateMapSource matching the given name.
  * Returns NULL if the source with the given name doesn't exist.
- *
- * Since: 0.12.5
  */
 ShumateMapSource *
 shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *factory,
@@ -532,8 +522,6 @@ shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *fac
  * Creates a map source generating error tiles.
  *
  * Returns: (transfer none): a ready to use map source generating error tiles.
- *
- * Since: 0.8
  */
 ShumateMapSource *
 shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
@@ -572,8 +560,6 @@ compare_id (ShumateMapSourceDesc *a, ShumateMapSourceDesc *b)
  * #ShumateMapSourceDesc, so don't free it.
  *
  * Returns: TRUE if the registration suceeded.
- *
- * Since: 0.10
  */
 gboolean
 shumate_map_source_factory_register (ShumateMapSourceFactory *factory,

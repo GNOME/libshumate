@@ -190,8 +190,6 @@ shumate_network_bbox_tile_source_class_init (ShumateNetworkBboxTileSourceClass *
    * ShumateNetworkBboxTileSource:api-uri:
    *
    * The URI of an OpenStreetMap API server
-   *
-   * Since: 0.8
    */
   g_object_class_install_property (object_class,
       PROP_API_URI,
@@ -205,8 +203,6 @@ shumate_network_bbox_tile_source_class_init (ShumateNetworkBboxTileSourceClass *
    * ShumateNetworkBboxTileSource:proxy-uri:
    *
    * Used to override the default proxy for accessing the network.
-   *
-   * Since: 0.8
    */
   g_object_class_install_property (object_class,
       PROP_PROXY_URI,
@@ -221,8 +217,6 @@ shumate_network_bbox_tile_source_class_init (ShumateNetworkBboxTileSourceClass *
    *
    * The map source's state. Useful to know if the data source is loading
    * or not.
-   *
-   * Since: 0.8
    */
   g_object_class_install_property (object_class,
       PROP_STATE,
@@ -237,8 +231,6 @@ shumate_network_bbox_tile_source_class_init (ShumateNetworkBboxTileSourceClass *
    * ShumateNetworkBboxTileSource:user-agent:
    *
    * The HTTP user agent used for requests
-   *
-   * Since: 0.12.16
    */
   g_object_class_install_property (object_class,
       PROP_USER_AGENT,
@@ -291,8 +283,6 @@ shumate_network_bbox_tile_source_init (ShumateNetworkBboxTileSource *self)
  * Constructor of #ShumateNetworkBboxTileSource.
  *
  * Returns: a constructed #ShumateNetworkBboxTileSource object
- *
- * Since: 0.8
  */
 ShumateNetworkBboxTileSource *
 shumate_network_bbox_tile_source_new_full (const gchar *id,
@@ -356,8 +346,6 @@ load_map_data_cb (G_GNUC_UNUSED SoupSession *session, SoupMessage *msg,
  * For details, see: <ulink role="online-location"
  * url="http://api.openstreetmap.org/api/capabilities">
  * http://api.openstreetmap.org/api/capabilities</ulink>
- *
- * Since: 0.10
  */
 void
 shumate_network_bbox_tile_source_load_map_data (
@@ -466,8 +454,6 @@ fill_tile (ShumateMapSource *map_source,
  * Gets the URI of the API server.
  *
  * Returns: the URI of the API server.
- *
- * Since: 0.8
  */
 const gchar *
 shumate_network_bbox_tile_source_get_api_uri (
@@ -485,8 +471,6 @@ shumate_network_bbox_tile_source_get_api_uri (
  * @api_uri: an URI of an API server
  *
  * Sets the URI of the API server.
- *
- * Since: 0.8
  */
 void
 shumate_network_bbox_tile_source_set_api_uri (
@@ -510,7 +494,6 @@ shumate_network_bbox_tile_source_set_api_uri (
  * @user_agent: A User-Agent string
  *
  * Sets the User-Agent header used communicating with the server.
- * Since: 0.12.16
  */
 void
 shumate_network_bbox_tile_source_set_user_agent (

@@ -112,8 +112,6 @@ struct _ShumateMarkerPrivate
  *
  * Changes the selection color, this is to ensure a better integration with
  * the desktop, this is automatically done by GtkShumateEmbed.
- *
- * Since: 0.10
  */
 void
 shumate_marker_set_selection_color (ClutterColor *color)
@@ -131,8 +129,6 @@ shumate_marker_set_selection_color (ClutterColor *color)
  * Gets the selection color.
  *
  * Returns: the selection color. Should not be freed.
- *
- * Since: 0.10
  */
 const ClutterColor *
 shumate_marker_get_selection_color ()
@@ -147,8 +143,6 @@ shumate_marker_get_selection_color ()
  *
  * Changes the selection text color, this is to ensure a better integration with
  * the desktop, this is automatically done by GtkShumateEmbed.
- *
- * Since: 0.10
  */
 void
 shumate_marker_set_selection_text_color (ClutterColor *color)
@@ -166,8 +160,6 @@ shumate_marker_set_selection_text_color (ClutterColor *color)
  * Gets the selection text color.
  *
  * Returns: the selection text color. Should not be freed.
- *
- * Since: 0.10
  */
 const ClutterColor *
 shumate_marker_get_selection_text_color ()
@@ -342,8 +334,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    * ShumateMarker:selected:
    *
    * The selected state of the marker
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_SELECTED,
       g_param_spec_boolean ("selected",
@@ -356,8 +346,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    * ShumateMarker:selectable:
    *
    * The selectable state of the marker
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_SELECTABLE,
       g_param_spec_boolean ("selectable",
@@ -370,8 +358,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    * ShumateMarker:draggable:
    *
    * The draggable state of the marker
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_DRAGGABLE,
       g_param_spec_boolean ("draggable",
@@ -386,8 +372,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    * @event: the underlying ClutterEvent
    *
    * Emitted when button is pressed.
-   *
-   * Since: 0.10
    */
   signals[BUTTON_PRESS_SIGNAL] =
     g_signal_new ("button-press",
@@ -405,8 +389,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    * @event: the underlying ClutterEvent
    *
    * Emitted when button is released. This signal is not emmitted at the end of dragging.
-   *
-   * Since: 0.10
    */
   signals[BUTTON_RELEASE_SIGNAL] =
     g_signal_new ("button-release",
@@ -427,8 +409,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    *
    * Emmitted when the marker is dragged by mouse. dx and dy specify by how much
    * the marker has been dragged since last time.
-   *
-   * Since: 0.10
    */
   signals[DRAG_MOTION_SIGNAL] =
     g_signal_new ("drag-motion",
@@ -447,8 +427,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
    *
    * Emitted when marker dragging ends (i.e. the button is released at the end
    * of dragging).
-   *
-   * Since: 0.10
    */
   signals[DRAG_FINISH_SIGNAL] =
     g_signal_new ("drag-finish",
@@ -477,8 +455,6 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
  * Creates an instance of #ShumateMarker.
  *
  * Returns: a new #ShumateMarker.
- *
- * Since: 0.12.4
  */
 ClutterActor *
 shumate_marker_new (void)
@@ -645,8 +621,6 @@ shumate_marker_init (ShumateMarker *marker)
  *
  * Sets the marker as selected or not. This will affect the "Selected" look
  * of the marker.
- *
- * Since: 0.10
  */
 void
 shumate_marker_set_selected (ShumateMarker *marker,
@@ -667,8 +641,6 @@ shumate_marker_set_selected (ShumateMarker *marker,
  * Checks whether the marker is selected.
  *
  * Returns: the selected or not state of the marker.
- *
- * Since: 0.10
  */
 gboolean
 shumate_marker_get_selected (ShumateMarker *marker)
@@ -685,8 +657,6 @@ shumate_marker_get_selected (ShumateMarker *marker)
  * @value: the selectable state
  *
  * Sets the marker as selectable or not.
- *
- * Since: 0.10
  */
 void
 shumate_marker_set_selectable (ShumateMarker *marker,
@@ -707,8 +677,6 @@ shumate_marker_set_selectable (ShumateMarker *marker,
  * Checks whether the marker is selectable.
  *
  * Returns: the selectable or not state of the marker.
- *
- * Since: 0.10
  */
 gboolean
 shumate_marker_get_selectable (ShumateMarker *marker)
@@ -725,8 +693,6 @@ shumate_marker_get_selectable (ShumateMarker *marker)
  * @value: the draggable state
  *
  * Sets the marker as draggable or not.
- *
- * Since: 0.10
  */
 void
 shumate_marker_set_draggable (ShumateMarker *marker,
@@ -747,8 +713,6 @@ shumate_marker_set_draggable (ShumateMarker *marker,
  * Checks whether the marker is draggable.
  *
  * Returns: the draggable or not state of the marker.
- *
- * Since: 0.10
  */
 gboolean
 shumate_marker_get_draggable (ShumateMarker *marker)
@@ -764,8 +728,6 @@ shumate_marker_get_draggable (ShumateMarker *marker)
  * @marker: a #ShumateMarker
  *
  * Animates the marker as if it were falling from the sky onto the map.
- *
- * Since: 0.10
  */
 void
 shumate_marker_animate_in (ShumateMarker *marker)
@@ -781,8 +743,6 @@ shumate_marker_animate_in (ShumateMarker *marker)
  *
  * Animates the marker as if it were falling from the sky onto the map after
  * delay.
- *
- * Since: 0.10
  */
 void
 shumate_marker_animate_in_with_delay (ShumateMarker *marker,
@@ -814,8 +774,6 @@ shumate_marker_animate_in_with_delay (ShumateMarker *marker,
  * @marker: a #ShumateMarker
  *
  * Animates the marker as if it were drawn through the sky.
- *
- * Since: 0.10
  */
 void
 shumate_marker_animate_out (ShumateMarker *marker)
@@ -843,8 +801,6 @@ on_transition_stopped (ClutterActor *marker,
  *
  * Animates the marker as if it were drawn through the sky after
  * delay.
- *
- * Since: 0.10
  */
 void
 shumate_marker_animate_out_with_delay (ShumateMarker *marker,

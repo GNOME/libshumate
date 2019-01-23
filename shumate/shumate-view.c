@@ -936,8 +936,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:longitude:
    *
    * The longitude coordonate of the map
-   *
-   * Since: 0.1
    */
   g_object_class_install_property (object_class,
       PROP_LONGITUDE,
@@ -953,8 +951,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:latitude:
    *
    * The latitude coordonate of the map
-   *
-   * Since: 0.1
    */
   g_object_class_install_property (object_class,
       PROP_LATITUDE,
@@ -970,8 +966,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:zoom-level:
    *
    * The level of zoom of the content.
-   *
-   * Since: 0.1
    */
   g_object_class_install_property (object_class,
       PROP_ZOOM_LEVEL,
@@ -987,8 +981,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:min-zoom-level:
    *
    * The lowest allowed level of zoom of the content.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_MIN_ZOOM_LEVEL,
@@ -1004,8 +996,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:max-zoom-level:
    *
    * The highest allowed level of zoom of the content.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_MAX_ZOOM_LEVEL,
@@ -1021,8 +1011,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:map-source:
    *
    * The #ShumateMapSource being displayed
-   *
-   * Since: 0.2
    */
   g_object_class_install_property (object_class,
       PROP_MAP_SOURCE,
@@ -1036,8 +1024,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:kinetic-mode:
    *
    * Determines whether the view should use kinetic mode.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_KINETIC_MODE,
@@ -1051,8 +1037,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:deceleration:
    *
    * The deceleration rate for the kinetic mode. The default value is 1.1.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_DECELERATION,
@@ -1068,8 +1052,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:keep-center-on-resize:
    *
    * Keep the current centered position when resizing the view.
-   *
-   * Since: 0.2.7
    */
   g_object_class_install_property (object_class,
       PROP_KEEP_CENTER_ON_RESIZE,
@@ -1083,8 +1065,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:zoom-on-double-click:
    *
    * Should the view zoom in and recenter when the user double click on the map.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_ZOOM_ON_DOUBLE_CLICK,
@@ -1098,8 +1078,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:animate-zoom:
    *
    * Animate zoom change when zooming in/out.
-   *
-   * Since: 0.12
    */
   g_object_class_install_property (object_class,
       PROP_ANIMATE_ZOOM,
@@ -1114,8 +1092,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    *
    * The view's global state. Useful to inform using if the view is busy loading
    * tiles or not.
-   *
-   * Since: 0.4
    */
   g_object_class_install_property (object_class,
       PROP_STATE,
@@ -1130,8 +1106,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ShumateView:background-pattern:
    *
    * The pattern displayed in the background of the map.
-   *
-   * Since: 0.12.4
    */
   g_object_class_install_property (object_class,
       PROP_BACKGROUND_PATTERN,
@@ -1187,8 +1161,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * of this bounding box.
    *
    * Default world is the actual world.
-   *
-   * Since: 0.12.11
    */
   g_object_class_install_property (object_class,
       PROP_WORLD,
@@ -1219,8 +1191,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * ends.  This is a detailed signal.  For example, if you want to be signaled
    * only for go-to animation, you should connect to
    * "animation-completed::go-to". And for zoom, connect to "animation-completed::zoom".
-   *
-   * Since: 0.4
    */
   signals[ANIMATION_COMPLETED] =
     g_signal_new ("animation-completed",
@@ -1238,8 +1208,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * every layer should connect to this signal and redraw itself when the signal is
    * emitted. Layer relocation happens when zooming in/out and when panning for more
    * than MAX_INT pixels.
-   *
-   * Since: 0.10
    */
   signals[LAYER_RELOCATED] =
     g_signal_new ("layer-relocated",
@@ -1910,8 +1878,6 @@ kinetic_scroll_key_press_cb (ShumateView *view,
  * Creates an instance of #ShumateView.
  *
  * Returns: a new #ShumateView ready to be used as a #ClutterActor.
- *
- * Since: 0.4
  */
 ClutterActor *
 shumate_view_new (void)
@@ -1929,8 +1895,6 @@ shumate_view_new (void)
  * @longitude: the longitude to center the map at
  *
  * Centers the map on these coordinates.
- *
- * Since: 0.1
  */
 void
 shumate_view_center_on (ShumateView *view,
@@ -1997,8 +1961,6 @@ timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
  *
  * Stop the go to animation.  The view will stay where it was when the
  * animation was stopped.
- *
- * Since: 0.4
  */
 void
 shumate_view_stop_go_to (ShumateView *view)
@@ -2031,8 +1993,6 @@ shumate_view_stop_go_to (ShumateView *view)
  *
  * Move from the current position to these coordinates. All tiles in the
  * intermediate view WILL be loaded!
- *
- * Since: 0.4
  */
 void
 shumate_view_go_to (ShumateView *view,
@@ -2108,8 +2068,6 @@ shumate_view_go_to_with_duration (ShumateView *view,
  * @view: a #ShumateView
  *
  * Zoom in the map by one level.
- *
- * Since: 0.1
  */
 void
 shumate_view_zoom_in (ShumateView *view)
@@ -2127,8 +2085,6 @@ shumate_view_zoom_in (ShumateView *view)
  * @view: a #ShumateView
  *
  * Zoom out the map by one level.
- *
- * Since: 0.1
  */
 void
 shumate_view_zoom_out (ShumateView *view)
@@ -2286,8 +2242,6 @@ shumate_view_to_surface (ShumateView *view,
  * @zoom_level: the level of zoom, a guint between 1 and 20
  *
  * Changes the current level of zoom
- *
- * Since: 0.4
  */
 void
 shumate_view_set_zoom_level (ShumateView *view,
@@ -2307,8 +2261,6 @@ shumate_view_set_zoom_level (ShumateView *view,
  * @zoom_level: the level of zoom
  *
  * Changes the lowest allowed level of zoom
- *
- * Since: 0.4
  */
 void
 shumate_view_set_min_zoom_level (ShumateView *view,
@@ -2339,8 +2291,6 @@ shumate_view_set_min_zoom_level (ShumateView *view,
  * @zoom_level: the level of zoom
  *
  * Changes the highest allowed level of zoom
- *
- * Since: 0.4
  */
 void
 shumate_view_set_max_zoom_level (ShumateView *view,
@@ -2371,8 +2321,6 @@ shumate_view_set_max_zoom_level (ShumateView *view,
  * Get the bounding box that represents the extent of the world.
  *
  * Returns: (transfer none): a #ShumateBoundingBox that represents the current world
- *
- * Since: 0.12.11
  */
 ShumateBoundingBox *
 shumate_view_get_world (ShumateView *view)
@@ -2393,8 +2341,6 @@ shumate_view_get_world (ShumateView *view)
  * Set a bounding box to limit the world to. No tiles will be loaded
  * outside of this bounding box. It will not be possible to scroll outside
  * of this bounding box.
- *
- * Since: 0.12.11
  */
 void
 shumate_view_set_world (ShumateView *view,
@@ -2432,8 +2378,6 @@ shumate_view_set_world (ShumateView *view,
  * @layer: a #ShumateLayer
  *
  * Adds a new layer to the view
- *
- * Since: 0.2
  */
 void
 shumate_view_add_layer (ShumateView *view,
@@ -2456,8 +2400,6 @@ shumate_view_add_layer (ShumateView *view,
  * @layer: a #ShumateLayer
  *
  * Removes the given layer from the view
- *
- * Since: 0.4.1
  */
 void
 shumate_view_remove_layer (ShumateView *view,
@@ -2482,8 +2424,6 @@ shumate_view_remove_layer (ShumateView *view,
  * Converts the view's x coordinate to longitude.
  *
  * Returns: the longitude
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_x_to_longitude (ShumateView *view,
@@ -2507,8 +2447,6 @@ shumate_view_x_to_longitude (ShumateView *view,
  * Converts the view's y coordinate to latitude.
  *
  * Returns: the latitude
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_y_to_latitude (ShumateView *view,
@@ -2537,8 +2475,6 @@ shumate_view_y_to_latitude (ShumateView *view,
  * Converts the longitude to view's x coordinate.
  *
  * Returns: the x coordinate
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_longitude_to_x (ShumateView *view,
@@ -2565,8 +2501,6 @@ shumate_view_longitude_to_x (ShumateView *view,
  * Converts the latitude to view's y coordinate.
  *
  * Returns: the y coordinate
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_latitude_to_y (ShumateView *view,
@@ -2591,8 +2525,6 @@ shumate_view_latitude_to_y (ShumateView *view,
  * @anchor_y: (out): the y coordinate of the viewport anchor
  *
  * Gets the x and y coordinate of the viewport anchor in respect to the layer origin.
- *
- * Since: 0.12.14
  */
 void
 shumate_view_get_viewport_anchor (ShumateView *view,
@@ -2614,8 +2546,6 @@ shumate_view_get_viewport_anchor (ShumateView *view,
  * @y: (out): the y coordinate of the viewport
  *
  * Gets the x and y coordinate of the viewport in respect to the layer origin.
- *
- * Since: 0.10
  */
 void
 shumate_view_get_viewport_origin (ShumateView *view,
@@ -2940,8 +2870,6 @@ remove_all_tiles (ShumateView *view)
  * @view: a #ShumateView
  *
  * Reloads all visible tiles.
- *
- * Since: 0.8
  */
 void
 shumate_view_reload_tiles (ShumateView *view)
@@ -3009,8 +2937,6 @@ tile_state_notify (ShumateTile *tile,
  *
  * As a side effect, changing the primary map source will also clear all
  * secondary map sources.
- *
- * Since: 0.4
  */
 void
 shumate_view_set_map_source (ShumateView *view,
@@ -3063,8 +2989,6 @@ shumate_view_set_map_source (ShumateView *view,
  * @rate: a #gdouble between 1.001 and 2.0
  *
  * The deceleration rate for the kinetic mode.
- *
- * Since: 0.4
  */
 void
 shumate_view_set_deceleration (ShumateView *view,
@@ -3086,8 +3010,6 @@ shumate_view_set_deceleration (ShumateView *view,
  * @kinetic: TRUE for kinetic mode, FALSE for push mode
  *
  * Determines the way the view reacts to scroll events.
- *
- * Since: 0.10
  */
 void
 shumate_view_set_kinetic_mode (ShumateView *view,
@@ -3111,8 +3033,6 @@ shumate_view_set_kinetic_mode (ShumateView *view,
  * @value: a #gboolean
  *
  * Keep the current centered position when resizing the view.
- *
- * Since: 0.4
  */
 void
 shumate_view_set_keep_center_on_resize (ShumateView *view,
@@ -3133,8 +3053,6 @@ shumate_view_set_keep_center_on_resize (ShumateView *view,
  * @value: a #gboolean
  *
  * Should the view zoom in and recenter when the user double click on the map.
- *
- * Since: 0.4
  */
 void
 shumate_view_set_zoom_on_double_click (ShumateView *view,
@@ -3155,8 +3073,6 @@ shumate_view_set_zoom_on_double_click (ShumateView *view,
  * @value: a #gboolean
  *
  * Should the view animate zoom level changes.
- *
- * Since: 0.12
  */
 void
 shumate_view_set_animate_zoom (ShumateView *view,
@@ -3179,8 +3095,6 @@ shumate_view_set_animate_zoom (ShumateView *view,
  *
  * Changes the map's zoom level and center to make sure the given area
  * is visible
- *
- * Since: 0.10
  */
 void
 shumate_view_ensure_visible (ShumateView *view,
@@ -3238,8 +3152,6 @@ shumate_view_ensure_visible (ShumateView *view,
  *
  * Changes the map's zoom level and center to make sure that the bounding
  * boxes of all inserted layers are visible.
- *
- * Since: 0.10
  */
 void
 shumate_view_ensure_layers_visible (ShumateView *view,
@@ -3278,8 +3190,6 @@ shumate_view_ensure_layers_visible (ShumateView *view,
  * Sets the background texture displayed behind the map. Setting the background
  * pattern affects performence slightly - use reasonably large patterns for
  * better performance.
- *
- * Since: 0.12.4
  */
 void
 shumate_view_set_background_pattern (ShumateView *view,
@@ -3306,8 +3216,6 @@ shumate_view_set_background_pattern (ShumateView *view,
  * Gets the current background texture displayed behind the map.
  *
  * Returns: (transfer none): The texture.
- *
- * Since: 0.12.4
  */
 ClutterContent *
 shumate_view_get_background_pattern (ShumateView *view)
@@ -3676,8 +3584,6 @@ view_set_zoom_level_at (ShumateView *view,
  * Gets the view's current zoom level.
  *
  * Returns: the view's current zoom level.
- *
- * Since: 0.4
  */
 guint
 shumate_view_get_zoom_level (ShumateView *view)
@@ -3697,8 +3603,6 @@ shumate_view_get_zoom_level (ShumateView *view)
  * Gets the view's minimal allowed zoom level.
  *
  * Returns: the view's minimal allowed zoom level.
- *
- * Since: 0.4
  */
 guint
 shumate_view_get_min_zoom_level (ShumateView *view)
@@ -3718,8 +3622,6 @@ shumate_view_get_min_zoom_level (ShumateView *view)
  * Gets the view's maximum allowed zoom level.
  *
  * Returns: the view's maximum allowed zoom level.
- *
- * Since: 0.4
  */
 guint
 shumate_view_get_max_zoom_level (ShumateView *view)
@@ -3740,8 +3642,6 @@ shumate_view_get_max_zoom_level (ShumateView *view)
  *
  * Returns: (transfer none): the view's current map source. If you need to keep a reference to the
  * map source then you have to call #g_object_ref().
- *
- * Since: 0.4
  */
 ShumateMapSource *
 shumate_view_get_map_source (ShumateView *view)
@@ -3761,8 +3661,6 @@ shumate_view_get_map_source (ShumateView *view)
  * Gets the view's deceleration rate.
  *
  * Returns: the view's deceleration rate.
- *
- * Since: 0.4
  */
 gdouble
 shumate_view_get_deceleration (ShumateView *view)
@@ -3784,8 +3682,6 @@ shumate_view_get_deceleration (ShumateView *view)
  * Gets the view's scroll mode behaviour.
  *
  * Returns: TRUE for kinetic mode, FALSE for push mode.
- *
- * Since: 0.10
  */
 gboolean
 shumate_view_get_kinetic_mode (ShumateView *view)
@@ -3805,8 +3701,6 @@ shumate_view_get_kinetic_mode (ShumateView *view)
  * Checks whether to keep the center on resize
  *
  * Returns: TRUE if the view keeps the center on resize, FALSE otherwise.
- *
- * Since: 0.4
  */
 gboolean
 shumate_view_get_keep_center_on_resize (ShumateView *view)
@@ -3826,8 +3720,6 @@ shumate_view_get_keep_center_on_resize (ShumateView *view)
  * Checks whether the view zooms on double click.
  *
  * Returns: TRUE if the view zooms on double click, FALSE otherwise.
- *
- * Since: 0.4
  */
 gboolean
 shumate_view_get_zoom_on_double_click (ShumateView *view)
@@ -3847,8 +3739,6 @@ shumate_view_get_zoom_on_double_click (ShumateView *view)
  * Checks whether the view animates zoom level changes.
  *
  * Returns: TRUE if the view animates zooms, FALSE otherwise.
- *
- * Since: 0.12
  */
 gboolean
 shumate_view_get_animate_zoom (ShumateView *view)
@@ -3891,8 +3781,6 @@ bin_alignment_to_actor_align (ClutterBinAlignment alignment)
  * manager. The inserted actors appear on top of the map. See clutter_bin_layout_add()
  * for reference.
  *
- * Since: 0.10
- *
  * Deprecated: 0.12.4: Use #ClutterActorAlign and the #ClutterActor
  * API instead.
  */
@@ -3923,8 +3811,6 @@ shumate_view_bin_layout_add (ShumateView *view,
  * (hidden and so on).
  *
  * Returns: (transfer none): the license actor
- *
- * Since: 0.10
  */
 ShumateLicense *
 shumate_view_get_license_actor (ShumateView *view)
@@ -3944,8 +3830,6 @@ shumate_view_get_license_actor (ShumateView *view)
  * Gets the latitude of the view's center.
  *
  * Returns: the latitude.
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_get_center_latitude (ShumateView *view)
@@ -3965,8 +3849,6 @@ shumate_view_get_center_latitude (ShumateView *view)
  * Gets the longitude of the view's center.
  *
  * Returns: the longitude.
- *
- * Since: 0.10
  */
 gdouble
 shumate_view_get_center_longitude (ShumateView *view)
@@ -3986,8 +3868,6 @@ shumate_view_get_center_longitude (ShumateView *view)
  * Gets the view's state.
  *
  * Returns: the state.
- *
- * Since: 0.10
  */
 ShumateState
 shumate_view_get_state (ShumateView *view)
@@ -4065,8 +3945,6 @@ get_bounding_box (ShumateView *view,
  * Gets the bounding box for view @view at @zoom_level.
  *
  * Returns: (transfer full): the bounding box for the view at @zoom_level.
- *
- * Since: 0.12.6
  */
 ShumateBoundingBox *
 shumate_view_get_bounding_box_for_zoom_level (ShumateView *view,
@@ -4093,8 +3971,6 @@ shumate_view_get_bounding_box_for_zoom_level (ShumateView *view,
  * Gets the bounding box for view @view at current zoom-level.
  *
  * Returns: (transfer full): the bounding box
- *
- * Since: 0.12.4
  */
 ShumateBoundingBox *
 shumate_view_get_bounding_box (ShumateView *view)
@@ -4117,8 +3993,6 @@ shumate_view_get_bounding_box (ShumateView *view)
  *
  * Adds a new overlay map source to render tiles with the supplied opacity on top
  * of the ordinary map source. Multiple overlay sources can be added.
- *
- * Since: 0.12.5
  */
 void
 shumate_view_add_overlay_source (ShumateView *view,
@@ -4148,8 +4022,6 @@ shumate_view_add_overlay_source (ShumateView *view,
  * @map_source: a #ShumateMapSource
  *
  * Removes an overlay source from #ShumateView.
- *
- * Since: 0.12.5
  */
 void
 shumate_view_remove_overlay_source (ShumateView *view,
@@ -4178,8 +4050,6 @@ shumate_view_remove_overlay_source (ShumateView *view,
  * Gets a list of overlay sources.
  *
  * Returns: (transfer container) (element-type ShumateMapSource): the list
- *
- * Since: 0.12.5
  */
 GList *
 shumate_view_get_overlay_sources (ShumateView *view)

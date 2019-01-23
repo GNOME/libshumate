@@ -153,8 +153,6 @@ shumate_memory_cache_class_init (ShumateMemoryCacheClass *klass)
    * ShumateMemoryCache:size-limit:
    *
    * The maximum number of tiles that are stored in the cache.
-   *
-   * Since: 0.8
    */
   pspec = g_param_spec_uint ("size-limit",
         "Size Limit",
@@ -181,8 +179,6 @@ shumate_memory_cache_class_init (ShumateMemoryCacheClass *klass)
  * Constructor of #ShumateMemoryCache.
  *
  * Returns: a constructed #ShumateMemoryCache
- *
- * Since: 0.8
  */
 ShumateMemoryCache *
 shumate_memory_cache_new_full (guint size_limit,
@@ -218,8 +214,6 @@ shumate_memory_cache_init (ShumateMemoryCache *memory_cache)
  * Gets the maximum number of tiles stored in the cache.
  *
  * Returns: maximum number of stored tiles
- *
- * Since: 0.8
  */
 guint
 shumate_memory_cache_get_size_limit (ShumateMemoryCache *memory_cache)
@@ -236,8 +230,6 @@ shumate_memory_cache_get_size_limit (ShumateMemoryCache *memory_cache)
  * @size_limit: maximum number of tiles stored in the cache
  *
  * Sets the maximum number of tiles stored in the cache.
- *
- * Since: 0.8
  */
 void
 shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,
@@ -443,8 +435,6 @@ refresh_tile_time (ShumateTileCache *tile_cache,
  * @memory_cache: a #ShumateMemoryCache
  *
  * Cleans the contents of the cache.
- *
- * Since: 0.8
  */
 void
 shumate_memory_cache_clean (ShumateMemoryCache *memory_cache)

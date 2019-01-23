@@ -67,8 +67,6 @@ typedef enum
  *
  * The #ShumateMapSource structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.4
  */
 struct _ShumateMapSource
 {

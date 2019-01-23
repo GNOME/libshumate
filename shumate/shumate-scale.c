@@ -173,8 +173,6 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    * ShumateScale:max-width:
    *
    * The size of the map scale on screen in pixels.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_MAX_SCALE_WIDTH,
@@ -191,8 +189,6 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    * ShumateScale:unit:
    *
    * The scale's units.
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class,
       PROP_SCALE_UNIT,
@@ -426,8 +422,6 @@ shumate_scale_init (ShumateScale *scale)
  * Creates an instance of #ShumateScale.
  *
  * Returns: a new #ShumateScale.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_scale_new (void)
@@ -442,8 +436,6 @@ shumate_scale_new (void)
  * @value: the number of pixels
  *
  * Sets the maximum width of the scale on the screen in pixels
- *
- * Since: 0.10
  */
 void
 shumate_scale_set_max_width (ShumateScale *scale,
@@ -463,8 +455,6 @@ shumate_scale_set_max_width (ShumateScale *scale,
  * @unit: a #ShumateUnit
  *
  * Sets the scale unit.
- *
- * Since: 0.10
  */
 void
 shumate_scale_set_unit (ShumateScale *scale,
@@ -485,8 +475,6 @@ shumate_scale_set_unit (ShumateScale *scale,
  * Gets the maximum scale width.
  *
  * Returns: The maximum scale width in pixels.
- *
- * Since: 0.10
  */
 guint
 shumate_scale_get_max_width (ShumateScale *scale)
@@ -504,8 +492,6 @@ shumate_scale_get_max_width (ShumateScale *scale)
  * Gets the unit used by the scale.
  *
  * Returns: The unit used by the scale
- *
- * Since: 0.10
  */
 ShumateUnit
 shumate_scale_get_unit (ShumateScale *scale)
@@ -532,8 +518,6 @@ redraw_scale_cb (G_GNUC_UNUSED GObject *gobject,
  *
  * This method connects to the necessary signals of #ShumateView to make the
  * scale adapt to the current latitude and longitude.
- *
- * Since: 0.10
  */
 void
 shumate_scale_connect_view (ShumateScale *scale,
@@ -553,8 +537,6 @@ shumate_scale_connect_view (ShumateScale *scale,
  * @scale: a #ShumateScale
  *
  * This method disconnects from the signals previously connected by shumate_scale_connect_view().
- *
- * Since: 0.10
  */
 void
 shumate_scale_disconnect_view (ShumateScale *scale)

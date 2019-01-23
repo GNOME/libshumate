@@ -61,8 +61,6 @@ typedef struct _ShumateMapSourceFactoryClass ShumateMapSourceFactoryClass;
  *
  * The #ShumateMapSourceFactory structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.4
  */
 struct _ShumateMapSourceFactory
 {

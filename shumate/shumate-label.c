@@ -369,8 +369,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:text:
    *
    * The text of the label
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_TEXT,
       g_param_spec_string ("text",
@@ -383,8 +381,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:image:
    *
    * The image of the label
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_IMAGE,
       g_param_spec_object ("image",
@@ -397,8 +393,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:use-markup:
    *
    * If the label's text uses markup
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_USE_MARKUP,
       g_param_spec_boolean ("use-markup",
@@ -411,8 +405,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:alignment:
    *
    * The label's alignment
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_ALIGNMENT,
       g_param_spec_enum ("alignment",
@@ -426,8 +418,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:color:
    *
    * The label's color
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_COLOR,
       clutter_param_spec_color ("color",
@@ -440,8 +430,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:text-color:
    *
    * The label's text color
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_TEXT_COLOR,
       clutter_param_spec_color ("text-color",
@@ -454,8 +442,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:font-name:
    *
    * The label's text font name
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_FONT_NAME,
       g_param_spec_string ("font-name",
@@ -468,8 +454,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:wrap:
    *
    * If the label's text wrap is set
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_WRAP,
       g_param_spec_boolean ("wrap",
@@ -482,8 +466,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:wrap-mode:
    *
    * The label's text wrap mode
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_WRAP_MODE,
       g_param_spec_enum ("wrap-mode",
@@ -497,8 +479,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:ellipsize:
    *
    * The label's ellipsize mode
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_ELLIPSIZE,
       g_param_spec_enum ("ellipsize",
@@ -512,8 +492,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:draw-background:
    *
    * If the label has a background
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_DRAW_BACKGROUND,
       g_param_spec_boolean ("draw-background",
@@ -526,8 +504,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:draw-shadow:
    *
    * If the label background has a shadow
-   *
-   * Since: 0.12.10
    */
   g_object_class_install_property (object_class, PROP_DRAW_SHADOW,
       g_param_spec_boolean ("draw-shadow",
@@ -540,8 +516,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * ShumateLabel:single-line-mode:
    *
    * If the label is in single line mode
-   *
-   * Since: 0.10
    */
   g_object_class_install_property (object_class, PROP_SINGLE_LINE_MODE,
       g_param_spec_boolean ("single-line-mode",
@@ -817,8 +791,6 @@ redraw_on_idle (gpointer gobject)
  * be used unless you are subclassing ShumateLabel and adding new properties
  * that affect the aspect of the label.  When they change, call this function
  * to update the label.
- *
- * Since: 0.10
  */
 static void
 shumate_label_queue_redraw (ShumateLabel *label)
@@ -881,8 +853,6 @@ shumate_label_init (ShumateLabel *label)
  * Creates a new instance of #ShumateLabel.
  *
  * Returns: a new #ShumateLabel ready to be used as a #ClutterActor.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_new (void)
@@ -901,8 +871,6 @@ shumate_label_new (void)
  * Creates a new instance of #ShumateLabel with text value.
  *
  * Returns: a new #ShumateLabel with a drawn label containing the given text.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_new_with_text (const gchar *text,
@@ -935,8 +903,6 @@ shumate_label_new_with_text (const gchar *text,
  *
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_new_with_image (ClutterActor *actor)
@@ -959,8 +925,6 @@ shumate_label_new_with_image (ClutterActor *actor)
  *
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_new_from_file (const gchar *filename,
@@ -1014,8 +978,6 @@ shumate_label_new_from_file (const gchar *filename,
  *
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_new_full (const gchar *text,
@@ -1039,8 +1001,6 @@ shumate_label_new_full (const gchar *text,
  * @text: The new text of the label
  *
  * Sets the label's text.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_text (ShumateLabel *label,
@@ -1065,8 +1025,6 @@ shumate_label_set_text (ShumateLabel *label,
  * @image: (allow-none): The image as a @ClutterActor or NULL to remove the current image.
  *
  * Sets the label's image.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_image (ShumateLabel *label,
@@ -1098,8 +1056,6 @@ shumate_label_set_image (ShumateLabel *label,
  * @use_markup: The value
  *
  * Sets if the label's text uses markup.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_use_markup (ShumateLabel *label,
@@ -1119,8 +1075,6 @@ shumate_label_set_use_markup (ShumateLabel *label,
  * @alignment: The label's alignment
  *
  * Sets the label's text alignment.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_alignment (ShumateLabel *label,
@@ -1141,8 +1095,6 @@ shumate_label_set_alignment (ShumateLabel *label,
  *         default color. The color parameter is copied.
  *
  * Sets the label's background color.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_color (ShumateLabel *label,
@@ -1171,8 +1123,6 @@ shumate_label_set_color (ShumateLabel *label,
  *         color. The color parameter is copied.
  *
  * Sets the label's text color.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_text_color (ShumateLabel *label,
@@ -1201,8 +1151,6 @@ shumate_label_set_text_color (ShumateLabel *label,
  *             value.
  *
  * Sets the label's font name such as "Sans 12".
- *
- * Since: 0.10
  */
 void
 shumate_label_set_font_name (ShumateLabel *label,
@@ -1230,8 +1178,6 @@ shumate_label_set_font_name (ShumateLabel *label,
  * @wrap: The label's wrap.
  *
  * Sets if the label's text wrap.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_wrap (ShumateLabel *label,
@@ -1251,8 +1197,6 @@ shumate_label_set_wrap (ShumateLabel *label,
  * @wrap_mode: The label's wrap mode.
  *
  * Sets the label's text wrap mode.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_wrap_mode (ShumateLabel *label,
@@ -1272,8 +1216,6 @@ shumate_label_set_wrap_mode (ShumateLabel *label,
  * @list: The label's text attributes.
  *
  * Sets the label's text attributes.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_attributes (ShumateLabel *label,
@@ -1302,8 +1244,6 @@ shumate_label_set_attributes (ShumateLabel *label,
  * @mode: The label's ellipsize mode.
  *
  * Sets the label's text ellipsize mode.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_ellipsize (ShumateLabel *label,
@@ -1323,8 +1263,6 @@ shumate_label_set_ellipsize (ShumateLabel *label,
  * @mode: The label's single line mode
  *
  * Sets if the label's text is on a single line.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_single_line_mode (ShumateLabel *label,
@@ -1345,8 +1283,6 @@ shumate_label_set_single_line_mode (ShumateLabel *label,
  * @background: value.
  *
  * Sets if the label has a background.
- *
- * Since: 0.10
  */
 void
 shumate_label_set_draw_background (ShumateLabel *label,
@@ -1366,8 +1302,6 @@ shumate_label_set_draw_background (ShumateLabel *label,
  * @shadow: value.
  *
  * Sets if the label's background has a shadow.
- *
- * Since: 0.12.10
  */
 void
 shumate_label_set_draw_shadow (ShumateLabel *label,
@@ -1387,8 +1321,6 @@ shumate_label_set_draw_shadow (ShumateLabel *label,
  * Get the label's image.
  *
  * Returns: (transfer none): the label's image.
- *
- * Since: 0.10
  */
 ClutterActor *
 shumate_label_get_image (ShumateLabel *label)
@@ -1406,8 +1338,6 @@ shumate_label_get_image (ShumateLabel *label)
  * Check whether the label uses markup.
  *
  * Returns: if the label's text contains markup.
- *
- * Since: 0.10
  */
 gboolean
 shumate_label_get_use_markup (ShumateLabel *label)
@@ -1425,8 +1355,6 @@ shumate_label_get_use_markup (ShumateLabel *label)
  * Get the label's text.
  *
  * Returns: the label's text.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_label_get_text (ShumateLabel *label)
@@ -1444,8 +1372,6 @@ shumate_label_get_text (ShumateLabel *label)
  * Get the label's text alignment.
  *
  * Returns: the label's text alignment.
- *
- * Since: 0.10
  */
 PangoAlignment
 shumate_label_get_alignment (ShumateLabel *label)
@@ -1463,8 +1389,6 @@ shumate_label_get_alignment (ShumateLabel *label)
  * Gets the label's background color.
  *
  * Returns: the label's background color.
- *
- * Since: 0.10
  */
 ClutterColor *
 shumate_label_get_color (ShumateLabel *label)
@@ -1482,8 +1406,6 @@ shumate_label_get_color (ShumateLabel *label)
  * Gets the label's text color.
  *
  * Returns: the label's text color.
- *
- * Since: 0.10
  */
 ClutterColor *
 shumate_label_get_text_color (ShumateLabel *label)
@@ -1501,8 +1423,6 @@ shumate_label_get_text_color (ShumateLabel *label)
  * Gets the label's font name.
  *
  * Returns: the label's font name.
- *
- * Since: 0.10
  */
 const gchar *
 shumate_label_get_font_name (ShumateLabel *label)
@@ -1520,8 +1440,6 @@ shumate_label_get_font_name (ShumateLabel *label)
  * Checks whether the label text wraps.
  *
  * Returns: if the label's text wraps.
- *
- * Since: 0.10
  */
 gboolean
 shumate_label_get_wrap (ShumateLabel *label)
@@ -1539,8 +1457,6 @@ shumate_label_get_wrap (ShumateLabel *label)
  * Gets the label's text wrap mode.
  *
  * Returns: the label's text wrap mode.
- *
- * Since: 0.10
  */
 PangoWrapMode
 shumate_label_get_wrap_mode (ShumateLabel *label)
@@ -1558,8 +1474,6 @@ shumate_label_get_wrap_mode (ShumateLabel *label)
  * Gets the label's text ellipsize mode.
  *
  * Returns: the label's text ellipsize mode.
- *
- * Since: 0.10
  */
 PangoEllipsizeMode
 shumate_label_get_ellipsize (ShumateLabel *label)
@@ -1577,8 +1491,6 @@ shumate_label_get_ellipsize (ShumateLabel *label)
  * Checks the label's single line mode.
  *
  * Returns: the label's text single line mode.
- *
- * Since: 0.10
  */
 gboolean
 shumate_label_get_single_line_mode (ShumateLabel *label)
@@ -1596,8 +1508,6 @@ shumate_label_get_single_line_mode (ShumateLabel *label)
  * Checks whether the label has a background.
  *
  * Returns: if the label has a background.
- *
- * Since: 0.10
  */
 gboolean
 shumate_label_get_draw_background (ShumateLabel *label)
@@ -1615,8 +1525,6 @@ shumate_label_get_draw_background (ShumateLabel *label)
  * Checks whether the label's background has a shadow.
  *
  * Returns: if the label's background has a shadow.
- *
- * Since: 0.12.10
  */
 gboolean
 shumate_label_get_draw_shadow (ShumateLabel *label)
@@ -1634,8 +1542,6 @@ shumate_label_get_draw_shadow (ShumateLabel *label)
  * Gets the label's text attributes.
  *
  * Returns: the label's text attributes.
- *
- * Since: 0.10
  */
 PangoAttrList *
 shumate_label_get_attributes (ShumateLabel *label)

@@ -56,8 +56,6 @@ typedef struct _ShumateMemoryCacheClass ShumateMemoryCacheClass;
  *
  * The #ShumateMemoryCache structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.8
  */
 struct _ShumateMemoryCache
 {

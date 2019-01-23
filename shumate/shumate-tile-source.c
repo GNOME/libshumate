@@ -249,8 +249,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:id:
    *
    * The id of the tile source
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("id",
         "Id",
@@ -263,8 +261,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:name:
    *
    * The name of the tile source
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("name",
         "Name",
@@ -277,8 +273,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:license:
    *
    * The usage license of the tile source
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("license",
         "License",
@@ -291,8 +285,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:license-uri:
    *
    * The usage license's uri for more information
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_string ("license-uri",
         "License-uri",
@@ -305,8 +297,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:min-zoom-level:
    *
    * The minimum zoom level
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_uint ("min-zoom-level",
         "Minimum Zoom Level",
@@ -321,8 +311,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:max-zoom-level:
    *
    * The maximum zoom level
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_uint ("max-zoom-level",
         "Maximum Zoom Level",
@@ -337,8 +325,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:tile-size:
    *
    * The tile size of the tile source
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_uint ("tile-size",
         "Tile Size",
@@ -353,8 +339,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:projection:
    *
    * The map projection of the tile source
-   *
-   * Since: 0.4
    */
   pspec = g_param_spec_enum ("projection",
         "Projection",
@@ -368,8 +352,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
    * ShumateTileSource:cache:
    *
    * The cache used for tile storage
-   *
-   * Since: 0.6
    */
   pspec = g_param_spec_object ("cache",
         "Cache",
@@ -406,8 +388,6 @@ shumate_tile_source_init (ShumateTileSource *tile_source)
  * Gets the cache used for storing tiles by this tile source.
  *
  * Returns: (transfer none): the cache
- *
- * Since: 0.6
  */
 ShumateTileCache *
 shumate_tile_source_get_cache (ShumateTileSource *tile_source)
@@ -424,8 +404,6 @@ shumate_tile_source_get_cache (ShumateTileSource *tile_source)
  * @cache: a #ShumateTileCache
  *
  * Sets the map source's cache used for storing tiles.
- *
- * Since: 0.6
  */
 void
 shumate_tile_source_set_cache (ShumateTileSource *tile_source,
@@ -529,8 +507,6 @@ get_projection (ShumateMapSource *map_source)
  * @id: an id
  *
  * Sets the tile source's id.
- *
- * Since: 0.4
  */
 void
 shumate_tile_source_set_id (ShumateTileSource *tile_source,
@@ -553,8 +529,6 @@ shumate_tile_source_set_id (ShumateTileSource *tile_source,
  * @name: a name
  *
  * Sets the tile source's name.
- *
- * Since: 0.4
  */
 void
 shumate_tile_source_set_name (ShumateTileSource *tile_source,
@@ -577,8 +551,6 @@ shumate_tile_source_set_name (ShumateTileSource *tile_source,
  * @license: the licence
  *
  * Sets the tile source's license.
- *
- * Since: 0.4
  */
 void
 shumate_tile_source_set_license (ShumateTileSource *tile_source,
@@ -601,8 +573,6 @@ shumate_tile_source_set_license (ShumateTileSource *tile_source,
  * @license_uri: the licence URI
  *
  * Sets the tile source's license URI.
- *
- * Since: 0.4
  */
 void
 shumate_tile_source_set_license_uri (ShumateTileSource *tile_source,
@@ -625,8 +595,6 @@ shumate_tile_source_set_license_uri (ShumateTileSource *tile_source,
  * @zoom_level: the minimal zoom level
  *
  * Sets the tile source's minimal zoom level.
- *
- * Since: 0.6
  */
 void
 shumate_tile_source_set_min_zoom_level (ShumateTileSource *tile_source,
@@ -646,8 +614,6 @@ shumate_tile_source_set_min_zoom_level (ShumateTileSource *tile_source,
  * @zoom_level: the maximum zoom level
  *
  * Sets the tile source's maximum zoom level.
- *
- * Since: 0.6
  */
 void
 shumate_tile_source_set_max_zoom_level (ShumateTileSource *tile_source,
@@ -667,8 +633,6 @@ shumate_tile_source_set_max_zoom_level (ShumateTileSource *tile_source,
  * @tile_size: the tile size
  *
  * Sets the tile source's tile size.
- *
- * Since: 0.6
  */
 void
 shumate_tile_source_set_tile_size (ShumateTileSource *tile_source,
@@ -688,8 +652,6 @@ shumate_tile_source_set_tile_size (ShumateTileSource *tile_source,
  * @projection: a #ShumateMapProjection
  *
  * Sets the tile source's projection.
- *
- * Since: 0.4
  */
 void
 shumate_tile_source_set_projection (ShumateTileSource *tile_source,

@@ -56,8 +56,6 @@ typedef struct _ShumateTileCacheClass ShumateTileCacheClass;
  *
  * The #ShumateTileCache structure contains only private data
  * and should be accessed using the provided API
- *
- * Since: 0.6
  */
 struct _ShumateTileCache
 {
