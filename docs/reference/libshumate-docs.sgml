@@ -113,36 +113,4 @@
   <index>
     <title>Index</title>
   </index>
-
-  <index role="deprecated">
-    <title>Index of deprecated symbols</title>
-  </index>
-
-  <index role="0.1">
-    <title>Index of new symbols in 0.1</title>
-  </index>
-
-  <index role="0.2">
-    <title>Index of new symbols in 0.2</title>
-  </index>
-
-  <index role="0.4">
-    <title>Index of new symbols in 0.4</title>
-  </index>
-
-  <index role="0.6">
-    <title>Index of new symbols in 0.6</title>
-  </index>
-
-  <index role="0.8">
-    <title>Index of new symbols in 0.8</title>
-  </index>
-
-  <index role="0.10">
-    <title>Index of new symbols in 0.10</title>
-  </index>
-
-  <index role="0.12">
-    <title>Index of new symbols in 0.12</title>
-  </index>
 </book>
