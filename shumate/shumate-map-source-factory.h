@@ -90,47 +90,6 @@ gboolean shumate_map_source_factory_register (ShumateMapSourceFactory *factory,
     ShumateMapSourceDesc *desc);
 GSList *shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory);
 
-#ifndef GTK_DISABLE_DEPRECATED
-/**
- * SHUMATE_MAP_SOURCE_OSM_OSMARENDER:
- *
- * OpenStreetMap Osmarender
- *
- * Deprecated: Osmarender isn't available any more and will be removed in the next release.
- * As it doens't exist, it isn't registered to the factory and the 'create' method won't
- * return any source.
- */
-#define SHUMATE_MAP_SOURCE_OSM_OSMARENDER "osm-osmarender"
-/**
- * SHUMATE_MAP_SOURCE_OAM:
- *
- * OpenAerialMap
- *
- * Deprecated: OpenAerialMap isn't available any more and will be removed in the next release.
- * As it doens't exist, it isn't registered to the factory and the 'create' method won't
- * return any source.
- */
-#define SHUMATE_MAP_SOURCE_OAM "OpenAerialMap"
-/**
- * SHUMATE_MAP_SOURCE_OSM_MAPQUEST:
- *
- * Deprecated: Mapquest isn't available any more and will be removed in the next release.
- * As it doens't exist, it isn't registered to the factory and the 'create' method won't
- * return any source.
- */
-#define SHUMATE_MAP_SOURCE_OSM_MAPQUEST "osm-mapquest"
-/**
- * SHUMATE_MAP_SOURCE_OSM_AERIAL_MAP:
- *
- * Mapquest Open Aerial
- *
- * Deprecated: Mapquest isn't available any more and will be removed in the next release.
- * As it doens't exist, it isn't registered to the factory and the 'create' method won't
- * return any source.
- */
-#define SHUMATE_MAP_SOURCE_OSM_AERIAL_MAP "osm-aerialmap"
-#endif
-
 /**
  * SHUMATE_MAP_SOURCE_OSM_MAPNIK:
  *
@@ -185,22 +144,6 @@ GSList *shumate_map_source_factory_get_registered (ShumateMapSourceFactory *fact
  * OpenWeatherMap temperature
  */
 #define SHUMATE_MAP_SOURCE_OWM_TEMPERATURE "owm-temperature"
-
-
-#ifdef SHUMATE_HAS_MEMPHIS
-/**
- * SHUMATE_MAP_SOURCE_MEMPHIS_LOCAL:
- *
- * OpenStreetMap Memphis Local Map
- */
-#define SHUMATE_MAP_SOURCE_MEMPHIS_LOCAL "memphis-local"
-/**
- * SHUMATE_MAP_SOURCE_MEMPHIS_NETWORK:
- *
- * OpenStreetMap Memphis Network Map
- */
-#define SHUMATE_MAP_SOURCE_MEMPHIS_NETWORK "memphis-network"
-#endif
 
 G_END_DECLS
 
