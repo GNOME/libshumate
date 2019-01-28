@@ -27,6 +27,10 @@
  */
 
 #include "shumate-image-renderer.h"
+
+#include "shumate-cairo-exportable.h"
+#include "shumate-cairo-importable.h"
+
 #include <gdk/gdk.h>
 
 G_DEFINE_TYPE (ShumateImageRenderer, shumate_image_renderer, SHUMATE_TYPE_RENDERER)
@@ -138,7 +142,7 @@ image_tile_draw_cb (ClutterCanvas   *canvas,
 {
   cairo_surface_t *surface;
 
-  surface = shumate_exportable_get_surface (SHUMATE_EXPORTABLE (tile));
+  surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (tile));
 
   /* Clear the drawing area */
   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
@@ -184,7 +188,7 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
   cr = cairo_create (image_surface);
   gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
   cairo_paint (cr);
-  shumate_exportable_set_surface (SHUMATE_EXPORTABLE (tile), image_surface);
+  shumate_cairo_importable_set_surface (SHUMATE_CAIRO_IMPORTABLE (tile), image_surface);
   cairo_destroy (cr);
 
   /* Load the image into clutter */

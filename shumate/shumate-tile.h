@@ -22,7 +22,6 @@
 #define SHUMATE_MAP_TILE_H
 
 #include <shumate/shumate-defines.h>
-#include <shumate/shumate-exportable.h>
 
 #include <glib.h>
 #include <clutter/clutter.h>

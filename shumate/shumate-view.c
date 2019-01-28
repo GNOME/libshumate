@@ -56,6 +56,7 @@
 #include "shumate-debug.h"
 
 #include "shumate.h"
+#include "shumate-cairo-exportable.h"
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-marshal.h"
@@ -2148,10 +2149,10 @@ layers_to_surface (ShumateView *view,
       ShumateLayer *layer = SHUMATE_LAYER (child);
       cairo_surface_t *surface;
 
-      if (!SHUMATE_IS_EXPORTABLE (layer))
+      if (!SHUMATE_IS_CAIRO_EXPORTABLE (layer))
         continue;
 
-      surface = shumate_exportable_get_surface (SHUMATE_EXPORTABLE (layer));
+      surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (layer));
       if (!surface)
         continue;
 
@@ -2213,7 +2214,7 @@ shumate_view_to_surface (ShumateView *view,
           cairo_surface_t *tile_surface;
           double x, y, opacity;
 
-          tile_surface = shumate_exportable_get_surface (SHUMATE_EXPORTABLE (tile));
+          tile_surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (tile));
           if (!tile_surface)
             {
               cairo_destroy (cr);

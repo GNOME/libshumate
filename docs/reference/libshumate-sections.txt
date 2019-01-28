@@ -758,16 +758,29 @@ SHUMATE_LOCATION_GET_IFACE
 </SECTION>
 
 <SECTION>
-<FILE>shumate-exportable</FILE>
-<TITLE>ShumateExportable</TITLE>
-ShumateExportable
-ShumateExportableIface
-shumate_exportable_set_surface
-shumate_exportable_get_surface
+<FILE>shumate-cairo-exportable</FILE>
+<TITLE>ShumateCairoExportable</TITLE>
+ShumateCairoExportable
+ShumateCairoExportableInterface
+shumate_cairo_exportable_get_surface
 <SUBSECTION Standard>
-SHUMATE_EXPORTABLE
-SHUMATE_IS_EXPORTABLE
-SHUMATE_TYPE_EXPORTABLE
-shumate_exportable_get_type
-SHUMATE_EXPORTABLE_GET_IFACE
+SHUMATE_CAIRO_EXPORTABLE
+SHUMATE_IS_CAIRO_EXPORTABLE
+SHUMATE_TYPE_CAIRO_EXPORTABLE
+shumate_cairo_exportable_get_type
+SHUMATE_CAIRO_EXPORTABLE_GET_IFACE
+</SECTION>
+
+<SECTION>
+<FILE>shumate-cairo-importable</FILE>
+<TITLE>ShumateCairoImportable</TITLE>
+ShumateCairoImportable
+ShumateCairoImportableInterface
+shumate_cairo_importable_set_surface
+<SUBSECTION Standard>
+SHUMATE_CAIRO_IMPORTABLE
+SHUMATE_IS_CAIRO_IMPORTABLE
+SHUMATE_TYPE_CAIRO_IMPORTABLE
+shumate_cairo_importable_get_type
+SHUMATE_CAIRO_IMPORTABLE_GET_IFACE
 </SECTION>

@@ -26,6 +26,9 @@
  */
 
 #include "shumate-error-tile-renderer.h"
+
+#include "shumate-cairo-importable.h"
+
 #include <gdk/gdk.h>
 
 G_DEFINE_TYPE (ShumateErrorTileRenderer, shumate_error_tile_renderer, SHUMATE_TYPE_RENDERER)
@@ -193,7 +196,7 @@ redraw_tile (ClutterCanvas *canvas,
   cairo_pattern_t *pat;
   gint size = w;
 
-  shumate_exportable_set_surface (SHUMATE_EXPORTABLE (tile), cairo_get_target (cr));
+  shumate_cairo_importable_set_surface (SHUMATE_CAIRO_IMPORTABLE (tile), cairo_get_target (cr));
 
   /* draw a linear gray to white pattern */
   pat = cairo_pattern_create_linear (size / 2.0, 0.0, size, size / 2.0);

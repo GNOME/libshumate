@@ -29,11 +29,15 @@
 #include "config.h"
 
 #include "shumate.h"
+
+#include "shumate-cairo-exportable.h"
+#include "shumate-cairo-importable.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
 #include "shumate-private.h"
 #include "shumate-tile.h"
 
+#include <cairo/cairo-gobject.h>
 #include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
@@ -71,14 +75,16 @@ struct _ShumatePointPrivate
   guint redraw_id;
 };
 
-static void set_surface (ShumateExportable *exportable,
+static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateExportable *exportable);
+static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 
-static void exportable_interface_init (ShumateExportableIface *iface);
+static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
+static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumatePoint, shumate_point, SHUMATE_TYPE_MARKER,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_EXPORTABLE, exportable_interface_init));
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
 
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_POINT, ShumatePointPrivate))
@@ -103,7 +109,7 @@ shumate_point_get_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_EXPORTABLE (object)));
+      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (object)));
       break;
 
     default:
@@ -131,7 +137,7 @@ shumate_point_set_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      set_surface (SHUMATE_EXPORTABLE (object), g_value_get_boxed (value));
+      set_surface (SHUMATE_CAIRO_IMPORTABLE (object), g_value_get_boxed (value));
       break;
 
     default:
@@ -224,9 +230,13 @@ shumate_point_class_init (ShumatePointClass *klass)
           12,
           SHUMATE_PARAM_READWRITE));
 
-  g_object_class_override_property (object_class,
+  g_object_class_install_property (object_class,
       PROP_SURFACE,
-      "surface");
+      g_param_spec_boxed ("surface",
+          "Surface",
+          "Cairo surface representaion",
+          CAIRO_GOBJECT_TYPE_SURFACE,
+          G_PARAM_READWRITE));
 
 }
 
@@ -243,7 +253,7 @@ draw (ClutterCanvas *canvas,
   gdouble radius = size / 2.0;
   const ClutterColor *color;
 
-  set_surface (SHUMATE_EXPORTABLE (point), cairo_get_target (cr));
+  set_surface (SHUMATE_CAIRO_IMPORTABLE (point), cairo_get_target (cr));
 
   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
   cairo_paint (cr);
@@ -300,13 +310,13 @@ shumate_point_init (ShumatePoint *point)
 
 
 static void
-set_surface (ShumateExportable *exportable,
+set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
-  g_return_if_fail (SHUMATE_POINT (exportable));
+  g_return_if_fail (SHUMATE_POINT (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumatePoint *self = SHUMATE_POINT (exportable);
+  ShumatePoint *self = SHUMATE_POINT (importable);
 
   if (self->priv->surface == surface)
     return;
@@ -317,7 +327,7 @@ set_surface (ShumateExportable *exportable,
 }
 
 static cairo_surface_t *
-get_surface (ShumateExportable *exportable)
+get_surface (ShumateCairoExportable *exportable)
 {
   g_return_val_if_fail (SHUMATE_POINT (exportable), NULL);
 
@@ -326,9 +336,14 @@ get_surface (ShumateExportable *exportable)
 
 
 static void
-exportable_interface_init (ShumateExportableIface *iface)
+cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
 {
   iface->get_surface = get_surface;
+}
+
+static void
+cairo_importable_interface_init (ShumateCairoImportableInterface *iface)
+{
   iface->set_surface = set_surface;
 }
 

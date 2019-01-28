@@ -26,6 +26,8 @@
 
 #include "shumate-tile.h"
 
+#include "shumate-cairo-exportable.h"
+#include "shumate-cairo-importable.h"
 #include "shumate-enum-types.h"
 #include "shumate-private.h"
 #include "shumate-marshal.h"
@@ -38,13 +40,15 @@
 #include <clutter/clutter.h>
 #include <cairo-gobject.h>
 
-static void set_surface (ShumateExportable *exportable,
+static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateExportable *exportable);
-static void exportable_interface_init (ShumateExportableIface *iface);
+static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
+static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
+static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumateTile, shumate_tile, CLUTTER_TYPE_ACTOR,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_EXPORTABLE, exportable_interface_init));
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
 
 #define GET_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_TILE, ShumateTilePrivate))
@@ -134,7 +138,7 @@ shumate_tile_get_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_EXPORTABLE (self)));
+      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (self)));
       break;
 
     default:
@@ -186,7 +190,7 @@ shumate_tile_set_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      set_surface (SHUMATE_EXPORTABLE (self), g_value_get_boxed (value));
+      set_surface (SHUMATE_CAIRO_IMPORTABLE (self), g_value_get_boxed (value));
       break;
 
     default:
@@ -351,9 +355,18 @@ shumate_tile_class_init (ShumateTileClass *klass)
           FALSE,
           G_PARAM_READWRITE));
 
-  g_object_class_override_property (object_class,
+  /**
+   * ShumateTile:surface:
+   *
+   * The Cairo surface backing the tile
+   */
+  g_object_class_install_property (object_class,
       PROP_SURFACE,
-      "surface");
+      g_param_spec_boxed ("surface",
+          "Surface",
+          "Cairo surface representaion",
+          CAIRO_GOBJECT_TYPE_SURFACE,
+          G_PARAM_READWRITE));
 
   /**
    * ShumateTile::render-complete:
@@ -401,13 +414,13 @@ shumate_tile_init (ShumateTile *self)
 
 
 static void
-set_surface (ShumateExportable *exportable,
+set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
-  g_return_if_fail (SHUMATE_TILE (exportable));
+  g_return_if_fail (SHUMATE_TILE (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumateTile *self = SHUMATE_TILE (exportable);
+  ShumateTile *self = SHUMATE_TILE (importable);
 
   if (self->priv->surface == surface)
     return;
@@ -419,7 +432,7 @@ set_surface (ShumateExportable *exportable,
 
 
 static cairo_surface_t *
-get_surface (ShumateExportable *exportable)
+get_surface (ShumateCairoExportable *exportable)
 {
   g_return_val_if_fail (SHUMATE_IS_TILE (exportable), NULL);
 
@@ -428,9 +441,14 @@ get_surface (ShumateExportable *exportable)
 
 
 static void
-exportable_interface_init (ShumateExportableIface *iface)
+cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
 {
   iface->get_surface = get_surface;
+}
+
+static void
+cairo_importable_interface_init (ShumateCairoImportableInterface *iface)
+{
   iface->set_surface = set_surface;
 }
 

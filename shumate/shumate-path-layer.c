@@ -34,18 +34,23 @@
 
 #include "shumate-path-layer.h"
 
+#include "shumate-cairo-exportable.h"
+#include "shumate-cairo-importable.h"
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-private.h"
 #include "shumate-view.h"
 
+#include <cairo/cairo-gobject.h>
 #include <clutter/clutter.h>
 #include <glib.h>
 
-static void exportable_interface_init (ShumateExportableIface *iface);
+static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
+static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_EXPORTABLE, exportable_interface_init));
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
 
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_PATH_LAYER, ShumatePathLayerPrivate))
@@ -122,9 +127,9 @@ struct _ShumatePathLayerPrivate
 };
 
 
-static void set_surface (ShumateExportable *exportable,
+static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateExportable *exportable);
+static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 
 static gboolean redraw_path (ClutterCanvas *canvas,
     cairo_t *cr,
@@ -178,7 +183,7 @@ shumate_path_layer_get_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_EXPORTABLE (self)));
+      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (self)));
       break;
 
     default:
@@ -231,7 +236,7 @@ shumate_path_layer_set_property (GObject *object,
       break;
 
    case PROP_SURFACE:
-      set_surface (SHUMATE_EXPORTABLE (object), g_value_get_boxed (value));
+      set_surface (SHUMATE_CAIRO_IMPORTABLE (object), g_value_get_boxed (value));
       break;
 
     default:
@@ -391,9 +396,18 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           TRUE,
           SHUMATE_PARAM_READWRITE));
 
-  g_object_class_override_property (object_class,
+  /**
+   * ShumatePathLayer:surface:
+   *
+   * The Cairo surface backing the layer
+   */
+  g_object_class_install_property (object_class,
       PROP_SURFACE,
-      "surface");
+      g_param_spec_boxed ("surface",
+          "Surface",
+          "Cairo surface representaion",
+          CAIRO_GOBJECT_TYPE_SURFACE,
+          G_PARAM_READWRITE));
 }
 
 static void
@@ -456,13 +470,13 @@ shumate_path_layer_init (ShumatePathLayer *self)
 
 
 static void
-set_surface (ShumateExportable *exportable,
+set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
-  g_return_if_fail (SHUMATE_PATH_LAYER (exportable));
+  g_return_if_fail (SHUMATE_PATH_LAYER (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumatePathLayer *self = SHUMATE_PATH_LAYER (exportable);
+  ShumatePathLayer *self = SHUMATE_PATH_LAYER (importable);
 
   if (self->priv->surface == surface)
     return;
@@ -521,7 +535,7 @@ create_merged_surface (ShumatePathLayer *layer)
 }
 
 static cairo_surface_t *
-get_surface (ShumateExportable *exportable)
+get_surface (ShumateCairoExportable *exportable)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (exportable), NULL);
 
@@ -534,7 +548,7 @@ get_surface (ShumateExportable *exportable)
         {
           cairo_surface_t *new_surface = create_merged_surface (self);
 
-          set_surface (exportable, new_surface);
+          set_surface (SHUMATE_CAIRO_IMPORTABLE (self), new_surface);
         }
       return SHUMATE_PATH_LAYER (exportable)->priv->surface;
     }
@@ -544,9 +558,14 @@ get_surface (ShumateExportable *exportable)
 
 
 static void
-exportable_interface_init (ShumateExportableIface *iface)
+cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
 {
   iface->get_surface = get_surface;
+}
+
+static void
+cairo_importable_interface_init (ShumateCairoImportableInterface *iface)
+{
   iface->set_surface = set_surface;
 }
 
@@ -828,13 +847,13 @@ update_surface (ShumatePathLayer *layer,
       cairo_surface_t *new_surface;
       new_surface = create_merged_surface (layer);
 
-      set_surface (SHUMATE_EXPORTABLE (layer), new_surface);
+      set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), new_surface);
 
       cairo_surface_destroy (new_surface);
     }
   /* When only the right actor is visible, no merging is required */
   else if (!CLUTTER_ACTOR_IS_VISIBLE (priv->left_actor))
-    set_surface (SHUMATE_EXPORTABLE (layer), priv->right_surface);
+    set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), priv->right_surface);
 }
 
 static gboolean

@@ -30,18 +30,20 @@
 
 #include "shumate-marker-layer.h"
 
+#include "shumate-cairo-exportable.h"
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-private.h"
 #include "shumate-view.h"
 
+#include <cairo/cairo-gobject.h>
 #include <clutter/clutter.h>
 #include <glib.h>
 
-static void exportable_interface_init (ShumateExportableIface *iface);
+static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_EXPORTABLE, exportable_interface_init));
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init));
 
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MARKER_LAYER, ShumateMarkerLayerPrivate))
@@ -66,9 +68,7 @@ struct _ShumateMarkerLayerPrivate
   ShumateView *view;
 };
 
-static void set_surface (ShumateExportable *exportable,
-    cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateExportable *exportable);
+static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 
 static void marker_selected_cb (ShumateMarker *marker,
     G_GNUC_UNUSED GParamSpec *arg1,
@@ -96,7 +96,7 @@ shumate_marker_layer_get_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_EXPORTABLE (self)));
+      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (self)));
       break;
 
     default:
@@ -117,10 +117,6 @@ shumate_marker_layer_set_property (GObject *object,
     {
     case PROP_SELECTION_MODE:
       shumate_marker_layer_set_selection_mode (self, g_value_get_enum (value));
-      break;
-
-    case PROP_SURFACE:
-      set_surface (SHUMATE_EXPORTABLE (object), g_value_get_boxed (value));
       break;
 
     default:
@@ -179,9 +175,18 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
           SHUMATE_SELECTION_NONE,
           SHUMATE_PARAM_READWRITE));
 
-    g_object_class_override_property (object_class,
+  /**
+   * ShumateMarkerLayer:surface:
+   *
+   * The Cairo surface representation of the marker layer
+   */
+  g_object_class_install_property (object_class,
       PROP_SURFACE,
-      "surface");
+      g_param_spec_boxed ("surface",
+          "Surface",
+          "Cairo surface representaion",
+          CAIRO_GOBJECT_TYPE_SURFACE,
+          G_PARAM_READABLE));
 }
 
 
@@ -196,16 +201,8 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
   priv->view = NULL;
 }
 
-
-static void
-set_surface (ShumateExportable *exportable,
-     cairo_surface_t *surface)
-{
-  /* no need */
-}
-
 static cairo_surface_t *
-get_surface (ShumateExportable *exportable)
+get_surface (ShumateCairoExportable *exportable)
 {
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (exportable), NULL);
 
@@ -222,12 +219,12 @@ get_surface (ShumateExportable *exportable)
     {
       ShumateMarker *marker = SHUMATE_MARKER (child);
 
-      if (SHUMATE_IS_EXPORTABLE (marker))
+      if (SHUMATE_IS_CAIRO_EXPORTABLE (marker))
         {
           gfloat x, y, tx, ty;
           gint origin_x, origin_y;
           cairo_surface_t *marker_surface;
-          ShumateExportable *exportable;
+          ShumateCairoExportable *exportable;
 
           if (!has_marker)
             {
@@ -241,8 +238,8 @@ get_surface (ShumateExportable *exportable)
               has_marker = TRUE;
             }
 
-          exportable = SHUMATE_EXPORTABLE (marker);
-          marker_surface = shumate_exportable_get_surface (exportable);
+          exportable = SHUMATE_CAIRO_EXPORTABLE (marker);
+          marker_surface = shumate_cairo_exportable_get_surface (exportable);
 
           shumate_view_get_viewport_origin (priv->view, &origin_x, &origin_y);
           clutter_actor_get_translation (CLUTTER_ACTOR (marker), &tx, &ty, NULL);
@@ -261,10 +258,9 @@ get_surface (ShumateExportable *exportable)
 }
 
 static void
-exportable_interface_init (ShumateExportableIface *iface)
+cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
 {
   iface->get_surface = get_surface;
-  iface->set_surface = set_surface;
 }
 
 
