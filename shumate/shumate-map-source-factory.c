@@ -82,11 +82,6 @@ struct _ShumateMapSourceFactoryPrivate
 static ShumateMapSource *shumate_map_source_new_generic (
     ShumateMapSourceDesc *desc);
 
-#ifdef SHUMATE_HAS_MEMPHIS
-static ShumateMapSource *shumate_map_source_new_memphis (
-    ShumateMapSourceDesc *desc);
-#endif
-
 
 static void
 shumate_map_source_factory_finalize (GObject *object)
