@@ -42,7 +42,6 @@ static GDebugKey keys[] = {
   { "Network", SHUMATE_DEBUG_NETWORK },
   { "Cache", SHUMATE_DEBUG_CACHE },
   { "Selection", SHUMATE_DEBUG_SELECTION },
-  { "Memphis", SHUMATE_DEBUG_MEMPHIS },
   { "Other", SHUMATE_DEBUG_OTHER },
   { 0, }
 };

@@ -37,8 +37,7 @@ typedef enum
   SHUMATE_DEBUG_NETWORK = 1 << 4,
   SHUMATE_DEBUG_CACHE = 1 << 5,
   SHUMATE_DEBUG_SELECTION = 1 << 6,
-  SHUMATE_DEBUG_MEMPHIS = 1 << 7,
-  SHUMATE_DEBUG_OTHER = 1 << 8,
+  SHUMATE_DEBUG_OTHER = 1 << 7,
 } ShumateDebugFlags;
 
 gboolean shumate_debug_flag_is_set (ShumateDebugFlags flag);
