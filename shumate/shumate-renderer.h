@@ -65,7 +65,7 @@ struct _ShumateRendererClass
   GInitiallyUnownedClass parent_class;
 
   void (*set_data)(ShumateRenderer *renderer,
-      const gchar *data,
+      const guint8 *data,
       guint size);
   void (*render)(ShumateRenderer *renderer,
       ShumateTile *tile);
@@ -74,7 +74,7 @@ struct _ShumateRendererClass
 GType shumate_renderer_get_type (void);
 
 void shumate_renderer_set_data (ShumateRenderer *renderer,
-    const gchar *data,
+    const guint8 *data,
     guint size);
 void shumate_renderer_render (ShumateRenderer *renderer,
     ShumateTile *tile);

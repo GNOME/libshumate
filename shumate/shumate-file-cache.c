@@ -645,7 +645,7 @@ file_loaded_cb (GFile *file,
 
   g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), user_data);
 
-  shumate_renderer_set_data (renderer, contents, length);
+  shumate_renderer_set_data (renderer, (guint8*) contents, length);
   g_free (contents);
   shumate_renderer_render (renderer, tile);
 }

@@ -55,7 +55,7 @@ struct _RendererData
 };
 
 static void set_data (ShumateRenderer *renderer,
-    const gchar *data,
+    const guint8 *data,
     guint size);
 static void render (ShumateRenderer *renderer,
     ShumateTile *tile);
@@ -121,7 +121,7 @@ shumate_image_renderer_new (void)
 
 
 static void
-set_data (ShumateRenderer *renderer, const gchar *data, guint size)
+set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 {
   ShumateImageRendererPrivate *priv = GET_PRIVATE (renderer);
 

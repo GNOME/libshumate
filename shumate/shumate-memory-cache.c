@@ -351,7 +351,7 @@ fill_tile (ShumateMapSource *map_source,
 
           g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), map_source);
 
-          shumate_renderer_set_data (renderer, member->data, member->size);
+          shumate_renderer_set_data (renderer, (guint8) member->data, member->size);
           shumate_renderer_render (renderer, tile);
 
           return;

@@ -330,7 +330,7 @@ load_map_data_cb (G_GNUC_UNUSED SoupSession *session, SoupMessage *msg,
   g_object_set (G_OBJECT (self), "state", SHUMATE_STATE_DONE, NULL);
 
   renderer = shumate_map_source_get_renderer (SHUMATE_MAP_SOURCE (self));
-  shumate_renderer_set_data (renderer, msg->response_body->data, msg->response_body->length);
+  shumate_renderer_set_data (renderer, (guint8*) msg->response_body->data, msg->response_body->length);
 }
 
 

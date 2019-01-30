@@ -66,7 +66,7 @@ shumate_renderer_class_init (ShumateRendererClass *klass)
  */
 void
 shumate_renderer_set_data (ShumateRenderer *renderer,
-    const gchar *data,
+    const guint8 *data,
     guint size)
 {
   g_return_if_fail (SHUMATE_IS_RENDERER (renderer));

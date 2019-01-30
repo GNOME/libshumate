@@ -50,7 +50,7 @@ enum
 
 
 static void set_data (ShumateRenderer *renderer,
-    const gchar *data,
+    const guint8 *data,
     guint size);
 static void render (ShumateRenderer *renderer,
     ShumateTile *tile);
@@ -180,7 +180,7 @@ shumate_error_tile_renderer_new (guint tile_size)
 
 
 static void
-set_data (ShumateRenderer *renderer, const gchar *data, guint size)
+set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 {
   /* always render the error tile no matter what data is set */
 }
