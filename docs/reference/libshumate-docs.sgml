@@ -102,7 +102,8 @@
     <title>Others</title>
     <xi:include href="xml/shumate-tile.xml"/>
     <xi:include href="xml/shumate-bounding-box.xml"/>
-    <xi:include href="xml/shumate-exportable.xml"/>
+    <xi:include href="xml/shumate-cairo-exportable.xml"/>
+    <xi:include href="xml/shumate-cairo-importable.xml"/>
     <xi:include href="xml/shumate-version.xml"/>
   </part>
   <part>
