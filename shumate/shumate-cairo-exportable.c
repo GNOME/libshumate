@@ -16,7 +16,7 @@
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  */
  /**
- * SECTION:shumate-exportable
+ * SECTION:shumate-cairo-exportable
  * @short_description: An interface for objects exportable to a cairo surface
  *
  * By implementing #ShumateCairoExportable the object declares that it has a cairo
