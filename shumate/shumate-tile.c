@@ -37,7 +37,6 @@
 #include <gdk/gdk.h>
 #include <libsoup/soup.h>
 #include <gio/gio.h>
-#include <clutter/clutter.h>
 #include <cairo-gobject.h>
 
 static void set_surface (ShumateCairoImportable *importable,
@@ -46,7 +45,7 @@ static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
 static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateTile, shumate_tile, CLUTTER_TYPE_ACTOR,
+G_DEFINE_TYPE_WITH_CODE (ShumateTile, shumate_tile, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
 
@@ -86,7 +85,7 @@ struct _ShumateTilePrivate
 
   ShumateState state; /* The tile state: loading, validation, done */
   /* The tile actor that will be displayed after shumate_tile_display_content () */
-  ClutterActor *content_actor;
+  //ClutterActor *content_actor;
   gboolean fade_in;
 
   GTimeVal *modified_time; /* The last modified time of the cache */
@@ -125,9 +124,9 @@ shumate_tile_get_property (GObject *object,
       g_value_set_enum (value, shumate_tile_get_state (self));
       break;
 
-    case PROP_CONTENT:
-      g_value_set_object (value, shumate_tile_get_content (self));
-      break;
+    //case PROP_CONTENT:
+    //  g_value_set_object (value, shumate_tile_get_content (self));
+    //  break;
 
     case PROP_ETAG:
       g_value_set_string (value, shumate_tile_get_etag (self));
@@ -177,9 +176,9 @@ shumate_tile_set_property (GObject *object,
       shumate_tile_set_state (self, g_value_get_enum (value));
       break;
 
-    case PROP_CONTENT:
-      shumate_tile_set_content (self, g_value_get_object (value));
-      break;
+    //case PROP_CONTENT:
+    //  shumate_tile_set_content (self, g_value_get_object (value));
+    //  break;
 
     case PROP_ETAG:
       shumate_tile_set_etag (self, g_value_get_string (value));
@@ -204,11 +203,11 @@ shumate_tile_dispose (GObject *object)
 {
   ShumateTilePrivate *priv = SHUMATE_TILE (object)->priv;
 
-  if (!priv->content_displayed && priv->content_actor)
-    {
-      clutter_actor_destroy (priv->content_actor);
-      priv->content_actor = NULL;
-    }
+  //if (!priv->content_displayed && priv->content_actor)
+  //  {
+  //    clutter_actor_destroy (priv->content_actor);
+  //    priv->content_actor = NULL;
+  //  }
 
   g_clear_pointer (&priv->surface, cairo_surface_destroy);
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
@@ -319,13 +318,13 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The #ClutterActor with the specific image content.  When changing this
    * property, the new actor will be faded in.
    */
-  g_object_class_install_property (object_class,
-      PROP_CONTENT,
-      g_param_spec_object ("content",
-          "Content",
-          "The tile's content",
-          CLUTTER_TYPE_ACTOR,
-          G_PARAM_READWRITE));
+  //g_object_class_install_property (object_class,
+  //    PROP_CONTENT,
+  //    g_param_spec_object ("content",
+  //        "Content",
+  //        "The tile's content",
+  //        CLUTTER_TYPE_ACTOR,
+  //        G_PARAM_READWRITE));
 
   /**
    * ShumateTile:etag:
@@ -409,7 +408,7 @@ shumate_tile_init (ShumateTile *self)
   priv->fade_in = FALSE;
   priv->content_displayed = FALSE;
 
-  priv->content_actor = NULL;
+  //priv->content_actor = NULL;
 }
 
 
@@ -761,6 +760,7 @@ shumate_tile_set_etag (ShumateTile *self,
  * Sets the tile's content. To also disppay the tile, you have to call
  * shumate_tile_display_content() in addition.
  */
+/*
 void
 shumate_tile_set_content (ShumateTile *self,
     ClutterActor *actor)
@@ -778,8 +778,10 @@ shumate_tile_set_content (ShumateTile *self,
 
   g_object_notify (G_OBJECT (self), "content");
 }
+*/
 
 
+/*
 static void
 fade_in_completed (ClutterActor *actor,
     const gchar *transition_name,
@@ -791,6 +793,7 @@ fade_in_completed (ClutterActor *actor,
 
   g_signal_handlers_disconnect_by_func (actor, fade_in_completed, self);
 }
+ */
 
 
 /**
@@ -806,6 +809,7 @@ shumate_tile_display_content (ShumateTile *self)
 
   ShumateTilePrivate *priv = self->priv;
 
+  /*
   if (!priv->content_actor || priv->content_displayed)
     return;
 
@@ -829,6 +833,7 @@ shumate_tile_display_content (ShumateTile *self)
   clutter_actor_restore_easing_state (priv->content_actor);
 
   g_signal_connect (priv->content_actor, "transition-stopped::opacity", G_CALLBACK (fade_in_completed), self);
+   */
 }
 
 
@@ -841,6 +846,7 @@ shumate_tile_display_content (ShumateTile *self)
  * Returns: (transfer none): the tile's content, this actor will change each time the tile's content changes.
  * You should not unref this content, it is owned by the tile.
  */
+/*
 ClutterActor *
 shumate_tile_get_content (ShumateTile *self)
 {
@@ -848,6 +854,7 @@ shumate_tile_get_content (ShumateTile *self)
 
   return self->priv->content_actor;
 }
+ */
 
 
 /**

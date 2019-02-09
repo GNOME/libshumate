@@ -18,39 +18,39 @@
  */
 
 #include <shumate/shumate.h>
+#include <gtk/gtk.h>
 
-static ClutterActor *stage;
+static GtkWidget *window;
 
-static ClutterActor *
-create_actor ()
+static ShumateView *
+create_view ()
 {
-  ClutterActor *actor;
+  ShumateView *view;
 
   /* Create the map view */
-  actor = shumate_view_new ();
-  clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
-  clutter_actor_add_child (stage, actor);
+  view = shumate_view_new ();
+  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
 
-  shumate_view_set_zoom_level (SHUMATE_VIEW (actor), 12);
-  shumate_view_center_on (SHUMATE_VIEW (actor), 45.466, -73.75);
+  shumate_view_set_zoom_level (view, 12);
+  shumate_view_center_on (view, 45.466, -73.75);
   
-  return actor;
+  return view;
 }
 
 
 static gboolean
 callback (void *data)
 {
-  static ClutterActor *actor = NULL;
+  static ShumateView *view = NULL;
   
-  if (!actor)
+  if (!view)
   {
-    actor = create_actor();
+    view = create_view();
   }
   else
   {
-    clutter_actor_destroy (actor);
-    actor = NULL;
+    gtk_widget_destroy (GTK_WIDGET (view));
+    view = NULL;
   }
   
   return TRUE;
@@ -60,17 +60,16 @@ callback (void *data)
 int
 main (int argc, char *argv[])
 {
-  if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
-    return 1;
+  gtk_init ();
 
-  stage = clutter_stage_new ();
-  clutter_actor_set_size (stage, 800, 600);
-  g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_widget_set_size_request (GTK_WIDGET (window), 800, 600);
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
   g_timeout_add (100, (GSourceFunc) callback, NULL);
 
-  clutter_actor_show (stage);
-  clutter_main ();
+  gtk_widget_show (window);
+  gtk_main ();
 
   return 0;
 }

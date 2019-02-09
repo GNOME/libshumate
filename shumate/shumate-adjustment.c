@@ -24,8 +24,6 @@
 
 #include "config.h"
 
-#include <clutter/clutter.h>
-
 #include "shumate-adjustment.h"
 #include "shumate-marshal.h"
 #include "shumate-private.h"
@@ -43,7 +41,7 @@ struct _ShumateAdjustmentPrivate
   gdouble step_increment;
 
   /* For interpolation */
-  ClutterTimeline *interpolation;
+  //ClutterTimeline *interpolation;
   gdouble dx;
   gdouble old_position;
   gdouble new_position;
@@ -146,12 +144,14 @@ stop_interpolation (ShumateAdjustment *adjustment)
 {
   ShumateAdjustmentPrivate *priv = adjustment->priv;
 
+  /*
   if (priv->interpolation)
     {
       clutter_timeline_stop (priv->interpolation);
       g_object_unref (priv->interpolation);
       priv->interpolation = NULL;
     }
+   */
 }
 
 
@@ -452,6 +452,7 @@ shumate_adjustment_get_values (ShumateAdjustment *adjustment,
 }
 
 
+/*
 static void
 interpolation_new_frame_cb (ClutterTimeline *timeline,
     gint frame_num,
@@ -476,7 +477,7 @@ interpolation_completed_cb (ClutterTimeline *timeline,
   stop_interpolation (adjustment);
   shumate_adjustment_set_value (adjustment, priv->new_position);
 }
-
+ */
 
 void
 shumate_adjustment_interpolate (ShumateAdjustment *adjustment,
@@ -498,8 +499,9 @@ shumate_adjustment_interpolate (ShumateAdjustment *adjustment,
   priv->new_position = value;
 
   priv->dx = (priv->new_position - priv->old_position) * n_frames;
-  priv->interpolation = clutter_timeline_new (((gdouble) n_frames / fps) * 1000);
+  //priv->interpolation = clutter_timeline_new (((gdouble) n_frames / fps) * 1000);
 
+  /*
   g_signal_connect (priv->interpolation,
       "new-frame",
       G_CALLBACK (interpolation_new_frame_cb),
@@ -510,6 +512,7 @@ shumate_adjustment_interpolate (ShumateAdjustment *adjustment,
       adjustment);
 
   clutter_timeline_start (priv->interpolation);
+   */
 }
 
 

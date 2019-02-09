@@ -133,27 +133,27 @@ set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 }
 
 
-static gboolean
-image_tile_draw_cb (ClutterCanvas   *canvas,
-    cairo_t *cr,
-    gint width,
-    gint height,
-    ShumateTile *tile)
-{
-  cairo_surface_t *surface;
+/* static gboolean */
+/* image_tile_draw_cb (ClutterCanvas   *canvas, */
+/*     cairo_t *cr, */
+/*     gint width, */
+/*     gint height, */
+/*     ShumateTile *tile) */
+/* { */
+/*   cairo_surface_t *surface; */
 
-  surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (tile));
+/*   surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (tile)); */
 
   /* Clear the drawing area */
-  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-  cairo_paint (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+/*   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR); */
+/*   cairo_paint (cr); */
+/*   cairo_set_operator (cr, CAIRO_OPERATOR_OVER); */
 
-  cairo_set_source_surface (cr, surface, 0, 0);
-  cairo_paint(cr);
+/*   cairo_set_source_surface (cr, surface, 0, 0); */
+/*   cairo_paint(cr); */
 
-  return FALSE;
-}
+/*   return FALSE; */
+/* } */
 
 
 static void
@@ -161,9 +161,9 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
 {
   ShumateTile *tile = data->tile;
   gboolean error = TRUE;
-  ClutterActor *actor = NULL;
+  //ClutterActor *actor = NULL;
   GdkPixbuf *pixbuf;
-  ClutterContent *content;
+  //ClutterContent *content;
   gfloat width, height;
   cairo_surface_t *image_surface = NULL;
   cairo_format_t format;
@@ -193,24 +193,26 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
 
   /* Load the image into clutter */
   width = height = shumate_tile_get_size (tile);
-  content = clutter_canvas_new ();
-  clutter_canvas_set_size (CLUTTER_CANVAS (content), width, height);
-  g_signal_connect (content, "draw", G_CALLBACK (image_tile_draw_cb), tile);
-  clutter_content_invalidate (content);
+  /* content = clutter_canvas_new (); */
+  /* clutter_canvas_set_size (CLUTTER_CANVAS (content), width, height); */
+  /* g_signal_connect (content, "draw", G_CALLBACK (image_tile_draw_cb), tile); */
+  /* clutter_content_invalidate (content); */
 
-  actor = clutter_actor_new ();
-  clutter_actor_set_size (actor, width, height);
-  clutter_actor_set_content (actor, content);
-  g_object_unref (content);
+  /* actor = clutter_actor_new (); */
+  /* clutter_actor_set_size (actor, width, height); */
+  /* clutter_actor_set_content (actor, content); */
+  /* g_object_unref (content); */
   /* has to be set for proper opacity */
-  clutter_actor_set_offscreen_redirect (actor, CLUTTER_OFFSCREEN_REDIRECT_AUTOMATIC_FOR_OPACITY);
+  /* clutter_actor_set_offscreen_redirect (actor, CLUTTER_OFFSCREEN_REDIRECT_AUTOMATIC_FOR_OPACITY); */
 
   error = FALSE;
 
 finish:
 
+  /*
   if (actor)
     shumate_tile_set_content (tile, actor);
+  */
 
   g_signal_emit_by_name (tile, "render-complete", data->data, data->size, error);
 

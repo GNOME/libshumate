@@ -28,8 +28,8 @@
 #include <shumate/shumate-defines.h>
 #include <shumate/shumate-location.h>
 
+#include <gdk/gdk.h>
 #include <glib-object.h>
-#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -64,20 +64,20 @@ typedef struct _ShumateMarkerClass ShumateMarkerClass;
  */
 struct _ShumateMarker
 {
-  ClutterActor parent;
+  GObject parent;
 
   ShumateMarkerPrivate *priv;
 };
 
 struct _ShumateMarkerClass
 {
-  ClutterActorClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType shumate_marker_get_type (void);
 
 
-ClutterActor *shumate_marker_new (void);
+ShumateMarker *shumate_marker_new (void);
 
 void shumate_marker_set_selectable (ShumateMarker *marker,
     gboolean value);
@@ -98,11 +98,11 @@ void shumate_marker_animate_out (ShumateMarker *marker);
 void shumate_marker_animate_out_with_delay (ShumateMarker *marker,
     guint delay);
 
-void shumate_marker_set_selection_color (ClutterColor *color);
-const ClutterColor *shumate_marker_get_selection_color (void);
+void shumate_marker_set_selection_color (GdkRGBA *color);
+const GdkRGBA *shumate_marker_get_selection_color (void);
 
-void shumate_marker_set_selection_text_color (ClutterColor *color);
-const ClutterColor *shumate_marker_get_selection_text_color (void);
+void shumate_marker_set_selection_text_color (GdkRGBA *color);
+const GdkRGBA *shumate_marker_get_selection_text_color (void);
 
 G_END_DECLS
 

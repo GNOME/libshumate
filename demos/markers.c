@@ -24,14 +24,12 @@
 ShumateMarkerLayer *
 create_marker_layer (G_GNUC_UNUSED ShumateView *view, ShumatePathLayer **path)
 {
-  ClutterActor *marker;
+  ShumateMarker *marker;
   ShumateMarkerLayer *layer;
-  ClutterActor *layer_actor;
-  ClutterColor orange = { 0xf3, 0x94, 0x07, 0xbb };
+  GdkRGBA orange = { 0.95, 0.6, 0.03, 0.75 };
 
   *path = shumate_path_layer_new ();
   layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
-  layer_actor = CLUTTER_ACTOR (layer);
 
   marker = shumate_label_new_with_text ("Montréal\n<span size=\"xx-small\">Québec</span>",
         "Serif 14", NULL, NULL);
@@ -71,6 +69,5 @@ create_marker_layer (G_GNUC_UNUSED ShumateView *view, ShumatePathLayer **path)
   
   shumate_marker_layer_set_all_markers_draggable (layer);
 
-  clutter_actor_show (layer_actor);
   return layer;
 }

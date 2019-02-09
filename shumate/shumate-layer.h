@@ -24,7 +24,6 @@
 #ifndef __SHUMATE_LAYER_H__
 #define __SHUMATE_LAYER_H__
 
-#include <clutter/clutter.h>
 #include <shumate/shumate-defines.h>
 #include <shumate/shumate-bounding-box.h>
 
@@ -58,12 +57,12 @@ typedef struct _ShumateLayerClass ShumateLayerClass;
  */
 struct _ShumateLayer
 {
-  ClutterActor parent;
+  GObject parent;
 };
 
 struct _ShumateLayerClass
 {
-  ClutterActorClass parent_class;
+  GObjectClass parent_class;
 
   void (*set_view)(ShumateLayer *layer,
       ShumateView *view);

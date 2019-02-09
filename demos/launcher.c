@@ -17,23 +17,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <gdk/gdk.h>
+#include <gtk/gtk.h>
 #include <shumate/shumate.h>
 #include "markers.h"
 
 #define PADDING 10
 
 static gboolean
-map_view_button_release_cb (G_GNUC_UNUSED ClutterActor *actor,
-    ClutterButtonEvent *event,
+map_view_button_release_cb (G_GNUC_UNUSED GtkWidget *widget,
+    GdkEvent *event,
     ShumateView *view)
 {
   gdouble lat, lon;
 
-  if (event->button != 1 || event->click_count > 1)
-    return FALSE;
-
-  lon = shumate_view_x_to_longitude (view, event->x);
-  lat = shumate_view_y_to_latitude (view, event->y);
+  lon = shumate_view_x_to_longitude (view, event->button.x);
+  lat = shumate_view_y_to_latitude (view, event->button.y);
 
   g_print ("Map clicked at %f, %f \n", lat, lon);
 
@@ -42,8 +41,8 @@ map_view_button_release_cb (G_GNUC_UNUSED ClutterActor *actor,
 
 
 static gboolean
-zoom_in (G_GNUC_UNUSED ClutterActor *actor,
-    G_GNUC_UNUSED ClutterButtonEvent *event,
+zoom_in (G_GNUC_UNUSED GtkWidget *widget,
+    G_GNUC_UNUSED GdkEventButton *event,
     ShumateView *view)
 {
   shumate_view_zoom_in (view);
@@ -52,83 +51,11 @@ zoom_in (G_GNUC_UNUSED ClutterActor *actor,
 
 
 static gboolean
-zoom_out (G_GNUC_UNUSED ClutterActor *actor,
-    G_GNUC_UNUSED ClutterButtonEvent *event,
+zoom_out (G_GNUC_UNUSED GtkWidget *widget,
+    G_GNUC_UNUSED GdkEventButton *event,
     ShumateView *view)
 {
   shumate_view_zoom_out (view);
-  return TRUE;
-}
-
-
-static ClutterActor *
-make_button (char *text)
-{
-  ClutterActor *button, *button_bg, *button_text;
-  ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
-  ClutterColor black = { 0x00, 0x00, 0x00, 0xff };
-  gfloat width, height;
-
-  button = clutter_actor_new ();
-
-  button_bg = clutter_actor_new ();
-  clutter_actor_set_background_color (button_bg, &white);
-  clutter_actor_add_child (button, button_bg);
-  clutter_actor_set_opacity (button_bg, 0xcc);
-
-  button_text = clutter_text_new_full ("Sans 10", text, &black);
-  clutter_actor_add_child (button, button_text);
-  clutter_actor_get_size (button_text, &width, &height);
-
-  clutter_actor_set_size (button_bg, width + PADDING * 2, height + PADDING * 2);
-  clutter_actor_set_position (button_bg, 0, 0);
-  clutter_actor_set_position (button_text, PADDING, PADDING);
-
-  return button;
-}
-
-#define TILE_SQUARE_SIZE 64
-
-static gboolean
-draw_background_tile (ClutterCanvas *canvas,
-    cairo_t *cr,
-    int width,
-    int height)
-{
-  cairo_pattern_t *pat;
-  gint no_of_squares_x = width / TILE_SQUARE_SIZE;
-  gint no_of_squares_y = height / TILE_SQUARE_SIZE;
-  gint row, column;
-
-  /* Create the background tile */
-  pat = cairo_pattern_create_linear (width / 2.0, 0.0, width, height / 2.0);
-  cairo_pattern_add_color_stop_rgb (pat, 0, 0.662, 0.662, 0.662);
-  cairo_set_source (cr, pat);
-  cairo_rectangle (cr, 0, 0, width, height);
-  cairo_fill (cr);
-  cairo_pattern_destroy (pat);
-
-  /* Filling the tile */
-  cairo_set_source_rgb (cr, 0.811, 0.811, 0.811);
-  cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
-
-  for (row = 0; row < no_of_squares_y; ++row)
-    {
-      for (column = 0; column < no_of_squares_x; column++)
-        {
-          /* drawing square alternatively */
-          if ((row % 2 == 0 && column % 2 == 0) ||
-              (row % 2 != 0 && column % 2 != 0))
-            cairo_rectangle (cr,
-                column * TILE_SQUARE_SIZE,
-                row * TILE_SQUARE_SIZE,
-                TILE_SQUARE_SIZE,
-                TILE_SQUARE_SIZE);
-        }
-      cairo_fill (cr);
-    }
-  cairo_stroke (cr);
-  
   return TRUE;
 }
 
@@ -137,71 +64,37 @@ int
 main (int argc,
     char *argv[])
 {
-  ClutterActor *actor, *stage, *buttons, *button;
+  GtkWidget *window;
+  ShumateView *view;
   ShumateMarkerLayer *layer;
   ShumatePathLayer *path;
   gfloat width, total_width = 0;
 
-  if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
-    return 1;
+  gtk_init ();
 
-  stage = clutter_stage_new ();
-  clutter_actor_set_size (stage, 800, 600);
-  g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_widget_set_size_request (window, 800, 600);
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
   /* Create the map view */
-  actor = shumate_view_new ();
-  clutter_actor_set_size (CLUTTER_ACTOR (actor), 800, 600);
-  clutter_actor_add_child (stage, actor);
-
-  /* Create the buttons */
-  buttons = clutter_actor_new ();
-  clutter_actor_set_position (buttons, PADDING, PADDING);
-
-  button = make_button ("Zoom in");
-  clutter_actor_add_child (buttons, button);
-  clutter_actor_set_reactive (button, TRUE);
-  clutter_actor_get_size (button, &width, NULL);
-  total_width += width + PADDING;
-  g_signal_connect (button, "button-release-event",
-      G_CALLBACK (zoom_in),
-      actor);
-
-  button = make_button ("Zoom out");
-  clutter_actor_add_child (buttons, button);
-  clutter_actor_set_reactive (button, TRUE);
-  clutter_actor_set_position (button, total_width, 0);
-  clutter_actor_get_size (button, &width, NULL);
-  g_signal_connect (button, "button-release-event",
-      G_CALLBACK (zoom_out),
-      actor);
-
-  clutter_actor_add_child (stage, buttons);
-
-  ClutterContent *canvas;
-  canvas = clutter_canvas_new ();
-  clutter_canvas_set_size (CLUTTER_CANVAS (canvas), 512, 256);
-  g_signal_connect (canvas, "draw", G_CALLBACK (draw_background_tile), NULL);
-  clutter_content_invalidate (canvas);
-  shumate_view_set_background_pattern (SHUMATE_VIEW (actor), canvas);
+  view = shumate_view_new ();
+  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
-  layer = create_marker_layer (SHUMATE_VIEW (actor), &path);
-  shumate_view_add_layer (SHUMATE_VIEW (actor), SHUMATE_LAYER (layer));
+  layer = create_marker_layer (view, &path);
+  shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 
-  /* Connect to the click event */
-  clutter_actor_set_reactive (actor, TRUE);
-  g_signal_connect (actor, "button-release-event",
-      G_CALLBACK (map_view_button_release_cb),
-      actor);
+  g_signal_connect (G_OBJECT (view), "button-press-event",
+                    G_CALLBACK (map_view_button_release_cb), view);
 
   /* Finish initialising the map view */
-  g_object_set (G_OBJECT (actor), "zoom-level", 12,
+  g_object_set (G_OBJECT (view), "zoom-level", 12,
       "kinetic-mode", TRUE, NULL);
-  shumate_view_center_on (SHUMATE_VIEW (actor), 45.466, -73.75);
+  shumate_view_center_on (view, 45.466, -73.75);
 
-  clutter_actor_show (stage);
-  clutter_main ();
+  gtk_widget_show (window);
+  gtk_widget_show (GTK_WIDGET (view));
+  gtk_main ();
 
   return 0;
 }

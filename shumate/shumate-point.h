@@ -26,8 +26,7 @@
 
 #include <shumate/shumate-marker.h>
 
-#include <glib-object.h>
-#include <clutter/clutter.h>
+#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 
@@ -73,14 +72,14 @@ struct _ShumatePointClass
 
 GType shumate_point_get_type (void);
 
-ClutterActor *shumate_point_new (void);
+ShumatePoint *shumate_point_new (void);
 
-ClutterActor *shumate_point_new_full (gdouble size,
-    const ClutterColor *color);
+ShumatePoint *shumate_point_new_full (gdouble size,
+    const GdkRGBA *color);
 
 void shumate_point_set_color (ShumatePoint *point,
-    const ClutterColor *color);
-ClutterColor *shumate_point_get_color (ShumatePoint *point);
+    const GdkRGBA *color);
+GdkRGBA *shumate_point_get_color (ShumatePoint *point);
 
 void shumate_point_set_size (ShumatePoint *point,
     gdouble size);

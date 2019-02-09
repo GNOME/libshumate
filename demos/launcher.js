@@ -30,93 +30,39 @@
  * export GI_TYPELIB_PATH=$GI_TYPELIB_PATH:/usr/local/lib/girepository-1.0/
  */
 
-const Lang = imports.lang;
-const Clutter = imports.gi.Clutter;
+imports.gi.versions.Gtk = '4.0';
+imports.gi.versions.Gdk = '4.0';
+
+const Gdk = imports.gi.Gdk;
+const Gtk = imports.gi.Gtk;
 const Shumate = imports.gi.Shumate;
 
-Clutter.init (null);
+Gtk.init ();
 
-const PADDING = 10;
 
-function make_button (text)
+function map_view_button_release_cb (event)
 {
-  let white = new Clutter.Color ({red:0xff, blue:0xff, green:0xff, alpha:0xff});
-  let black = new Clutter.Color ({red:0x00, blue:0x00, green:0x00, alpha:0xff});
-
-  let button = new Clutter.Actor ();
-
-  let button_bg = new Clutter.Actor ();
-  button_bg.set_background_color (white)
-  button.add_child (button_bg);
-  button.set_opacity (0xcc);
-
-  let button_text = new Clutter.Text ({font_name:"Sans 10", text:text, color:black});
-  button.add_child (button_text);
-
-  let [width, height] = button_text.get_size();
-  button_bg.set_size (width + PADDING * 2, height + PADDING * 2);
-  button_bg.set_position (0, 0);
-  button_text.set_position (PADDING, PADDING);
-
-  return button;
-}
-
-function map_view_button_release_cb (actor, event)
-{
-  // FIXME: it does not print and GLib.printf does not work.
-  if (event.button != 1 || event.click_count > 1)
-    return false;
-
-  let lat = view.y_to_latitude (event.y);
-  let lon = view.x_to_longitude (event.x);
+  let lat = view.y_to_latitude (event.button.y);
+  let lon = view.x_to_longitude (event.button.x);
 
   log ("Map clicked at %f, %f \n", lat, lon);
 
   return true;
 }
 
-let stage = new Clutter.Stage ();
-stage.title = "Shumate Javascript Example";
-stage.set_size (800, 600);
+let window = new Gtk.Window (Gtk.Window.TOPLEVEL);
+window.title = "Shumate Javascript Example";
+window.set_size_request (800, 600);
 
 /* Create the map view */
 let view = new Shumate.View();
-view.set_size (800, 600);
-stage.add_actor (view);
+window.add (view);
 
 /* Create the buttons */
 let buttons = new Clutter.Actor ();
 let total_width = 0;
 buttons.set_position (PADDING, PADDING);
 
-let button = make_button ("Zoom in");
-buttons.add_child (button);
-button.set_reactive (true);
-
-let width = button.width;
-total_width += width + PADDING;
-button.connect ("button-release-event", Lang.bind (view,
-    function (actor, event)
-      {
-        view.zoom_in ();
-        return true;
-      }));
-
-let button = make_button ("Zoom out");
-buttons.add_child (button);
-button.set_reactive (true);
-button.set_position (total_width, 0);
-
-let width = button.width;
-total_width += width + PADDING;
-button.connect ("button-release-event", Lang.bind (view,
-    function (actor, event)
-      {
-        view.zoom_out ();
-        return true;
-      }));
-
-stage.add_child (buttons);
 
 /* Create the markers and marker layer */
 let orange= Clutter.Color.new(0xf3,0x94,0x07,0xbb);
@@ -128,17 +74,14 @@ marker.set_reactive(true);
 layer.show();
 view.add_layer(layer);
 
-/* Connect to the click event */
-view.set_reactive (true);
-view.connect ("button-release-event", Lang.bind (view,
-    map_view_button_release_cb));
+view.connect('button-pressed-event', (w, event) => map_view_button_release_cb (event));
 
 /* Finish initialising the map view */
 view.zoom_level = 12;
 view.kinetic_mode = true;
 view.center_on (45.466, -73.75);
 
-stage.connect ("destroy", Clutter.main_quit);
+window.connect ("destroy", Gtk.main_quit);
 
-stage.show ();
-Clutter.main ();
+window.show ();
+Gtk.main ();

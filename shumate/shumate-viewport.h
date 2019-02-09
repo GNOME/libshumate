@@ -26,8 +26,8 @@
 #define __SHUMATE_VIEWPORT_H__
 
 #include <glib-object.h>
-#include <clutter/clutter.h>
 #include "shumate-adjustment.h"
+#include "shumate-view.h"
 
 G_BEGIN_DECLS
 
@@ -54,19 +54,19 @@ typedef struct _ShumateViewportClass ShumateViewportClass;
 
 struct _ShumateViewport
 {
-  ClutterActor parent;
+  GObject parent;
 
   ShumateViewportPrivate *priv;
 };
 
 struct _ShumateViewportClass
 {
-  ClutterActorClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType shumate_viewport_get_type (void) G_GNUC_CONST;
 
-ClutterActor *shumate_viewport_new (void);
+ShumateViewport *shumate_viewport_new (void);
 
 void shumate_viewport_set_origin (ShumateViewport *viewport,
     gdouble x,
@@ -78,6 +78,7 @@ void shumate_viewport_get_origin (ShumateViewport *viewport,
 void shumate_viewport_stop (ShumateViewport *viewport);
 
 void shumate_viewport_get_adjustments (ShumateViewport *viewport,
+    ShumateView *view,
     ShumateAdjustment **hadjustment,
     ShumateAdjustment **vadjustment);
 
@@ -85,17 +86,9 @@ void shumate_viewport_set_adjustments (ShumateViewport *viewport,
     ShumateAdjustment *hadjustment,
     ShumateAdjustment *vadjustment);
 
-void shumate_viewport_set_child (ShumateViewport *viewport,
-    ClutterActor *child);
-
 void shumate_viewport_get_anchor (ShumateViewport *viewport,
     gint *x,
     gint *y);
-
-void shumate_viewport_set_actor_position (ShumateViewport *viewport,
-    ClutterActor *actor,
-    gdouble x,
-    gdouble y);
 
 G_END_DECLS
 

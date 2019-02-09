@@ -45,14 +45,14 @@
 #include "shumate-private.h"
 #include "shumate-tile.h"
 
-#include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
+#include <gdk/gdk.h>
 #include <cairo.h>
 #include <math.h>
 
-static ClutterColor SELECTED_COLOR = { 0x00, 0x33, 0xcc, 0xff };
-static ClutterColor SELECTED_TEXT_COLOR = { 0xff, 0xff, 0xff, 0xff };
+static GdkRGBA SELECTED_COLOR = { 0.0, 0.2, 0.8, 1.0 };
+static GdkRGBA SELECTED_TEXT_COLOR = { 1.0, 1.0, 1.0, 1.0 };
 
 enum
 {
@@ -86,7 +86,7 @@ static gdouble get_longitude (ShumateLocation *location);
 
 static void location_interface_init (ShumateLocationIface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, CLUTTER_TYPE_ACTOR,
+G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
 
 #define GET_PRIVATE(obj) \
@@ -111,10 +111,10 @@ struct _ShumateMarkerPrivate
  * @color: a #ClutterColor
  *
  * Changes the selection color, this is to ensure a better integration with
- * the desktop, this is automatically done by GtkShumateEmbed.
+ * the desktop.
  */
 void
-shumate_marker_set_selection_color (ClutterColor *color)
+shumate_marker_set_selection_color (GdkRGBA *color)
 {
   SELECTED_COLOR.red = color->red;
   SELECTED_COLOR.green = color->green;
@@ -130,7 +130,7 @@ shumate_marker_set_selection_color (ClutterColor *color)
  *
  * Returns: the selection color. Should not be freed.
  */
-const ClutterColor *
+const GdkRGBA *
 shumate_marker_get_selection_color ()
 {
   return &SELECTED_COLOR;
@@ -142,10 +142,10 @@ shumate_marker_get_selection_color ()
  * @color: a #ClutterColor
  *
  * Changes the selection text color, this is to ensure a better integration with
- * the desktop, this is automatically done by GtkShumateEmbed.
+ * the desktop.
  */
 void
-shumate_marker_set_selection_text_color (ClutterColor *color)
+shumate_marker_set_selection_text_color (GdkRGBA *color)
 {
   SELECTED_TEXT_COLOR.red = color->red;
   SELECTED_TEXT_COLOR.green = color->green;
@@ -161,7 +161,7 @@ shumate_marker_set_selection_text_color (ClutterColor *color)
  *
  * Returns: the selection text color. Should not be freed.
  */
-const ClutterColor *
+const GdkRGBA *
 shumate_marker_get_selection_text_color ()
 {
   return &SELECTED_TEXT_COLOR;
@@ -381,7 +381,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
         g_cclosure_marshal_VOID__BOXED,
         G_TYPE_NONE,
         1,
-        CLUTTER_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   /**
    * ShumateMarker::button-release:
@@ -398,7 +398,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
         g_cclosure_marshal_VOID__BOXED,
         G_TYPE_NONE,
         1,
-        CLUTTER_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   /**
    * ShumateMarker::drag-motion:
@@ -418,7 +418,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
         _shumate_marshal_VOID__DOUBLE_DOUBLE_BOXED,
         G_TYPE_NONE,
         3,
-        G_TYPE_DOUBLE, G_TYPE_DOUBLE, CLUTTER_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+        G_TYPE_DOUBLE, G_TYPE_DOUBLE, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
   /**
    * ShumateMarker::drag-finish:
@@ -436,7 +436,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
         g_cclosure_marshal_VOID__BOXED,
         G_TYPE_NONE,
         1,
-        CLUTTER_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
+        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
 
 
   g_object_class_override_property (object_class,
@@ -456,24 +456,24 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
  *
  * Returns: a new #ShumateMarker.
  */
-ClutterActor *
+ShumateMarker *
 shumate_marker_new (void)
 {
-  return CLUTTER_ACTOR (g_object_new (SHUMATE_TYPE_MARKER, NULL));
+  return SHUMATE_MARKER (g_object_new (SHUMATE_TYPE_MARKER, NULL));
 }
 
 
 static gboolean
-motion_event_cb (ClutterActor *stage,
-    ClutterMotionEvent *event,
-    ShumateMarker *marker)
+motion_event_cb (ShumateMarker *marker,
+    GdkEventMotion *event)
 {
   ShumateMarkerPrivate *priv = marker->priv;
   gfloat x, y;
 
-  if (event->type != CLUTTER_MOTION)
+  if (event->type != GDK_DRAG_MOTION)
     return FALSE;
 
+  /*
   if (clutter_actor_transform_stage_point (CLUTTER_ACTOR (marker),
           event->x,
           event->y,
@@ -483,28 +483,30 @@ motion_event_cb (ClutterActor *stage,
           x - priv->click_x, y - priv->click_y, event);
       priv->moved = TRUE;
     }
+   */
 
   return TRUE;
 }
 
 
 static gboolean
-capture_release_event_cb (ClutterActor *stage,
-    ClutterButtonEvent *event,
-    ShumateMarker *marker)
+capture_release_event_cb (ShumateMarker *marker,
+    GdkEventButton *event)
 {
   ShumateMarkerPrivate *priv = marker->priv;
 
-  if ((event->type != CLUTTER_BUTTON_RELEASE) ||
+  if ((event->type != GDK_BUTTON_RELEASE) ||
       (event->button != 1))
     return FALSE;
 
+  /*
   g_signal_handlers_disconnect_by_func (stage,
       motion_event_cb,
       marker);
   g_signal_handlers_disconnect_by_func (stage,
       capture_release_event_cb,
       marker);
+  */
 
   if (priv->moved)
     g_signal_emit_by_name (marker, "drag-finish", event);
@@ -516,17 +518,15 @@ capture_release_event_cb (ClutterActor *stage,
 
 
 static gboolean
-button_release_event_cb (ClutterActor *actor,
-    ClutterButtonEvent *event,
-    ShumateMarker *marker)
+button_release_event_cb (ShumateMarker *marker,
+    GdkEventButton *event)
 {
-  if ((event->type != CLUTTER_BUTTON_RELEASE) ||
+  if ((event->type != GDK_BUTTON_RELEASE) ||
       (event->button != 1))
     return FALSE;
 
   g_signal_handlers_disconnect_by_func (marker,
-      button_release_event_cb,
-      marker);
+      button_release_event_cb, marker);
 
   g_signal_emit_by_name (marker, "button-release", event);
 
@@ -535,23 +535,20 @@ button_release_event_cb (ClutterActor *actor,
 
 
 static gboolean
-button_press_event_cb (ClutterActor *actor,
-    ClutterEvent *event,
-    ShumateMarker *marker)
+button_press_event_cb (ShumateMarker *marker,
+    GdkEventButton *event)
 {
   ShumateMarkerPrivate *priv = marker->priv;
-  ClutterButtonEvent *bevent = (ClutterButtonEvent *) event;
-  ClutterActor *stage = clutter_actor_get_stage (actor);
 
-  if (event->type != CLUTTER_BUTTON_PRESS ||
-      bevent->button != 1 ||
-      !stage)
+  if (event->type != GDK_BUTTON_PRESS ||
+      event->button != 1)
     {
       return FALSE;
     }
 
   if (priv->draggable)
     {
+      /*
       if (clutter_actor_transform_stage_point (actor, bevent->x, bevent->y,
               &priv->click_x, &priv->click_y))
         {
@@ -566,6 +563,7 @@ button_press_event_cb (ClutterActor *actor,
               G_CALLBACK (capture_release_event_cb),
               marker);
         }
+       */
     }
   else
     {
@@ -580,10 +578,12 @@ button_press_event_cb (ClutterActor *actor,
 
   if (priv->selectable || priv->draggable)
     {
+      /*
       ClutterActor *parent;
 
       parent = clutter_actor_get_parent (CLUTTER_ACTOR (marker));
       clutter_actor_set_child_above_sibling (parent, CLUTTER_ACTOR (marker), NULL);
+       */
     }
 
   g_signal_emit_by_name (marker, "button-press", event);
@@ -604,8 +604,6 @@ shumate_marker_init (ShumateMarker *marker)
   priv->selected = FALSE;
   priv->selectable = TRUE;
   priv->draggable = FALSE;
-
-  clutter_actor_set_reactive (CLUTTER_ACTOR (marker), TRUE);
 
   g_signal_connect (marker,
       "button-press-event",
@@ -722,108 +720,3 @@ shumate_marker_get_draggable (ShumateMarker *marker)
   return marker->priv->draggable;
 }
 
-
-/**
- * shumate_marker_animate_in:
- * @marker: a #ShumateMarker
- *
- * Animates the marker as if it were falling from the sky onto the map.
- */
-void
-shumate_marker_animate_in (ShumateMarker *marker)
-{
-  shumate_marker_animate_in_with_delay (marker, 0);
-}
-
-
-/**
- * shumate_marker_animate_in_with_delay :
- * @marker: a #ShumateMarker
- * @delay: The delay in milliseconds
- *
- * Animates the marker as if it were falling from the sky onto the map after
- * delay.
- */
-void
-shumate_marker_animate_in_with_delay (ShumateMarker *marker,
-    guint delay)
-{
-  gfloat y;
-
-  g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  clutter_actor_show (CLUTTER_ACTOR (marker));
-  clutter_actor_set_opacity (CLUTTER_ACTOR (marker), 0);
-  clutter_actor_set_scale (CLUTTER_ACTOR (marker), 1.5, 1.5);
-  clutter_actor_get_position (CLUTTER_ACTOR (marker), NULL, &y);
-  clutter_actor_move_by (CLUTTER_ACTOR (marker), 0, -100);
-
-  clutter_actor_save_easing_state (CLUTTER_ACTOR (marker));
-  clutter_actor_set_easing_delay (CLUTTER_ACTOR (marker), delay);
-  clutter_actor_set_easing_mode (CLUTTER_ACTOR (marker), CLUTTER_EASE_OUT_BOUNCE);
-  clutter_actor_set_easing_duration (CLUTTER_ACTOR (marker), 1000);
-  clutter_actor_set_opacity (CLUTTER_ACTOR (marker), 255);
-  clutter_actor_set_scale (CLUTTER_ACTOR (marker), 1.0, 1.0);
-  clutter_actor_set_y (CLUTTER_ACTOR (marker), y);
-  clutter_actor_restore_easing_state (CLUTTER_ACTOR (marker));
-}
-
-
-/**
- * shumate_marker_animate_out:
- * @marker: a #ShumateMarker
- *
- * Animates the marker as if it were drawn through the sky.
- */
-void
-shumate_marker_animate_out (ShumateMarker *marker)
-{
-  shumate_marker_animate_out_with_delay (marker, 0);
-}
-
-
-static void
-on_transition_stopped (ClutterActor *marker,
-    const gchar *transition_name,
-    gboolean is_finished)
-{
-  clutter_actor_hide (marker);
-
-  clutter_actor_move_by (marker, 0, 100);
-  g_signal_handlers_disconnect_by_func (marker, on_transition_stopped, NULL);
-}
-
-
-/**
- * shumate_marker_animate_out_with_delay :
- * @marker: a #ShumateMarker
- * @delay: The delay in milliseconds
- *
- * Animates the marker as if it were drawn through the sky after
- * delay.
- */
-void
-shumate_marker_animate_out_with_delay (ShumateMarker *marker,
-    guint delay)
-{
-  gfloat y;
-
-  g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  clutter_actor_get_position (CLUTTER_ACTOR (marker), NULL, &y);
-  clutter_actor_set_opacity (CLUTTER_ACTOR (marker), 200);
-
-  clutter_actor_save_easing_state (CLUTTER_ACTOR (marker));
-  clutter_actor_set_easing_delay (CLUTTER_ACTOR (marker), delay);
-  clutter_actor_set_easing_mode (CLUTTER_ACTOR (marker), CLUTTER_EASE_IN_BACK);
-  clutter_actor_set_easing_duration (CLUTTER_ACTOR (marker), 750);
-  clutter_actor_set_opacity (CLUTTER_ACTOR (marker), 0);
-  clutter_actor_set_scale (CLUTTER_ACTOR (marker), 2.0, 2.0);
-  clutter_actor_set_y (CLUTTER_ACTOR (marker), y - 100);
-  clutter_actor_restore_easing_state (CLUTTER_ACTOR (marker));
-
-  g_signal_connect (CLUTTER_ACTOR (marker),
-      "transition-stopped::opacity",
-      G_CALLBACK (on_transition_stopped),
-      NULL);
-}

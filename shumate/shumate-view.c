@@ -66,11 +66,12 @@
 #include "shumate-tile.h"
 #include "shumate-license.h"
 
-#include <clutter/clutter.h>
+//#include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
+#include <gtk/gtk.h>
 #include <math.h>
-#include <shumate-kinetic-scroll-view.h>
+//#include <shumate-kinetic-scroll-view.h>
 #include <shumate-viewport.h>
 #include <shumate-adjustment.h>
 
@@ -114,8 +115,8 @@ enum
 #define PADDING 10
 static guint signals[LAST_SIGNAL] = { 0, };
 
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_VIEW, ShumateViewPrivate))
+//#define GET_PRIVATE(obj) \
+//  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_VIEW, ShumateViewPrivate))
 
 #define ZOOM_LEVEL_OUT_OF_RANGE(priv, level) \
   (level < priv->min_zoom_level || \
@@ -127,7 +128,7 @@ static guint signals[LAST_SIGNAL] = { 0, };
 typedef struct
 {
   ShumateView *view;
-  ClutterTimeline *timeline;
+  //ClutterTimeline *timeline;
   gdouble to_latitude;
   gdouble to_longitude;
   gdouble from_latitude;
@@ -149,18 +150,18 @@ typedef struct
 struct _ShumateViewPrivate
 {
                                 /* ShumateView */
-  ClutterActor *kinetic_scroll;     /* kinetic_scroll */
-  ClutterActor *viewport;               /* viewport */
-  ClutterActor *viewport_container;         /* viewport_container */
-  ClutterActor *background_layer;               /* background_layer */
-  ClutterActor *zoom_layer;                     /* zoom_layer */
-  ClutterActor *map_layer;                      /* map_layer */
+  //ClutterActor *kinetic_scroll;     /* kinetic_scroll */
+  ShumateViewport *viewport;               /* viewport */
+  //ClutterActor *viewport_container;         /* viewport_container */
+  //ClutterActor *background_layer;               /* background_layer */
+  //ClutterActor *zoom_layer;                     /* zoom_layer */
+  //ClutterActor *map_layer;                      /* map_layer */
                                                 /* map_layer clones */
-  ClutterActor *user_layers;                    /* user_layers and clones */
-  ClutterActor *zoom_overlay_actor; /* zoom_overlay_actor */
-  ClutterActor *license_actor;      /* license_actor */
+  //ClutterActor *user_layers;                    /* user_layers and clones */
+  //ClutterActor *zoom_overlay_actor; /* zoom_overlay_actor */
+  //ClutterActor *license_actor;      /* license_actor */
 
-  ClutterContent *background_content;
+  //ClutterContent *background_content;
 
   gboolean hwrap;
   /* There are num_right_clones clones on the right, and one extra on the left */
@@ -210,7 +211,7 @@ struct _ShumateViewPrivate
   guint redraw_timeout;
   guint zoom_timeout;
 
-  ClutterAnimationMode goto_mode;
+  //ClutterAnimationMode goto_mode;
   guint goto_duration;
 
   gboolean animating_zoom;
@@ -227,7 +228,7 @@ struct _ShumateViewPrivate
   gint tile_y_last;
 
   /* Zoom gesture */
-  ClutterGestureAction *zoom_gesture;
+  //ClutterGestureAction *zoom_gesture;
   guint initial_gesture_zoom;
   gdouble focus_lat;
   gdouble focus_lon;
@@ -239,13 +240,13 @@ struct _ShumateViewPrivate
   GHashTable *visible_tiles;
 };
 
-G_DEFINE_TYPE (ShumateView, shumate_view, CLUTTER_TYPE_ACTOR);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
 
-static void exclusive_destroy_clone (ClutterActor *clone);
+//static void exclusive_destroy_clone (ClutterActor *clone);
 static void update_clones (ShumateView *view);
-static gboolean scroll_event (ClutterActor *actor,
+/*static gboolean scroll_event (ClutterActor *actor,
     ClutterScrollEvent *event,
-    ShumateView *view);
+    ShumateView *view);*/
 static void resize_viewport (ShumateView *view);
 static void shumate_view_get_property (GObject *object,
     guint prop_id,
@@ -261,21 +262,21 @@ static void shumate_view_init (ShumateView *view);
 static void viewport_pos_changed_cb (GObject *gobject,
     GParamSpec *arg1,
     ShumateView *view);
-static gboolean kinetic_scroll_button_press_cb (ClutterActor *actor,
+/*static gboolean kinetic_scroll_button_press_cb (ClutterActor *actor,
     ClutterButtonEvent *event,
     ShumateView *view);
 static ClutterActor *sample_user_layer_at_pos (ShumateView *view,
     gfloat x,
-    gfloat y);
+    gfloat y);*/
 static void swap_user_layer_slots (ShumateView *view,
     gint original_index,
     gint clone_index);
-static gboolean viewport_motion_cb (ClutterActor *actor,
+/*static gboolean viewport_motion_cb (ClutterActor *actor,
     ClutterMotionEvent *event,
     ShumateView *view);
 static gboolean viewport_press_cb (ClutterActor *actor,
     ClutterButtonEvent *event,
-    ShumateView *view);
+    ShumateView *view);*/
 static void load_visible_tiles (ShumateView *view,
     gboolean relocate);
 static gboolean view_set_zoom_level_at (ShumateView *view,
@@ -286,8 +287,8 @@ static gboolean view_set_zoom_level_at (ShumateView *view,
 static void tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
     ShumateView *view);
-static gboolean kinetic_scroll_key_press_cb (ShumateView *view,
-    ClutterKeyEvent *event);
+/*static gboolean kinetic_scroll_key_press_cb (ShumateView *view,
+    ClutterKeyEvent *event);*/
 static void shumate_view_go_to_with_duration (ShumateView *view,
     gdouble latitude,
     gdouble longitude,
@@ -396,12 +397,14 @@ position_viewport (ShumateView *view,
   gfloat bg_width, bg_height;
 
   /* remember the relative offset of the background tile */
+  /*
   if (priv->background_content)
     {
       clutter_content_get_preferred_size (priv->background_content, &bg_width, &bg_height);
       old_bg_offset_x = ((gint)priv->viewport_x + priv->bg_offset_x) % (gint)bg_width;
       old_bg_offset_y = ((gint)priv->viewport_y + priv->bg_offset_y) % (gint)bg_height;
     }
+   */
 
   /* notify about latitude and longitude change only after the viewport position is set */
   g_object_freeze_notify (G_OBJECT (view));
@@ -409,6 +412,7 @@ position_viewport (ShumateView *view,
   update_coords (view, x, y, TRUE);
 
   /* compute the new relative offset of the background tile */
+  /*
   if (priv->background_content)
     {
       gint new_bg_offset_x = (gint)priv->viewport_x % (gint)bg_width;
@@ -420,47 +424,50 @@ position_viewport (ShumateView *view,
       if (priv->bg_offset_y < 0)
         priv->bg_offset_y += bg_height;
     }
+   */
 
   /* we know about the change already - don't send the notifications again */
+  /*
   g_signal_handlers_block_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
   shumate_viewport_set_origin (SHUMATE_VIEWPORT (priv->viewport),
       (gint)priv->viewport_x,
       (gint)priv->viewport_y);
   g_signal_handlers_unblock_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
+   */
 
   g_object_thaw_notify (G_OBJECT (view));
 }
 
 
-static void
-view_relocated_cb (G_GNUC_UNUSED ShumateViewport *viewport,
-    ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-  gint anchor_x, anchor_y, new_width, new_height;
-  gint tile_size, column_count, row_count;
+/* static void */
+/* view_relocated_cb (G_GNUC_UNUSED ShumateViewport *viewport, */
+/*     ShumateView *view) */
+/* { */
+/*   ShumateViewPrivate *priv = view->priv; */
+/*   gint anchor_x, anchor_y, new_width, new_height; */
+/*   gint tile_size, column_count, row_count; */
 
-  clutter_actor_destroy_all_children (priv->zoom_layer);
-  load_visible_tiles (view, TRUE);
-  g_signal_emit_by_name (view, "layer-relocated", NULL);
+/*   clutter_actor_destroy_all_children (priv->zoom_layer); */
+/*   load_visible_tiles (view, TRUE); */
+/*   g_signal_emit_by_name (view, "layer-relocated", NULL); */
 
   /* Clutter clones need their source actor to have an explicitly set size to display properly */
-  tile_size = shumate_map_source_get_tile_size (priv->map_source);
-  column_count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level);
-  row_count = shumate_map_source_get_row_count (priv->map_source, priv->zoom_level);
-  shumate_viewport_get_anchor (SHUMATE_VIEWPORT (priv->viewport), &anchor_x, &anchor_y);
+/*   tile_size = shumate_map_source_get_tile_size (priv->map_source); */
+/*   column_count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level); */
+/*   row_count = shumate_map_source_get_row_count (priv->map_source, priv->zoom_level); */
+/*   shumate_viewport_get_anchor (SHUMATE_VIEWPORT (priv->viewport), &anchor_x, &anchor_y); */
 
-  /* The area containing tiles in the map layer is actually column_count * tile_size wide (same
-   * for height), but the viewport anchor acts as an offset for the tile actors, causing the map
-   * layer to contain some empty space as well.
-   */
-  new_width = column_count * tile_size + anchor_x;
-  new_height = row_count * tile_size + anchor_y;
+  /* The area containing tiles in the map layer is actually column_count * tile_size wide (same */
+/*    * for height), but the viewport anchor acts as an offset for the tile actors, causing the map */
+/*    * layer to contain some empty space as well. */
+/*    */
+/*   new_width = column_count * tile_size + anchor_x; */
+/*   new_height = row_count * tile_size + anchor_y; */
 
-  clutter_actor_set_size (priv->map_layer, new_width, new_height);
-}
+/*   clutter_actor_set_size (priv->map_layer, new_width, new_height); */
+/* } */
 
-
+/*
 static void
 panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
     ShumateView *view)
@@ -481,7 +488,7 @@ panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
   update_coords (view, x, y, TRUE);
   load_visible_tiles (view, FALSE);
 }
-
+*/
 
 static gboolean
 zoom_timeout_cb (gpointer data)
@@ -499,8 +506,8 @@ zoom_timeout_cb (gpointer data)
 
 
 static gboolean
-scroll_event (G_GNUC_UNUSED ClutterActor *actor,
-    ClutterScrollEvent *event,
+scroll_event (G_GNUC_UNUSED ShumateView *this,
+    GdkEvent *event,
     ShumateView *view)
 {
   DEBUG_LOG ()
@@ -509,16 +516,16 @@ scroll_event (G_GNUC_UNUSED ClutterActor *actor,
 
   guint zoom_level = priv->zoom_level;
 
-  if (event->direction == CLUTTER_SCROLL_UP)
+  if (event->scroll.direction == GDK_SCROLL_UP)
     zoom_level = priv->zoom_level + 1;
-  else if (event->direction == CLUTTER_SCROLL_DOWN)
+  else if (event->scroll.direction == GDK_SCROLL_DOWN)
     zoom_level = priv->zoom_level - 1;
-  else if (event->direction == CLUTTER_SCROLL_SMOOTH)
+  else if (event->scroll.direction == GDK_SCROLL_SMOOTH)
     {
       gdouble dx, dy;
       gint steps;
 
-      clutter_event_get_scroll_delta ((ClutterEvent *)event, &dx, &dy);
+      gdk_event_get_scroll_deltas (event, &dx, &dy);
 
       priv->accumulated_scroll_dy += dy;
       /* add some small value to avoid missing step for values like 0.999999 */
@@ -534,7 +541,7 @@ scroll_event (G_GNUC_UNUSED ClutterActor *actor,
       priv->zoom_timeout = g_timeout_add (1000, zoom_timeout_cb, view);
     }
 
-  return view_set_zoom_level_at (view, zoom_level, TRUE, event->x, event->y);
+  return view_set_zoom_level_at (view, zoom_level, TRUE, event->scroll.x, event->scroll.y);
 }
 
 
@@ -552,8 +559,8 @@ resize_viewport (ShumateView *view)
 
   ShumateViewPrivate *priv = view->priv;
 
-  shumate_viewport_get_adjustments (SHUMATE_VIEWPORT (priv->viewport), &hadjust,
-      &vadjust);
+  shumate_viewport_get_adjustments (SHUMATE_VIEWPORT (priv->viewport), view,
+      &hadjust, &vadjust);
 
   get_tile_bounds (view, &min_x, &min_y, &max_x, &max_y);
   gint x_last = max_x * shumate_map_source_get_tile_size (priv->map_source);
@@ -637,7 +644,7 @@ shumate_view_get_property (GObject *object,
     case PROP_DECELERATION:
       {
         gdouble decel = 0.0;
-        g_object_get (priv->kinetic_scroll, "deceleration", &decel, NULL);
+        //g_object_get (priv->kinetic_scroll, "deceleration", &decel, NULL);
         g_value_set_double (value, decel);
         break;
       }
@@ -658,13 +665,17 @@ shumate_view_get_property (GObject *object,
       g_value_set_enum (value, priv->state);
       break;
 
+    /*
     case PROP_BACKGROUND_PATTERN:
       g_value_set_object (value, priv->background_content);
       break;
+     */
 
+    /*
     case PROP_GOTO_ANIMATION_MODE:
       g_value_set_enum (value, priv->goto_mode);
       break;
+     */
 
     case PROP_GOTO_ANIMATION_DURATION:
       g_value_set_uint (value, priv->goto_duration);
@@ -743,13 +754,17 @@ shumate_view_set_property (GObject *object,
       shumate_view_set_animate_zoom (view, g_value_get_boolean (value));
       break;
 
+    /*
     case PROP_BACKGROUND_PATTERN:
       shumate_view_set_background_pattern (view, g_value_get_object (value));
       break;
+     */
 
+    /*
     case PROP_GOTO_ANIMATION_MODE:
       priv->goto_mode = g_value_get_enum (value);
       break;
+     */
 
     case PROP_GOTO_ANIMATION_DURATION:
       priv->goto_duration = g_value_get_uint (value);
@@ -780,11 +795,13 @@ shumate_view_dispose (GObject *object)
   if (priv->goto_context != NULL)
     shumate_view_stop_go_to (view);
 
+  /*
   if (priv->kinetic_scroll != NULL)
     {
       shumate_kinetic_scroll_view_stop (SHUMATE_KINETIC_SCROLL_VIEW (priv->kinetic_scroll));
       priv->kinetic_scroll = NULL;
     }
+   */
 
   if (priv->viewport != NULL)
     {
@@ -801,11 +818,13 @@ shumate_view_dispose (GObject *object)
   g_list_free_full (priv->overlay_sources, g_object_unref);
   priv->overlay_sources = NULL;
 
+  /*
   if (priv->background_content)
     {
       g_object_unref (priv->background_content);
       priv->background_content = NULL;
     }
+   */
 
   if (priv->redraw_timeout != 0)
     {
@@ -813,11 +832,13 @@ shumate_view_dispose (GObject *object)
       priv->redraw_timeout = 0;
     }
 
+  /*
   if (priv->zoom_actor_timeout != 0)
     {
       g_source_remove (priv->zoom_actor_timeout);
       priv->zoom_actor_timeout = 0;
     }
+   */
 
   if (priv->zoom_timeout != 0)
     {
@@ -831,12 +852,12 @@ shumate_view_dispose (GObject *object)
       priv->tile_map = NULL;
     }
 
-  if (priv->zoom_gesture)
-    {
-      clutter_actor_remove_action (CLUTTER_ACTOR (view),
-                                   CLUTTER_ACTION (priv->zoom_gesture));
-      priv->zoom_gesture = NULL;
-    }
+  /* if (priv->zoom_gesture) */
+  /*   { */
+  /*     clutter_actor_remove_action (CLUTTER_ACTOR (view), */
+  /*                                  CLUTTER_ACTION (priv->zoom_gesture)); */
+  /*     priv->zoom_gesture = NULL; */
+  /*   } */
 
   if (priv->visible_tiles != NULL)
     {
@@ -844,14 +865,14 @@ shumate_view_dispose (GObject *object)
       priv->visible_tiles = NULL;
     }
 
-  priv->map_layer = NULL;
-  priv->license_actor = NULL;
+  //priv->map_layer = NULL;
+  //priv->license_actor = NULL;
 
   /* This is needed to prevent race condition see bug #760012 */
-  if (priv->user_layers)
-      clutter_actor_remove_all_children (priv->user_layers);
-  priv->user_layers = NULL;
-  priv->zoom_layer = NULL;
+  //if (priv->user_layers)
+  //    clutter_actor_remove_all_children (priv->user_layers);
+  //priv->user_layers = NULL;
+  //priv->zoom_layer = NULL;
 
   if (priv->world_bbox)
     {
@@ -873,65 +894,16 @@ shumate_view_finalize (GObject *object)
   G_OBJECT_CLASS (shumate_view_parent_class)->finalize (object);
 }
 
-
-/* These return fixed sizes because either a.) We expect the user to size
- * explicitly with clutter_actor_get_size or b.) place it in a container that
- * allocates it whatever it wants.
- */
-static void
-shumate_view_get_preferred_width (ClutterActor *actor,
-    G_GNUC_UNUSED gfloat for_height,
-    gfloat *min_width,
-    gfloat *nat_width)
-{
-  DEBUG_LOG ()
-
-  ShumateView *view = SHUMATE_VIEW (actor);
-  gint width = shumate_map_source_get_tile_size (view->priv->map_source);
-
-  if (min_width)
-    *min_width = 1;
-
-  if (nat_width)
-    *nat_width = width;
-}
-
-
-static void
-shumate_view_get_preferred_height (ClutterActor *actor,
-    G_GNUC_UNUSED gfloat for_width,
-    gfloat *min_height,
-    gfloat *nat_height)
-{
-  DEBUG_LOG ()
-
-  ShumateView *view = SHUMATE_VIEW (actor);
-  gint height = shumate_map_source_get_tile_size (view->priv->map_source);
-
-  if (min_height)
-    *min_height = 1;
-
-  if (nat_height)
-    *nat_height = height;
-}
-
-
 static void
 shumate_view_class_init (ShumateViewClass *shumateViewClass)
 {
   DEBUG_LOG ()
-
-  g_type_class_add_private (shumateViewClass, sizeof (ShumateViewPrivate));
 
   GObjectClass *object_class = G_OBJECT_CLASS (shumateViewClass);
   object_class->dispose = shumate_view_dispose;
   object_class->finalize = shumate_view_finalize;
   object_class->get_property = shumate_view_get_property;
   object_class->set_property = shumate_view_set_property;
-
-  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (shumateViewClass);
-  actor_class->get_preferred_width = shumate_view_get_preferred_width;
-  actor_class->get_preferred_height = shumate_view_get_preferred_height;
 
   /**
    * ShumateView:longitude:
@@ -1108,6 +1080,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    *
    * The pattern displayed in the background of the map.
    */
+  /*
   g_object_class_install_property (object_class,
       PROP_BACKGROUND_PATTERN,
       g_param_spec_object ("background-pattern",
@@ -1115,6 +1088,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
           "The tile's background pattern",
           CLUTTER_TYPE_ACTOR,
           G_PARAM_READWRITE));
+   */
 
   /**
    * ShumateView:goto-animation-mode:
@@ -1125,6 +1099,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    * involves a 'goto' animation.
    *
    */
+  /*
   g_object_class_install_property (object_class,
       PROP_GOTO_ANIMATION_MODE,
       g_param_spec_enum ("goto-animation-mode",
@@ -1133,6 +1108,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
           CLUTTER_TYPE_ANIMATION_MODE,
           CLUTTER_EASE_IN_OUT_CIRC,
           G_PARAM_READWRITE));
+   */
 
   /**
    * ShumateView:goto-animation-duration:
@@ -1229,10 +1205,10 @@ shumate_view_realized_cb (ShumateView *view,
 
   ShumateViewPrivate *priv = view->priv;
 
-  if (!CLUTTER_ACTOR_IS_REALIZED (view))
+  if (!gtk_widget_get_realized (GTK_WIDGET (view)))
     return;
 
-  clutter_actor_grab_key_focus (priv->kinetic_scroll);
+  //clutter_actor_grab_key_focus (priv->kinetic_scroll);
 
   resize_viewport (view);
   shumate_view_center_on (view, priv->latitude, priv->longitude);
@@ -1250,12 +1226,12 @@ _update_idle_cb (ShumateView *view)
 
   ShumateViewPrivate *priv = view->priv;
 
-  if (!priv->kinetic_scroll)
-    return FALSE;
+  //if (!priv->kinetic_scroll)
+  //  return FALSE;
 
-  clutter_actor_set_size (priv->kinetic_scroll,
-      priv->viewport_width,
-      priv->viewport_height);
+  //clutter_actor_set_size (priv->kinetic_scroll,
+  //    priv->viewport_width,
+  //    priv->viewport_height);
 
   resize_viewport (view);
 
@@ -1266,7 +1242,7 @@ _update_idle_cb (ShumateView *view)
 
   if (priv->hwrap)
     {
-      update_clones (view);
+      //update_clones (view);
       position_viewport (view, x_to_wrap_x (priv->viewport_x, get_map_width (view)), priv->viewport_y);
     }
 
@@ -1278,15 +1254,15 @@ static void
 view_size_changed_cb (ShumateView *view,
     G_GNUC_UNUSED GParamSpec *pspec)
 {
-  ShumateViewPrivate *priv = GET_PRIVATE (view);
+  ShumateViewPrivate *priv = view->priv;
   gint width, height;
 
-  width = clutter_actor_get_width (CLUTTER_ACTOR (view));
-  height = clutter_actor_get_height (CLUTTER_ACTOR (view));
+  width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
+  height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
 
   if (priv->viewport_width != width || priv->viewport_height != height)
     {
-      g_idle_add_full (CLUTTER_PRIORITY_REDRAW,
+      g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50,
           (GSourceFunc) _update_idle_cb,
           g_object_ref (view),
           (GDestroyNotify) g_object_unref);
@@ -1296,6 +1272,7 @@ view_size_changed_cb (ShumateView *view,
   priv->viewport_height = height;
 }
 
+/*
 static void
 exclusive_destroy_clone (ClutterActor *clone)
 {
@@ -1304,68 +1281,69 @@ exclusive_destroy_clone (ClutterActor *clone)
 
   clutter_actor_destroy (clone);
 }
+ */
 
 static void
 add_clone (ShumateView *view,
     gint x)
 {
   ShumateViewPrivate *priv = view->priv;
-  ClutterActor *map_clone, *user_clone;
+  //ClutterActor *map_clone, *user_clone;
 
   /* Map layer clones */
-  map_clone = clutter_clone_new (priv->map_layer);
-  clutter_actor_set_x (map_clone, x);
-  clutter_actor_insert_child_below (priv->viewport_container, map_clone,
-                                    NULL);
+  //map_clone = clutter_clone_new (priv->map_layer);
+  //clutter_actor_set_x (map_clone, x);
+  //clutter_actor_insert_child_below (priv->viewport_container, map_clone,
+  //                                  NULL);
 
-  priv->map_clones = g_list_prepend (priv->map_clones, map_clone);
+  //priv->map_clones = g_list_prepend (priv->map_clones, map_clone);
 
   /* User layer clones */
-  user_clone = clutter_clone_new (priv->user_layers);
-  clutter_actor_set_x (user_clone, x);
-  clutter_actor_insert_child_below (priv->viewport_container, user_clone,
-                                    priv->user_layers);
+  //user_clone = clutter_clone_new (priv->user_layers);
+  //clutter_actor_set_x (user_clone, x);
+  //clutter_actor_insert_child_below (priv->viewport_container, user_clone,
+  //                                  priv->user_layers);
 
   /* Inserting clones in the slots following the real user layer (order must be kept)*/
-  priv->user_layer_slots = g_list_append (priv->user_layer_slots, user_clone);
+  //priv->user_layer_slots = g_list_append (priv->user_layer_slots, user_clone);
 }
 
 
-static void
-update_clones (ShumateView *view)
-{
-  DEBUG_LOG ()
+/* static void */
+/* update_clones (ShumateView *view) */
+/* { */
+/*   DEBUG_LOG () */
 
-  ShumateViewPrivate *priv = view->priv;
-  gint map_size;
-  gfloat view_width;
-  gint i;
+/*   ShumateViewPrivate *priv = view->priv; */
+/*   gint map_size; */
+/*   gfloat view_width; */
+/*   gint i; */
 
-  map_size = get_map_width (view);
-  clutter_actor_get_size (CLUTTER_ACTOR (view), &view_width, NULL);
+/*   map_size = get_map_width (view); */
+/*   clutter_actor_get_size (CLUTTER_ACTOR (view), &view_width, NULL); */
 
-  priv->num_right_clones = ceil (view_width / map_size) + 1;
+/*   priv->num_right_clones = ceil (view_width / map_size) + 1; */
 
-  if (priv->map_clones != NULL)
-    {
+/*   if (priv->map_clones != NULL) */
+/*     { */
       /* Only destroy clones, skip the real user_layers actor */
-      g_list_free_full (priv->user_layer_slots, (GDestroyNotify) exclusive_destroy_clone);
-      g_list_free_full (priv->map_clones, (GDestroyNotify) clutter_actor_destroy);
+/*       g_list_free_full (priv->user_layer_slots, (GDestroyNotify) exclusive_destroy_clone); */
+/*       g_list_free_full (priv->map_clones, (GDestroyNotify) clutter_actor_destroy); */
 
-      priv->map_clones = NULL;
-      priv->user_layer_slots = NULL;
-    }
+/*       priv->map_clones = NULL; */
+/*       priv->user_layer_slots = NULL; */
+/*     } */
 
   /* An extra clone is added to the left for smoother panning */
-  add_clone (view, -map_size);
+/*   add_clone (view, -map_size); */
 
   /* Inserting the real user layer in the second slot (after the left clone) */
-  priv->user_layer_slots = g_list_append (priv->user_layer_slots, priv->user_layers);
-  clutter_actor_set_x (priv->user_layers, 0);
+/*   priv->user_layer_slots = g_list_append (priv->user_layer_slots, priv->user_layers); */
+/*   clutter_actor_set_x (priv->user_layers, 0); */
 
-  for (i = 0; i < priv->num_right_clones; i++)
-    add_clone (view, (i + 1) * map_size);
-}
+/*   for (i = 0; i < priv->num_right_clones; i++) */
+/*     add_clone (view, (i + 1) * map_size); */
+/* } */
 
 
 static void
@@ -1397,7 +1375,7 @@ view_find_suitable_zoom (ShumateView *view,
   return zoom_level;
 }
 
-
+/*
 static gboolean
 zoom_gesture_zoom_cb (ClutterZoomAction *gesture,
     G_GNUC_UNUSED ClutterActor *actor,
@@ -1440,21 +1418,23 @@ zoom_gesture_zoom_cb (ClutterZoomAction *gesture,
 
   return FALSE;
 }
+ */
 
-static gboolean
-zoom_gesture_begin_cb (ClutterGestureAction *gesture,
-    G_GNUC_UNUSED ClutterActor *actor,
-    G_GNUC_UNUSED gpointer user_data)
-{
-  ClutterEvent *event = clutter_gesture_action_get_last_event (gesture, 0);
-  ClutterInputDevice *device = clutter_event_get_source_device (event);
+/* static gboolean */
+/* zoom_gesture_begin_cb (ClutterGestureAction *gesture, */
+/*     G_GNUC_UNUSED ClutterActor *actor, */
+/*     G_GNUC_UNUSED gpointer user_data) */
+/* { */
+/*   ClutterEvent *event = clutter_gesture_action_get_last_event (gesture, 0); */
+/*   ClutterInputDevice *device = clutter_event_get_source_device (event); */
 
   /* Give up on >2 finger input and when using mouse */
-  return clutter_gesture_action_get_n_current_points (gesture) == 2 &&
-    clutter_input_device_get_device_type (device) != CLUTTER_POINTER_DEVICE;
-}
+/*   return clutter_gesture_action_get_n_current_points (gesture) == 2 && */
+/*     clutter_input_device_get_device_type (device) != CLUTTER_POINTER_DEVICE; */
+/* } */
 
 
+/*
 static void
 zoom_gesture_finish_cb (ClutterGestureAction *gesture,
     G_GNUC_UNUSED ClutterActor *actor,
@@ -1464,8 +1444,9 @@ zoom_gesture_finish_cb (ClutterGestureAction *gesture,
 
   priv->zoom_started = FALSE;
 }
+ */
 
-
+/*
 static void
 zoom_gesture_cancel_cb (ClutterGestureAction *gesture,
     G_GNUC_UNUSED ClutterActor *actor,
@@ -1476,22 +1457,21 @@ zoom_gesture_cancel_cb (ClutterGestureAction *gesture,
   priv->zoom_started = FALSE;
   g_signal_stop_emission_by_name (gesture, "gesture-cancel");
 }
-
+*/
 
 static void
 shumate_view_init (ShumateView *view)
 {
   DEBUG_LOG ()
 
-  ShumateViewPrivate *priv = GET_PRIVATE (view);
   ShumateMapSourceFactory *factory;
   ShumateMapSource *source;
-  ClutterLayoutManager *layout;
-  ClutterColor color = { 0xf1, 0xee, 0xe8, 0xff };
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
   view->priv = priv;
+  gtk_widget_set_has_window (GTK_WIDGET (view), FALSE);
 
   factory = shumate_map_source_factory_dup_default ();
   source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
@@ -1504,7 +1484,7 @@ shumate_view_init (ShumateView *view)
   priv->keep_center_on_resize = TRUE;
   priv->zoom_on_double_click = TRUE;
   priv->animate_zoom = TRUE;
-  priv->license_actor = NULL;
+  //priv->license_actor = NULL;
   priv->kinetic_mode = FALSE;
   priv->viewport_x = 0;
   priv->viewport_y = 0;
@@ -1516,8 +1496,7 @@ shumate_view_init (ShumateView *view)
   priv->goto_context = NULL;
   priv->tiles_loading = 0;
   priv->animating_zoom = FALSE;
-  priv->background_content = NULL;
-  priv->zoom_overlay_actor = NULL;
+  //priv->background_content = NULL;
   priv->bg_offset_x = 0;
   priv->bg_offset_y = 0;
   priv->location_updated = FALSE;
@@ -1526,7 +1505,7 @@ shumate_view_init (ShumateView *view)
   priv->tile_map = g_hash_table_new_full (g_int64_hash, g_int64_equal, slice_free_gint64, NULL);
   priv->visible_tiles = g_hash_table_new_full (g_int64_hash, g_int64_equal, slice_free_gint64, NULL);
   priv->goto_duration = 0;
-  priv->goto_mode = CLUTTER_EASE_IN_OUT_CIRC;
+  //priv->goto_mode = CLUTTER_EASE_IN_OUT_CIRC;
   priv->world_bbox = shumate_bounding_box_new ();
   priv->world_bbox->left = SHUMATE_MIN_LONGITUDE;
   priv->world_bbox->bottom = SHUMATE_MIN_LATITUDE;
@@ -1537,78 +1516,43 @@ shumate_view_init (ShumateView *view)
   priv->user_layer_slots = NULL;
   priv->hwrap = FALSE;
 
-  clutter_actor_set_background_color (CLUTTER_ACTOR (view), &color);
+  //clutter_actor_set_background_color (CLUTTER_ACTOR (view), &color);
 
   g_signal_connect (view, "notify::width", G_CALLBACK (view_size_changed_cb), NULL);
   g_signal_connect (view, "notify::height", G_CALLBACK (view_size_changed_cb), NULL);
 
   g_signal_connect (view, "notify::realized", G_CALLBACK (shumate_view_realized_cb), NULL);
 
-  layout = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_FIXED,
-                                   CLUTTER_BIN_ALIGNMENT_FIXED);
-  clutter_actor_set_layout_manager (CLUTTER_ACTOR (view), layout);
+  //layout = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_FIXED,
+  //                                 CLUTTER_BIN_ALIGNMENT_FIXED);
+  //clutter_actor_set_layout_manager (CLUTTER_ACTOR (view), layout);
 
   /* Setup viewport layers*/
-  priv->background_layer = clutter_actor_new ();
-  priv->zoom_layer = clutter_actor_new ();
-  priv->map_layer = clutter_actor_new ();
-  priv->user_layers = clutter_actor_new ();
+  //priv->background_layer = clutter_actor_new ();
+  //priv->zoom_layer = clutter_actor_new ();
+  //priv->map_layer = clutter_actor_new ();
+  //priv->user_layers = clutter_actor_new ();
 
-  priv->viewport_container = clutter_actor_new ();
-  clutter_actor_add_child (priv->viewport_container, priv->background_layer);
-  clutter_actor_add_child (priv->viewport_container, priv->zoom_layer);
-  clutter_actor_add_child (priv->viewport_container, priv->map_layer);
-  clutter_actor_add_child (priv->viewport_container, priv->user_layers);
+  //priv->viewport_container = clutter_actor_new ();
+  //clutter_actor_add_child (priv->viewport_container, priv->background_layer);
+  //clutter_actor_add_child (priv->viewport_container, priv->zoom_layer);
+  //clutter_actor_add_child (priv->viewport_container, priv->map_layer);
+  //clutter_actor_add_child (priv->viewport_container, priv->user_layers);
 
   /* Setup viewport */
   priv->viewport = shumate_viewport_new ();
-  shumate_viewport_set_child (SHUMATE_VIEWPORT (priv->viewport), priv->viewport_container);
-  g_signal_connect (priv->viewport, "relocated", G_CALLBACK (view_relocated_cb), view);
+  //shumate_viewport_set_child (SHUMATE_VIEWPORT (priv->viewport), priv->viewport_container);
+  //g_signal_connect (priv->viewport, "relocated", G_CALLBACK (view_relocated_cb), view);
 
   g_signal_connect (priv->viewport, "notify::x-origin",
       G_CALLBACK (viewport_pos_changed_cb), view);
   g_signal_connect (priv->viewport, "notify::y-origin",
       G_CALLBACK (viewport_pos_changed_cb), view);
-  clutter_actor_set_reactive (priv->viewport, TRUE);
 
-  /* Setup kinetic scroll */
-  priv->kinetic_scroll = shumate_kinetic_scroll_view_new (FALSE, SHUMATE_VIEWPORT (priv->viewport));
-
-  g_signal_connect (priv->kinetic_scroll, "scroll-event",
-      G_CALLBACK (scroll_event), view);
-  g_signal_connect (priv->kinetic_scroll, "panning-completed",
-      G_CALLBACK (panning_completed), view);
-  g_signal_connect (priv->kinetic_scroll, "button-press-event",
-      G_CALLBACK (kinetic_scroll_button_press_cb), view);
-
-  /* Setup zoom gesture */
-  priv->zoom_gesture = CLUTTER_GESTURE_ACTION (clutter_zoom_action_new ());
-  g_signal_connect (priv->zoom_gesture, "zoom",
-                    G_CALLBACK (zoom_gesture_zoom_cb), view);
-  g_signal_connect (priv->zoom_gesture, "gesture-begin",
-                    G_CALLBACK (zoom_gesture_begin_cb), view);
-  g_signal_connect (priv->zoom_gesture, "gesture-end",
-                    G_CALLBACK (zoom_gesture_finish_cb), view);
-  g_signal_connect (priv->zoom_gesture, "gesture-cancel",
-                    G_CALLBACK (zoom_gesture_cancel_cb), view);
-  clutter_actor_add_action (CLUTTER_ACTOR (view),
-                            CLUTTER_ACTION (priv->zoom_gesture));
-
-  /* Setup stage */
-  clutter_actor_add_child (CLUTTER_ACTOR (view), priv->kinetic_scroll);
-  priv->zoom_overlay_actor = clutter_actor_new ();
-  clutter_actor_add_child (CLUTTER_ACTOR (view), priv->zoom_overlay_actor);
-  g_signal_connect (view, "key-press-event",
-                    G_CALLBACK (kinetic_scroll_key_press_cb), NULL);
+  //g_signal_connect (view, "key-press-event",
+  //                  G_CALLBACK (kinetic_scroll_key_press_cb), NULL);
 
   /* Setup license */
-  priv->license_actor = shumate_license_new ();
-  shumate_license_connect_view (SHUMATE_LICENSE (priv->license_actor), view);
-  clutter_actor_set_x_expand (priv->license_actor, TRUE);
-  clutter_actor_set_y_expand (priv->license_actor, TRUE);
-  clutter_actor_set_x_align (priv->license_actor, CLUTTER_ACTOR_ALIGN_END);
-  clutter_actor_set_y_align (priv->license_actor, CLUTTER_ACTOR_ALIGN_END);
-  clutter_actor_add_child (CLUTTER_ACTOR (view), priv->license_actor);
 }
 
 
@@ -1669,7 +1613,7 @@ viewport_pos_changed_cb (G_GNUC_UNUSED GObject *gobject,
     }
 }
 
-
+/*
 static void
 swap_user_layer_slots (ShumateView *view,
     gint original_index,
@@ -1689,8 +1633,9 @@ swap_user_layer_slots (ShumateView *view,
   clutter_actor_set_x (clone, (original_index - 1) * map_width);
   clutter_actor_set_x (priv->user_layers, (clone_index - 1) * map_width);
 }
+*/
 
-
+/*
 static gboolean
 viewport_motion_cb (G_GNUC_UNUSED ClutterActor *actor,
     ClutterMotionEvent *event,
@@ -1708,8 +1653,8 @@ viewport_motion_cb (G_GNUC_UNUSED ClutterActor *actor,
 
    return TRUE;
  }
-
-
+*/
+/*
 static ClutterActor *
 sample_user_layer_at_pos (ShumateView *view,
     gfloat x,
@@ -1721,89 +1666,73 @@ sample_user_layer_at_pos (ShumateView *view,
     ClutterActor *retval = clutter_stage_get_actor_at_pos (stage,
         CLUTTER_PICK_REACTIVE, x, y);
 
-    /* If no reactive actor is found on top of the clone, return NULL */
     if (!clutter_actor_contains (priv->user_layers, retval))
       return NULL;
 
     return retval;
 }
+*/
 
-
-static gboolean
-viewport_press_cb (G_GNUC_UNUSED ClutterActor *actor,
-    ClutterButtonEvent *event,
-    ShumateView *view)
-{
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = view->priv;
-
-  if (!priv->hwrap)
-    return FALSE;
-
-  gint original_index = g_list_index (priv->user_layer_slots, priv->user_layers);
-  gint initial_original_index = original_index;
-  ClutterActor *sampled_actor = NULL;
-
-  /* Sampling neighbouring slots for children that are split by the slot border.
-   * (e.g. a marker that has one half in a slot #n and the other half in #n-1)
-   * Whenever a user clicks on the real user layer, it is swapped succesively with
-   * the right and left neighbors (if they exist) and the area at the event
-   * coordinates is inspected for a reactive child actor. If a child is found,
-   * a button press is synthesized over it.
-   */
-  gint right_neighbor_index = original_index + 1;
-  gint left_neighbor_index = original_index - 1;
-
-  /* Swapping and testing right neighbor */
-  if (right_neighbor_index < priv->num_right_clones + 2)
-    {
-      swap_user_layer_slots (view, original_index, right_neighbor_index);
-      original_index = right_neighbor_index;
-      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
-    }
-
-  /* Swapping and testing left neighbor */
-  if (left_neighbor_index >= 0 && sampled_actor == NULL)
-    {
-      swap_user_layer_slots (view, original_index, left_neighbor_index);
-      original_index = left_neighbor_index;
-      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
-    }
-
-  /* If found, redirecting event to the sampled actor */
-  if (sampled_actor != NULL)
-    {
-      ClutterEvent *cloned_event = (ClutterEvent *)event;
-      clutter_event_set_source (cloned_event, sampled_actor);
-      clutter_event_put (cloned_event);
-    }
-  else
-    {
-      /* Swapping the real layer back to its initial slot */
-      if (original_index != initial_original_index)
-        swap_user_layer_slots (view, original_index, initial_original_index);
-
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
-static gboolean
-kinetic_scroll_button_press_cb (G_GNUC_UNUSED ClutterActor *actor,
-    ClutterButtonEvent *event,
-    ShumateView *view)
-{
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = view->priv;
-
-  if (priv->zoom_on_double_click && event->button == 1 && event->click_count == 2)
-    return view_set_zoom_level_at (view, priv->zoom_level + 1, TRUE, event->x, event->y);
-
-  return FALSE; /* Propagate the event */
-}
+//static gboolean
+//viewport_press_cb (G_GNUC_UNUSED ClutterActor *actor,
+//    ClutterButtonEvent *event,
+//    ShumateView *view)
+//{
+//  DEBUG_LOG ()
+//
+//  ShumateViewPrivate *priv = view->priv;
+//
+//  if (!priv->hwrap)
+//    return FALSE;
+//
+//  gint original_index = g_list_index (priv->user_layer_slots, priv->user_layers);
+//  gint initial_original_index = original_index;
+//  ClutterActor *sampled_actor = NULL;
+//
+//  /* Sampling neighbouring slots for children that are split by the slot border.
+//   * (e.g. a marker that has one half in a slot #n and the other half in #n-1)
+//   * Whenever a user clicks on the real user layer, it is swapped succesively with
+//   * the right and left neighbors (if they exist) and the area at the event
+//   * coordinates is inspected for a reactive child actor. If a child is found,
+//   * a button press is synthesized over it.
+//   */
+//  gint right_neighbor_index = original_index + 1;
+//  gint left_neighbor_index = original_index - 1;
+//
+//  /* Swapping and testing right neighbor */
+//  if (right_neighbor_index < priv->num_right_clones + 2)
+//    {
+//      swap_user_layer_slots (view, original_index, right_neighbor_index);
+//      original_index = right_neighbor_index;
+//      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
+//    }
+//
+//  /* Swapping and testing left neighbor */
+//  if (left_neighbor_index >= 0 && sampled_actor == NULL)
+//    {
+//      swap_user_layer_slots (view, original_index, left_neighbor_index);
+//      original_index = left_neighbor_index;
+//      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
+//    }
+//
+//  /* If found, redirecting event to the sampled actor */
+//  if (sampled_actor != NULL)
+//    {
+//      ClutterEvent *cloned_event = (ClutterEvent *)event;
+//      clutter_event_set_source (cloned_event, sampled_actor);
+//      clutter_event_put (cloned_event);
+//    }
+//  else
+//    {
+//      /* Swapping the real layer back to its initial slot */
+//      if (original_index != initial_original_index)
+//        swap_user_layer_slots (view, original_index, initial_original_index);
+//
+//      return FALSE;
+//    }
+//
+//  return TRUE;
+//}
 
 
 static void
@@ -1829,58 +1758,14 @@ shumate_view_scroll (ShumateView *view,
     shumate_view_center_on (view, lat, lon);
 }
 
-
-static gboolean
-kinetic_scroll_key_press_cb (ShumateView *view,
-    ClutterKeyEvent *event)
-{
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = view->priv;
-
-  switch (event->keyval)
-    {
-    case 65361: /* Left */
-      shumate_view_scroll (view, -priv->viewport_width / 4.0, 0);
-      return TRUE;
-      break;
-
-    case 65362: /* Up */
-      if (event->modifier_state & CLUTTER_CONTROL_MASK)
-        shumate_view_zoom_in (view);
-      else
-        shumate_view_scroll (view, 0, -priv->viewport_width / 4.0);
-      return TRUE;
-      break;
-
-    case 65363: /* Right */
-      shumate_view_scroll (view, priv->viewport_width / 4.0, 0);
-      return TRUE;
-      break;
-
-    case 65364: /* Down */
-      if (event->modifier_state & CLUTTER_CONTROL_MASK)
-        shumate_view_zoom_out (view);
-      else
-        shumate_view_scroll (view, 0, priv->viewport_width / 4.0);
-      return TRUE;
-      break;
-
-    default:
-      return FALSE; /* Propagate the event */
-    }
-  return FALSE; /* Propagate the event */
-}
-
-
 /**
  * shumate_view_new:
  *
  * Creates an instance of #ShumateView.
  *
- * Returns: a new #ShumateView ready to be used as a #ClutterActor.
+ * Returns: a new #ShumateView ready to be used as a #GtkWidget.
  */
-ClutterActor *
+ShumateView *
 shumate_view_new (void)
 {
   DEBUG_LOG ()
@@ -1924,7 +1809,7 @@ shumate_view_center_on (ShumateView *view,
   load_visible_tiles (view, FALSE);
 }
 
-
+/*
 static void
 timeline_new_frame (G_GNUC_UNUSED ClutterTimeline *timeline,
     G_GNUC_UNUSED gint frame_num,
@@ -1944,8 +1829,8 @@ timeline_new_frame (G_GNUC_UNUSED ClutterTimeline *timeline,
       ctx->from_latitude + alpha * lat,
       ctx->from_longitude + alpha * lon);
 }
-
-
+*/
+/*
 static void
 timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
     ShumateView *view)
@@ -1954,7 +1839,7 @@ timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
 
   shumate_view_stop_go_to (view);
 }
-
+*/
 
 /**
  * shumate_view_stop_go_to:
@@ -1975,9 +1860,9 @@ shumate_view_stop_go_to (ShumateView *view)
   if (priv->goto_context == NULL)
     return;
 
-  clutter_timeline_stop (priv->goto_context->timeline);
+  //clutter_timeline_stop (priv->goto_context->timeline);
 
-  g_object_unref (priv->goto_context->timeline);
+  //g_object_unref (priv->goto_context->timeline);
 
   g_slice_free (GoToContext, priv->goto_context);
   priv->goto_context = NULL;
@@ -2052,15 +1937,15 @@ shumate_view_go_to_with_duration (ShumateView *view,
    * To have a nice animation, the duration should be longer if the zoom level
    * is higher and if the points are far away
    */
-  ctx->timeline = clutter_timeline_new (duration);
-  clutter_timeline_set_progress_mode (ctx->timeline, priv->goto_mode);
+  //ctx->timeline = clutter_timeline_new (duration);
+  //clutter_timeline_set_progress_mode (ctx->timeline, priv->goto_mode);
 
-  g_signal_connect (ctx->timeline, "new-frame", G_CALLBACK (timeline_new_frame),
-      ctx);
-  g_signal_connect (ctx->timeline, "completed", G_CALLBACK (timeline_completed),
-      view);
+  //g_signal_connect (ctx->timeline, "new-frame", G_CALLBACK (timeline_new_frame),
+  //    ctx);
+  //g_signal_connect (ctx->timeline, "completed", G_CALLBACK (timeline_completed),
+  //    view);
 
-  clutter_timeline_start (ctx->timeline);
+  //clutter_timeline_start (ctx->timeline);
 }
 
 
@@ -2140,6 +2025,7 @@ static void
 layers_to_surface (ShumateView *view,
     cairo_t *cr)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -2158,6 +2044,7 @@ layers_to_surface (ShumateView *view,
 
       paint_surface (view, cr, surface, 0, 0, 255);
     }
+   */
 }
 
 
@@ -2189,18 +2076,19 @@ shumate_view_to_surface (ShumateView *view,
   ShumateViewPrivate *priv = view->priv;
   cairo_surface_t *surface;
   cairo_t *cr;
-  ClutterActorIter iter;
-  ClutterActor *child;
+  //ClutterActorIter iter;
+  //ClutterActor *child;
   gdouble width, height;
 
   if (priv->state != SHUMATE_STATE_DONE)
     return NULL;
 
-  width = clutter_actor_get_width (CLUTTER_ACTOR (view));
-  height = clutter_actor_get_height (CLUTTER_ACTOR (view));
+  width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
+  height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
   cr = cairo_create (surface);
 
+  /*
   clutter_actor_iter_init (&iter, priv->map_layer);
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -2228,6 +2116,7 @@ shumate_view_to_surface (ShumateView *view,
           paint_surface (view, cr, tile_surface, x, y, opacity);
         }
     }
+   */
 
     if (include_layers)
       layers_to_surface (view, cr);
@@ -2389,9 +2278,9 @@ shumate_view_add_layer (ShumateView *view,
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  clutter_actor_add_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
+  //clutter_actor_add_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
   shumate_layer_set_view (layer, view);
-  clutter_actor_set_child_above_sibling (view->priv->user_layers, CLUTTER_ACTOR (layer), NULL);
+  //clutter_actor_set_child_above_sibling (view->priv->user_layers, CLUTTER_ACTOR (layer), NULL);
 }
 
 
@@ -2413,7 +2302,7 @@ shumate_view_remove_layer (ShumateView *view,
 
   shumate_layer_set_view (layer, NULL);
 
-  clutter_actor_remove_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
+  //clutter_actor_remove_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
 }
 
 
@@ -2568,7 +2457,7 @@ shumate_view_get_viewport_origin (ShumateView *view,
     *y = priv->viewport_y - anchor_y;
 }
 
-
+/*
 static void
 fill_background_tiles (ShumateView *view)
 {
@@ -2618,6 +2507,7 @@ fill_background_tiles (ShumateView *view)
           clutter_actor_iter_destroy (&iter);
     }
 }
+ */
 
 static void
 tile_table_set (ShumateView *view,
@@ -2670,11 +2560,11 @@ load_tile_for_source (ShumateView *view,
   shumate_tile_set_y (tile, y);
   shumate_tile_set_zoom_level (tile, priv->zoom_level);
   shumate_tile_set_size (tile, size);
-  clutter_actor_set_opacity (CLUTTER_ACTOR (tile), opacity);
+  //clutter_actor_set_opacity (CLUTTER_ACTOR (tile), opacity);
 
   g_signal_connect (tile, "notify::state", G_CALLBACK (tile_state_notify), view);
-  clutter_actor_add_child (priv->map_layer, CLUTTER_ACTOR (tile));
-  shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), CLUTTER_ACTOR (tile), x * size, y * size);
+  //clutter_actor_add_child (priv->map_layer, CLUTTER_ACTOR (tile));
+  //shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), CLUTTER_ACTOR (tile), x * size, y * size);
 
   /* updates shumate_view state automatically as
      notify::state signal is connected  */
@@ -2729,9 +2619,9 @@ load_visible_tiles (ShumateView *view,
   DEBUG_LOG ()
 
   ShumateViewPrivate *priv = view->priv;
-  ClutterActorIter iter;
+  //ClutterActorIter iter;
   gint size;
-  ClutterActor *child;
+  //ClutterActor *child;
   gint x_count, y_count, column_count;
   guint min_x, min_y, max_x, max_y;
   gint arm_size, arm_max, turn;
@@ -2778,10 +2668,11 @@ load_visible_tiles (ShumateView *view,
       }
 
   /* fill background tiles */
-  if (priv->background_content != NULL)
-      fill_background_tiles (view);
+  //if (priv->background_content != NULL)
+  //    fill_background_tiles (view);
 
   /* Get rid of old tiles first */
+  /*
   clutter_actor_iter_init (&iter, priv->map_layer);
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -2799,6 +2690,7 @@ load_visible_tiles (ShumateView *view,
       else if (relocate)
         shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), CLUTTER_ACTOR (tile), tile_x * size, tile_y * size);
     }
+   */
 
   /* Load new tiles if needed */
   x = priv->tile_x_first + x_count / 2 - 1;
@@ -2832,7 +2724,7 @@ load_visible_tiles (ShumateView *view,
               data->map_source = priv->map_source;
               data->view = g_object_ref (view);
 
-              g_idle_add_full (CLUTTER_PRIORITY_REDRAW, (GSourceFunc) fill_tile_cb, data, NULL);
+              g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50, (GSourceFunc) fill_tile_cb, data, NULL);
             }
 
           x += dirs[turn % 4 + 1];
@@ -2851,6 +2743,7 @@ remove_all_tiles (ShumateView *view)
   DEBUG_LOG ()
 
   ShumateViewPrivate *priv = view->priv;
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -2863,6 +2756,7 @@ remove_all_tiles (ShumateView *view)
   g_hash_table_remove_all (priv->tile_map);
 
   clutter_actor_destroy_all_children (priv->map_layer);
+   */
 }
 
 
@@ -2881,18 +2775,6 @@ shumate_view_reload_tiles (ShumateView *view)
 
   load_visible_tiles (view, FALSE);
 }
-
-
-static gboolean
-remove_zoom_actor_cb (ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-
-  clutter_actor_destroy_all_children (priv->zoom_layer);
-  priv->zoom_actor_timeout = 0;
-  return FALSE;
-}
-
 
 static void
 tile_state_notify (ShumateTile *tile,
@@ -2921,8 +2803,6 @@ tile_state_notify (ShumateTile *tile,
         {
           priv->state = SHUMATE_STATE_DONE;
           g_object_notify (G_OBJECT (view), "state");
-          if (clutter_actor_get_n_children (priv->zoom_layer) > 0)
-            priv->zoom_actor_timeout = g_timeout_add_seconds_full (CLUTTER_PRIORITY_REDRAW, 1, (GSourceFunc) remove_zoom_actor_cb, view, NULL);
         }
     }
 }
@@ -3000,7 +2880,7 @@ shumate_view_set_deceleration (ShumateView *view,
   g_return_if_fail (SHUMATE_IS_VIEW (view) &&
       rate < 2.0 && rate > 1.0001);
 
-  g_object_set (view->priv->kinetic_scroll, "decel-rate", rate, NULL);
+  //g_object_set (view->priv->kinetic_scroll, "decel-rate", rate, NULL);
   g_object_notify (G_OBJECT (view), "deceleration");
 }
 
@@ -3023,7 +2903,7 @@ shumate_view_set_kinetic_mode (ShumateView *view,
   ShumateViewPrivate *priv = view->priv;
 
   priv->kinetic_mode = kinetic;
-  g_object_set (view->priv->kinetic_scroll, "mode", kinetic, NULL);
+  //g_object_set (view->priv->kinetic_scroll, "mode", kinetic, NULL);
   g_object_notify (G_OBJECT (view), "kinetic-mode");
 }
 
@@ -3160,12 +3040,13 @@ shumate_view_ensure_layers_visible (ShumateView *view,
 {
   DEBUG_LOG ()
 
-  ClutterActorIter iter;
-  ClutterActor *child;
+  //ClutterActorIter iter;
+  //ClutterActor *child;
   ShumateBoundingBox *bbox;
 
   bbox = shumate_bounding_box_new ();
 
+  /*
   clutter_actor_iter_init (&iter, view->priv->user_layers);
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -3176,6 +3057,7 @@ shumate_view_ensure_layers_visible (ShumateView *view,
       shumate_bounding_box_compose (bbox, other);
       shumate_bounding_box_free (other);
     }
+   */
 
   shumate_view_ensure_visible (view, bbox, animate);
 
@@ -3192,6 +3074,7 @@ shumate_view_ensure_layers_visible (ShumateView *view,
  * pattern affects performence slightly - use reasonably large patterns for
  * better performance.
  */
+/*
 void
 shumate_view_set_background_pattern (ShumateView *view,
     ClutterContent *background)
@@ -3208,7 +3091,7 @@ shumate_view_set_background_pattern (ShumateView *view,
   priv->background_content = g_object_ref_sink (background);
   clutter_actor_destroy_all_children (priv->background_layer);
 }
-
+*/
 
 /**
  * shumate_view_get_background_pattern:
@@ -3218,6 +3101,7 @@ shumate_view_set_background_pattern (ShumateView *view,
  *
  * Returns: (transfer none): The texture.
  */
+/*
 ClutterContent *
 shumate_view_get_background_pattern (ShumateView *view)
 {
@@ -3229,6 +3113,7 @@ shumate_view_get_background_pattern (ShumateView *view)
 
   return priv->background_content;
 }
+ */
 
 
 /**
@@ -3253,6 +3138,7 @@ shumate_view_set_horizontal_wrap (ShumateView *view,
 
   priv->hwrap = wrap;
 
+  /*
   if (priv->hwrap)
     {
       g_signal_connect (priv->viewport, "motion-event",
@@ -3271,6 +3157,7 @@ shumate_view_set_horizontal_wrap (ShumateView *view,
       g_signal_handlers_disconnect_by_func (priv->viewport, viewport_press_cb, view);
       clutter_actor_set_x (priv->user_layers, 0);
     }
+   */
   resize_viewport (view);
 
   gint map_width = get_map_width (view);
@@ -3304,37 +3191,7 @@ shumate_view_get_horizontal_wrap (ShumateView *view)
   return priv->hwrap;
 }
 
-
-static void
-position_zoom_actor (ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-  gdouble x, y;
-  gdouble deltazoom;
-
-  clutter_actor_destroy_all_children (priv->zoom_layer);
-  if (priv->zoom_actor_timeout != 0)
-    {
-      g_source_remove (priv->zoom_actor_timeout);
-      priv->zoom_actor_timeout = 0;
-    }
-
-  ClutterActor *zoom_actor = clutter_actor_get_first_child (priv->zoom_overlay_actor);
-  clutter_actor_set_pivot_point (zoom_actor, 0.0, 0.0);
-
-  g_object_ref (zoom_actor);
-  clutter_actor_remove_child(priv->zoom_overlay_actor, zoom_actor);
-  clutter_actor_add_child (priv->zoom_layer, zoom_actor);
-  g_object_unref (zoom_actor);
-
-  deltazoom = pow (2, (gdouble)priv->zoom_level - (gdouble)priv->anim_start_zoom_level);
-  x = priv->zoom_actor_viewport_x * deltazoom;
-  y = priv->zoom_actor_viewport_y * deltazoom;
-
-  shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), zoom_actor, x, y);
-}
-
-
+/*
 static void
 zoom_animation_completed (ClutterActor *actor,
     const gchar *transition_name,
@@ -3355,158 +3212,8 @@ zoom_animation_completed (ClutterActor *actor,
   g_signal_handlers_disconnect_by_func (actor, zoom_animation_completed, view);
   g_signal_emit_by_name (view, "animation-completed::zoom", NULL);
 }
+*/
 
-
-static void
-show_zoom_actor (ShumateView *view,
-    guint zoom_level,
-    gdouble x,
-    gdouble y)
-{
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = view->priv;
-  ClutterActor *zoom_actor = NULL;
-  gdouble deltazoom;
-
-  if (!priv->animating_zoom)
-    {
-      ClutterActorIter iter;
-      ClutterActor *child;
-      ClutterActor *tile_container;
-      gint size;
-      gint x_first, y_first;
-      gdouble zoom_actor_width, zoom_actor_height;
-      gint column_count;
-      gdouble deltax, deltay;
-      guint min_x, min_y, max_x, max_y;
-
-      get_tile_bounds (view, &min_x, &min_y, &max_x, &max_y);
-      size = shumate_map_source_get_tile_size (priv->map_source);
-
-      column_count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level);
-
-      x_first = CLAMP (priv->viewport_x / size, min_x, max_x);
-      y_first = CLAMP (priv->viewport_y / size, min_y, max_y);
-
-      clutter_actor_destroy_all_children (priv->zoom_overlay_actor);
-      zoom_actor = clutter_actor_new ();
-      clutter_actor_add_child (priv->zoom_overlay_actor, zoom_actor);
-
-      deltax = priv->viewport_x - x_first * size;
-      deltay = priv->viewport_y - y_first * size;
-
-      priv->anim_start_zoom_level = priv->zoom_level;
-      priv->zoom_actor_viewport_x = priv->viewport_x - deltax;
-      priv->zoom_actor_viewport_y = priv->viewport_y - deltay;
-
-      tile_container = clutter_actor_new ();
-      clutter_actor_iter_init (&iter, priv->map_layer);
-      while (clutter_actor_iter_next (&iter, &child))
-        {
-          ShumateTile *tile = SHUMATE_TILE (child);
-          gint tile_x = shumate_tile_get_x (tile);
-          gint tile_y = shumate_tile_get_y (tile);
-          gboolean overlay = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (tile), "overlay"));
-
-          shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-
-          g_object_ref (CLUTTER_ACTOR (tile));
-          clutter_actor_iter_remove (&iter);
-          clutter_actor_add_child (tile_container, CLUTTER_ACTOR (tile));
-          g_object_unref (CLUTTER_ACTOR (tile));
-
-          /* We move overlay tiles to the zoom actor so they get properly reparented
-             and destroyed as needed, but we hide them for performance reasons */
-          if (overlay)
-            clutter_actor_hide (CLUTTER_ACTOR (tile));
-
-          clutter_actor_set_position (CLUTTER_ACTOR (tile), (tile_x - x_first) * size, (tile_y - y_first) * size);
-        }
-      clutter_actor_add_child (zoom_actor, tile_container);
-
-      /* The tile_container is cloned and its clones are also added to the zoom_actor
-       * in order to horizontally wrap. Moreover, the old clones are hidden while the zooming
-       * animation is runnning.
-       */
-      if (priv->hwrap)
-        {
-          GList *old_clone = priv->map_clones;
-          gint i;
-
-          for (i = 0; i < priv->num_right_clones + 2; i++)
-            {
-              gfloat tiles_x;
-              ClutterActor *clone;
-
-              if (i == 1)
-                continue;
-
-              clone = clutter_clone_new (tile_container);
-
-              clutter_actor_hide (CLUTTER_ACTOR (old_clone->data));
-
-              clutter_actor_get_position (tile_container, &tiles_x, NULL);
-              clutter_actor_set_x (clone, tiles_x + ((i - 1) * column_count * size));
-
-              clutter_actor_add_child (zoom_actor, clone);
-
-              old_clone = old_clone->next;
-            }
-        }
-
-      zoom_actor_width = clutter_actor_get_width (zoom_actor);
-      zoom_actor_height = clutter_actor_get_height (zoom_actor);
-
-      clutter_actor_set_pivot_point (zoom_actor, (x + deltax) / zoom_actor_width, (y + deltay) / zoom_actor_height);
-      clutter_actor_set_position (zoom_actor, -deltax, -deltay);
-    }
-  else
-    zoom_actor = clutter_actor_get_first_child (priv->zoom_overlay_actor);
-
-  deltazoom = pow (2.0, (gdouble)zoom_level - priv->anim_start_zoom_level);
-
-  if (priv->animate_zoom)
-    {
-      clutter_actor_set_opacity (priv->map_layer, 0);
-
-      clutter_actor_destroy_all_children (priv->zoom_layer);
-
-      clutter_actor_save_easing_state (zoom_actor);
-      clutter_actor_set_easing_mode (zoom_actor, CLUTTER_EASE_IN_OUT_QUAD);
-      clutter_actor_set_easing_duration (zoom_actor, 350);
-      clutter_actor_set_scale (zoom_actor, deltazoom, deltazoom);
-      clutter_actor_restore_easing_state (zoom_actor);
-
-      clutter_actor_save_easing_state (priv->map_layer);
-      clutter_actor_set_easing_mode (priv->map_layer, CLUTTER_EASE_IN_EXPO);
-      clutter_actor_set_easing_duration (priv->map_layer, 350);
-      clutter_actor_set_opacity (priv->map_layer, 255);
-      clutter_actor_restore_easing_state (priv->map_layer);
-
-      if (!priv->animating_zoom)
-        {
-          if (priv->hwrap)
-            {
-              GList *slot;
-              for (slot = priv->user_layer_slots; slot != NULL; slot = slot->next)
-                clutter_actor_hide (CLUTTER_ACTOR (slot->data));
-            }
-          else
-            clutter_actor_hide (priv->user_layers);
-
-          g_signal_connect (zoom_actor, "transition-stopped::scale-x", G_CALLBACK (zoom_animation_completed), view);
-        }
-
-      priv->animating_zoom = TRUE;
-    }
-  else
-    {
-      clutter_actor_set_scale (zoom_actor, deltazoom, deltazoom);
-      if (priv->hwrap)
-        update_clones (view);
-    }
-}
 
 static void
 get_x_y_for_zoom_level (ShumateView *view,
@@ -3551,15 +3258,11 @@ view_set_zoom_level_at (ShumateView *view,
       offset_y = priv->viewport_height / 2.0;
     }
 
-  /* don't do anything when view not yet realized */
-  if (CLUTTER_ACTOR_IS_REALIZED (view))
-    show_zoom_actor (view, zoom_level, offset_x, offset_y);
-
   get_x_y_for_zoom_level (view, zoom_level, offset_x, offset_y, &new_x, &new_y);
 
   priv->zoom_level = zoom_level;
 
-  if (CLUTTER_ACTOR_IS_REALIZED (view))
+  if (gtk_widget_get_realized (GTK_WIDGET (view)))
     {
       resize_viewport (view);
       remove_all_tiles (view);
@@ -3569,8 +3272,7 @@ view_set_zoom_level_at (ShumateView *view,
         position_viewport (view, new_x, new_y);
       load_visible_tiles (view, FALSE);
 
-      if (!priv->animate_zoom)
-        position_zoom_actor (view);
+      /* TODO: animate zoom */
     }
 
   g_object_notify (G_OBJECT (view), "zoom-level");
@@ -3671,7 +3373,7 @@ shumate_view_get_deceleration (ShumateView *view)
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
   gdouble decel = 0.0;
-  g_object_get (view->priv->kinetic_scroll, "decel-rate", &decel, NULL);
+  //g_object_get (view->priv->kinetic_scroll, "decel-rate", &decel, NULL);
   return decel;
 }
 
@@ -3750,46 +3452,6 @@ shumate_view_get_animate_zoom (ShumateView *view)
 
   return view->priv->animate_zoom;
 }
-
-
-static ClutterActorAlign
-bin_alignment_to_actor_align (ClutterBinAlignment alignment)
-{
-    switch (alignment)
-      {
-        case CLUTTER_BIN_ALIGNMENT_FILL:
-            return CLUTTER_ACTOR_ALIGN_FILL;
-        case CLUTTER_BIN_ALIGNMENT_START:
-            return CLUTTER_ACTOR_ALIGN_START;
-        case CLUTTER_BIN_ALIGNMENT_END:
-            return CLUTTER_ACTOR_ALIGN_END;
-        case CLUTTER_BIN_ALIGNMENT_CENTER:
-            return CLUTTER_ACTOR_ALIGN_CENTER;
-        default:
-            return CLUTTER_ACTOR_ALIGN_START;
-      }
-}
-
-/**
- * shumate_view_get_license_actor:
- * @view: a #ShumateView
- *
- * Returns the #ShumateLicense actor which is inserted by default into the
- * layout manager. It can be manipulated using standard #ClutterActor methods
- * (hidden and so on).
- *
- * Returns: (transfer none): the license actor
- */
-ShumateLicense *
-shumate_view_get_license_actor (ShumateView *view)
-{
-  DEBUG_LOG ()
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  return SHUMATE_LICENSE (view->priv->license_actor);
-}
-
 
 /**
  * shumate_view_get_center_latitude:

@@ -42,7 +42,8 @@
 #include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
-#include <clutter/clutter.h>
+#include <gdk/gdk.h>
+#include <gtk/gtk.h>
 #include <glib.h>
 
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
@@ -74,8 +75,8 @@ enum
   PROP_SURFACE,
 };
 
-static ClutterColor DEFAULT_FILL_COLOR = { 0xcc, 0x00, 0x00, 0xaa };
-static ClutterColor DEFAULT_STROKE_COLOR = { 0xa4, 0x00, 0x00, 0xff };
+static GdkRGBA DEFAULT_FILL_COLOR = { 0.8, 0.0, 0.0, 0.67 };
+static GdkRGBA DEFAULT_STROKE_COLOR = { 0.64, 0.0, 0.0, 1.0 };
 
 /* static guint signals[LAST_SIGNAL] = { 0, }; */
 
@@ -84,9 +85,9 @@ struct _ShumatePathLayerPrivate
   ShumateView *view;
 
   gboolean closed_path;
-  ClutterColor *stroke_color;
+  GdkRGBA *stroke_color;
   gboolean fill;
-  ClutterColor *fill_color;
+  GdkRGBA *fill_color;
   gboolean stroke;
   gdouble stroke_width;
   gboolean visible;
@@ -108,6 +109,7 @@ struct _ShumatePathLayerPrivate
    * If horizontal wrap is disabled, the left_actor won't render
    * anything.
    */
+  /*
   ClutterActor *path_actor;
 
   ClutterActor *right_actor;
@@ -115,7 +117,7 @@ struct _ShumatePathLayerPrivate
 
   ClutterContent *right_canvas;
   ClutterContent *left_canvas;
-
+   */
   cairo_surface_t *right_surface;
   cairo_surface_t *left_surface;
 
@@ -131,11 +133,13 @@ static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
 static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 
+/*
 static gboolean redraw_path (ClutterCanvas *canvas,
     cairo_t *cr,
     int w,
     int h,
     ShumatePathLayer *layer);
+*/
 
 static void set_view (ShumateLayer *layer,
     ShumateView *view);
@@ -167,11 +171,11 @@ shumate_path_layer_get_property (GObject *object,
       break;
 
     case PROP_FILL_COLOR:
-      clutter_value_set_color (value, priv->fill_color);
+      g_value_set_boxed (value, gdk_rgba_copy (priv->fill_color));
       break;
 
     case PROP_STROKE_COLOR:
-      clutter_value_set_color (value, priv->stroke_color);
+      g_value_set_boxed (value, gdk_rgba_copy (priv->stroke_color));
       break;
 
     case PROP_STROKE_WIDTH:
@@ -217,12 +221,12 @@ shumate_path_layer_set_property (GObject *object,
 
     case PROP_FILL_COLOR:
       shumate_path_layer_set_fill_color (SHUMATE_PATH_LAYER (object),
-          clutter_value_get_color (value));
+          gdk_rgba_copy (g_value_get_boxed (value)));
       break;
 
     case PROP_STROKE_COLOR:
       shumate_path_layer_set_stroke_color (SHUMATE_PATH_LAYER (object),
-          clutter_value_get_color (value));
+          gdk_rgba_copy (g_value_get_boxed (value)));
       break;
 
     case PROP_STROKE_WIDTH:
@@ -257,6 +261,7 @@ shumate_path_layer_dispose (GObject *object)
   if (priv->view != NULL)
     set_view (SHUMATE_LAYER (self), NULL);
 
+  /*
   if (priv->right_canvas)
     {
       g_object_unref (priv->right_canvas);
@@ -264,6 +269,7 @@ shumate_path_layer_dispose (GObject *object)
       priv->right_canvas = NULL;
       priv->left_canvas = NULL;
     }
+   */
 
   g_clear_pointer (&priv->surface, cairo_surface_destroy);
   g_clear_pointer (&priv->right_surface, cairo_surface_destroy);
@@ -279,8 +285,8 @@ shumate_path_layer_finalize (GObject *object)
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
   ShumatePathLayerPrivate *priv = self->priv;
 
-  clutter_color_free (priv->stroke_color);
-  clutter_color_free (priv->fill_color);
+  gdk_rgba_free (priv->stroke_color);
+  gdk_rgba_free (priv->fill_color);
   g_free (priv->dash);
 
   G_OBJECT_CLASS (shumate_path_layer_parent_class)->finalize (object);
@@ -349,11 +355,11 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    */
   g_object_class_install_property (object_class,
       PROP_STROKE_COLOR,
-      clutter_param_spec_color ("stroke-color",
+      g_param_spec_boxed ("stroke-color",
           "Stroke Color",
           "The path's stroke color",
-          &DEFAULT_STROKE_COLOR,
-          SHUMATE_PARAM_READWRITE));
+          GDK_TYPE_RGBA,
+          G_PARAM_READWRITE));
 
   /**
    * ShumatePathLayer:fill-color:
@@ -362,11 +368,11 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    */
   g_object_class_install_property (object_class,
       PROP_FILL_COLOR,
-      clutter_param_spec_color ("fill-color",
+      g_param_spec_boxed ("fill-color",
           "Fill Color",
           "The path's fill color",
-          &DEFAULT_FILL_COLOR,
-          SHUMATE_PARAM_READWRITE));
+          GDK_TYPE_RGBA,
+          G_PARAM_READWRITE));
 
   /**
    * ShumatePathLayer:stroke-width:
@@ -410,6 +416,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           G_PARAM_READWRITE));
 }
 
+/*
 static void
 initialize_child_actor (ShumatePathLayer *self,
     ClutterActor *child_actor,
@@ -422,6 +429,7 @@ initialize_child_actor (ShumatePathLayer *self,
   clutter_actor_set_size (child_actor, 255, 255);
   clutter_actor_add_child (priv->path_actor, child_actor);
 }
+ */
 
 static void
 shumate_path_layer_init (ShumatePathLayer *self)
@@ -441,9 +449,10 @@ shumate_path_layer_init (ShumatePathLayer *self)
   priv->num_dashes = 0;
   priv->redraw_scheduled = FALSE;
 
-  priv->fill_color = clutter_color_copy (&DEFAULT_FILL_COLOR);
-  priv->stroke_color = clutter_color_copy (&DEFAULT_STROKE_COLOR);
+  priv->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
+  priv->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
 
+  /*
   priv->path_actor = clutter_actor_new ();
   clutter_actor_add_child (CLUTTER_ACTOR (self), priv->path_actor);
   clutter_actor_set_size (priv->path_actor, 255, 255);
@@ -453,6 +462,7 @@ shumate_path_layer_init (ShumatePathLayer *self)
 
   priv->right_canvas = clutter_canvas_new ();
   priv->left_canvas = clutter_canvas_new ();
+   */
 
   priv->surface = NULL;
   priv->right_surface = NULL;
@@ -461,11 +471,13 @@ shumate_path_layer_init (ShumatePathLayer *self)
   priv->right_surface_updated = FALSE;
   priv->left_surface_updated = FALSE;
 
+  /*
   clutter_canvas_set_size (CLUTTER_CANVAS (priv->right_canvas), 255, 255);
   clutter_canvas_set_size (CLUTTER_CANVAS (priv->left_canvas), 0, 0);
 
   initialize_child_actor (self, priv->right_actor, priv->right_canvas);
   initialize_child_actor (self, priv->left_actor, priv->left_canvas);
+   */
 }
 
 
@@ -508,13 +520,14 @@ static cairo_surface_t *
 create_merged_surface (ShumatePathLayer *layer)
 {
   ShumatePathLayerPrivate *priv = layer->priv;
-  gfloat view_width, view_height;
+  gint view_width, view_height;
   gint map_width, viewport_x, anchor_x;
   cairo_surface_t *new_surface;
   cairo_t *cr;
 
   get_map_size (priv->view, &map_width, NULL);
-  clutter_actor_get_size (CLUTTER_ACTOR (priv->view), &view_width, &view_height);
+  view_width = gtk_widget_get_allocated_width (GTK_WIDGET (priv->view));
+  view_height = gtk_widget_get_allocated_height (GTK_WIDGET (priv->view));
   shumate_view_get_viewport_origin (priv->view, &viewport_x, NULL);
   shumate_view_get_viewport_anchor (priv->view, &anchor_x, NULL);
   new_surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, view_width, view_height);
@@ -587,7 +600,7 @@ static gboolean
 invalidate_canvas (ShumatePathLayer *layer)
 {
   ShumatePathLayerPrivate *priv = layer->priv;
-  gfloat view_width, view_height;
+  gint view_width, view_height;
   gint map_width, map_height;
   gint viewport_x, viewport_y;
   gint anchor_x, anchor_y;
@@ -604,7 +617,8 @@ invalidate_canvas (ShumatePathLayer *layer)
   if (priv->view != NULL)
     {
       get_map_size (priv->view, &map_width, &map_height);
-      clutter_actor_get_size (CLUTTER_ACTOR (priv->view), &view_width, &view_height);
+      view_width = gtk_widget_get_allocated_width (GTK_WIDGET (priv->view));
+      view_height = gtk_widget_get_allocated_height (GTK_WIDGET (priv->view));
       shumate_view_get_viewport_origin (priv->view, &viewport_x, &viewport_y);
       shumate_view_get_viewport_anchor (priv->view, &anchor_x, &anchor_y);
 
@@ -614,8 +628,8 @@ invalidate_canvas (ShumatePathLayer *layer)
        * The left_actor renders the paths on the visible side of the first cloned map layer
        * (from the leftmost point on the map, clamped by the viewport width).
        */
-      right_actor_width = MIN (map_width - (viewport_x + anchor_x), (gint)view_width);
-      right_actor_height = MIN (map_height - (viewport_y + anchor_y), (gint)view_height);
+      right_actor_width = MIN (map_width - (viewport_x + anchor_x), view_width);
+      right_actor_height = MIN (map_height - (viewport_y + anchor_y), view_height);
       left_actor_width = MIN (view_width - right_actor_width, map_width - right_actor_width);
       left_actor_height = right_actor_height;
 
@@ -626,16 +640,19 @@ invalidate_canvas (ShumatePathLayer *layer)
       left_actor_height = MAX (0, left_actor_height);
     }
 
+  /*
   clutter_actor_set_size (priv->path_actor, map_width, map_height);
 
   clutter_actor_set_size (priv->right_actor, right_actor_width, right_actor_height);
   clutter_canvas_set_size (CLUTTER_CANVAS (priv->right_canvas), right_actor_width, right_actor_height);
   priv->right_surface_updated = FALSE;
   clutter_content_invalidate (priv->right_canvas);
+   */
 
   /* Since the left actor only renders paths visible on the clone, it should be hidden
    * when no clone is visible.
    */
+  /*
   if (left_actor_width != 0)
     {
       clutter_actor_set_size (priv->left_actor, left_actor_width, left_actor_height);
@@ -646,6 +663,7 @@ invalidate_canvas (ShumatePathLayer *layer)
     }
   else
     clutter_actor_hide (priv->left_actor);
+  */
 
   priv->redraw_scheduled = FALSE;
 
@@ -659,7 +677,7 @@ schedule_redraw (ShumatePathLayer *layer)
   if (!layer->priv->redraw_scheduled)
     {
       layer->priv->redraw_scheduled = TRUE;
-      g_idle_add_full (CLUTTER_PRIORITY_REDRAW,
+      g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50,
           (GSourceFunc) invalidate_canvas,
           g_object_ref (layer),
           (GDestroyNotify) g_object_unref);
@@ -819,120 +837,120 @@ relocate_cb (G_GNUC_UNUSED GObject *gobject,
   schedule_redraw (layer);
 }
 
-static void
-update_surface (ShumatePathLayer *layer,
-    ClutterCanvas *canvas,
-    cairo_surface_t *surface)
-{
-  ShumatePathLayerPrivate *priv = layer->priv;
+/* static void */
+/* update_surface (ShumatePathLayer *layer, */
+/*     ClutterCanvas *canvas, */
+/*     cairo_surface_t *surface) */
+/* { */
+/*   ShumatePathLayerPrivate *priv = layer->priv; */
 
-  if (canvas == CLUTTER_CANVAS (priv->right_canvas))
-    {
-      cairo_surface_destroy (priv->right_surface);
-      priv->right_surface = cairo_surface_reference (surface);
-      priv->right_surface_updated = TRUE;
-    }
-  else if (canvas == CLUTTER_CANVAS (priv->left_canvas))
-    {
-      cairo_surface_destroy (priv->left_surface);
-      priv->left_surface = cairo_surface_reference (surface);
-      priv->left_surface_updated = TRUE;
-    }
+/*   if (canvas == CLUTTER_CANVAS (priv->right_canvas)) */
+/*     { */
+/*       cairo_surface_destroy (priv->right_surface); */
+/*       priv->right_surface = cairo_surface_reference (surface); */
+/*       priv->right_surface_updated = TRUE; */
+/*     } */
+/*   else if (canvas == CLUTTER_CANVAS (priv->left_canvas)) */
+/*     { */
+/*       cairo_surface_destroy (priv->left_surface); */
+/*       priv->left_surface = cairo_surface_reference (surface); */
+/*       priv->left_surface_updated = TRUE; */
+/*     } */
 
  /* Updating the exportable surface. Path layer has two surfaces (one for each canvas)
-  * which have to be merged into a single new one.
-  */
-  if (priv->left_surface_updated && priv->right_surface_updated)
-    {
-      cairo_surface_t *new_surface;
-      new_surface = create_merged_surface (layer);
+   * which have to be merged into a single new one. */
 
-      set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), new_surface);
+/*   if (priv->left_surface_updated && priv->right_surface_updated) */
+/*     { */
+/*       cairo_surface_t *new_surface; */
+/*       new_surface = create_merged_surface (layer); */
 
-      cairo_surface_destroy (new_surface);
-    }
+/*       set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), new_surface); */
+
+/*       cairo_surface_destroy (new_surface); */
+/*     } */
   /* When only the right actor is visible, no merging is required */
-  else if (!CLUTTER_ACTOR_IS_VISIBLE (priv->left_actor))
-    set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), priv->right_surface);
-}
+/*   else if (!CLUTTER_ACTOR_IS_VISIBLE (priv->left_actor)) */
+/*     set_surface (SHUMATE_CAIRO_IMPORTABLE (layer), priv->right_surface); */
+/* } */
 
-static gboolean
-redraw_path (ClutterCanvas *canvas,
-    cairo_t *cr,
-    int width,
-    int height,
-    ShumatePathLayer *layer)
-{
-  ShumatePathLayerPrivate *priv = layer->priv;
-  GList *elem;
-  ShumateView *view = priv->view;
-  gint  viewport_x, viewport_y;
-  gint anchor_x, anchor_y;
+/* static gboolean */
+/* redraw_path (ClutterCanvas *canvas, */
+/*     cairo_t *cr, */
+/*     int width, */
+/*     int height, */
+/*     ShumatePathLayer *layer) */
+/* { */
+/*   ShumatePathLayerPrivate *priv = layer->priv; */
+/*   GList *elem; */
+/*   ShumateView *view = priv->view; */
+/*   gint  viewport_x, viewport_y; */
+/*   gint anchor_x, anchor_y; */
 
   /* layer not yet added to the view */
-  if (view == NULL)
-    return FALSE;
+/*   if (view == NULL) */
+/*     return FALSE; */
 
-  if (!priv->visible || width == 0.0 || height == 0.0)
-    return FALSE;
+/*   if (!priv->visible || width == 0.0 || height == 0.0) */
+/*     return FALSE; */
 
-  shumate_view_get_viewport_origin (priv->view, &viewport_x, &viewport_y);
-  shumate_view_get_viewport_anchor (priv->view, &anchor_x, &anchor_y);
+/*   shumate_view_get_viewport_origin (priv->view, &viewport_x, &viewport_y); */
+/*   shumate_view_get_viewport_anchor (priv->view, &anchor_x, &anchor_y); */
 
-  if (canvas == CLUTTER_CANVAS (priv->right_canvas))
-    clutter_actor_set_position (priv->right_actor, viewport_x, viewport_y);
-  else
-    clutter_actor_set_position (priv->left_actor, -anchor_x, viewport_y);
+/*   if (canvas == CLUTTER_CANVAS (priv->right_canvas)) */
+/*     clutter_actor_set_position (priv->right_actor, viewport_x, viewport_y); */
+/*   else */
+/*     clutter_actor_set_position (priv->left_actor, -anchor_x, viewport_y); */
 
   /* Clear the drawing area */
-  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-  cairo_paint (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+/*   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR); */
+/*   cairo_paint (cr); */
+/*   cairo_set_operator (cr, CAIRO_OPERATOR_OVER); */
 
-  cairo_set_line_join (cr, CAIRO_LINE_JOIN_BEVEL);
+/*   cairo_set_line_join (cr, CAIRO_LINE_JOIN_BEVEL); */
 
-  for (elem = priv->nodes; elem != NULL; elem = elem->next)
-    {
-      ShumateLocation *location = SHUMATE_LOCATION (elem->data);
-      gfloat x, y;
+/*   for (elem = priv->nodes; elem != NULL; elem = elem->next) */
+/*     { */
+/*       ShumateLocation *location = SHUMATE_LOCATION (elem->data); */
+/*       gfloat x, y; */
 
-      x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (location));
-      y = shumate_view_latitude_to_y (view, shumate_location_get_latitude (location));
+/*       x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (location)); */
+/*       y = shumate_view_latitude_to_y (view, shumate_location_get_latitude (location)); */
 
-      if (canvas == CLUTTER_CANVAS (priv->right_canvas))
-        cairo_line_to (cr, x, y);
-      else
-        cairo_line_to (cr, x + (viewport_x + anchor_x), y);
-    }
+/*       if (canvas == CLUTTER_CANVAS (priv->right_canvas)) */
+/*         cairo_line_to (cr, x, y); */
+/*       else */
+/*         cairo_line_to (cr, x + (viewport_x + anchor_x), y); */
+/*     } */
 
-  if (priv->closed_path)
-    cairo_close_path (cr);
+/*   if (priv->closed_path) */
+/*     cairo_close_path (cr); */
 
-  cairo_set_source_rgba (cr,
-      priv->fill_color->red / 255.0,
-      priv->fill_color->green / 255.0,
-      priv->fill_color->blue / 255.0,
-      priv->fill_color->alpha / 255.0);
+/*   cairo_set_source_rgba (cr, */
+/*       priv->fill_color->red / 255.0, */
+/*       priv->fill_color->green / 255.0, */
+/*       priv->fill_color->blue / 255.0, */
+/*       priv->fill_color->alpha / 255.0); */
 
-  if (priv->fill)
-    cairo_fill_preserve (cr);
+/*   if (priv->fill) */
+/*     cairo_fill_preserve (cr); */
 
-  cairo_set_source_rgba (cr,
-      priv->stroke_color->red / 255.0,
-      priv->stroke_color->green / 255.0,
-      priv->stroke_color->blue / 255.0,
-      priv->stroke_color->alpha / 255.0);
+/*   cairo_set_source_rgba (cr, */
+/*       priv->stroke_color->red / 255.0, */
+/*       priv->stroke_color->green / 255.0, */
+/*       priv->stroke_color->blue / 255.0, */
+/*       priv->stroke_color->alpha / 255.0); */
 
-  cairo_set_line_width (cr, priv->stroke_width);
-  cairo_set_dash(cr, priv->dash, priv->num_dashes, 0);
+/*   cairo_set_line_width (cr, priv->stroke_width); */
+/*   cairo_set_dash(cr, priv->dash, priv->num_dashes, 0); */
 
-  if (priv->stroke)
-    cairo_stroke (cr);
+/*   if (priv->stroke) */
+/*     cairo_stroke (cr); */
 
-  update_surface (layer, canvas, cairo_get_target (cr));
+/*   update_surface (layer, canvas, cairo_get_target (cr)); */
 
-  return FALSE;
-}
+/*   return FALSE; */
+/* } */
 
 
 static void
@@ -957,8 +975,8 @@ set_view (ShumateLayer *layer,
       g_signal_handlers_disconnect_by_func (path_layer->priv->view,
           G_CALLBACK (relocate_cb), path_layer);
 
-      g_signal_handlers_disconnect_by_func (path_layer->priv->view,
-          G_CALLBACK (redraw_path_cb), path_layer);
+      //g_signal_handlers_disconnect_by_func (path_layer->priv->view,
+      //    G_CALLBACK (redraw_path_cb), path_layer);
 
       g_object_unref (path_layer->priv->view);
     }
@@ -969,6 +987,7 @@ set_view (ShumateLayer *layer,
     {
       g_object_ref (view);
 
+      /*
       g_signal_connect (view, "layer-relocated",
           G_CALLBACK (relocate_cb), layer);
 
@@ -977,6 +996,7 @@ set_view (ShumateLayer *layer,
 
       g_signal_connect (view, "notify::zoom-level",
           G_CALLBACK (redraw_path_cb), layer);
+       */
 
       schedule_redraw (path_layer);
     }
@@ -1029,19 +1049,19 @@ get_bounding_box (ShumateLayer *layer)
  */
 void
 shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
-    const ClutterColor *color)
+    const GdkRGBA *color)
 {
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
   ShumatePathLayerPrivate *priv = layer->priv;
 
   if (priv->fill_color != NULL)
-    clutter_color_free (priv->fill_color);
+    gdk_rgba_free (priv->fill_color);
 
   if (color == NULL)
     color = &DEFAULT_FILL_COLOR;
 
-  priv->fill_color = clutter_color_copy (color);
+  priv->fill_color = gdk_rgba_copy (color);
   g_object_notify (G_OBJECT (layer), "fill-color");
 
   schedule_redraw (layer);
@@ -1056,7 +1076,7 @@ shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
  *
  * Returns: the path's fill color.
  */
-ClutterColor *
+GdkRGBA *
 shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
@@ -1075,19 +1095,19 @@ shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
  */
 void
 shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
-    const ClutterColor *color)
+    const GdkRGBA *color)
 {
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
   ShumatePathLayerPrivate *priv = layer->priv;
 
   if (priv->stroke_color != NULL)
-    clutter_color_free (priv->stroke_color);
+    gdk_rgba_free (priv->stroke_color);
 
   if (color == NULL)
     color = &DEFAULT_STROKE_COLOR;
 
-  priv->stroke_color = clutter_color_copy (color);
+  priv->stroke_color = gdk_rgba_copy (color);
   g_object_notify (G_OBJECT (layer), "stroke-color");
 
   schedule_redraw (layer);
@@ -1102,7 +1122,7 @@ shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
  *
  * Returns: the path's stroke color.
  */
-ClutterColor *
+GdkRGBA *
 shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
@@ -1236,10 +1256,12 @@ shumate_path_layer_set_visible (ShumatePathLayer *layer,
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
   layer->priv->visible = value;
+  /*
   if (value)
     clutter_actor_show (CLUTTER_ACTOR (layer->priv->path_actor));
   else
     clutter_actor_hide (CLUTTER_ACTOR (layer->priv->path_actor));
+   */
   g_object_notify (G_OBJECT (layer), "visible");
 }
 

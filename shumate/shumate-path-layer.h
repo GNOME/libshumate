@@ -30,8 +30,8 @@
 #include <shumate/shumate-location.h>
 #include <shumate/shumate-bounding-box.h>
 
+#include <gdk/gdk.h>
 #include <glib-object.h>
-#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -90,13 +90,13 @@ void shumate_path_layer_insert_node (ShumatePathLayer *layer,
     guint position);
 GList *shumate_path_layer_get_nodes (ShumatePathLayer *layer);
 
-ClutterColor *shumate_path_layer_get_fill_color (ShumatePathLayer *layer);
+GdkRGBA *shumate_path_layer_get_fill_color (ShumatePathLayer *layer);
 void shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
-    const ClutterColor *color);
+    const GdkRGBA *color);
 
-ClutterColor *shumate_path_layer_get_stroke_color (ShumatePathLayer *layer);
+GdkRGBA *shumate_path_layer_get_stroke_color (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
-    const ClutterColor *color);
+    const GdkRGBA *color);
 
 gboolean shumate_path_layer_get_fill (ShumatePathLayer *layer);
 void shumate_path_layer_set_fill (ShumatePathLayer *layer,
@@ -125,3 +125,4 @@ void shumate_path_layer_set_dash (ShumatePathLayer *layer,
 G_END_DECLS
 
 #endif
+

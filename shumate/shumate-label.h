@@ -28,7 +28,6 @@
 #include <shumate/shumate-marker.h>
 
 #include <glib-object.h>
-#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -74,33 +73,33 @@ struct _ShumateLabelClass
 
 GType shumate_label_get_type (void);
 
-ClutterActor *shumate_label_new (void);
+ShumateLabel *shumate_label_new (void);
 
-ClutterActor *shumate_label_new_with_text (const gchar *text,
+ShumateLabel *shumate_label_new_with_text (const gchar *text,
     const gchar *font,
-    ClutterColor *text_color,
-    ClutterColor *label_color);
+    GdkRGBA *text_color,
+    GdkRGBA *label_color);
 
-ClutterActor *shumate_label_new_with_image (ClutterActor *actor);
+ShumateLabel *shumate_label_new_with_image (GdkPixbuf *image);
 
-ClutterActor *shumate_label_new_from_file (const gchar *filename,
+ShumateLabel *shumate_label_new_from_file (const gchar *filename,
     GError **error);
 
-ClutterActor *shumate_label_new_full (const gchar *text,
-    ClutterActor *actor);
+//ClutterActor *shumate_label_new_full (const gchar *text,
+//    ClutterActor *actor);
 
 void shumate_label_set_text (ShumateLabel *label,
     const gchar *text);
 void shumate_label_set_image (ShumateLabel *label,
-    ClutterActor *image);
+    GdkPixbuf *image);
 void shumate_label_set_use_markup (ShumateLabel *label,
     gboolean use_markup);
 void shumate_label_set_alignment (ShumateLabel *label,
     PangoAlignment alignment);
 void shumate_label_set_color (ShumateLabel *label,
-    const ClutterColor *color);
+    const GdkRGBA *color);
 void shumate_label_set_text_color (ShumateLabel *label,
-    const ClutterColor *color);
+    const GdkRGBA *color);
 void shumate_label_set_font_name (ShumateLabel *label,
     const gchar *font_name);
 void shumate_label_set_wrap (ShumateLabel *label,
@@ -120,10 +119,10 @@ void shumate_label_set_draw_shadow (ShumateLabel *label,
 
 gboolean shumate_label_get_use_markup (ShumateLabel *label);
 const gchar *shumate_label_get_text (ShumateLabel *label);
-ClutterActor *shumate_label_get_image (ShumateLabel *label);
+GdkPixbuf *shumate_label_get_image (ShumateLabel *label);
 PangoAlignment shumate_label_get_alignment (ShumateLabel *label);
-ClutterColor *shumate_label_get_color (ShumateLabel *label);
-ClutterColor *shumate_label_get_text_color (ShumateLabel *label);
+GdkRGBA *shumate_label_get_color (ShumateLabel *label);
+GdkRGBA *shumate_label_get_text_color (ShumateLabel *label);
 const gchar *shumate_label_get_font_name (ShumateLabel *label);
 gboolean shumate_label_get_wrap (ShumateLabel *label);
 PangoWrapMode shumate_label_get_wrap_mode (ShumateLabel *label);

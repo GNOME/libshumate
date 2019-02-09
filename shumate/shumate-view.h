@@ -33,7 +33,8 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <clutter/clutter.h>
+#include <gtk/gtk.h>
+//#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -65,19 +66,19 @@ typedef struct _ShumateViewPrivate ShumateViewPrivate;
  */
 struct _ShumateView
 {
-  ClutterActor parent;
+  GtkWidget parent;
 
   ShumateViewPrivate *priv;
 };
 
 struct _ShumateViewClass
 {
-  ClutterActorClass parent_class;
+  GtkWidgetClass parent_class;
 };
 
 GType shumate_view_get_type (void);
 
-ClutterActor *shumate_view_new (void);
+ShumateView *shumate_view_new (void);
 
 void shumate_view_center_on (ShumateView *view,
     gdouble latitude,
@@ -123,8 +124,8 @@ void shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value);
 void shumate_view_set_animate_zoom (ShumateView *view,
     gboolean value);
-void shumate_view_set_background_pattern (ShumateView *view,
-    ClutterContent *background);
+//void shumate_view_set_background_pattern (ShumateView *view,
+//    ClutterContent *background);
 void shumate_view_set_world (ShumateView *view,
     ShumateBoundingBox *bbox);
 void shumate_view_set_horizontal_wrap (ShumateView *view,
@@ -146,7 +147,7 @@ gboolean shumate_view_get_keep_center_on_resize (ShumateView *view);
 gboolean shumate_view_get_zoom_on_double_click (ShumateView *view);
 gboolean shumate_view_get_animate_zoom (ShumateView *view);
 ShumateState shumate_view_get_state (ShumateView *view);
-ClutterContent *shumate_view_get_background_pattern (ShumateView *view);
+//ClutterContent *shumate_view_get_background_pattern (ShumateView *view);
 ShumateBoundingBox *shumate_view_get_world (ShumateView *view);
 gboolean shumate_view_get_horizontal_wrap (ShumateView *view);
 
@@ -167,8 +168,6 @@ void shumate_view_get_viewport_anchor (ShumateView *view,
 void shumate_view_get_viewport_origin (ShumateView *view,
     gint *x,
     gint *y);
-
-ShumateLicense *shumate_view_get_license_actor (ShumateView *view);
 
 ShumateBoundingBox *shumate_view_get_bounding_box (ShumateView *view);
 ShumateBoundingBox *shumate_view_get_bounding_box_for_zoom_level (ShumateView *view,

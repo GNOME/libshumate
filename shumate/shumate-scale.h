@@ -27,7 +27,6 @@
 #include <shumate/shumate-defines.h>
 
 #include <glib-object.h>
-#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -74,19 +73,19 @@ typedef enum
  */
 struct _ShumateScale
 {
-  ClutterActor parent;
+  GObject parent;
 
   ShumateScalePrivate *priv;
 };
 
 struct _ShumateScaleClass
 {
-  ClutterActorClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType shumate_scale_get_type (void);
 
-ClutterActor *shumate_scale_new (void);
+ShumateScale *shumate_scale_new (void);
 
 
 void shumate_scale_set_max_width (ShumateScale *scale,

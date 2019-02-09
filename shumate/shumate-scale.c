@@ -33,7 +33,6 @@
 #include "shumate-enum-types.h"
 #include "shumate-view.h"
 
-#include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <cairo.h>
@@ -61,13 +60,13 @@ struct _ShumateScalePrivate
   ShumateUnit scale_unit;
   guint max_scale_width;
   gfloat text_height;
-  ClutterContent *canvas;
+  //ClutterContent *canvas;
 
   ShumateView *view;
   gboolean redraw_scheduled;
 };
 
-G_DEFINE_TYPE (ShumateScale, shumate_scale, CLUTTER_TYPE_ACTOR);
+G_DEFINE_TYPE (ShumateScale, shumate_scale, G_TYPE_OBJECT);
 
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_SCALE, ShumateScalePrivate))
@@ -138,11 +137,13 @@ shumate_scale_dispose (GObject *object)
       priv->view = NULL;
     }
 
+  /*
   if (priv->canvas)
     {
       g_object_unref (priv->canvas);
       priv->canvas = NULL;
     }
+   */
 
   G_OBJECT_CLASS (shumate_scale_parent_class)->dispose (object);
 }
@@ -202,14 +203,14 @@ shumate_scale_class_init (ShumateScaleClass *klass)
 
 
 static gboolean
-redraw_scale (ClutterCanvas *canvas,
+redraw_scale (/*ClutterCanvas *canvas,*/
     cairo_t *cr,
     int w,
     int h,
     ShumateScale *scale)
 {
   gboolean is_small_unit = TRUE;  /* indicates if using meters */
-  ClutterActor *text;
+  //ClutterActor *text;
   gfloat width, height;
   ShumateScalePrivate *priv = scale->priv;
   gfloat m_per_pixel;
@@ -277,26 +278,28 @@ redraw_scale (ClutterCanvas *canvas,
         }
     } while (!final_unit);
 
-  text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-far-label");
+  //text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-far-label");
   label = g_strdup_printf ("%g", base);
   /* Get only digits width for centering */
-  clutter_text_set_text (CLUTTER_TEXT (text), label);
+  //clutter_text_set_text (CLUTTER_TEXT (text), label);
   g_free (label);
-  clutter_actor_get_size (text, &width, NULL);
+  //clutter_actor_get_size (text, &width, NULL);
   /* actual label with unit */
   label = g_strdup_printf ("%g %s", base,
         priv->scale_unit == SHUMATE_UNIT_KM ?
         (is_small_unit ? "m" : "km") :
         (is_small_unit ? "ft" : "miles"));
-  clutter_text_set_text (CLUTTER_TEXT (text), label);
+  //clutter_text_set_text (CLUTTER_TEXT (text), label);
   g_free (label);
-  clutter_actor_set_position (text, ceil (scale_width - width / 2) + SCALE_INSIDE_PADDING, SCALE_INSIDE_PADDING);
+  //clutter_actor_set_position (text, ceil (scale_width - width / 2) + SCALE_INSIDE_PADDING, SCALE_INSIDE_PADDING);
 
-  text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-mid-label");
+  //text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-mid-label");
   label = g_strdup_printf ("%g", base / 2.0);
+  /*
   clutter_text_set_text (CLUTTER_TEXT (text), label);
   clutter_actor_get_size (text, &width, &height);
   clutter_actor_set_position (text, ceil ((scale_width - width) / 2) + SCALE_INSIDE_PADDING, SCALE_INSIDE_PADDING);
+   */
   g_free (label);
 
   /* Draw the line */
@@ -339,7 +342,7 @@ invalidate_canvas (ShumateScale *layer)
 {
   ShumateScalePrivate *priv = layer->priv;
 
-  clutter_content_invalidate (priv->canvas);
+  //clutter_content_invalidate (priv->canvas);
   priv->redraw_scheduled = FALSE;
 
   return FALSE;
@@ -352,7 +355,7 @@ schedule_redraw (ShumateScale *layer)
   if (!layer->priv->redraw_scheduled)
     {
       layer->priv->redraw_scheduled = TRUE;
-      g_idle_add_full (CLUTTER_PRIORITY_REDRAW,
+      g_idle_add_full (G_PRIORITY_HIGH + 50,
           (GSourceFunc) invalidate_canvas,
           g_object_ref (layer),
           (GDestroyNotify) g_object_unref);
@@ -363,6 +366,7 @@ schedule_redraw (ShumateScale *layer)
 static void
 create_scale (ShumateScale *scale)
 {
+  /*
   ClutterActor *text, *scale_actor;
   gfloat width, height;
   ShumateScalePrivate *priv = scale->priv;
@@ -395,6 +399,7 @@ create_scale (ShumateScale *scale)
   clutter_actor_add_child (CLUTTER_ACTOR (scale), scale_actor);
 
   clutter_actor_set_opacity (CLUTTER_ACTOR (scale), 200);
+   */
 
   schedule_redraw (scale);
 }
@@ -423,10 +428,10 @@ shumate_scale_init (ShumateScale *scale)
  *
  * Returns: a new #ShumateScale.
  */
-ClutterActor *
+ShumateScale *
 shumate_scale_new (void)
 {
-  return CLUTTER_ACTOR (g_object_new (SHUMATE_TYPE_SCALE, NULL));
+  return SHUMATE_SCALE (g_object_new (SHUMATE_TYPE_SCALE, NULL));
 }
 
 

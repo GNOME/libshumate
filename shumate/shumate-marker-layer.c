@@ -37,7 +37,6 @@
 #include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
-#include <clutter/clutter.h>
 #include <glib.h>
 
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
@@ -206,14 +205,15 @@ get_surface (ShumateCairoExportable *exportable)
 {
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (exportable), NULL);
 
-  ClutterActorIter iter;
-  ClutterActor *child;
+  //ClutterActorIter iter;
+  //ClutterActor *child;
   ShumateMarkerLayer *layer = SHUMATE_MARKER_LAYER (exportable);
   ShumateMarkerLayerPrivate *priv = layer->priv;
   cairo_surface_t *surface = NULL;
   cairo_t *cr;
   gboolean has_marker = FALSE;
 
+  /*
   clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -253,6 +253,7 @@ get_surface (ShumateCairoExportable *exportable)
           cairo_destroy (cr);
         }
     }
+   */
 
   return surface;
 }
@@ -292,12 +293,12 @@ shumate_marker_layer_new_full (ShumateSelectionMode mode)
   return g_object_new (SHUMATE_TYPE_MARKER_LAYER, "selection-mode", mode, NULL);
 }
 
-
 static void
 set_selected_all_but_one (ShumateMarkerLayer *layer,
     ShumateMarker *not_selected,
     gboolean select)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -320,6 +321,7 @@ set_selected_all_but_one (ShumateMarkerLayer *layer,
               layer);
         }
     }
+   */
 }
 
 
@@ -349,7 +351,7 @@ set_marker_position (ShumateMarkerLayer *layer, ShumateMarker *marker)
   y = shumate_view_latitude_to_y (priv->view,
         shumate_location_get_latitude (SHUMATE_LOCATION (marker))) + origin_y;
 
-  clutter_actor_set_position (CLUTTER_ACTOR (marker), x, y);
+  //clutter_actor_set_position (CLUTTER_ACTOR (marker), x, y);
 }
 
 
@@ -366,7 +368,7 @@ static void
 marker_move_by_cb (ShumateMarker *marker,
     gdouble dx,
     gdouble dy,
-    ClutterEvent *event,
+    GdkEvent *event,
     ShumateMarkerLayer *layer)
 {
   ShumateMarkerLayerPrivate *priv = layer->priv;
@@ -411,7 +413,7 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
   g_signal_connect (G_OBJECT (marker), "drag-motion",
       G_CALLBACK (marker_move_by_cb), layer);
 
-  clutter_actor_add_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
+  //clutter_actor_add_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
   set_marker_position (layer, marker);
 }
 
@@ -425,11 +427,12 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 void
 shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
 {
-  ClutterActorIter iter;
-  ClutterActor *child;
+  //ClutterActorIter iter;
+  //ClutterActor *child;
 
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
 
+  /*
   clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -446,6 +449,7 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
 
       clutter_actor_iter_remove (&iter);
     }
+   */
 }
 
 
@@ -463,7 +467,7 @@ shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
 {
   GList *lst;
 
-  lst = clutter_actor_get_children (CLUTTER_ACTOR (layer));
+  //lst = clutter_actor_get_children (CLUTTER_ACTOR (layer));
   return g_list_reverse (lst);
 }
 
@@ -483,6 +487,7 @@ shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
 
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
 
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -494,6 +499,7 @@ shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
       if (shumate_marker_get_selected (marker))
         selected = g_list_prepend (selected, marker);
     }
+   */
 
   return selected;
 }
@@ -522,7 +528,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
   g_signal_handlers_disconnect_by_func (marker,
       G_CALLBACK (marker_move_by_cb), layer);
 
-  clutter_actor_remove_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
+  //clutter_actor_remove_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
 }
 
 
@@ -535,6 +541,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
 void
 shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
   guint delay = 0;
@@ -549,6 +556,7 @@ shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer)
       shumate_marker_animate_in_with_delay (marker, delay);
       delay += 50;
     }
+   */
 }
 
 
@@ -561,6 +569,7 @@ shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer)
 void
 shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
   guint delay = 0;
@@ -575,6 +584,7 @@ shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer)
       shumate_marker_animate_out_with_delay (marker, delay);
       delay += 50;
     }
+   */
 }
 
 
@@ -587,6 +597,7 @@ shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer)
 void
 shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -599,6 +610,7 @@ shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer)
 
       clutter_actor_show (actor);
     }
+   */
 }
 
 
@@ -611,6 +623,7 @@ shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer)
 void
 shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -623,6 +636,7 @@ shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer)
 
       clutter_actor_hide (actor);
     }
+   */
 }
 
 
@@ -635,6 +649,7 @@ shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer)
 void
 shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -647,6 +662,7 @@ shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer)
 
       shumate_marker_set_draggable (marker, TRUE);
     }
+   */
 }
 
 
@@ -659,6 +675,7 @@ shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer)
 void
 shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -671,6 +688,7 @@ shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer)
 
       shumate_marker_set_draggable (marker, FALSE);
     }
+   */
 }
 
 
@@ -750,6 +768,7 @@ shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer)
 static void
 reposition (ShumateMarkerLayer *layer)
 {
+  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -762,6 +781,7 @@ reposition (ShumateMarkerLayer *layer)
 
       set_marker_position (layer, marker);
     }
+   */
 }
 
 
@@ -821,14 +841,15 @@ set_view (ShumateLayer *layer,
 static ShumateBoundingBox *
 get_bounding_box (ShumateLayer *layer)
 {
-  ClutterActorIter iter;
-  ClutterActor *child;
+  //ClutterActorIter iter;
+  //ClutterActor *child;
   ShumateBoundingBox *bbox;
 
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
 
   bbox = shumate_bounding_box_new ();
 
+  /*
   clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -840,6 +861,7 @@ get_bounding_box (ShumateLayer *layer)
 
       shumate_bounding_box_extend (bbox, lat, lon);
     }
+   */
 
   if (bbox->left == bbox->right)
     {

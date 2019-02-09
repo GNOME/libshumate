@@ -111,7 +111,7 @@ shumate_map_source_factory_constructor (GType type,
     }
   else
     {
-      retval = g_object_ref (instance);
+      retval = g_object_ref (G_OBJECT (instance));
     }
 
   return retval;

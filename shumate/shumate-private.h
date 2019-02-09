@@ -21,7 +21,6 @@
 #define SHUMATE_PRIVATE_H
 
 #include <glib.h>
-#include <clutter/clutter.h>
 
 
 #define SHUMATE_PARAM_READABLE     \

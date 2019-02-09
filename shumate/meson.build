@@ -8,7 +8,7 @@ libshumate_public_h = [
   'shumate-error-tile-renderer.h',
   'shumate-file-cache.h',
   'shumate-image-renderer.h',
-  'shumate-kinetic-scroll-view.h',
+  #'shumate-kinetic-scroll-view.h',
   'shumate-label.h',
   'shumate-layer.h',
   'shumate-license.h',
@@ -50,7 +50,7 @@ libshumate_sources = [
   'shumate-error-tile-renderer.c',
   'shumate-file-cache.c',
   'shumate-image-renderer.c',
-  'shumate-kinetic-scroll-view.c',
+  #'shumate-kinetic-scroll-view.c',
   'shumate-label.c',
   'shumate-layer.c',
   'shumate-license.c',
@@ -81,7 +81,7 @@ libshumate_deps = [
   glib_dep,
   gobject_dep,
   gio_dep,
-  clutter_dep,
+  gtk_dep,
   cairo_dep,
   sqlite_dep,
   libsoup_dep,
@@ -191,7 +191,9 @@ libshumate_dep_sources = [
 if generate_gir == true
   libshumate_gir_includes = [
     'GObject-2.0',
-    'Clutter-1.0',
+    'Gdk-4.0',
+    'Gtk-4.0',
+    'Gsk-4.0',
   ]
 
   libshumate_gir = gnome.generate_gir(
@@ -219,7 +221,6 @@ if generate_gir == true
 
   if generate_vapi == true and libshumate_gir.length() > 0
     libshumate_vapi_packages = [
-      'clutter-1.0',
       'cogl-pango-1.0',
       'atk',
       'pangocairo',
@@ -244,8 +245,8 @@ libshumate_dep = declare_dependency(
 
 libshumate_pc = pkg.generate(
   name: package_string,
-  description: 'Map View for Clutter',
-  requires: ['glib-2.0', 'gobject-2.0', 'clutter-1.0'],
+  description: 'Map View for GTK',
+  requires: ['glib-2.0', 'gobject-2.0', 'gtk+-4.0'],
   requires_private: ['gio-2.0', 'cairo', 'libsoup-2.4', 'sqlite3'],
   version: version,
   subdirs: package_string,

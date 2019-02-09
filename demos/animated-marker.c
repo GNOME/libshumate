@@ -24,8 +24,7 @@
 
 
 static gboolean
-draw_center (ClutterCanvas *canvas,
-    cairo_t *cr,
+draw_center (cairo_t *cr,
     int width,
     int height)
 {
@@ -47,8 +46,7 @@ draw_center (ClutterCanvas *canvas,
 
 
 static gboolean
-draw_circle (ClutterCanvas *canvas,
-    cairo_t *cr,
+draw_circle (cairo_t *cr,
     int width,
     int height)
 {
@@ -69,7 +67,7 @@ draw_circle (ClutterCanvas *canvas,
 /* The marker is drawn with cairo.  It is composed of 1 static filled circle
  * and 1 stroked circle animated as an echo.
  */
-static ClutterActor *
+static ShumateMarker *
 create_marker ()
 {
   ClutterActor *marker;

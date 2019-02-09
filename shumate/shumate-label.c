@@ -44,7 +44,7 @@
 #include "shumate-private.h"
 #include "shumate-tile.h"
 
-#include <clutter/clutter.h>
+#include <gdk/gdk.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <glib.h>
 #include <glib-object.h>
@@ -56,8 +56,8 @@
 #define SLOPE -0.3
 #define SCALING 0.65
 
-static ClutterColor DEFAULT_COLOR = { 0x33, 0x33, 0x33, 0xff };
-static ClutterColor DEFAULT_TEXT_COLOR = { 0xee, 0xee, 0xee, 0xff };
+static GdkRGBA DEFAULT_COLOR = { 0.2, 0.2, 0.2, 1.0 };
+static GdkRGBA DEFAULT_TEXT_COLOR = { 0.93, 0.93, 0.93, 1.0 };
 
 enum
 {
@@ -89,12 +89,12 @@ enum
 struct _ShumateLabelPrivate
 {
   gchar *text;
-  ClutterActor *image;
+  GdkPixbuf *image;
   gboolean use_markup;
   PangoAlignment alignment;
   PangoAttrList *attributes;
-  ClutterColor *color;
-  ClutterColor *text_color;
+  GdkRGBA *color;
+  GdkRGBA *text_color;
   gchar *font_name;
   gboolean wrap;
   PangoWrapMode wrap_mode;
@@ -131,9 +131,11 @@ shumate_label_get_property (GObject *object,
       g_value_set_string (value, priv->text);
       break;
 
+    /*
     case PROP_IMAGE:
       g_value_set_object (value, priv->image);
       break;
+     */
 
     case PROP_USE_MARKUP:
       g_value_set_boolean (value, priv->use_markup);
@@ -144,11 +146,11 @@ shumate_label_get_property (GObject *object,
       break;
 
     case PROP_COLOR:
-      clutter_value_set_color (value, priv->color);
+      g_value_set_boxed (value, priv->color);
       break;
 
     case PROP_TEXT_COLOR:
-      clutter_value_set_color (value, priv->text_color);
+      g_value_set_boxed (value, priv->text_color);
       break;
 
     case PROP_FONT_NAME:
@@ -199,9 +201,11 @@ shumate_label_set_property (GObject *object,
       shumate_label_set_text (label, g_value_get_string (value));
       break;
 
+    /*
     case PROP_IMAGE:
       shumate_label_set_image (label, g_value_get_object (value));
       break;
+     */
 
     case PROP_USE_MARKUP:
       shumate_label_set_use_markup (label, g_value_get_boolean (value));
@@ -212,11 +216,11 @@ shumate_label_set_property (GObject *object,
       break;
 
     case PROP_COLOR:
-      shumate_label_set_color (label, clutter_value_get_color (value));
+      shumate_label_set_color (label, g_value_get_boxed (value));
       break;
 
     case PROP_TEXT_COLOR:
-      shumate_label_set_text_color (label, clutter_value_get_color (value));
+      shumate_label_set_text_color (label, g_value_get_boxed (value));
       break;
 
     case PROP_FONT_NAME:
@@ -256,6 +260,7 @@ shumate_label_set_property (GObject *object,
 #define RADIUS 10
 #define PADDING (RADIUS / 2)
 
+/*
 static void
 pick (ClutterActor *self,
     const ClutterColor *color)
@@ -288,6 +293,7 @@ pick (ClutterActor *self,
   cogl_path_close ();
   cogl_path_fill ();
 }
+ */
 
 
 static void
@@ -295,11 +301,13 @@ shumate_label_dispose (GObject *object)
 {
   ShumateLabelPrivate *priv = SHUMATE_LABEL (object)->priv;
 
+  /*
   if (priv->image)
     {
       clutter_actor_destroy (priv->image);
       priv->image = NULL;
     }
+   */
 
   if (priv->attributes)
     {
@@ -330,13 +338,13 @@ shumate_label_finalize (GObject *object)
 
   if (priv->color)
     {
-      clutter_color_free (priv->color);
+      gdk_rgba_free (priv->color);
       priv->color = NULL;
     }
 
   if (priv->text_color)
     {
-      clutter_color_free (priv->text_color);
+      gdk_rgba_free (priv->text_color);
       priv->text_color = NULL;
     }
 
@@ -353,7 +361,7 @@ shumate_label_finalize (GObject *object)
 static void
 shumate_label_class_init (ShumateLabelClass *klass)
 {
-  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
+  //ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   g_type_class_add_private (klass, sizeof (ShumateLabelPrivate));
@@ -363,7 +371,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
   object_class->get_property = shumate_label_get_property;
   object_class->set_property = shumate_label_set_property;
 
-  actor_class->pick = pick;
+  //actor_class->pick = pick;
 
   /**
    * ShumateLabel:text:
@@ -382,12 +390,14 @@ shumate_label_class_init (ShumateLabelClass *klass)
    *
    * The image of the label
    */
+  /*
   g_object_class_install_property (object_class, PROP_IMAGE,
       g_param_spec_object ("image",
           "Image",
           "The image of the label",
           CLUTTER_TYPE_ACTOR,
           SHUMATE_PARAM_READWRITE));
+   */
 
   /**
    * ShumateLabel:use-markup:
@@ -420,10 +430,10 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * The label's color
    */
   g_object_class_install_property (object_class, PROP_COLOR,
-      clutter_param_spec_color ("color",
+      g_param_spec_boxed ("color",
           "Color",
           "The label's color",
-          &DEFAULT_COLOR,
+          GDK_TYPE_RGBA,
           SHUMATE_PARAM_READWRITE));
 
   /**
@@ -432,10 +442,10 @@ shumate_label_class_init (ShumateLabelClass *klass)
    * The label's text color
    */
   g_object_class_install_property (object_class, PROP_TEXT_COLOR,
-      clutter_param_spec_color ("text-color",
+      g_param_spec_boxed ("text-color",
           "Text Color",
           "The label's text color",
-          &DEFAULT_TEXT_COLOR,
+          GDK_TYPE_RGBA,
           SHUMATE_PARAM_READWRITE));
 
   /**
@@ -577,7 +587,7 @@ get_shadow_slope_width (ShumateLabel *label)
 
 
 static gboolean
-draw_shadow (ClutterCanvas *canvas,
+draw_shadow (/*ClutterCanvas *canvas,*/
     cairo_t *cr,
     int width,
     int height,
@@ -607,9 +617,17 @@ draw_shadow (ClutterCanvas *canvas,
   return TRUE;
 }
 
+static void
+darken (const GdkRGBA *color, GdkRGBA *darkened_color)
+{
+  darkened_color->red = color->red * 0.7;
+  darkened_color->green = color->green * 0.7;
+  darkened_color->blue = color->blue * 0.7;
+  darkened_color->alpha = color->alpha;
+}
 
 static gboolean
-draw_background (ClutterCanvas *canvas,
+draw_background (/*ClutterCanvas *canvas,*/
     cairo_t *cr,
     int width,
     int height,
@@ -617,8 +635,8 @@ draw_background (ClutterCanvas *canvas,
 {
   ShumateLabelPrivate *priv = label->priv;
   ShumateMarker *marker = SHUMATE_MARKER (label);
-  const ClutterColor *color;
-  ClutterColor darker_color;
+  const GdkRGBA *color;
+  GdkRGBA darker_color;
 
   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
   cairo_paint (cr);
@@ -632,21 +650,17 @@ draw_background (ClutterCanvas *canvas,
 
   draw_box (cr, width, height - priv->point, priv->point, priv->alignment == PANGO_ALIGN_LEFT);
 
-  clutter_color_darken (color, &darker_color);
+  darken (color, &darker_color);
 
-  cairo_set_source_rgba (cr,
-      color->red / 255.0,
-      color->green / 255.0,
-      color->blue / 255.0,
-      color->alpha / 255.0);
+  cairo_set_source_rgba (cr, color->red, color->green, color->blue, color->alpha);
   cairo_fill_preserve (cr);
 
   cairo_set_line_width (cr, 1.0);
   cairo_set_source_rgba (cr,
-      darker_color.red / 255.0,
-      darker_color.green / 255.0,
-      darker_color.blue / 255.0,
-      darker_color.alpha / 255.0);
+      darker_color.red,
+      darker_color.green,
+      darker_color.blue,
+      darker_color.alpha);
   cairo_stroke (cr);
 
   return TRUE;
@@ -660,6 +674,7 @@ draw_label (ShumateLabel *label)
   ShumateMarker *marker = SHUMATE_MARKER (label);
   gint height = 0;
   gint total_width = 0, total_height = 0;
+  /*
   ClutterActor *text_actor, *shadow, *background;
 
   text_actor = NULL;
@@ -667,7 +682,9 @@ draw_label (ShumateLabel *label)
   background = NULL;
 
   clutter_actor_remove_all_children (CLUTTER_ACTOR (label));
+   */
 
+  /*
   if (priv->image != NULL)
     {
       clutter_actor_set_position (priv->image, PADDING, PADDING);
@@ -675,7 +692,9 @@ draw_label (ShumateLabel *label)
       total_height = clutter_actor_get_height (priv->image) + 2 * PADDING;
       clutter_actor_add_child (CLUTTER_ACTOR (label), priv->image);
     }
+   */
 
+  /*
   if (priv->text != NULL && strlen (priv->text) > 0)
     {
       ClutterText *text;
@@ -769,6 +788,7 @@ draw_label (ShumateLabel *label)
         -clutter_actor_get_height (priv->image) / 2.0 - PADDING, 0);
   else if (text_actor != NULL)
     clutter_actor_set_translation (CLUTTER_ACTOR (label), 0, -clutter_actor_get_height (text_actor) / 2.0, 0);
+   */
 }
 
 
@@ -800,7 +820,7 @@ shumate_label_queue_redraw (ShumateLabel *label)
   if (!priv->redraw_id)
     {
       priv->redraw_id =
-        g_idle_add_full (CLUTTER_PRIORITY_REDRAW,
+        g_idle_add_full (G_PRIORITY_HIGH + 50,
             (GSourceFunc) redraw_on_idle,
             g_object_ref (label),
             (GDestroyNotify) g_object_unref);
@@ -825,12 +845,12 @@ shumate_label_init (ShumateLabel *label)
   label->priv = priv;
 
   priv->text = NULL;
-  priv->image = NULL;
+  //priv->image = NULL;
   priv->use_markup = FALSE;
   priv->alignment = PANGO_ALIGN_LEFT;
   priv->attributes = NULL;
-  priv->color = clutter_color_copy (&DEFAULT_COLOR);
-  priv->text_color = clutter_color_copy (&DEFAULT_TEXT_COLOR);
+  priv->color = gdk_rgba_copy (&DEFAULT_COLOR);
+  priv->text_color = gdk_rgba_copy (&DEFAULT_TEXT_COLOR);
   priv->font_name = g_strdup (DEFAULT_FONT_NAME);
   priv->wrap = FALSE;
   priv->wrap_mode = PANGO_WRAP_WORD;
@@ -854,10 +874,10 @@ shumate_label_init (ShumateLabel *label)
  *
  * Returns: a new #ShumateLabel ready to be used as a #ClutterActor.
  */
-ClutterActor *
+ShumateLabel *
 shumate_label_new (void)
 {
-  return CLUTTER_ACTOR (g_object_new (SHUMATE_TYPE_LABEL, NULL));
+  return SHUMATE_LABEL (g_object_new (SHUMATE_TYPE_LABEL, NULL));
 }
 
 
@@ -872,11 +892,11 @@ shumate_label_new (void)
  *
  * Returns: a new #ShumateLabel with a drawn label containing the given text.
  */
-ClutterActor *
+ShumateLabel *
 shumate_label_new_with_text (const gchar *text,
     const gchar *font,
-    ClutterColor *text_color,
-    ClutterColor *label_color)
+    GdkRGBA *text_color,
+    GdkRGBA *label_color)
 {
   ShumateLabel *label = SHUMATE_LABEL (shumate_label_new ());
 
@@ -891,7 +911,7 @@ shumate_label_new_with_text (const gchar *text,
   if (label_color != NULL)
     shumate_label_set_color (label, label_color);
 
-  return CLUTTER_ACTOR (label);
+  return label;
 }
 
 
@@ -904,17 +924,16 @@ shumate_label_new_with_text (const gchar *text,
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
  */
-ClutterActor *
-shumate_label_new_with_image (ClutterActor *actor)
+ShumateLabel *
+shumate_label_new_with_image (GdkPixbuf *pixbuf)
 {
   ShumateLabel *label = SHUMATE_LABEL (shumate_label_new ());
 
-  if (actor != NULL)
-    shumate_label_set_image (label, actor);
+  if (pixbuf != NULL)
+    shumate_label_set_image (label, pixbuf);
 
-  return CLUTTER_ACTOR (label);
+  return label;
 }
-
 
 /**
  * shumate_label_new_from_file:
@@ -926,12 +945,13 @@ shumate_label_new_with_image (ClutterActor *actor)
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
  */
-ClutterActor *
+ShumateLabel *
 shumate_label_new_from_file (const gchar *filename,
     GError **error)
 {
   ShumateLabel *label = SHUMATE_LABEL (shumate_label_new ());
 
+  /*
   ClutterActor *actor;
   GdkPixbuf *pixbuf;
   ClutterContent *content;
@@ -964,8 +984,9 @@ shumate_label_new_from_file (const gchar *filename,
   g_object_unref (content);
 
   shumate_label_set_image (label, actor);
+   */
 
-  return CLUTTER_ACTOR (label);
+  return label;
 }
 
 
@@ -979,6 +1000,7 @@ shumate_label_new_from_file (const gchar *filename,
  * Returns: a new #ShumateLabel with a drawn label containing the given
  * image.
  */
+/*
 ClutterActor *
 shumate_label_new_full (const gchar *text,
     ClutterActor *actor)
@@ -993,6 +1015,7 @@ shumate_label_new_full (const gchar *text,
 
   return CLUTTER_ACTOR (label);
 }
+ */
 
 
 /**
@@ -1022,24 +1045,23 @@ shumate_label_set_text (ShumateLabel *label,
 /**
  * shumate_label_set_image:
  * @label: a #ShumateLabel
- * @image: (allow-none): The image as a @ClutterActor or NULL to remove the current image.
+ * @image: (allow-none): The image as a @GdkPixbuf or NULL to remove the current image.
  *
  * Sets the label's image.
  */
 void
 shumate_label_set_image (ShumateLabel *label,
-    ClutterActor *image)
+    GdkPixbuf *image)
 {
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   ShumateLabelPrivate *priv = label->priv;
 
-  if (priv->image != NULL)
-    clutter_actor_destroy (priv->image);
+  g_clear_pointer (&priv->image, g_free);
 
   if (image != NULL)
     {
-      g_return_if_fail (CLUTTER_IS_ACTOR (image));
+      g_return_if_fail (GDK_IS_PIXBUF (image));
       priv->image = g_object_ref (image);
     }
   else
@@ -1048,7 +1070,6 @@ shumate_label_set_image (ShumateLabel *label,
   g_object_notify (G_OBJECT (label), "image");
   shumate_label_queue_redraw (label);
 }
-
 
 /**
  * shumate_label_set_use_markup:
@@ -1098,19 +1119,19 @@ shumate_label_set_alignment (ShumateLabel *label,
  */
 void
 shumate_label_set_color (ShumateLabel *label,
-    const ClutterColor *color)
+    const GdkRGBA *color)
 {
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   ShumateLabelPrivate *priv = label->priv;
 
   if (priv->color != NULL)
-    clutter_color_free (priv->color);
+    gdk_rgba_free (priv->color);
 
   if (color == NULL)
     color = &DEFAULT_COLOR;
 
-  priv->color = clutter_color_copy (color);
+  priv->color = gdk_rgba_copy (color);
   g_object_notify (G_OBJECT (label), "color");
   shumate_label_queue_redraw (label);
 }
@@ -1126,19 +1147,19 @@ shumate_label_set_color (ShumateLabel *label,
  */
 void
 shumate_label_set_text_color (ShumateLabel *label,
-    const ClutterColor *color)
+    const GdkRGBA *color)
 {
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   ShumateLabelPrivate *priv = label->priv;
 
   if (priv->text_color != NULL)
-    clutter_color_free (priv->text_color);
+    gdk_rgba_free (priv->text_color);
 
   if (color == NULL)
     color = &DEFAULT_TEXT_COLOR;
 
-  priv->text_color = clutter_color_copy (color);
+  priv->text_color = gdk_rgba_copy (color);
   g_object_notify (G_OBJECT (label), "text-color");
   shumate_label_queue_redraw (label);
 }
@@ -1322,14 +1343,13 @@ shumate_label_set_draw_shadow (ShumateLabel *label,
  *
  * Returns: (transfer none): the label's image.
  */
-ClutterActor *
+GdkPixbuf *
 shumate_label_get_image (ShumateLabel *label)
 {
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
 
   return label->priv->image;
 }
-
 
 /**
  * shumate_label_get_use_markup:
@@ -1390,7 +1410,7 @@ shumate_label_get_alignment (ShumateLabel *label)
  *
  * Returns: the label's background color.
  */
-ClutterColor *
+GdkRGBA *
 shumate_label_get_color (ShumateLabel *label)
 {
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
@@ -1407,7 +1427,7 @@ shumate_label_get_color (ShumateLabel *label)
  *
  * Returns: the label's text color.
  */
-ClutterColor *
+GdkRGBA *
 shumate_label_get_text_color (ShumateLabel *label)
 {
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);

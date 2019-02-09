@@ -18,54 +18,28 @@
  */
 
 using GLib;
-using Clutter;
+using Gtk;
 using Shumate;
 
 public class Launcher : GLib.Object
 {
   private const int PADDING = 10;
   private Shumate.View view;
-  private Clutter.Stage stage;
+  private Gtk.Window window;
 
   public Launcher ()
   {
     float width, total_width = 0;
 
-    stage = new Clutter.Stage ();
-    stage.title = "Shumate Vala Example";
-    stage.set_size (800, 600);
+    window = new Gtk.Window ();
+    window.title = "Shumate Vala Example";
+    window.default_width = 800;
+    window.default_height = 600;
 
     /* Create the map view */
     view = new Shumate.View ();
-    view.set_size (800, 600);
-    stage.add_child (view);
-
-    /* Create the buttons */
-    var buttons = new Clutter.Actor ();
-    buttons.set_position (PADDING, PADDING);
-
-    var button = make_button ("Zoom in");
-    buttons.add_child (button);
-    button.reactive = true;
-    button.get_size (out width, null);
-    total_width += width + PADDING;
-    button.button_release_event.connect ((event) => {
-        view.zoom_in ();
-        return true;
-      });
-
-    button = make_button ("Zoom out");
-    buttons.add_child (button);
-    button.reactive = true;
-    button.set_position (total_width, 0);
-    button.get_size (out width, null);
-    total_width += width + PADDING;
-    button.button_release_event.connect ((event) => {
-        view.zoom_out ();
-        return true;
-      });
-
-    stage.add_child (buttons);
+    //view.set_size_request (800, 600);
+    window.add (view);
 
     /* Create the markers and marker layer */
     var layer = new  DemoLayer ();
@@ -83,56 +57,18 @@ public class Launcher : GLib.Object
 
   public void show ()
   {
-    stage.show ();
+    window.show ();
   }
 
-  private bool button_release_cb (Clutter.ButtonEvent event)
-  {
-    double lat, lon;
-
-    if (event.button != 1 || event.click_count > 1)
-      return false;
-      
-    lat = view.y_to_latitude (event.y);
-    lon = view.x_to_longitude (event.x);
-
-    GLib.print ("Map clicked at %f, %f \n", lat, lon);
-
-    return true;
-  }
-
-  public Clutter.Actor make_button (string text)
-  {
-    Clutter.Color white = { 0xff, 0xff, 0xff, 0xff };
-    Clutter.Color black = { 0x00, 0x00, 0x00, 0xff };
-    float width, height;
-
-    var button = new Clutter.Actor ();
-
-    var button_bg = new Clutter.Actor ();
-    button_bg.set_background_color (white);
-    button.add_child (button_bg);
-    button_bg.opacity = 0xcc;
-
-    var button_text = new Clutter.Text.full ("Sans 10", text, black);
-    button.add_child (button_text);
-    button_text.get_size (out width, out height);
-
-    button_bg.set_size (width + PADDING * 2, height + PADDING * 2);
-    button_bg.set_position (0, 0);
-    button_text.set_position (PADDING, PADDING);
-
-    return button;
-  }
 
   public static int main (string[] args)
   {
-    if (Clutter.init (ref args) != InitError.SUCCESS)
+    if (Gtk.init (ref args) != InitError.SUCCESS)
       return 1;
 
     var launcher = new Launcher ();
     launcher.show ();
-    Clutter.main ();
+    Gtk.main ();
     return 0;
   }
 }

@@ -31,7 +31,6 @@
 #include <shumate/shumate-bounding-box.h>
 
 #include <glib-object.h>
-#include <clutter/clutter.h>
 
 G_BEGIN_DECLS
 
@@ -122,3 +121,4 @@ ShumateSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer
 G_END_DECLS
 
 #endif
+

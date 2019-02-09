@@ -27,7 +27,7 @@
 
 #include "shumate-layer.h"
 
-G_DEFINE_ABSTRACT_TYPE (ShumateLayer, shumate_layer, CLUTTER_TYPE_ACTOR)
+G_DEFINE_ABSTRACT_TYPE (ShumateLayer, shumate_layer, G_TYPE_OBJECT)
 
 static void
 shumate_layer_dispose (GObject *object)

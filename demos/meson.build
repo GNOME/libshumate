@@ -1,8 +1,6 @@
 libshumate_demos = [
   ['minimal', 'minimal.c'],
   ['launcher', ['launcher.c', 'markers.c']],
-  ['animated-marker', 'animated-marker.c'],
-  ['polygons', 'polygons.c'],
   ['url-marker', 'url-marker.c'],
   ['create_destroy_test', 'create-destroy-test.c'],
 ]

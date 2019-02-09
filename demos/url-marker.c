@@ -89,35 +89,6 @@ cleanup:
 }
 
 
-static ClutterActor *
-texture_new_from_pixbuf (GdkPixbuf *pixbuf, GError **error)
-{
-  ClutterActor *texture = NULL;
-  gfloat width, height;
-  ClutterContent *content;
-  
-  content = clutter_image_new ();
-  clutter_image_set_data (CLUTTER_IMAGE (content),
-                          gdk_pixbuf_get_pixels (pixbuf),
-                          gdk_pixbuf_get_has_alpha (pixbuf)
-                            ? COGL_PIXEL_FORMAT_RGBA_8888
-                            : COGL_PIXEL_FORMAT_RGB_888,
-                          gdk_pixbuf_get_width (pixbuf),
-                          gdk_pixbuf_get_height (pixbuf),
-                          gdk_pixbuf_get_rowstride (pixbuf),
-                          NULL);
-
-  texture = clutter_actor_new ();
-  clutter_content_get_preferred_size (content, &width, &height);
-  clutter_actor_set_size (texture, width, height);
-  clutter_actor_set_content (texture, content);
-  clutter_content_invalidate (content);
-  g_object_unref (content);
-
-  return texture;
-}
-
-
 /**
  * Called when an image has been downloaded. This callback will transform the
  * image data (binary chunk sent by the remote web server) into a valid Clutter
@@ -136,8 +107,7 @@ image_downloaded_cb (SoupSession *session,
   char *url = NULL;
   GError *error = NULL;
   GdkPixbuf *pixbuf = NULL;
-  ClutterActor *texture = NULL;
-  ClutterActor *marker = NULL;
+  ShumateLabel *marker = NULL;
 
   if (data == NULL)
     goto cleanup;
@@ -160,18 +130,8 @@ image_downloaded_cb (SoupSession *session,
       goto cleanup;
     }
 
-  /* Then transform the pixbuf into a texture */
-  texture = texture_new_from_pixbuf (pixbuf, &error);
-  if (error != NULL)
-    {
-      g_print ("Failed to convert %s into a texture: %s\n", url,
-          error->message);
-      goto cleanup;
-    }
-
   /* Finally create a marker with the texture */
-  marker = shumate_label_new_with_image (texture);
-  texture = NULL;
+  marker = shumate_label_new_with_image (pixbuf);
   shumate_location_set_location (SHUMATE_LOCATION (marker),
       marker_data->latitude, marker_data->longitude);
   shumate_marker_layer_add_marker (marker_data->layer, SHUMATE_MARKER (marker));
@@ -187,9 +147,6 @@ cleanup:
 
   if (pixbuf != NULL)
     g_object_unref (G_OBJECT (pixbuf));
-
-  if (texture != NULL)
-    clutter_actor_destroy (CLUTTER_ACTOR (texture));
 }
 
 
@@ -221,21 +178,20 @@ create_marker_from_url (ShumateMarkerLayer *layer,
 int
 main (int argc, char *argv[])
 {
-  ClutterActor *view, *stage;
+  ShumateView *view;
+  GtkWindow *window;
   ShumateMarkerLayer *layer;
   SoupSession *session;
 
-  if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
-    return 1;
+  gtk_init ();
 
-  stage = clutter_stage_new ();
-  clutter_actor_set_size (stage, 800, 600);
-  g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_widget_set_size_request (GTK_WIDGET (window), 800, 600);
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
   /* Create the map view */
   view = shumate_view_new ();
-  clutter_actor_set_size (CLUTTER_ACTOR (view), 800, 600);
-  clutter_actor_add_child (stage, view);
+  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
   layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
@@ -253,8 +209,8 @@ main (int argc, char *argv[])
       "kinetic-mode", TRUE, NULL);
   shumate_view_center_on (SHUMATE_VIEW (view), 48.22, 16.8);
 
-  clutter_actor_show (stage);
-  clutter_main ();
+  gtk_widget_show (GTK_WIDGET (window));
+  gtk_main ();
 
   g_object_unref (session);
 

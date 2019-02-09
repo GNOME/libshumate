@@ -24,12 +24,11 @@
 
 #include "config.h"
 
-#include <clutter/clutter.h>
-
+#include "shumate-view.h"
 #include "shumate-viewport.h"
 #include "shumate-private.h"
 
-G_DEFINE_TYPE (ShumateViewport, shumate_viewport, CLUTTER_TYPE_ACTOR)
+G_DEFINE_TYPE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT)
 
 #define GET_PRIVATE(o) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_VIEWPORT, ShumateViewportPrivate))
@@ -44,8 +43,6 @@ struct _ShumateViewportPrivate
 
   ShumateAdjustment *hadjustment;
   ShumateAdjustment *vadjustment;
-
-  ClutterActor *child;
 };
 
 enum
@@ -54,8 +51,6 @@ enum
 
   PROP_X_ORIGIN,
   PROP_Y_ORIGIN,
-  PROP_HADJUST,
-  PROP_VADJUST,
 };
 
 enum
@@ -74,8 +69,6 @@ shumate_viewport_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateAdjustment *adjustment;
-
   ShumateViewportPrivate *priv = SHUMATE_VIEWPORT (object)->priv;
 
   switch (prop_id)
@@ -86,16 +79,6 @@ shumate_viewport_get_property (GObject *object,
 
     case PROP_Y_ORIGIN:
       g_value_set_int (value, priv->y);
-      break;
-
-    case PROP_HADJUST:
-      shumate_viewport_get_adjustments (SHUMATE_VIEWPORT (object), &adjustment, NULL);
-      g_value_set_object (value, adjustment);
-      break;
-
-    case PROP_VADJUST:
-      shumate_viewport_get_adjustments (SHUMATE_VIEWPORT (object), NULL, &adjustment);
-      g_value_set_object (value, adjustment);
       break;
 
     default:
@@ -126,18 +109,6 @@ shumate_viewport_set_property (GObject *object,
       shumate_viewport_set_origin (viewport,
           priv->x,
           g_value_get_int (value));
-      break;
-
-    case PROP_HADJUST:
-      shumate_viewport_set_adjustments (SHUMATE_VIEWPORT (object),
-          g_value_get_object (value),
-          priv->vadjustment);
-      break;
-
-    case PROP_VADJUST:
-      shumate_viewport_set_adjustments (SHUMATE_VIEWPORT (object),
-          priv->hadjustment,
-          g_value_get_object (value));
       break;
 
     default:
@@ -210,22 +181,6 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
           "Origin's Y coordinate in pixels",
           -G_MAXINT, G_MAXINT,
           0,
-          G_PARAM_READWRITE));
-
-  g_object_class_install_property (gobject_class,
-      PROP_HADJUST,
-      g_param_spec_object ("hadjustment",
-          "ShumateAdjustment",
-          "Horizontal adjustment",
-          SHUMATE_TYPE_ADJUSTMENT,
-          G_PARAM_READWRITE));
-
-  g_object_class_install_property (gobject_class,
-      PROP_VADJUST,
-      g_param_spec_object ("vadjustment",
-          "ShumateAdjustment",
-          "Vertical adjustment",
-          SHUMATE_TYPE_ADJUSTMENT,
           G_PARAM_READWRITE));
 
   signals[RELOCATED] =
@@ -321,6 +276,7 @@ shumate_viewport_set_adjustments (ShumateViewport *viewport,
 
 void
 shumate_viewport_get_adjustments (ShumateViewport *viewport,
+    ShumateView *view,
     ShumateAdjustment **hadjustment,
     ShumateAdjustment **vadjustment)
 {
@@ -339,7 +295,7 @@ shumate_viewport_get_adjustments (ShumateViewport *viewport,
           ShumateAdjustment *adjustment;
           guint width;
 
-          width = clutter_actor_get_width (CLUTTER_ACTOR (viewport));
+          width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
 
           adjustment = shumate_adjustment_new (priv->x,
                 0,
@@ -361,7 +317,7 @@ shumate_viewport_get_adjustments (ShumateViewport *viewport,
           ShumateAdjustment *adjustment;
           guint height;
 
-          height = clutter_actor_get_height (CLUTTER_ACTOR (viewport));
+          height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
 
           adjustment = shumate_adjustment_new (priv->y,
                 0,
@@ -386,7 +342,7 @@ shumate_viewport_init (ShumateViewport *self)
 }
 
 
-ClutterActor *
+ShumateViewport *
 shumate_viewport_new (void)
 {
   return g_object_new (SHUMATE_TYPE_VIEWPORT, NULL);
@@ -414,9 +370,6 @@ shumate_viewport_set_origin (ShumateViewport *viewport,
       priv->anchor_x = x - ANCHOR_LIMIT / 2;
       priv->anchor_y = y - ANCHOR_LIMIT / 2;
     }
-
-  if (priv->child)
-    clutter_actor_set_position (priv->child, -x + priv->anchor_x, -y + priv->anchor_y);
 
   g_object_freeze_notify (G_OBJECT (viewport));
 
@@ -485,27 +438,3 @@ shumate_viewport_get_anchor (ShumateViewport *viewport,
     *y = priv->anchor_y;
 }
 
-
-void
-shumate_viewport_set_child (ShumateViewport *viewport, ClutterActor *child)
-{
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
-
-  ShumateViewportPrivate *priv = viewport->priv;
-
-  clutter_actor_remove_all_children (CLUTTER_ACTOR (viewport));
-  clutter_actor_add_child (CLUTTER_ACTOR (viewport), child);
-  priv->child = child;
-}
-
-
-void
-shumate_viewport_set_actor_position (ShumateViewport *viewport,
-    ClutterActor *actor,
-    gdouble x,
-    gdouble y)
-{
-  ShumateViewportPrivate *priv = viewport->priv;
-
-  clutter_actor_set_position (actor, x - priv->anchor_x, y - priv->anchor_y);
-}

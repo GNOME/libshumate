@@ -17,27 +17,28 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <gtk/gtk.h>
 #include <shumate/shumate.h>
 
 int
 main (int argc, char *argv[])
 {
-  ClutterActor *actor, *stage;
+  GtkWidget *window;
+  ShumateView *view;
 
-  if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)
-    return 1;
+  gtk_init ();
 
-  stage = clutter_stage_new ();
-  clutter_actor_set_size (stage, 800, 600);
-  g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_widget_set_size_request (window, 800, 600);
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
   /* Create the map view */
-  actor = shumate_view_new ();
-  clutter_actor_set_size (actor, 800, 600);
-  clutter_actor_add_child (stage, actor);
+  view = shumate_view_new ();
+  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
 
-  clutter_actor_show (stage);
-  clutter_main ();
+  gtk_widget_show (GTK_WIDGET (view));
+  gtk_widget_show (window);
+  gtk_main ();
 
   return 0;
 }

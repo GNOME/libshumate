@@ -33,11 +33,11 @@
 #include "shumate-enum-types.h"
 #include "shumate-view.h"
 
-#include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <cairo.h>
 #include <math.h>
+#include <pango/pango.h>
 #include <string.h>
 
 
@@ -59,13 +59,13 @@ enum
 struct _ShumateLicensePrivate
 {
   gchar *extra_text; /* Extra license text */
-  ClutterActor *license_actor;
+  //ClutterActor *license_actor;
   PangoAlignment alignment;
 
   ShumateView *view;
 };
 
-G_DEFINE_TYPE (ShumateLicense, shumate_license, CLUTTER_TYPE_ACTOR);
+G_DEFINE_TYPE (ShumateLicense, shumate_license, G_TYPE_OBJECT);
 
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_LICENSE, ShumateLicensePrivate))
@@ -165,11 +165,12 @@ redraw_license (ShumateLicense *license)
     }
   g_list_free (overlay_sources);
 
+  /*
   clutter_text_set_text (CLUTTER_TEXT (priv->license_actor), text);
   clutter_actor_get_size (priv->license_actor, &width, &height);
   clutter_actor_set_size (CLUTTER_ACTOR (license), width + 2 * WIDTH_PADDING, height + 2 * HEIGHT_PADDING);
   clutter_actor_set_position (priv->license_actor, WIDTH_PADDING, HEIGHT_PADDING);
-
+  */
   g_free (text);
 }
 
@@ -188,7 +189,7 @@ shumate_license_dispose (GObject *object)
 {
   ShumateLicensePrivate *priv = SHUMATE_LICENSE (object)->priv;
 
-  priv->license_actor = NULL;
+  //priv->license_actor = NULL;
 
   if (priv->view)
     {
@@ -264,11 +265,13 @@ shumate_license_init (ShumateLicense *license)
   priv->view = NULL;
   priv->alignment = PANGO_ALIGN_RIGHT;
 
+  /*
   priv->license_actor = clutter_text_new ();
   clutter_text_set_font_name (CLUTTER_TEXT (priv->license_actor), "sans 8");
   clutter_text_set_line_alignment (CLUTTER_TEXT (priv->license_actor), priv->alignment);
   clutter_actor_set_opacity (priv->license_actor, 128);
   clutter_actor_add_child (CLUTTER_ACTOR (license), priv->license_actor);
+  */
 }
 
 
@@ -279,10 +282,10 @@ shumate_license_init (ShumateLicense *license)
  *
  * Returns: a new #ShumateLicense.
  */
-ClutterActor *
+ShumateLicense *
 shumate_license_new (void)
 {
-  return CLUTTER_ACTOR (g_object_new (SHUMATE_TYPE_LICENSE, NULL));
+  return SHUMATE_LICENSE (g_object_new (SHUMATE_TYPE_LICENSE, NULL));
 }
 
 
@@ -387,7 +390,7 @@ shumate_license_set_alignment (ShumateLicense *license,
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
   license->priv->alignment = alignment;
-  clutter_text_set_line_alignment (CLUTTER_TEXT (license->priv->license_actor), alignment);
+  //clutter_text_set_line_alignment (CLUTTER_TEXT (license->priv->license_actor), alignment);
   g_object_notify (G_OBJECT (license), "alignment");
 }
 

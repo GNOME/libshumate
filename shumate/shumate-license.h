@@ -27,7 +27,7 @@
 #include <shumate/shumate-defines.h>
 
 #include <glib-object.h>
-#include <clutter/clutter.h>
+#include <pango/pango.h>
 
 G_BEGIN_DECLS
 
@@ -62,19 +62,19 @@ typedef struct _ShumateLicenseClass ShumateLicenseClass;
  */
 struct _ShumateLicense
 {
-  ClutterActor parent;
+  GObject parent;
 
   ShumateLicensePrivate *priv;
 };
 
 struct _ShumateLicenseClass
 {
-  ClutterActorClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType shumate_license_get_type (void);
 
-ClutterActor *shumate_license_new (void);
+ShumateLicense *shumate_license_new (void);
 
 void shumate_license_set_extra_text (ShumateLicense *license,
     const gchar *text);

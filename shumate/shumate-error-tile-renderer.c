@@ -38,7 +38,7 @@ G_DEFINE_TYPE (ShumateErrorTileRenderer, shumate_error_tile_renderer, SHUMATE_TY
 
 struct _ShumateErrorTileRendererPrivate
 {
-  ClutterContent *error_canvas;
+  //ClutterContent *error_canvas;
   guint tile_size;
 };
 
@@ -101,11 +101,13 @@ shumate_error_tile_renderer_dispose (GObject *object)
 {
   ShumateErrorTileRendererPrivate *priv = SHUMATE_ERROR_TILE_RENDERER (object)->priv;
 
+  /*
   if (priv->error_canvas)
     {
       g_object_unref (priv->error_canvas);
       priv->error_canvas = NULL;
     }
+   */
 
   G_OBJECT_CLASS (shumate_error_tile_renderer_parent_class)->dispose (object);
 }
@@ -158,7 +160,7 @@ shumate_error_tile_renderer_init (ShumateErrorTileRenderer *self)
 
   self->priv = priv;
 
-  priv->error_canvas = NULL;
+  //priv->error_canvas = NULL;
 }
 
 
@@ -186,40 +188,40 @@ set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 }
 
 
-static gboolean
-redraw_tile (ClutterCanvas *canvas,
-    cairo_t *cr,
-    gint w,
-    gint h,
-    ShumateTile *tile)
-{
-  cairo_pattern_t *pat;
-  gint size = w;
+/* static gboolean */
+/* redraw_tile (ClutterCanvas *canvas, */
+/*     cairo_t *cr, */
+/*     gint w, */
+/*     gint h, */
+/*     ShumateTile *tile) */
+/* { */
+/*   cairo_pattern_t *pat; */
+/*   gint size = w; */
 
-  shumate_cairo_importable_set_surface (SHUMATE_CAIRO_IMPORTABLE (tile), cairo_get_target (cr));
+/*   shumate_cairo_importable_set_surface (SHUMATE_CAIRO_IMPORTABLE (tile), cairo_get_target (cr)); */
 
   /* draw a linear gray to white pattern */
-  pat = cairo_pattern_create_linear (size / 2.0, 0.0, size, size / 2.0);
-  cairo_pattern_add_color_stop_rgb (pat, 0, 0.686, 0.686, 0.686);
-  cairo_pattern_add_color_stop_rgb (pat, 1, 0.925, 0.925, 0.925);
-  cairo_set_source (cr, pat);
-  cairo_rectangle (cr, 0, 0, size, size);
-  cairo_fill (cr);
+/*   pat = cairo_pattern_create_linear (size / 2.0, 0.0, size, size / 2.0); */
+/*   cairo_pattern_add_color_stop_rgb (pat, 0, 0.686, 0.686, 0.686); */
+/*   cairo_pattern_add_color_stop_rgb (pat, 1, 0.925, 0.925, 0.925); */
+/*   cairo_set_source (cr, pat); */
+/*   cairo_rectangle (cr, 0, 0, size, size); */
+/*   cairo_fill (cr); */
 
-  cairo_pattern_destroy (pat);
+/*   cairo_pattern_destroy (pat); */
 
   /* draw the red cross */
-  cairo_set_source_rgb (cr, 0.424, 0.078, 0.078);
-  cairo_set_line_width (cr, 14.0);
-  cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
-  cairo_move_to (cr, 24, 24);
-  cairo_line_to (cr, 50, 50);
-  cairo_move_to (cr, 50, 24);
-  cairo_line_to (cr, 24, 50);
-  cairo_stroke (cr);
+/*   cairo_set_source_rgb (cr, 0.424, 0.078, 0.078); */
+/*   cairo_set_line_width (cr, 14.0); */
+/*   cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND); */
+/*   cairo_move_to (cr, 24, 24); */
+/*   cairo_line_to (cr, 50, 50); */
+/*   cairo_move_to (cr, 50, 24); */
+/*   cairo_line_to (cr, 24, 50); */
+/*   cairo_stroke (cr); */
 
-  return TRUE;
-}
+/*   return TRUE; */
+/* } */
 
 
 static void
@@ -230,7 +232,7 @@ render (ShumateRenderer *renderer, ShumateTile *tile)
 
   ShumateErrorTileRenderer *error_renderer = SHUMATE_ERROR_TILE_RENDERER (renderer);
   ShumateErrorTileRendererPrivate *priv = error_renderer->priv;
-  ClutterActor *actor;
+  //ClutterActor *actor;
   gpointer data = NULL;
   guint size = 0;
   gboolean error = FALSE;
@@ -244,21 +246,21 @@ render (ShumateRenderer *renderer, ShumateTile *tile)
 
   size = shumate_error_tile_renderer_get_tile_size (error_renderer);
 
-  if (!priv->error_canvas)
-    {
-      priv->error_canvas = clutter_canvas_new ();
-      clutter_canvas_set_size (CLUTTER_CANVAS (priv->error_canvas), size, size);
-      g_signal_connect (priv->error_canvas, "draw", G_CALLBACK (redraw_tile), tile);
-      clutter_content_invalidate (priv->error_canvas);
-    }
+  /* if (!priv->error_canvas) */
+  /*   { */
+  /*     priv->error_canvas = clutter_canvas_new (); */
+  /*     clutter_canvas_set_size (CLUTTER_CANVAS (priv->error_canvas), size, size); */
+  /*     g_signal_connect (priv->error_canvas, "draw", G_CALLBACK (redraw_tile), tile); */
+  /*     clutter_content_invalidate (priv->error_canvas); */
+  /*   } */
 
-  actor = clutter_actor_new ();
-  clutter_actor_set_size (actor, size, size);
-  clutter_actor_set_content (actor, priv->error_canvas);
+  /* actor = clutter_actor_new (); */
+  /* clutter_actor_set_size (actor, size, size); */
+  /* clutter_actor_set_content (actor, priv->error_canvas); */
   /* has to be set for proper opacity */
-  clutter_actor_set_offscreen_redirect (actor, CLUTTER_OFFSCREEN_REDIRECT_AUTOMATIC_FOR_OPACITY);
+  /* clutter_actor_set_offscreen_redirect (actor, CLUTTER_OFFSCREEN_REDIRECT_AUTOMATIC_FOR_OPACITY); */
 
-  shumate_tile_set_content (tile, actor);
+  /* shumate_tile_set_content (tile, actor); */
   g_signal_emit_by_name (tile, "render-complete", data, size, error);
 }
 
