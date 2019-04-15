@@ -30,6 +30,7 @@
 
 #include <gdk/gdk.h>
 #include <glib-object.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
@@ -64,14 +65,14 @@ typedef struct _ShumateMarkerClass ShumateMarkerClass;
  */
 struct _ShumateMarker
 {
-  GObject parent;
+  GtkWidget parent;
 
   ShumateMarkerPrivate *priv;
 };
 
 struct _ShumateMarkerClass
 {
-  GObjectClass parent_class;
+  GtkWidgetClass parent_class;
 };
 
 GType shumate_marker_get_type (void);

@@ -48,6 +48,7 @@
 #include <glib.h>
 #include <glib-object.h>
 #include <gdk/gdk.h>
+#include <gtk/gtk.h>
 #include <cairo.h>
 #include <math.h>
 
@@ -86,7 +87,7 @@ static gdouble get_longitude (ShumateLocation *location);
 
 static void location_interface_init (ShumateLocationIface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, G_TYPE_OBJECT,
+G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
 
 #define GET_PRIVATE(obj) \
@@ -317,7 +318,6 @@ shumate_marker_finalize (GObject *object)
 {
   G_OBJECT_CLASS (shumate_marker_parent_class)->finalize (object);
 }
-
 
 static void
 shumate_marker_class_init (ShumateMarkerClass *marker_class)
@@ -604,6 +604,8 @@ shumate_marker_init (ShumateMarker *marker)
   priv->selected = FALSE;
   priv->selectable = TRUE;
   priv->draggable = FALSE;
+
+  gtk_widget_set_has_window (GTK_WIDGET (marker), FALSE);
 
   g_signal_connect (marker,
       "button-press-event",
