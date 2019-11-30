@@ -511,16 +511,20 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
     ShumateView *view)
 {
   DEBUG_LOG ()
+  GdkScrollDirection direction;
+  gdk_event_get_scroll_direction(event, &direction);
+  gdouble x, y;
+  gdk_event_get_coords(event, &x, &y);
 
   ShumateViewPrivate *priv = view->priv;
 
   guint zoom_level = priv->zoom_level;
 
-  if (event->scroll.direction == GDK_SCROLL_UP)
+  if (direction == GDK_SCROLL_UP)
     zoom_level = priv->zoom_level + 1;
-  else if (event->scroll.direction == GDK_SCROLL_DOWN)
+  else if (direction == GDK_SCROLL_DOWN)
     zoom_level = priv->zoom_level - 1;
-  else if (event->scroll.direction == GDK_SCROLL_SMOOTH)
+  else if (direction == GDK_SCROLL_SMOOTH)
     {
       gdouble dx, dy;
       gint steps;
@@ -541,7 +545,7 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
       priv->zoom_timeout = g_timeout_add (1000, zoom_timeout_cb, view);
     }
 
-  return view_set_zoom_level_at (view, zoom_level, TRUE, event->scroll.x, event->scroll.y);
+  return view_set_zoom_level_at (view, zoom_level, TRUE, x, y);
 }
 
 
@@ -1471,7 +1475,7 @@ shumate_view_init (ShumateView *view)
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
   view->priv = priv;
-  gtk_widget_set_has_window (GTK_WIDGET (view), FALSE);
+  gtk_widget_set_has_surface (GTK_WIDGET (view), FALSE);
 
   factory = shumate_map_source_factory_dup_default ();
   source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
