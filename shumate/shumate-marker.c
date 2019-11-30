@@ -470,7 +470,7 @@ motion_event_cb (ShumateMarker *marker,
   ShumateMarkerPrivate *priv = marker->priv;
   gfloat x, y;
 
-  if (event->type != GDK_DRAG_MOTION)
+  if (gdk_event_get_event_type(event) != GDK_DRAG_MOTION)
     return FALSE;
 
   /*
@@ -494,9 +494,11 @@ capture_release_event_cb (ShumateMarker *marker,
     GdkEventButton *event)
 {
   ShumateMarkerPrivate *priv = marker->priv;
+  guint button;
+  gdk_event_get_button(event, &button);
 
-  if ((event->type != GDK_BUTTON_RELEASE) ||
-      (event->button != 1))
+  if ((gdk_event_get_event_type(event) != GDK_BUTTON_RELEASE) ||
+      (button != 1))
     return FALSE;
 
   /*
@@ -521,8 +523,11 @@ static gboolean
 button_release_event_cb (ShumateMarker *marker,
     GdkEventButton *event)
 {
-  if ((event->type != GDK_BUTTON_RELEASE) ||
-      (event->button != 1))
+  guint button;
+  gdk_event_get_button(event, &button);
+
+  if ((gdk_event_get_event_type(event) != GDK_BUTTON_RELEASE) ||
+      (button != 1))
     return FALSE;
 
   g_signal_handlers_disconnect_by_func (marker,
@@ -539,9 +544,11 @@ button_press_event_cb (ShumateMarker *marker,
     GdkEventButton *event)
 {
   ShumateMarkerPrivate *priv = marker->priv;
+  guint button;
+  gdk_event_get_button(event, &button);
 
-  if (event->type != GDK_BUTTON_PRESS ||
-      event->button != 1)
+  if (gdk_event_get_event_type(event) != GDK_BUTTON_PRESS ||
+      button != 1)
     {
       return FALSE;
     }
@@ -605,7 +612,7 @@ shumate_marker_init (ShumateMarker *marker)
   priv->selectable = TRUE;
   priv->draggable = FALSE;
 
-  gtk_widget_set_has_window (GTK_WIDGET (marker), FALSE);
+  gtk_widget_set_has_surface (GTK_WIDGET (marker), FALSE);
 
   g_signal_connect (marker,
       "button-press-event",
