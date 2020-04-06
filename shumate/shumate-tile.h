@@ -102,7 +102,7 @@ guint shumate_tile_get_zoom_level (ShumateTile *self);
 guint shumate_tile_get_size (ShumateTile *self);
 ShumateState shumate_tile_get_state (ShumateTile *self);
 //ClutterActor *shumate_tile_get_content (ShumateTile *self);
-const GTimeVal *shumate_tile_get_modified_time (ShumateTile *self);
+GDateTime *shumate_tile_get_modified_time (ShumateTile *self);
 const gchar *shumate_tile_get_etag (ShumateTile *self);
 gboolean shumate_tile_get_fade_in (ShumateTile *self);
 
@@ -121,7 +121,7 @@ void shumate_tile_set_state (ShumateTile *self,
 void shumate_tile_set_etag (ShumateTile *self,
     const gchar *etag);
 void shumate_tile_set_modified_time (ShumateTile *self,
-    const GTimeVal *time);
+    GDateTime *modified_time);
 void shumate_tile_set_fade_in (ShumateTile *self,
     gboolean fade_in);
 

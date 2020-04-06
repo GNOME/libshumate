@@ -40,7 +40,7 @@ typedef struct
   /* Units to store the origin of a click when scrolling */
   gfloat x;
   gfloat y;
-  GTimeVal time;
+  gint64 time;
 } ShumateKineticScrollViewMotion;
 
 struct _ShumateKineticScrollViewPrivate
@@ -419,18 +419,18 @@ button_release_event_cb (ClutterActor *stage,
               &x, &y))
         {
           double frac, x_origin, y_origin;
-          GTimeVal release_time, motion_time;
+          gint64 release_time, motion_time;
           ShumateAdjustment *hadjust, *vadjust;
-          glong time_diff;
+          gint64 time_diff;
           gint i;
 
           /* Get time delta */
-          g_get_current_time (&release_time);
+          release_time = g_get_monotonic_time ();
 
           /* Get average position/time of last x mouse events */
           priv->last_motion++;
           x_origin = y_origin = 0;
-          motion_time = (GTimeVal){ 0, 0 };
+          motion_time = 0;
           for (i = 0; i < priv->last_motion; i++)
             {
               ShumateKineticScrollViewMotion *motion =
@@ -443,19 +443,13 @@ button_release_event_cb (ClutterActor *stage,
 
               x_origin += motion->x;
               y_origin += motion->y;
-              motion_time.tv_sec += motion->time.tv_sec;
-              motion_time.tv_usec += motion->time.tv_usec;
+			  motion_time += motion->time;
             }
           x_origin /= priv->last_motion;
           y_origin /= priv->last_motion;
-          motion_time.tv_sec /= priv->last_motion;
-          motion_time.tv_usec /= priv->last_motion;
+          motion_time /= priv->last_motion;
 
-          if (motion_time.tv_sec == release_time.tv_sec)
-            time_diff = release_time.tv_usec - motion_time.tv_usec;
-          else
-            time_diff = release_time.tv_usec +
-              (G_USEC_PER_SEC - motion_time.tv_usec);
+          time_diff = release_time - motion_time;
 
           /* On a macbook that's running Ubuntu 9.04 sometimes 'time_diff' is 0
              and this causes a division by 0 when computing 'frac'. This check
