@@ -684,7 +684,7 @@ shumate_tile_new_full (guint x,
  *
  * Returns: the tile's last modified time
  */
-G_CONST_RETURN GTimeVal *
+const GTimeVal *
 shumate_tile_get_modified_time (ShumateTile *self)
 {
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
@@ -722,7 +722,7 @@ shumate_tile_set_modified_time (ShumateTile *self,
  *
  * Returns: the tile's ETag
  */
-G_CONST_RETURN gchar *
+const gchar *
 shumate_tile_get_etag (ShumateTile *self)
 {
   g_return_val_if_fail (SHUMATE_TILE (self), "");
