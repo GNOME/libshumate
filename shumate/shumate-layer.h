@@ -30,24 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LAYER shumate_layer_get_type ()
-
-#define SHUMATE_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_LAYER, ShumateLayer))
-
-#define SHUMATE_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_LAYER, ShumateLayerClass))
-
-#define SHUMATE_IS_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_LAYER))
-
-#define SHUMATE_IS_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_LAYER))
-
-#define SHUMATE_LAYER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_LAYER, ShumateLayerClass))
-
-typedef struct _ShumateLayer ShumateLayer;
-typedef struct _ShumateLayerClass ShumateLayerClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GObject)
 
 /**
  * ShumateLayer:
@@ -55,10 +38,6 @@ typedef struct _ShumateLayerClass ShumateLayerClass;
  * The #ShumateLayer structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateLayer
-{
-  GObject parent;
-};
 
 struct _ShumateLayerClass
 {
@@ -68,9 +47,6 @@ struct _ShumateLayerClass
       ShumateView *view);
   ShumateBoundingBox * (*get_bounding_box)(ShumateLayer * layer);
 };
-
-GType shumate_layer_get_type (void);
-
 
 void shumate_layer_set_view (ShumateLayer *layer,
     ShumateView *view);
