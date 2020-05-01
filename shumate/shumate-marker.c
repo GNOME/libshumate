@@ -463,6 +463,7 @@ shumate_marker_new (void)
 }
 
 
+#if 0
 static gboolean
 motion_event_cb (ShumateMarker *marker,
     GdkEventMotion *event)
@@ -597,6 +598,7 @@ button_press_event_cb (ShumateMarker *marker,
 
   return TRUE;
 }
+#endif
 
 
 static void
@@ -612,12 +614,14 @@ shumate_marker_init (ShumateMarker *marker)
   priv->selectable = TRUE;
   priv->draggable = FALSE;
 
+#if 0
   gtk_widget_set_has_surface (GTK_WIDGET (marker), FALSE);
 
   g_signal_connect (marker,
       "button-press-event",
       G_CALLBACK (button_press_event_cb),
       marker);
+#endif
 }
 
 

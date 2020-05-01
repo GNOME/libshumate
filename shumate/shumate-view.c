@@ -1475,7 +1475,7 @@ shumate_view_init (ShumateView *view)
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
   view->priv = priv;
-  gtk_widget_set_has_surface (GTK_WIDGET (view), FALSE);
+  /* gtk_widget_set_has_surface (GTK_WIDGET (view), FALSE); */
 
   factory = shumate_map_source_factory_dup_default ();
   source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);

@@ -790,25 +790,15 @@ tile_state_notify (ShumateTile *tile,
 static gchar *
 get_modified_time_string (ShumateTile *tile)
 {
-  const GTimeVal *time;
+  GDateTime *modified_time;
 
   g_return_val_if_fail (SHUMATE_TILE (tile), NULL);
 
-  time = shumate_tile_get_modified_time (tile);
-
-  if (time == NULL)
+  modified_time = shumate_tile_get_modified_time (tile);
+  if (modified_time == NULL)
     return NULL;
 
-  struct tm *other_time = gmtime (&time->tv_sec);
-  char value[100];
-
-#ifdef G_OS_WIN32
-  strftime (value, 100, "%a, %d %b %Y %H:%M:%S %Z", other_time);
-#else
-  strftime (value, 100, "%a, %d %b %Y %T %Z", other_time);
-#endif
-
-  return g_strdup (value);
+  return g_date_time_format (modified_time, "%a, %d %b %Y %T %Z");
 }
 
 

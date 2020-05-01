@@ -471,18 +471,20 @@ static gboolean
 tile_is_expired (ShumateFileCache *file_cache,
     ShumateTile *tile)
 {
+  GDateTime *modified_time;
+  gboolean validate_cache = TRUE;
+
   g_return_val_if_fail (SHUMATE_FILE_CACHE (file_cache), FALSE);
   g_return_val_if_fail (SHUMATE_TILE (tile), FALSE);
 
-  GTimeVal now = { 0, };
-  const GTimeVal *modified_time = shumate_tile_get_modified_time (tile);
-  gboolean validate_cache = TRUE;
-
+  modified_time = shumate_tile_get_modified_time (tile);
   if (modified_time)
     {
-      g_get_current_time (&now);
-      g_time_val_add (&now, (-24ul * 60ul * 60ul * 1000ul * 1000ul * 7ul)); /* Cache expires in 7 days */
-      validate_cache = modified_time->tv_sec < now.tv_sec;
+      GDateTime *now = g_date_time_new_now_utc ();
+      GTimeSpan diff = g_date_time_difference (now, modified_time);
+
+      validate_cache = (diff > 7 * G_TIME_SPAN_DAY); /* Cache expires in 7 days */
+      g_date_time_unref (now);
     }
 
   DEBUG ("%p is %s expired", tile, (validate_cache ? "" : "not"));
@@ -510,7 +512,7 @@ tile_rendered_cb (ShumateTile *tile,
   ShumateMapSource *next_source;
   ShumateFileCachePrivate *priv;
   GFileInfo *info = NULL;
-  GTimeVal modified_time = { 0, };
+  GDateTime *modified_time;
   gchar *filename = NULL;
 
   g_signal_handlers_disconnect_by_func (tile, tile_rendered_cb, user_data);
@@ -537,9 +539,10 @@ tile_rendered_cb (ShumateTile *tile,
         G_FILE_QUERY_INFO_NONE, NULL, NULL);
   if (info)
     {
-      g_file_info_get_modification_time (info, &modified_time);
-      shumate_tile_set_modified_time (tile, &modified_time);
+      modified_time = g_file_info_get_modification_date_time (info);
+      shumate_tile_set_modified_time (tile, modified_time);
 
+      g_date_time_unref (modified_time);
       g_object_unref (info);
     }
   g_object_unref (file);
@@ -717,13 +720,12 @@ refresh_tile_time (ShumateTileCache *tile_cache,
 
   if (info)
     {
-      GTimeVal now = { 0, };
+      GDateTime *now = g_date_time_new_now_utc ();
 
-      g_get_current_time (&now);
-
-      g_file_info_set_modification_time (info, &now);
+      g_file_info_set_modification_date_time (info, &now);
       g_file_set_attributes_from_info (file, info, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
+      g_date_time_unref (now);
       g_object_unref (info);
     }
 

@@ -88,7 +88,7 @@ struct _ShumateTilePrivate
   //ClutterActor *content_actor;
   gboolean fade_in;
 
-  GTimeVal *modified_time; /* The last modified time of the cache */
+  GDateTime *modified_time; /* The last modified time of the cache */
   gchar *etag; /* The HTTP ETag sent by the server */
   gboolean content_displayed;
   cairo_surface_t *surface;
@@ -219,7 +219,7 @@ shumate_tile_finalize (GObject *object)
 {
   ShumateTilePrivate *priv = SHUMATE_TILE (object)->priv;
 
-  g_free (priv->modified_time);
+  g_date_time_unref (priv->modified_time);
   g_free (priv->etag);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->finalize (object);
@@ -682,9 +682,9 @@ shumate_tile_new_full (guint x,
  *
  * Gets the tile's last modified time.
  *
- * Returns: the tile's last modified time
+ * Returns: (transfer none): the tile's last modified time
  */
-G_CONST_RETURN GTimeVal *
+GDateTime *
 shumate_tile_get_modified_time (ShumateTile *self)
 {
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
@@ -696,21 +696,21 @@ shumate_tile_get_modified_time (ShumateTile *self)
 /**
  * shumate_tile_set_modified_time:
  * @self: the #ShumateTile
- * @time: a #GTimeVal, the value will be copied
+ * @modified_time: a #GDateTime, the value will be copied
  *
  * Sets the tile's modified time
  */
 void
 shumate_tile_set_modified_time (ShumateTile *self,
-    const GTimeVal *time_)
+    GDateTime *modified_time)
 {
   g_return_if_fail (SHUMATE_TILE (self));
-  g_return_if_fail (time_ != NULL);
+  g_return_if_fail (modified_time != NULL);
 
   ShumateTilePrivate *priv = self->priv;
 
-  g_free (priv->modified_time);
-  priv->modified_time = g_memdup (time_, sizeof (GTimeVal));
+  g_date_time_unref (priv->modified_time);
+  priv->modified_time = g_date_time_ref (modified_time);
 }
 
 
@@ -722,7 +722,7 @@ shumate_tile_set_modified_time (ShumateTile *self,
  *
  * Returns: the tile's ETag
  */
-G_CONST_RETURN gchar *
+const gchar *
 shumate_tile_get_etag (ShumateTile *self)
 {
   g_return_val_if_fail (SHUMATE_TILE (self), "");
