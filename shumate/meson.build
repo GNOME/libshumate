@@ -219,6 +219,8 @@ if generate_gir == true
 
   if generate_vapi == true and libshumate_gir.length() > 0
     libshumate_vapi_packages = [
+      'gio-2.0',
+      'gtk4',
       'cogl-pango-1.0',
       'atk',
       'pangocairo',
