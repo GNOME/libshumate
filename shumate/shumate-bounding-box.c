@@ -31,22 +31,7 @@
 #include "shumate-bounding-box.h"
 #include "shumate-defines.h"
 
-GType
-shumate_bounding_box_get_type (void)
-{
-  static GType type = 0;
-
-  if (G_UNLIKELY (type == 0))
-    {
-      type = g_boxed_type_register_static (
-            g_intern_static_string ("ShumateBoundingBox"),
-            (GBoxedCopyFunc) shumate_bounding_box_copy,
-            (GBoxedFreeFunc) shumate_bounding_box_free);
-    }
-
-  return type;
-}
-
+G_DEFINE_BOXED_TYPE (ShumateBoundingBox, shumate_bounding_box, shumate_bounding_box_copy, shumate_bounding_box_free)
 
 /**
  * shumate_bounding_box_new:
