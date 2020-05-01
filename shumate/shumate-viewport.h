@@ -32,39 +32,12 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_VIEWPORT shumate_viewport_get_type ()
-
-#define SHUMATE_VIEWPORT(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_VIEWPORT, ShumateViewport))
-
-#define SHUMATE_IS_VIEWPORT(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_VIEWPORT))
-
-#define SHUMATE_VIEWPORT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_VIEWPORT, ShumateViewportClass))
-
-#define SHUMATE_IS_VIEWPORT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_VIEWPORT))
-
-#define SHUMATE_VIEWPORT_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_VIEWPORT, ShumateViewportClass))
-
-typedef struct _ShumateViewport ShumateViewport;
-typedef struct _ShumateViewportPrivate ShumateViewportPrivate;
-typedef struct _ShumateViewportClass ShumateViewportClass;
-
-struct _ShumateViewport
-{
-  GObject parent;
-
-  ShumateViewportPrivate *priv;
-};
+G_DECLARE_DERIVABLE_TYPE (ShumateViewport, shumate_viewport, SHUMATE, VIEWPORT, GObject)
 
 struct _ShumateViewportClass
 {
   GObjectClass parent_class;
 };
-
-GType shumate_viewport_get_type (void) G_GNUC_CONST;
 
 ShumateViewport *shumate_viewport_new (void);
 

@@ -28,13 +28,7 @@
 #include "shumate-viewport.h"
 #include "shumate-private.h"
 
-G_DEFINE_TYPE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT)
-
-#define GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_VIEWPORT, ShumateViewportPrivate))
-
-struct _ShumateViewportPrivate
-{
+typedef struct {
   gdouble x;
   gdouble y;
 
@@ -43,7 +37,9 @@ struct _ShumateViewportPrivate
 
   ShumateAdjustment *hadjustment;
   ShumateAdjustment *vadjustment;
-};
+} ShumateViewportPrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT)
 
 enum
 {
@@ -69,7 +65,8 @@ shumate_viewport_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateViewportPrivate *priv = SHUMATE_VIEWPORT (object)->priv;
+  ShumateViewport *viewport = SHUMATE_VIEWPORT (object);
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
   switch (prop_id)
     {
@@ -95,7 +92,7 @@ shumate_viewport_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateViewport *viewport = SHUMATE_VIEWPORT (object);
-  ShumateViewportPrivate *priv = viewport->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
   switch (prop_id)
     {
@@ -121,7 +118,9 @@ shumate_viewport_set_property (GObject *object,
 void
 shumate_viewport_stop (ShumateViewport *viewport)
 {
-  ShumateViewportPrivate *priv = SHUMATE_VIEWPORT (viewport)->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
 
   if (priv->hadjustment)
     shumate_adjustment_interpolate_stop (priv->hadjustment);
@@ -134,20 +133,19 @@ shumate_viewport_stop (ShumateViewport *viewport)
 static void
 shumate_viewport_dispose (GObject *gobject)
 {
-  ShumateViewportPrivate *priv = SHUMATE_VIEWPORT (gobject)->priv;
+  ShumateViewport *viewport = SHUMATE_VIEWPORT (gobject);
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
   if (priv->hadjustment)
     {
       shumate_adjustment_interpolate_stop (priv->hadjustment);
-      g_object_unref (priv->hadjustment);
-      priv->hadjustment = NULL;
+      g_clear_object (&priv->hadjustment);
     }
 
   if (priv->vadjustment)
     {
       shumate_adjustment_interpolate_stop (priv->vadjustment);
-      g_object_unref (priv->vadjustment);
-      priv->vadjustment = NULL;
+      g_clear_object (&priv->vadjustment);
     }
 
   G_OBJECT_CLASS (shumate_viewport_parent_class)->dispose (gobject);
@@ -158,8 +156,6 @@ static void
 shumate_viewport_class_init (ShumateViewportClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumateViewportPrivate));
 
   gobject_class->get_property = shumate_viewport_get_property;
   gobject_class->set_property = shumate_viewport_set_property;
@@ -199,7 +195,7 @@ hadjustment_value_notify_cb (ShumateAdjustment *adjustment,
     GParamSpec *pspec,
     ShumateViewport *viewport)
 {
-  ShumateViewportPrivate *priv = viewport->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
   gdouble value;
 
   value = shumate_adjustment_get_value (adjustment);
@@ -213,7 +209,7 @@ static void
 vadjustment_value_notify_cb (ShumateAdjustment *adjustment, GParamSpec *arg1,
     ShumateViewport *viewport)
 {
-  ShumateViewportPrivate *priv = viewport->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
   gdouble value;
 
   value = shumate_adjustment_get_value (adjustment);
@@ -228,7 +224,7 @@ shumate_viewport_set_adjustments (ShumateViewport *viewport,
     ShumateAdjustment *hadjustment,
     ShumateAdjustment *vadjustment)
 {
-  ShumateViewportPrivate *priv = SHUMATE_VIEWPORT (viewport)->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
   if (hadjustment != priv->hadjustment)
     {
@@ -280,11 +276,9 @@ shumate_viewport_get_adjustments (ShumateViewport *viewport,
     ShumateAdjustment **hadjustment,
     ShumateAdjustment **vadjustment)
 {
-  ShumateViewportPrivate *priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
   g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
-
-  priv = ((ShumateViewport *) viewport)->priv;
 
   if (hadjustment)
     {
@@ -335,10 +329,10 @@ shumate_viewport_get_adjustments (ShumateViewport *viewport,
 static void
 shumate_viewport_init (ShumateViewport *self)
 {
-  self->priv = GET_PRIVATE (self);
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (self);
 
-  self->priv->anchor_x = 0;
-  self->priv->anchor_y = 0;
+  priv->anchor_x = 0;
+  priv->anchor_y = 0;
 }
 
 
@@ -356,10 +350,10 @@ shumate_viewport_set_origin (ShumateViewport *viewport,
     gdouble x,
     gdouble y)
 {
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
-
-  ShumateViewportPrivate *priv = viewport->priv;
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
   gboolean relocated;
+
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
 
   if (x == priv->x && y == priv->y)
     return;
@@ -410,9 +404,9 @@ shumate_viewport_get_origin (ShumateViewport *viewport,
     gdouble *x,
     gdouble *y)
 {
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
-  ShumateViewportPrivate *priv = viewport->priv;
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
 
   if (x)
     *x = priv->x;
@@ -427,9 +421,9 @@ shumate_viewport_get_anchor (ShumateViewport *viewport,
     gint *x,
     gint *y)
 {
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
+  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
 
-  ShumateViewportPrivate *priv = viewport->priv;
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
 
   if (x)
     *x = priv->anchor_x;
