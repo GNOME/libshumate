@@ -35,23 +35,20 @@
 #include <glib.h>
 #include <string.h>
 
-G_DEFINE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE_TYPE_TILE_CACHE);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MEMORY_CACHE, ShumateMemoryCachePrivate))
-
 enum
 {
   PROP_0,
   PROP_SIZE_LIMIT
 };
 
-struct _ShumateMemoryCachePrivate
+typedef struct
 {
   guint size_limit;
   GQueue *queue;
   GHashTable *hash_table;
-};
+} ShumateMemoryCachePrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateMemoryCache, shumate_memory_cache, SHUMATE_TYPE_TILE_CACHE);
 
 typedef struct
 {
@@ -113,22 +110,15 @@ shumate_memory_cache_set_property (GObject *object,
     }
 }
 
-
-static void
-shumate_memory_cache_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_memory_cache_parent_class)->dispose (object);
-}
-
-
 static void
 shumate_memory_cache_finalize (GObject *object)
 {
   ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (object);
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
 
   shumate_memory_cache_clean (memory_cache);
-  g_queue_free (memory_cache->priv->queue);
-  g_hash_table_destroy (memory_cache->priv->hash_table);
+  g_clear_pointer (&priv->queue, g_queue_free);
+  g_clear_pointer (&priv->hash_table, g_hash_table_unref);
 
   G_OBJECT_CLASS (shumate_memory_cache_parent_class)->finalize (object);
 }
@@ -142,10 +132,7 @@ shumate_memory_cache_class_init (ShumateMemoryCacheClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
 
-  g_type_class_add_private (klass, sizeof (ShumateMemoryCachePrivate));
-
   object_class->finalize = shumate_memory_cache_finalize;
-  object_class->dispose = shumate_memory_cache_dispose;
   object_class->get_property = shumate_memory_cache_get_property;
   object_class->set_property = shumate_memory_cache_set_property;
 
@@ -198,9 +185,7 @@ shumate_memory_cache_new_full (guint size_limit,
 static void
 shumate_memory_cache_init (ShumateMemoryCache *memory_cache)
 {
-  ShumateMemoryCachePrivate *priv = GET_PRIVATE (memory_cache);
-
-  memory_cache->priv = priv;
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
 
   priv->queue = g_queue_new ();
   priv->hash_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
@@ -218,9 +203,11 @@ shumate_memory_cache_init (ShumateMemoryCache *memory_cache)
 guint
 shumate_memory_cache_get_size_limit (ShumateMemoryCache *memory_cache)
 {
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
+
   g_return_val_if_fail (SHUMATE_IS_MEMORY_CACHE (memory_cache), 0);
 
-  return memory_cache->priv->size_limit;
+  return priv->size_limit;
 }
 
 
@@ -235,9 +222,9 @@ void
 shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,
     guint size_limit)
 {
-  g_return_if_fail (SHUMATE_IS_MEMORY_CACHE (memory_cache));
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
 
-  ShumateMemoryCachePrivate *priv = memory_cache->priv;
+  g_return_if_fail (SHUMATE_IS_MEMORY_CACHE (memory_cache));
 
   priv->size_limit = size_limit;
   g_object_notify (G_OBJECT (memory_cache), "size-limit");
@@ -328,7 +315,7 @@ fill_tile (ShumateMapSource *map_source,
   if (shumate_tile_get_state (tile) != SHUMATE_STATE_LOADED)
     {
       ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (map_source);
-      ShumateMemoryCachePrivate *priv = memory_cache->priv;
+      ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
       ShumateRenderer *renderer;
       GList *link;
       gchar *key;
@@ -351,7 +338,7 @@ fill_tile (ShumateMapSource *map_source,
 
           g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), map_source);
 
-          shumate_renderer_set_data (renderer, (guint8) member->data, member->size);
+          shumate_renderer_set_data (renderer, (guint8 *) member->data, member->size);
           shumate_renderer_render (renderer, tile);
 
           return;
@@ -380,7 +367,7 @@ store_tile (ShumateTileCache *tile_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (tile_cache);
-  ShumateMemoryCachePrivate *priv = memory_cache->priv;
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
   GList *link;
   gchar *key;
 
@@ -439,11 +426,11 @@ refresh_tile_time (ShumateTileCache *tile_cache,
 void
 shumate_memory_cache_clean (ShumateMemoryCache *memory_cache)
 {
-  ShumateMemoryCachePrivate *priv = memory_cache->priv;
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
 
   g_queue_foreach (priv->queue, (GFunc) delete_queue_member, NULL);
   g_queue_clear (priv->queue);
-  g_hash_table_destroy (memory_cache->priv->hash_table);
+  g_hash_table_unref (priv->hash_table);
   priv->hash_table = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
@@ -458,7 +445,7 @@ on_tile_filled (ShumateTileCache *tile_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (tile_cache);
-  ShumateMemoryCachePrivate *priv = memory_cache->priv;
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
   GList *link;
   gchar *key;
 

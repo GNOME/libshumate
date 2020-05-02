@@ -30,26 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MEMORY_CACHE shumate_memory_cache_get_type ()
-
-#define SHUMATE_MEMORY_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MEMORY_CACHE, ShumateMemoryCache))
-
-#define SHUMATE_MEMORY_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MEMORY_CACHE, ShumateMemoryCacheClass))
-
-#define SHUMATE_IS_MEMORY_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MEMORY_CACHE))
-
-#define SHUMATE_IS_MEMORY_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MEMORY_CACHE))
-
-#define SHUMATE_MEMORY_CACHE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MEMORY_CACHE, ShumateMemoryCacheClass))
-
-typedef struct _ShumateMemoryCachePrivate ShumateMemoryCachePrivate;
-
-typedef struct _ShumateMemoryCache ShumateMemoryCache;
-typedef struct _ShumateMemoryCacheClass ShumateMemoryCacheClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, ShumateTileCache)
 
 /**
  * ShumateMemoryCache:
@@ -57,19 +38,11 @@ typedef struct _ShumateMemoryCacheClass ShumateMemoryCacheClass;
  * The #ShumateMemoryCache structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMemoryCache
-{
-  ShumateTileCache parent_instance;
-
-  ShumateMemoryCachePrivate *priv;
-};
 
 struct _ShumateMemoryCacheClass
 {
   ShumateTileCacheClass parent_class;
 };
-
-GType shumate_memory_cache_get_type (void);
 
 ShumateMemoryCache *shumate_memory_cache_new_full (guint size_limit,
     ShumateRenderer *renderer);
