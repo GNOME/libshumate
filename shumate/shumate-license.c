@@ -40,13 +40,6 @@
 #include <pango/pango.h>
 #include <string.h>
 
-
-enum
-{
-  /* normal signals */
-  LAST_SIGNAL
-};
-
 enum
 {
   PROP_0,
@@ -56,8 +49,10 @@ enum
 
 /* static guint shumate_license_signals[LAST_SIGNAL] = { 0, }; */
 
-struct _ShumateLicensePrivate
+struct _ShumateLicense
 {
+  GObject parent_instance;
+
   gchar *extra_text; /* Extra license text */
   //ClutterActor *license_actor;
   PangoAlignment alignment;
@@ -66,9 +61,6 @@ struct _ShumateLicensePrivate
 };
 
 G_DEFINE_TYPE (ShumateLicense, shumate_license, G_TYPE_OBJECT);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_LICENSE, ShumateLicensePrivate))
 
 #define WIDTH_PADDING 10
 #define HEIGHT_PADDING 7
@@ -80,16 +72,16 @@ shumate_license_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateLicensePrivate *priv = SHUMATE_LICENSE (object)->priv;
+  ShumateLicense *license = SHUMATE_LICENSE (object);
 
   switch (prop_id)
     {
     case PROP_LICENSE_EXTRA:
-      g_value_set_string (value, priv->extra_text);
+      g_value_set_string (value, license->extra_text);
       break;
 
     case PROP_ALIGNMENT:
-      g_value_set_enum (value, priv->alignment);
+      g_value_set_enum (value, license->alignment);
       break;
 
     default:
@@ -125,29 +117,28 @@ shumate_license_set_property (GObject *object,
 static void
 redraw_license (ShumateLicense *license)
 {
-  ShumateLicensePrivate *priv = license->priv;
   gchar *text;
   gfloat width, height;
   ShumateMapSource *map_source;
   GList *overlay_sources, *iter;
 
-  if (!priv->view)
+  if (!license->view)
     return;
 
-  map_source = shumate_view_get_map_source (priv->view);
+  map_source = shumate_view_get_map_source (license->view);
 
   if (!map_source)
     return;
 
-  if (priv->extra_text)
+  if (license->extra_text)
     text = g_strjoin ("\n",
-          priv->extra_text,
+          license->extra_text,
           shumate_map_source_get_license (map_source),
           NULL);
   else
     text = g_strdup (shumate_map_source_get_license (map_source));
 
-  overlay_sources = shumate_view_get_overlay_sources (priv->view);
+  overlay_sources = shumate_view_get_overlay_sources (license->view);
   for (iter = overlay_sources; iter; iter = iter->next)
     {
       ShumateMapSource *map_source = iter->data;
@@ -187,14 +178,14 @@ redraw_license_cb (G_GNUC_UNUSED GObject *gobject,
 static void
 shumate_license_dispose (GObject *object)
 {
-  ShumateLicensePrivate *priv = SHUMATE_LICENSE (object)->priv;
+  ShumateLicense *self = SHUMATE_LICENSE (object);
 
   //priv->license_actor = NULL;
 
-  if (priv->view)
+  if (self->view)
     {
-      shumate_license_disconnect_view (SHUMATE_LICENSE (object));
-      priv->view = NULL;
+      shumate_license_disconnect_view (self);
+      self->view = NULL;
     }
 
   G_OBJECT_CLASS (shumate_license_parent_class)->dispose (object);
@@ -204,9 +195,9 @@ shumate_license_dispose (GObject *object)
 static void
 shumate_license_finalize (GObject *object)
 {
-  ShumateLicensePrivate *priv = SHUMATE_LICENSE (object)->priv;
+  ShumateLicense *self = SHUMATE_LICENSE (object);
 
-  g_free (priv->extra_text);
+  g_clear_pointer (&self->extra_text, g_free);
 
   G_OBJECT_CLASS (shumate_license_parent_class)->finalize (object);
 }
@@ -216,8 +207,6 @@ static void
 shumate_license_class_init (ShumateLicenseClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumateLicensePrivate));
 
   object_class->finalize = shumate_license_finalize;
   object_class->dispose = shumate_license_dispose;
@@ -258,12 +247,9 @@ shumate_license_class_init (ShumateLicenseClass *klass)
 static void
 shumate_license_init (ShumateLicense *license)
 {
-  ShumateLicensePrivate *priv = GET_PRIVATE (license);
-
-  license->priv = priv;
-  priv->extra_text = NULL;
-  priv->view = NULL;
-  priv->alignment = PANGO_ALIGN_RIGHT;
+  license->extra_text = NULL;
+  license->view = NULL;
+  license->alignment = PANGO_ALIGN_RIGHT;
 
   /*
   priv->license_actor = clutter_text_new ();
@@ -303,7 +289,7 @@ shumate_license_connect_view (ShumateLicense *license,
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  license->priv->view = g_object_ref (view);
+  license->view = g_object_ref (view);
 
   g_signal_connect (view, "notify::map-source",
       G_CALLBACK (redraw_license_cb), license);
@@ -326,11 +312,10 @@ shumate_license_disconnect_view (ShumateLicense *license)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  g_signal_handlers_disconnect_by_func (license->priv->view,
+  g_signal_handlers_disconnect_by_func (license->view,
       redraw_license_cb,
       license);
-  g_object_unref (license->priv->view);
-  license->priv->view = NULL;
+  g_clear_object (&license->view);
 }
 
 
@@ -348,12 +333,10 @@ shumate_license_set_extra_text (ShumateLicense *license,
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  ShumateLicensePrivate *priv = license->priv;
+  if (license->extra_text)
+    g_free (license->extra_text);
 
-  if (priv->extra_text)
-    g_free (priv->extra_text);
-
-  priv->extra_text = g_strdup (text);
+  license->extra_text = g_strdup (text);
   g_object_notify (G_OBJECT (license), "extra-text");
   redraw_license (license);
 }
@@ -372,7 +355,7 @@ shumate_license_get_extra_text (ShumateLicense *license)
 {
   g_return_val_if_fail (SHUMATE_IS_LICENSE (license), FALSE);
 
-  return license->priv->extra_text;
+  return license->extra_text;
 }
 
 
@@ -389,7 +372,7 @@ shumate_license_set_alignment (ShumateLicense *license,
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  license->priv->alignment = alignment;
+  license->alignment = alignment;
   //clutter_text_set_line_alignment (CLUTTER_TEXT (license->priv->license_actor), alignment);
   g_object_notify (G_OBJECT (license), "alignment");
 }
@@ -408,5 +391,5 @@ shumate_license_get_alignment (ShumateLicense *license)
 {
   g_return_val_if_fail (SHUMATE_IS_LICENSE (license), FALSE);
 
-  return license->priv->alignment;
+  return license->alignment;
 }

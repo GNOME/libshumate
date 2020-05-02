@@ -32,27 +32,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LICENSE shumate_license_get_type ()
-
-#define SHUMATE_LICENSE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_LICENSE, ShumateLicense))
-
-#define SHUMATE_LICENSE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_LICENSE, ShumateLicenseClass))
-
-#define SHUMATE_IS_LICENSE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_LICENSE))
-
-#define SHUMATE_IS_LICENSE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_LICENSE))
-
-#define SHUMATE_LICENSE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_LICENSE, ShumateLicenseClass))
-
-typedef struct _ShumateLicensePrivate ShumateLicensePrivate;
-
-typedef struct _ShumateLicense ShumateLicense;
-typedef struct _ShumateLicenseClass ShumateLicenseClass;
-
+G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GObject)
 
 /**
  * ShumateLicense:
@@ -60,19 +40,6 @@ typedef struct _ShumateLicenseClass ShumateLicenseClass;
  * The #ShumateLicense structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateLicense
-{
-  GObject parent;
-
-  ShumateLicensePrivate *priv;
-};
-
-struct _ShumateLicenseClass
-{
-  GObjectClass parent_class;
-};
-
-GType shumate_license_get_type (void);
 
 ShumateLicense *shumate_license_new (void);
 
