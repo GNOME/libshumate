@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_NETWORK_TILE_SOURCE shumate_network_tile_source_get_type ()
-
-#define SHUMATE_NETWORK_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_NETWORK_TILE_SOURCE, ShumateNetworkTileSource))
-
-#define SHUMATE_NETWORK_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_NETWORK_TILE_SOURCE, ShumateNetworkTileSourceClass))
-
-#define SHUMATE_IS_NETWORK_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_NETWORK_TILE_SOURCE))
-
-#define SHUMATE_IS_NETWORK_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_NETWORK_TILE_SOURCE))
-
-#define SHUMATE_NETWORK_TILE_SOURCE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_NETWORK_TILE_SOURCE, ShumateNetworkTileSourceClass))
-
-typedef struct _ShumateNetworkTileSourcePrivate ShumateNetworkTileSourcePrivate;
-
-typedef struct _ShumateNetworkTileSource ShumateNetworkTileSource;
-typedef struct _ShumateNetworkTileSourceClass ShumateNetworkTileSourceClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE, NETWORK_TILE_SOURCE, ShumateTileSource)
 
 /**
  * ShumateNetworkTileSource:
@@ -58,19 +39,11 @@ typedef struct _ShumateNetworkTileSourceClass ShumateNetworkTileSourceClass;
  * The #ShumateNetworkTileSource structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateNetworkTileSource
-{
-  ShumateTileSource parent_instance;
-
-  ShumateNetworkTileSourcePrivate *priv;
-};
 
 struct _ShumateNetworkTileSourceClass
 {
   ShumateTileSourceClass parent_class;
 };
-
-GType shumate_network_tile_source_get_type (void);
 
 ShumateNetworkTileSource *shumate_network_tile_source_new_full (const gchar *id,
     const gchar *name,
