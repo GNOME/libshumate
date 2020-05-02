@@ -39,11 +39,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-G_DEFINE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE_TYPE_TILE_CACHE);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_FILE_CACHE, ShumateFileCachePrivate))
-
 enum
 {
   PROP_0,
@@ -51,7 +46,7 @@ enum
   PROP_CACHE_DIR
 };
 
-struct _ShumateFileCachePrivate
+typedef struct
 {
   guint size_limit;
   gchar *cache_dir;
@@ -59,7 +54,9 @@ struct _ShumateFileCachePrivate
   sqlite3 *db;
   sqlite3_stmt *stmt_select;
   sqlite3_stmt *stmt_update;
-};
+} ShumateFileCachePrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, SHUMATE_TYPE_TILE_CACHE);
 
 static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
@@ -114,7 +111,7 @@ shumate_file_cache_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   switch (property_id)
     {
@@ -133,35 +130,17 @@ shumate_file_cache_set_property (GObject *object,
     }
 }
 
-
-static void
-shumate_file_cache_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_file_cache_parent_class)->dispose (object);
-}
-
-
 static void
 finalize_sql (ShumateFileCache *file_cache)
 {
-  ShumateFileCachePrivate *priv = file_cache->priv;
-  gint error;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
-  if (priv->stmt_select)
-    {
-      sqlite3_finalize (priv->stmt_select);
-      priv->stmt_select = NULL;
-    }
-
-  if (priv->stmt_update)
-    {
-      sqlite3_finalize (priv->stmt_update);
-      priv->stmt_update = NULL;
-    }
+  g_clear_pointer (&priv->stmt_select, sqlite3_finalize);
+  g_clear_pointer (&priv->stmt_update, sqlite3_finalize);
 
   if (priv->db)
     {
-      error = sqlite3_close (priv->db);
+      gint error = sqlite3_close (priv->db);
       if (error != SQLITE_OK)
         DEBUG ("Sqlite returned error %d when closing cache.db", error);
       priv->db = NULL;
@@ -173,11 +152,11 @@ static void
 shumate_file_cache_finalize (GObject *object)
 {
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   finalize_sql (file_cache);
 
-  g_free (priv->cache_dir);
+  g_clear_pointer (&priv->cache_dir, g_free);
 
   G_OBJECT_CLASS (shumate_file_cache_parent_class)->finalize (object);
 }
@@ -203,7 +182,7 @@ create_cache_dir (const gchar *dir_name)
 static void
 init_cache (ShumateFileCache *file_cache)
 {
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   gchar *filename = NULL;
   gchar *error_msg = NULL;
   gint error;
@@ -277,7 +256,7 @@ static void
 shumate_file_cache_constructed (GObject *object)
 {
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   if (!priv->cache_dir)
     {
@@ -299,12 +278,8 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
   ShumateTileCacheClass *tile_cache_class = SHUMATE_TILE_CACHE_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
-  gchar *cache_dir = NULL;
-
-  g_type_class_add_private (klass, sizeof (ShumateFileCachePrivate));
 
   object_class->finalize = shumate_file_cache_finalize;
-  object_class->dispose = shumate_file_cache_dispose;
   object_class->get_property = shumate_file_cache_get_property;
   object_class->set_property = shumate_file_cache_set_property;
   object_class->constructed = shumate_file_cache_constructed;
@@ -333,7 +308,7 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
   pspec = g_param_spec_string ("cache-dir",
         "Cache Directory",
         "The directory of the cache",
-        cache_dir,
+        NULL,
         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
   g_object_class_install_property (object_class, PROP_CACHE_DIR, pspec);
 
@@ -348,9 +323,7 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
 static void
 shumate_file_cache_init (ShumateFileCache *file_cache)
 {
-  ShumateFileCachePrivate *priv = GET_PRIVATE (file_cache);
-
-  file_cache->priv = priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   priv->cache_dir = NULL;
   priv->size_limit = 100000000;
@@ -399,9 +372,11 @@ shumate_file_cache_new_full (guint size_limit,
 guint
 shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
 {
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), 0);
 
-  return file_cache->priv->size_limit;
+  return priv->size_limit;
 }
 
 
@@ -416,9 +391,11 @@ shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
 const gchar *
 shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
 {
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
 
-  return file_cache->priv->cache_dir;
+  return priv->cache_dir;
 }
 
 
@@ -433,9 +410,9 @@ void
 shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
     guint size_limit)
 {
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
 
   priv->size_limit = size_limit;
   g_object_notify (G_OBJECT (file_cache), "size-limit");
@@ -446,7 +423,7 @@ static gchar *
 get_filename (ShumateFileCache *file_cache,
     ShumateTile *tile)
 {
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
   g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
@@ -520,7 +497,7 @@ tile_rendered_cb (ShumateTile *tile,
 
   next_source = shumate_map_source_get_next_source (map_source);
   file_cache = SHUMATE_FILE_CACHE (map_source);
-  priv = file_cache->priv;
+  priv = shumate_file_cache_get_instance_private (file_cache);
 
   if (error)
     {
@@ -722,7 +699,7 @@ refresh_tile_time (ShumateTileCache *tile_cache,
     {
       GDateTime *now = g_date_time_new_now_utc ();
 
-      g_file_info_set_modification_date_time (info, &now);
+      g_file_info_set_modification_date_time (info, now);
       g_file_set_attributes_from_info (file, info, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
       g_date_time_unref (now);
@@ -747,7 +724,7 @@ store_tile (ShumateTileCache *tile_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   gchar *query = NULL;
   gchar *error = NULL;
   gchar *path = NULL;
@@ -828,7 +805,7 @@ on_tile_filled (ShumateTileCache *tile_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  ShumateFileCachePrivate *priv = file_cache->priv;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   int sql_rc = SQLITE_OK;
   gchar *filename = NULL;
 
@@ -862,12 +839,12 @@ call_next:
 static void
 delete_tile (ShumateFileCache *file_cache, const gchar *filename)
 {
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
   gchar *query, *error = NULL;
   GError *gerror = NULL;
   GFile *file;
-
-  ShumateFileCachePrivate *priv = file_cache->priv;
 
   query = sqlite3_mprintf ("DELETE FROM tiles WHERE filename = %Q", filename);
   sqlite3_exec (priv->db, query, NULL, NULL, &error);
@@ -923,9 +900,10 @@ shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache)
 void
 shumate_file_cache_purge (ShumateFileCache *file_cache)
 {
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
 
-  ShumateFileCachePrivate *priv = file_cache->priv;
   gchar *query;
   sqlite3_stmt *stmt;
   int rc = 0;
