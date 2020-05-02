@@ -30,10 +30,6 @@
 
 G_DEFINE_ABSTRACT_TYPE (ShumateTileCache, shumate_tile_cache, SHUMATE_TYPE_MAP_SOURCE)
 
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_TILE_CACHE, ShumateTileCachePrivate))
-
-
 static const gchar *get_id (ShumateMapSource * map_source);
 static const gchar *get_name (ShumateMapSource *map_source);
 static const gchar *get_license (ShumateMapSource *map_source);
@@ -43,38 +39,11 @@ static guint get_max_zoom_level (ShumateMapSource *map_source);
 static guint get_tile_size (ShumateMapSource *map_source);
 static ShumateMapProjection get_projection (ShumateMapSource *map_source);
 
-
-static void
-shumate_tile_cache_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_tile_cache_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_tile_cache_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_tile_cache_parent_class)->finalize (object);
-}
-
-
-static void
-shumate_tile_cache_constructed (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_tile_cache_parent_class)->constructed (object);
-}
-
-
 static void
 shumate_tile_cache_class_init (ShumateTileCacheClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
   ShumateTileCacheClass *tile_cache_class = SHUMATE_TILE_CACHE_CLASS (klass);
-
-  object_class->finalize = shumate_tile_cache_finalize;
-  object_class->dispose = shumate_tile_cache_dispose;
-  object_class->constructed = shumate_tile_cache_constructed;
 
   map_source_class->get_id = get_id;
   map_source_class->get_name = get_name;
