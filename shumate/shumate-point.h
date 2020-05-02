@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_POINT shumate_point_get_type ()
-
-#define SHUMATE_POINT(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_POINT, ShumatePoint))
-
-#define SHUMATE_POINT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_POINT, ShumatePointClass))
-
-#define SHUMATE_IS_POINT(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_POINT))
-
-#define SHUMATE_IS_POINT_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_POINT))
-
-#define SHUMATE_POINT_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_POINT, ShumatePointClass))
-
-typedef struct _ShumatePointPrivate ShumatePointPrivate;
-
-typedef struct _ShumatePoint ShumatePoint;
-typedef struct _ShumatePointClass ShumatePointClass;
+G_DECLARE_DERIVABLE_TYPE (ShumatePoint, shumate_point, SHUMATE, POINT, ShumateMarker)
 
 /**
  * ShumatePoint:
@@ -58,19 +39,12 @@ typedef struct _ShumatePointClass ShumatePointClass;
  * The #ShumatePoint structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumatePoint
-{
-  ShumateMarker parent;
-
-  ShumatePointPrivate *priv;
-};
 
 struct _ShumatePointClass
 {
   ShumateMarkerClass parent_class;
 };
 
-GType shumate_point_get_type (void);
 
 ShumatePoint *shumate_point_new (void);
 
