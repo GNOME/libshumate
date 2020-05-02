@@ -29,25 +29,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_RENDERER shumate_renderer_get_type ()
-
-#define SHUMATE_RENDERER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_RENDERER, ShumateRenderer))
-
-#define SHUMATE_RENDERER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_RENDERER, ShumateRendererClass))
-
-#define SHUMATE_IS_RENDERER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_RENDERER))
-
-#define SHUMATE_IS_RENDERER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_RENDERER))
-
-#define SHUMATE_RENDERER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_RENDERER, ShumateRendererClass))
-
-typedef struct _ShumateRenderer ShumateRenderer;
-typedef struct _ShumateRendererClass ShumateRendererClass;
-
+G_DECLARE_DERIVABLE_TYPE (ShumateRenderer, shumate_renderer, SHUMATE, RENDERER, GInitiallyUnowned)
 
 /**
  * ShumateRenderer:
@@ -55,10 +37,6 @@ typedef struct _ShumateRendererClass ShumateRendererClass;
  * The #ShumateRenderer structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateRenderer
-{
-  GInitiallyUnowned parent;
-};
 
 struct _ShumateRendererClass
 {
@@ -70,8 +48,6 @@ struct _ShumateRendererClass
   void (*render)(ShumateRenderer *renderer,
       ShumateTile *tile);
 };
-
-GType shumate_renderer_get_type (void);
 
 void shumate_renderer_set_data (ShumateRenderer *renderer,
     const guint8 *data,

@@ -30,27 +30,8 @@
 G_DEFINE_TYPE (ShumateRenderer, shumate_renderer, G_TYPE_INITIALLY_UNOWNED)
 
 static void
-shumate_renderer_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_renderer_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_renderer_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_renderer_parent_class)->finalize (object);
-}
-
-
-static void
 shumate_renderer_class_init (ShumateRendererClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = shumate_renderer_finalize;
-  object_class->dispose = shumate_renderer_dispose;
-
   klass->set_data = NULL;
   klass->render = NULL;
 }
