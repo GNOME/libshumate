@@ -36,27 +36,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_PATH_LAYER shumate_path_layer_get_type ()
-
-#define SHUMATE_PATH_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_PATH_LAYER, ShumatePathLayer))
-
-#define SHUMATE_PATH_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_PATH_LAYER, ShumatePathLayerClass))
-
-#define SHUMATE_IS_PATH_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_PATH_LAYER))
-
-#define SHUMATE_IS_PATH_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_PATH_LAYER))
-
-#define SHUMATE_PATH_LAYER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_PATH_LAYER, ShumatePathLayerClass))
-
-typedef struct _ShumatePathLayerPrivate ShumatePathLayerPrivate;
-
-typedef struct _ShumatePathLayer ShumatePathLayer;
-typedef struct _ShumatePathLayerClass ShumatePathLayerClass;
-
+G_DECLARE_DERIVABLE_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE, PATH_LAYER, ShumateLayer)
 
 /**
  * ShumatePathLayer:
@@ -64,19 +44,11 @@ typedef struct _ShumatePathLayerClass ShumatePathLayerClass;
  * The #ShumatePathLayer structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumatePathLayer
-{
-  ShumateLayer parent;
-
-  ShumatePathLayerPrivate *priv;
-};
 
 struct _ShumatePathLayerClass
 {
   ShumateLayerClass parent_class;
 };
-
-GType shumate_path_layer_get_type (void);
 
 ShumatePathLayer *shumate_path_layer_new (void);
 
