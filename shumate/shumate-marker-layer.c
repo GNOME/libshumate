@@ -41,9 +41,6 @@
 
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init));
-
 #define GET_PRIVATE(obj) \
   (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MARKER_LAYER, ShumateMarkerLayerPrivate))
 
@@ -61,11 +58,15 @@ enum
 };
 
 
-struct _ShumateMarkerLayerPrivate
+typedef struct
 {
   ShumateSelectionMode mode;
   ShumateView *view;
-};
+} ShumateMarkerLayerPrivate;
+
+G_DEFINE_TYPE_WITH_CODE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER,
+    G_ADD_PRIVATE (ShumateMarkerLayer)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init));
 
 static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 
@@ -86,7 +87,7 @@ shumate_marker_layer_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
-  ShumateMarkerLayerPrivate *priv = self->priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
 
   switch (property_id)
     {
@@ -128,7 +129,7 @@ static void
 shumate_marker_layer_dispose (GObject *object)
 {
   ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
-  ShumateMarkerLayerPrivate *priv = self->priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
 
   if (priv->view != NULL)
     set_view (SHUMATE_LAYER (self), NULL);
@@ -136,23 +137,12 @@ shumate_marker_layer_dispose (GObject *object)
   G_OBJECT_CLASS (shumate_marker_layer_parent_class)->dispose (object);
 }
 
-
-static void
-shumate_marker_layer_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_marker_layer_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShumateMarkerLayerPrivate));
-
-  object_class->finalize = shumate_marker_layer_finalize;
   object_class->dispose = shumate_marker_layer_dispose;
   object_class->get_property = shumate_marker_layer_get_property;
   object_class->set_property = shumate_marker_layer_set_property;
@@ -192,10 +182,8 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
 static void
 shumate_marker_layer_init (ShumateMarkerLayer *self)
 {
-  ShumateMarkerLayerPrivate *priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
 
-  self->priv = GET_PRIVATE (self);
-  priv = self->priv;
   priv->mode = SHUMATE_SELECTION_NONE;
   priv->view = NULL;
 }
@@ -208,7 +196,7 @@ get_surface (ShumateCairoExportable *exportable)
   //ClutterActorIter iter;
   //ClutterActor *child;
   ShumateMarkerLayer *layer = SHUMATE_MARKER_LAYER (exportable);
-  ShumateMarkerLayerPrivate *priv = layer->priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   cairo_surface_t *surface = NULL;
   cairo_t *cr;
   gboolean has_marker = FALSE;
@@ -330,7 +318,9 @@ marker_selected_cb (ShumateMarker *marker,
     G_GNUC_UNUSED GParamSpec *arg1,
     ShumateMarkerLayer *layer)
 {
-  if (layer->priv->mode == SHUMATE_SELECTION_SINGLE && shumate_marker_get_selected (marker))
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
+
+  if (priv->mode == SHUMATE_SELECTION_SINGLE && shumate_marker_get_selected (marker))
     set_selected_all_but_one (layer, marker, FALSE);
 }
 
@@ -338,7 +328,7 @@ marker_selected_cb (ShumateMarker *marker,
 static void
 set_marker_position (ShumateMarkerLayer *layer, ShumateMarker *marker)
 {
-  ShumateMarkerLayerPrivate *priv = layer->priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   gint x, y, origin_x, origin_y;
 
   /* layer not yet added to the view */
@@ -371,7 +361,7 @@ marker_move_by_cb (ShumateMarker *marker,
     GdkEvent *event,
     ShumateMarkerLayer *layer)
 {
-  ShumateMarkerLayerPrivate *priv = layer->priv;
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   ShumateView *view = priv->view;
   gdouble x, y, lat, lon;
 
@@ -399,10 +389,12 @@ void
 shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
     ShumateMarker *marker)
 {
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  shumate_marker_set_selectable (marker, layer->priv->mode != SHUMATE_SELECTION_NONE);
+  shumate_marker_set_selectable (marker, priv->mode != SHUMATE_SELECTION_NONE);
 
   g_signal_connect (G_OBJECT (marker), "notify::selected",
       G_CALLBACK (marker_selected_cb), layer);
@@ -736,11 +728,13 @@ void
 shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
     ShumateSelectionMode mode)
 {
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
 
-  if (layer->priv->mode == mode)
+  if (priv->mode == mode)
     return;
-  layer->priv->mode = mode;
+  priv->mode = mode;
 
   if (mode != SHUMATE_SELECTION_MULTIPLE)
     set_selected_all_but_one (layer, NULL, FALSE);
@@ -760,8 +754,11 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
 ShumateSelectionMode
 shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer)
 {
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), SHUMATE_SELECTION_SINGLE);
-  return layer->priv->mode;
+
+  return priv->mode;
 }
 
 
@@ -810,18 +807,21 @@ static void
 set_view (ShumateLayer *layer,
     ShumateView *view)
 {
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer) && (SHUMATE_IS_VIEW (view) || view == NULL));
-
   ShumateMarkerLayer *marker_layer = SHUMATE_MARKER_LAYER (layer);
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (marker_layer);
 
-  if (marker_layer->priv->view != NULL)
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_VIEW (view) || view == NULL);
+
+
+  if (priv->view != NULL)
     {
-      g_signal_handlers_disconnect_by_func (marker_layer->priv->view,
+      g_signal_handlers_disconnect_by_func (priv->view,
           G_CALLBACK (relocate_cb), marker_layer);
-      g_object_unref (marker_layer->priv->view);
+      g_object_unref (priv->view);
     }
 
-  marker_layer->priv->view = view;
+  priv->view = view;
 
   if (view != NULL)
     {
