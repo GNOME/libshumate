@@ -29,11 +29,6 @@
 #include "shumate-tile-source.h"
 #include "shumate-enum-types.h"
 
-G_DEFINE_ABSTRACT_TYPE (ShumateTileSource, shumate_tile_source, SHUMATE_TYPE_MAP_SOURCE);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_TILE_SOURCE, ShumateTileSourcePrivate))
-
 enum
 {
   PROP_0,
@@ -48,7 +43,7 @@ enum
   PROP_CACHE
 };
 
-struct _ShumateTileSourcePrivate
+typedef struct
 {
   gchar *id;
   gchar *name;
@@ -59,7 +54,9 @@ struct _ShumateTileSourcePrivate
   guint tile_size;
   ShumateMapProjection map_projection;
   ShumateTileCache *cache;
-};
+} ShumateTileSourcePrivate;
+
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateTileSource, shumate_tile_source, SHUMATE_TYPE_MAP_SOURCE);
 
 static const gchar *get_id (ShumateMapSource *map_source);
 static const gchar *get_name (ShumateMapSource *map_source);
@@ -76,7 +73,8 @@ shumate_tile_source_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateTileSourcePrivate *priv = SHUMATE_TILE_SOURCE (object)->priv;
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (object);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
   switch (prop_id)
     {
@@ -185,14 +183,10 @@ shumate_tile_source_set_property (GObject *object,
 static void
 shumate_tile_source_dispose (GObject *object)
 {
-  ShumateTileSourcePrivate *priv = SHUMATE_TILE_SOURCE (object)->priv;
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (object);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  if (priv->cache)
-    {
-      g_object_unref (priv->cache);
-
-      priv->cache = NULL;
-    }
+  g_clear_object (&priv->cache);
 
   G_OBJECT_CLASS (shumate_tile_source_parent_class)->dispose (object);
 }
@@ -201,23 +195,16 @@ shumate_tile_source_dispose (GObject *object)
 static void
 shumate_tile_source_finalize (GObject *object)
 {
-  ShumateTileSourcePrivate *priv = SHUMATE_TILE_SOURCE (object)->priv;
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (object);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  g_free (priv->id);
-  g_free (priv->name);
-  g_free (priv->license);
-  g_free (priv->license_uri);
+  g_clear_pointer (&priv->id, g_free);
+  g_clear_pointer (&priv->name, g_free);
+  g_clear_pointer (&priv->license, g_free);
+  g_clear_pointer (&priv->license_uri, g_free);
 
   G_OBJECT_CLASS (shumate_tile_source_parent_class)->finalize (object);
 }
-
-
-static void
-shumate_tile_source_constructed (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_tile_source_parent_class)->constructed (object);
-}
-
 
 static void
 shumate_tile_source_class_init (ShumateTileSourceClass *klass)
@@ -226,13 +213,10 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
 
-  g_type_class_add_private (klass, sizeof (ShumateTileSourcePrivate));
-
   object_class->finalize = shumate_tile_source_finalize;
   object_class->dispose = shumate_tile_source_dispose;
   object_class->get_property = shumate_tile_source_get_property;
   object_class->set_property = shumate_tile_source_set_property;
-  object_class->constructed = shumate_tile_source_constructed;
 
   map_source_class->get_id = get_id;
   map_source_class->get_name = get_name;
@@ -365,9 +349,7 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
 static void
 shumate_tile_source_init (ShumateTileSource *tile_source)
 {
-  ShumateTileSourcePrivate *priv = GET_PRIVATE (tile_source);
-
-  tile_source->priv = priv;
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
   priv->cache = NULL;
   priv->id = NULL;
@@ -392,9 +374,11 @@ shumate_tile_source_init (ShumateTileSource *tile_source)
 ShumateTileCache *
 shumate_tile_source_get_cache (ShumateTileSource *tile_source)
 {
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source), NULL);
 
-  return tile_source->priv->cache;
+  return priv->cache;
 }
 
 
@@ -409,9 +393,9 @@ void
 shumate_tile_source_set_cache (ShumateTileSource *tile_source,
     ShumateTileCache *cache)
 {
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  ShumateTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
   if (priv->cache != NULL)
     g_object_unref (priv->cache);
@@ -432,72 +416,96 @@ shumate_tile_source_set_cache (ShumateTileSource *tile_source,
 static const gchar *
 get_id (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), NULL);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->id;
+  return priv->id;
 }
 
 
 static const gchar *
 get_name (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), NULL);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->name;
+  return priv->name;
 }
 
 
 static const gchar *
 get_license (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), NULL);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->license;
+  return priv->license;
 }
 
 
 static const gchar *
 get_license_uri (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), NULL);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->license_uri;
+  return priv->license_uri;
 }
 
 
 static guint
 get_min_zoom_level (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), 0);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->min_zoom_level;
+  return priv->min_zoom_level;
 }
 
 
 static guint
 get_max_zoom_level (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), 0);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->max_zoom_level;
+  return priv->max_zoom_level;
 }
 
 
 static guint
 get_tile_size (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), 0);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->tile_size;
+  return priv->tile_size;
 }
 
 
 static ShumateMapProjection
 get_projection (ShumateMapSource *map_source)
 {
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (map_source), 0);
 
-  return SHUMATE_TILE_SOURCE (map_source)->priv->map_projection;
+  return priv->map_projection;
 }
 
 
@@ -512,9 +520,9 @@ void
 shumate_tile_source_set_id (ShumateTileSource *tile_source,
     const gchar *id)
 {
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  ShumateTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
   g_free (priv->id);
   priv->id = g_strdup (id);
@@ -534,9 +542,9 @@ void
 shumate_tile_source_set_name (ShumateTileSource *tile_source,
     const gchar *name)
 {
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  ShumateTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
   g_free (priv->name);
   priv->name = g_strdup (name);
@@ -556,9 +564,9 @@ void
 shumate_tile_source_set_license (ShumateTileSource *tile_source,
     const gchar *license)
 {
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  ShumateTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
   g_free (priv->license);
   priv->license = g_strdup (license);
@@ -578,9 +586,9 @@ void
 shumate_tile_source_set_license_uri (ShumateTileSource *tile_source,
     const gchar *license_uri)
 {
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  ShumateTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
   g_free (priv->license_uri);
   priv->license_uri = g_strdup (license_uri);
@@ -600,9 +608,11 @@ void
 shumate_tile_source_set_min_zoom_level (ShumateTileSource *tile_source,
     guint zoom_level)
 {
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
-  tile_source->priv->min_zoom_level = zoom_level;
+  priv->min_zoom_level = zoom_level;
 
   g_object_notify (G_OBJECT (tile_source), "min-zoom-level");
 }
@@ -619,9 +629,11 @@ void
 shumate_tile_source_set_max_zoom_level (ShumateTileSource *tile_source,
     guint zoom_level)
 {
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
-  tile_source->priv->max_zoom_level = zoom_level;
+  priv->max_zoom_level = zoom_level;
 
   g_object_notify (G_OBJECT (tile_source), "max-zoom-level");
 }
@@ -638,9 +650,11 @@ void
 shumate_tile_source_set_tile_size (ShumateTileSource *tile_source,
     guint tile_size)
 {
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
-  tile_source->priv->tile_size = tile_size;
+  priv->tile_size = tile_size;
 
   g_object_notify (G_OBJECT (tile_source), "tile-size");
 }
@@ -657,9 +671,11 @@ void
 shumate_tile_source_set_projection (ShumateTileSource *tile_source,
     ShumateMapProjection projection)
 {
+  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
 
-  tile_source->priv->map_projection = projection;
+  priv->map_projection = projection;
 
   g_object_notify (G_OBJECT (tile_source), "projection");
 }
