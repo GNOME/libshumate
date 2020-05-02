@@ -32,26 +32,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LABEL shumate_label_get_type ()
-
-#define SHUMATE_LABEL(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_LABEL, ShumateLabel))
-
-#define SHUMATE_LABEL_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_LABEL, ShumateLabelClass))
-
-#define SHUMATE_IS_LABEL(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_LABEL))
-
-#define SHUMATE_IS_LABEL_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_LABEL))
-
-#define SHUMATE_LABEL_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_LABEL, ShumateLabelClass))
-
-typedef struct _ShumateLabelPrivate ShumateLabelPrivate;
-
-typedef struct _ShumateLabel ShumateLabel;
-typedef struct _ShumateLabelClass ShumateLabelClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateLabel, shumate_label, SHUMATE, LABEL, ShumateMarker)
 
 /**
  * ShumateLabel:
@@ -59,19 +40,11 @@ typedef struct _ShumateLabelClass ShumateLabelClass;
  * The #ShumateLabel structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateLabel
-{
-  ShumateMarker parent;
-
-  ShumateLabelPrivate *priv;
-};
 
 struct _ShumateLabelClass
 {
   ShumateMarkerClass parent_class;
 };
-
-GType shumate_label_get_type (void);
 
 ShumateLabel *shumate_label_new (void);
 
@@ -80,7 +53,7 @@ ShumateLabel *shumate_label_new_with_text (const gchar *text,
     GdkRGBA *text_color,
     GdkRGBA *label_color);
 
-ShumateLabel *shumate_label_new_with_image (GdkPixbuf *image);
+ShumateLabel *shumate_label_new_with_image (GdkPixbuf *pixbuf);
 
 ShumateLabel *shumate_label_new_from_file (const gchar *filename,
     GError **error);
