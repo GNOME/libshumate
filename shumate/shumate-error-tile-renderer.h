@@ -30,26 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_ERROR_TILE_RENDERER shumate_error_tile_renderer_get_type ()
-
-#define SHUMATE_ERROR_TILE_RENDERER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_ERROR_TILE_RENDERER, ShumateErrorTileRenderer))
-
-#define SHUMATE_ERROR_TILE_RENDERER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_ERROR_TILE_RENDERER, ShumateErrorTileRendererClass))
-
-#define SHUMATE_IS_ERROR_TILE_RENDERER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_ERROR_TILE_RENDERER))
-
-#define SHUMATE_IS_ERROR_TILE_RENDERER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_ERROR_TILE_RENDERER))
-
-#define SHUMATE_ERROR_TILE_RENDERER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_ERROR_TILE_RENDERER, ShumateErrorTileRendererClass))
-
-typedef struct _ShumateErrorTileRendererPrivate ShumateErrorTileRendererPrivate;
-
-typedef struct _ShumateErrorTileRenderer ShumateErrorTileRenderer;
-typedef struct _ShumateErrorTileRendererClass ShumateErrorTileRendererClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateErrorTileRenderer, shumate_error_tile_renderer, SHUMATE, ERROR_TILE_RENDERER, ShumateRenderer)
 
 /**
  * ShumateErrorTileRenderer:
@@ -57,20 +38,11 @@ typedef struct _ShumateErrorTileRendererClass ShumateErrorTileRendererClass;
  * The #ShumateErrorTileRenderer structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateErrorTileRenderer
-{
-  ShumateRenderer parent;
-
-  ShumateErrorTileRendererPrivate *priv;
-};
 
 struct _ShumateErrorTileRendererClass
 {
   ShumateRendererClass parent_class;
 };
-
-
-GType shumate_error_tile_renderer_get_type (void);
 
 ShumateErrorTileRenderer *shumate_error_tile_renderer_new (guint tile_size);
 
