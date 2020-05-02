@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_SCALE shumate_scale_get_type ()
-
-#define SHUMATE_SCALE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_SCALE, ShumateScale))
-
-#define SHUMATE_SCALE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_SCALE, ShumateScaleClass))
-
-#define SHUMATE_IS_SCALE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_SCALE))
-
-#define SHUMATE_IS_SCALE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_SCALE))
-
-#define SHUMATE_SCALE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_SCALE, ShumateScaleClass))
-
-typedef struct _ShumateScalePrivate ShumateScalePrivate;
-
-typedef struct _ShumateScale ShumateScale;
-typedef struct _ShumateScaleClass ShumateScaleClass;
+G_DECLARE_FINAL_TYPE (ShumateScale, shumate_scale, SHUMATE, SCALE, GObject)
 
 /**
  * ShumateUnit:
@@ -71,22 +52,8 @@ typedef enum
  * The #ShumateScale structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateScale
-{
-  GObject parent;
-
-  ShumateScalePrivate *priv;
-};
-
-struct _ShumateScaleClass
-{
-  GObjectClass parent_class;
-};
-
-GType shumate_scale_get_type (void);
 
 ShumateScale *shumate_scale_new (void);
-
 
 void shumate_scale_set_max_width (ShumateScale *scale,
     guint value);

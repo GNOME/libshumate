@@ -55,8 +55,10 @@ enum
 
 /* static guint shumate_scale_signals[LAST_SIGNAL] = { 0, }; */
 
-struct _ShumateScalePrivate
+struct _ShumateScale
 {
+  GObject parent_instance;
+
   ShumateUnit scale_unit;
   guint max_scale_width;
   gfloat text_height;
@@ -67,10 +69,6 @@ struct _ShumateScalePrivate
 };
 
 G_DEFINE_TYPE (ShumateScale, shumate_scale, G_TYPE_OBJECT);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_SCALE, ShumateScalePrivate))
-
 
 #define SCALE_HEIGHT  5
 #define GAP_SIZE 2
@@ -84,16 +82,16 @@ shumate_scale_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateScalePrivate *priv = SHUMATE_SCALE (object)->priv;
+  ShumateScale *scale = SHUMATE_SCALE (object);
 
   switch (prop_id)
     {
     case PROP_MAX_SCALE_WIDTH:
-      g_value_set_uint (value, priv->max_scale_width);
+      g_value_set_uint (value, scale->max_scale_width);
       break;
 
     case PROP_SCALE_UNIT:
-      g_value_set_enum (value, priv->scale_unit);
+      g_value_set_enum (value, scale->scale_unit);
       break;
 
     default:
@@ -129,12 +127,11 @@ shumate_scale_set_property (GObject *object,
 static void
 shumate_scale_dispose (GObject *object)
 {
-  ShumateScalePrivate *priv = SHUMATE_SCALE (object)->priv;
+  ShumateScale *scale = SHUMATE_SCALE (object);
 
-  if (priv->view)
+  if (scale->view)
     {
       shumate_scale_disconnect_view (SHUMATE_SCALE (object));
-      priv->view = NULL;
     }
 
   /*
@@ -148,24 +145,11 @@ shumate_scale_dispose (GObject *object)
   G_OBJECT_CLASS (shumate_scale_parent_class)->dispose (object);
 }
 
-
-static void
-shumate_scale_finalize (GObject *object)
-{
-/*  ShumateScalePrivate *priv = SHUMATE_SCALE (object)->priv; */
-
-  G_OBJECT_CLASS (shumate_scale_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_scale_class_init (ShumateScaleClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShumateScalePrivate));
-
-  object_class->finalize = shumate_scale_finalize;
   object_class->dispose = shumate_scale_dispose;
   object_class->get_property = shumate_scale_get_property;
   object_class->set_property = shumate_scale_set_property;
@@ -212,9 +196,8 @@ redraw_scale (/*ClutterCanvas *canvas,*/
   gboolean is_small_unit = TRUE;  /* indicates if using meters */
   //ClutterActor *text;
   gfloat width, height;
-  ShumateScalePrivate *priv = scale->priv;
   gfloat m_per_pixel;
-  gfloat scale_width = priv->max_scale_width;
+  gfloat scale_width = scale->max_scale_width;
   gchar *label;
   gfloat base;
   gfloat factor;
@@ -224,17 +207,17 @@ redraw_scale (/*ClutterCanvas *canvas,*/
   gfloat offset;
   ShumateMapSource *map_source;
 
-  if (!priv->view)
+  if (!scale->view)
     return FALSE;
 
-  zoom_level = shumate_view_get_zoom_level (priv->view);
-  map_source = shumate_view_get_map_source (priv->view);
-  lat = shumate_view_get_center_latitude (priv->view);
-  lon = shumate_view_get_center_longitude (priv->view);
+  zoom_level = shumate_view_get_zoom_level (scale->view);
+  map_source = shumate_view_get_map_source (scale->view);
+  lat = shumate_view_get_center_latitude (scale->view);
+  lon = shumate_view_get_center_longitude (scale->view);
   m_per_pixel = shumate_map_source_get_meters_per_pixel (map_source,
         zoom_level, lat, lon);
 
-  if (priv->scale_unit == SHUMATE_UNIT_MILES)
+  if (scale->scale_unit == SHUMATE_UNIT_MILES)
     m_per_pixel *= 3.28;  /* m_per_pixel is now in ft */
 
   /* This loop will find the pretty value to display on the scale.
@@ -252,11 +235,11 @@ redraw_scale (/*ClutterCanvas *canvas,*/
       g_assert (m_per_pixel * scale_width / base > 0);
       scale_width /= m_per_pixel * scale_width / base;
       g_assert (scale_width > 0);
-      factor = floor (priv->max_scale_width / scale_width);
+      factor = floor (scale->max_scale_width / scale_width);
       base *= factor;
       scale_width *= factor;
 
-      if (priv->scale_unit == SHUMATE_UNIT_KM)
+      if (scale->scale_unit == SHUMATE_UNIT_KM)
         {
           if (base / 1000.0 >= 1)
             {
@@ -265,7 +248,7 @@ redraw_scale (/*ClutterCanvas *canvas,*/
             }
           final_unit = TRUE; /* Don't need to recompute */
         }
-      else if (priv->scale_unit == SHUMATE_UNIT_MILES)
+      else if (scale->scale_unit == SHUMATE_UNIT_MILES)
         {
           if (is_small_unit && base / 5280.0 >= 1)
             {
@@ -286,7 +269,7 @@ redraw_scale (/*ClutterCanvas *canvas,*/
   //clutter_actor_get_size (text, &width, NULL);
   /* actual label with unit */
   label = g_strdup_printf ("%g %s", base,
-        priv->scale_unit == SHUMATE_UNIT_KM ?
+        scale->scale_unit == SHUMATE_UNIT_KM ?
         (is_small_unit ? "m" : "km") :
         (is_small_unit ? "ft" : "miles"));
   //clutter_text_set_text (CLUTTER_TEXT (text), label);
@@ -311,7 +294,7 @@ redraw_scale (/*ClutterCanvas *canvas,*/
   cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
   cairo_set_line_width (cr, SCALE_LINE_WIDTH);
 
-  offset = SCALE_INSIDE_PADDING + priv->text_height + GAP_SIZE;
+  offset = SCALE_INSIDE_PADDING + scale->text_height + GAP_SIZE;
 
   /* First tick */
   cairo_move_to (cr, SCALE_INSIDE_PADDING, offset);
@@ -340,10 +323,8 @@ redraw_scale (/*ClutterCanvas *canvas,*/
 static gboolean
 invalidate_canvas (ShumateScale *layer)
 {
-  ShumateScalePrivate *priv = layer->priv;
-
   //clutter_content_invalidate (priv->canvas);
-  priv->redraw_scheduled = FALSE;
+  layer->redraw_scheduled = FALSE;
 
   return FALSE;
 }
@@ -352,9 +333,9 @@ invalidate_canvas (ShumateScale *layer)
 static void
 schedule_redraw (ShumateScale *layer)
 {
-  if (!layer->priv->redraw_scheduled)
+  if (!layer->redraw_scheduled)
     {
-      layer->priv->redraw_scheduled = TRUE;
+      layer->redraw_scheduled = TRUE;
       g_idle_add_full (G_PRIORITY_HIGH + 50,
           (GSourceFunc) invalidate_canvas,
           g_object_ref (layer),
@@ -408,14 +389,10 @@ create_scale (ShumateScale *scale)
 static void
 shumate_scale_init (ShumateScale *scale)
 {
-  ShumateScalePrivate *priv = GET_PRIVATE (scale);
-
-  scale->priv = priv;
-
-  priv->scale_unit = SHUMATE_UNIT_KM;
-  priv->max_scale_width = 100;
-  priv->view = NULL;
-  priv->redraw_scheduled = FALSE;
+  scale->scale_unit = SHUMATE_UNIT_KM;
+  scale->max_scale_width = 100;
+  scale->view = NULL;
+  scale->redraw_scheduled = FALSE;
 
   create_scale (scale);
 }
@@ -448,7 +425,7 @@ shumate_scale_set_max_width (ShumateScale *scale,
 {
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
-  scale->priv->max_scale_width = value;
+  scale->max_scale_width = value;
   create_scale (scale);
   g_object_notify (G_OBJECT (scale), "max-width");
 }
@@ -467,7 +444,7 @@ shumate_scale_set_unit (ShumateScale *scale,
 {
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
-  scale->priv->scale_unit = unit;
+  scale->scale_unit = unit;
   g_object_notify (G_OBJECT (scale), "unit");
   schedule_redraw (scale);
 }
@@ -486,7 +463,7 @@ shumate_scale_get_max_width (ShumateScale *scale)
 {
   g_return_val_if_fail (SHUMATE_IS_SCALE (scale), FALSE);
 
-  return scale->priv->max_scale_width;
+  return scale->max_scale_width;
 }
 
 
@@ -503,7 +480,7 @@ shumate_scale_get_unit (ShumateScale *scale)
 {
   g_return_val_if_fail (SHUMATE_IS_SCALE (scale), FALSE);
 
-  return scale->priv->scale_unit;
+  return scale->scale_unit;
 }
 
 
@@ -530,7 +507,7 @@ shumate_scale_connect_view (ShumateScale *scale,
 {
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
-  scale->priv->view = g_object_ref (view);
+  scale->view = g_object_ref (view);
   g_signal_connect (view, "notify::latitude",
       G_CALLBACK (redraw_scale_cb), scale);
   schedule_redraw (scale);
@@ -548,9 +525,8 @@ shumate_scale_disconnect_view (ShumateScale *scale)
 {
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
-  g_signal_handlers_disconnect_by_func (scale->priv->view,
+  g_signal_handlers_disconnect_by_func (scale->view,
       redraw_scale_cb,
       scale);
-  g_object_unref (scale->priv->view);
-  scale->priv->view = NULL;
+  g_clear_object (&scale->view);
 }
