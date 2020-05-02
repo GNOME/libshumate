@@ -56,10 +56,13 @@
 
 #include <math.h>
 
-G_DEFINE_ABSTRACT_TYPE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
+typedef struct
+{
+  ShumateMapSource *next_source;
+  ShumateRenderer *renderer;
+} ShumateMapSourcePrivate;
 
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MAP_SOURCE, ShumateMapSourcePrivate))
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
 
 enum
 {
@@ -68,19 +71,14 @@ enum
   PROP_RENDERER,
 };
 
-struct _ShumateMapSourcePrivate
-{
-  ShumateMapSource *next_source;
-  ShumateRenderer *renderer;
-};
-
 static void
 shumate_map_source_get_property (GObject *object,
     guint prop_id,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateMapSourcePrivate *priv = SHUMATE_MAP_SOURCE (object)->priv;
+  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (object);
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
   switch (prop_id)
     {
@@ -127,38 +125,13 @@ shumate_map_source_set_property (GObject *object,
 static void
 shumate_map_source_dispose (GObject *object)
 {
-  ShumateMapSourcePrivate *priv = SHUMATE_MAP_SOURCE (object)->priv;
+  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (object);
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
-  if (priv->next_source)
-    {
-      g_object_unref (priv->next_source);
-
-      priv->next_source = NULL;
-    }
-
-  if (priv->renderer)
-    {
-      g_object_unref (priv->renderer);
-
-      priv->renderer = NULL;
-    }
+  g_clear_object (&priv->next_source);
+  g_clear_object (&priv->renderer);
 
   G_OBJECT_CLASS (shumate_map_source_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_map_source_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_map_source_parent_class)->finalize (object);
-}
-
-
-static void
-shumate_map_source_constructed (GObject *object)
-{
-  if (G_OBJECT_CLASS (shumate_map_source_parent_class)->constructed)
-    G_OBJECT_CLASS (shumate_map_source_parent_class)->constructed (object);
 }
 
 
@@ -168,13 +141,9 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
 
-  g_type_class_add_private (klass, sizeof (ShumateMapSourcePrivate));
-
-  object_class->finalize = shumate_map_source_finalize;
   object_class->dispose = shumate_map_source_dispose;
   object_class->get_property = shumate_map_source_get_property;
   object_class->set_property = shumate_map_source_set_property;
-  object_class->constructed = shumate_map_source_constructed;
 
   klass->get_id = NULL;
   klass->get_name = NULL;
@@ -216,9 +185,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
 static void
 shumate_map_source_init (ShumateMapSource *map_source)
 {
-  ShumateMapSourcePrivate *priv = GET_PRIVATE (map_source);
-
-  map_source->priv = priv;
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
   priv->next_source = NULL;
   priv->renderer = NULL;
@@ -236,9 +203,11 @@ shumate_map_source_init (ShumateMapSource *map_source)
 ShumateMapSource *
 shumate_map_source_get_next_source (ShumateMapSource *map_source)
 {
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
 
-  return map_source->priv->next_source;
+  return priv->next_source;
 }
 
 
@@ -253,9 +222,11 @@ shumate_map_source_get_next_source (ShumateMapSource *map_source)
 ShumateRenderer *
 shumate_map_source_get_renderer (ShumateMapSource *map_source)
 {
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
 
-  return map_source->priv->renderer;
+  return priv->renderer;
 }
 
 
@@ -270,9 +241,9 @@ void
 shumate_map_source_set_next_source (ShumateMapSource *map_source,
     ShumateMapSource *next_source)
 {
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
-  ShumateMapSourcePrivate *priv = map_source->priv;
+  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
 
   if (priv->next_source != NULL)
     g_object_unref (priv->next_source);
@@ -301,10 +272,10 @@ void
 shumate_map_source_set_renderer (ShumateMapSource *map_source,
     ShumateRenderer *renderer)
 {
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
+
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
   g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
-
-  ShumateMapSourcePrivate *priv = map_source->priv;
 
   if (priv->renderer != NULL)
     g_object_unref (priv->renderer);
