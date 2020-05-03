@@ -38,29 +38,10 @@ G_DEFINE_TYPE (ShumateNullTileSource, shumate_null_tile_source, SHUMATE_TYPE_TIL
 static void fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile);
 
-
-static void
-shumate_null_tile_source_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_null_tile_source_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_null_tile_source_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_null_tile_source_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_null_tile_source_class_init (ShumateNullTileSourceClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
-
-  object_class->dispose = shumate_null_tile_source_dispose;
-  object_class->finalize = shumate_null_tile_source_finalize;
 
   map_source_class->fill_tile = fill_tile;
 }
@@ -69,7 +50,6 @@ shumate_null_tile_source_class_init (ShumateNullTileSourceClass *klass)
 static void
 shumate_null_tile_source_init (ShumateNullTileSource *self)
 {
-  g_return_if_fail (SHUMATE_IS_NULL_TILE_SOURCE (self));
 }
 
 

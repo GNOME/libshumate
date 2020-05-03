@@ -30,23 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_NULL_TILE_SOURCE shumate_null_tile_source_get_type ()
-
-#define SHUMATE_NULL_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_NULL_TILE_SOURCE, ShumateNullTileSource))
-
-#define SHUMATE_NULL_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_NULL_TILE_SOURCE, ShumateNullTileSourceClass))
-
-#define SHUMATE_IS_NULL_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_NULL_TILE_SOURCE))
-
-#define SHUMATE_IS_NULL_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_NULL_TILE_SOURCE))
-
-#define SHUMATE_NULL_TILE_SOURCE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_NULL_TILE_SOURCE, ShumateNullTileSourceClass))
-
-typedef struct _ShumateNullTileSourcePrivate ShumateNullTileSourcePrivate;
+G_DECLARE_DERIVABLE_TYPE (ShumateNullTileSource, shumate_null_tile_source, SHUMATE, NULL_TILE_SOURCE, ShumateTileSource)
 
 /**
  * ShumateNullTileSource:
@@ -54,20 +38,10 @@ typedef struct _ShumateNullTileSourcePrivate ShumateNullTileSourcePrivate;
  * The #ShumateNullTileSource structure contains only private data
  * and should be accessed using the provided API
  */
-typedef struct _ShumateNullTileSource ShumateNullTileSource;
-typedef struct _ShumateNullTileSourceClass ShumateNullTileSourceClass;
-
-struct _ShumateNullTileSource
-{
-  ShumateTileSource parent;
-};
-
 struct _ShumateNullTileSourceClass
 {
   ShumateTileSourceClass parent_class;
 };
-
-GType shumate_null_tile_source_get_type (void);
 
 ShumateNullTileSource *shumate_null_tile_source_new_full (ShumateRenderer *renderer);
 
