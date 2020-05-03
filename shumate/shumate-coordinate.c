@@ -45,7 +45,7 @@ static void set_location (ShumateLocation *location,
 static gdouble get_latitude (ShumateLocation *location);
 static gdouble get_longitude (ShumateLocation *location);
 
-static void location_interface_init (ShumateLocationIface *iface);
+static void location_interface_init (ShumateLocationInterface *iface);
 
 typedef struct
 {
@@ -156,7 +156,7 @@ get_longitude (ShumateLocation *location)
 
 
 static void
-location_interface_init (ShumateLocationIface *iface)
+location_interface_init (ShumateLocationInterface *iface)
 {
   iface->get_latitude = get_latitude;
   iface->get_longitude = get_longitude;

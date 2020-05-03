@@ -29,18 +29,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LOCATION (shumate_location_get_type ())
-
-#define SHUMATE_LOCATION(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_LOCATION, ShumateLocation))
-
-#define SHUMATE_IS_LOCATION(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_LOCATION))
-
-#define SHUMATE_LOCATION_GET_IFACE(inst) \
-  (G_TYPE_INSTANCE_GET_INTERFACE ((inst), SHUMATE_TYPE_LOCATION, ShumateLocationIface))
-
-typedef struct _ShumateLocation ShumateLocation; /* Dummy object */
-typedef struct _ShumateLocationIface ShumateLocationIface;
+G_DECLARE_INTERFACE (ShumateLocation, shumate_location, SHUMATE, LOCATION, GObject)
 
 /**
  * ShumateLocation:
@@ -49,14 +38,14 @@ typedef struct _ShumateLocationIface ShumateLocationIface;
  */
 
 /**
- * ShumateLocationIface:
+ * ShumateLocationInterface:
  * @get_latitude: virtual function for obtaining latitude.
  * @get_longitude: virtual function for obtaining longitude.
  * @set_location: virtual function for setting position.
  *
  * An interface common to objects having latitude and longitude.
  */
-struct _ShumateLocationIface
+struct _ShumateLocationInterface
 {
   /*< private >*/
   GTypeInterface g_iface;
@@ -68,8 +57,6 @@ struct _ShumateLocationIface
       gdouble latitude,
       gdouble longitude);
 };
-
-GType shumate_location_get_type (void) G_GNUC_CONST;
 
 void shumate_location_set_location (ShumateLocation *location,
     gdouble latitude,
