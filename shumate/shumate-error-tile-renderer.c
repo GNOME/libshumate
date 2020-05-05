@@ -31,16 +31,13 @@
 
 #include <gdk/gdk.h>
 
-G_DEFINE_TYPE (ShumateErrorTileRenderer, shumate_error_tile_renderer, SHUMATE_TYPE_RENDERER)
-
-#define GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_ERROR_TILE_RENDERER, ShumateErrorTileRendererPrivate))
-
-struct _ShumateErrorTileRendererPrivate
+typedef struct
 {
   //ClutterContent *error_canvas;
   guint tile_size;
-};
+} ShumateErrorTileRendererPrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateErrorTileRenderer, shumate_error_tile_renderer, SHUMATE_TYPE_RENDERER)
 
 enum
 {
@@ -95,43 +92,14 @@ shumate_error_tile_renderer_set_property (GObject *object,
     }
 }
 
-
-static void
-shumate_error_tile_renderer_dispose (GObject *object)
-{
-  ShumateErrorTileRendererPrivate *priv = SHUMATE_ERROR_TILE_RENDERER (object)->priv;
-
-  /*
-  if (priv->error_canvas)
-    {
-      g_object_unref (priv->error_canvas);
-      priv->error_canvas = NULL;
-    }
-   */
-
-  G_OBJECT_CLASS (shumate_error_tile_renderer_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_error_tile_renderer_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_error_tile_renderer_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_error_tile_renderer_class_init (ShumateErrorTileRendererClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateRendererClass *renderer_class = SHUMATE_RENDERER_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShumateErrorTileRendererPrivate));
-
   object_class->get_property = shumate_error_tile_renderer_get_property;
   object_class->set_property = shumate_error_tile_renderer_set_property;
-  object_class->finalize = shumate_error_tile_renderer_finalize;
-  object_class->dispose = shumate_error_tile_renderer_dispose;
 
   /**
    * ShumateErrorTileRenderer:tile-size:
@@ -156,11 +124,6 @@ shumate_error_tile_renderer_class_init (ShumateErrorTileRendererClass *klass)
 static void
 shumate_error_tile_renderer_init (ShumateErrorTileRenderer *self)
 {
-  ShumateErrorTileRendererPrivate *priv = GET_PRIVATE (self);
-
-  self->priv = priv;
-
-  //priv->error_canvas = NULL;
 }
 
 
@@ -227,11 +190,11 @@ set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 static void
 render (ShumateRenderer *renderer, ShumateTile *tile)
 {
+  ShumateErrorTileRenderer *error_renderer = SHUMATE_ERROR_TILE_RENDERER (renderer);
+
   g_return_if_fail (SHUMATE_IS_ERROR_TILE_RENDERER (renderer));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
 
-  ShumateErrorTileRenderer *error_renderer = SHUMATE_ERROR_TILE_RENDERER (renderer);
-  ShumateErrorTileRendererPrivate *priv = error_renderer->priv;
   //ClutterActor *actor;
   gpointer data = NULL;
   guint size = 0;
@@ -276,9 +239,12 @@ void
 shumate_error_tile_renderer_set_tile_size (ShumateErrorTileRenderer *renderer,
     guint size)
 {
+  ShumateErrorTileRenderer *error_renderer = SHUMATE_ERROR_TILE_RENDERER (renderer);
+  ShumateErrorTileRendererPrivate *priv = shumate_error_tile_renderer_get_instance_private (error_renderer);
+
   g_return_if_fail (SHUMATE_IS_ERROR_TILE_RENDERER (renderer));
 
-  renderer->priv->tile_size = size;
+  priv->tile_size = size;
 
   g_object_notify (G_OBJECT (renderer), "tile-size");
 }
@@ -295,7 +261,10 @@ shumate_error_tile_renderer_set_tile_size (ShumateErrorTileRenderer *renderer,
 guint
 shumate_error_tile_renderer_get_tile_size (ShumateErrorTileRenderer *renderer)
 {
+  ShumateErrorTileRenderer *error_renderer = SHUMATE_ERROR_TILE_RENDERER (renderer);
+  ShumateErrorTileRendererPrivate *priv = shumate_error_tile_renderer_get_instance_private (error_renderer);
+
   g_return_val_if_fail (SHUMATE_IS_ERROR_TILE_RENDERER (renderer), 0);
 
-  return renderer->priv->tile_size;
+  return priv->tile_size;
 }

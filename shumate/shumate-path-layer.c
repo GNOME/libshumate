@@ -49,13 +49,6 @@
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
 static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_PATH_LAYER, ShumatePathLayerPrivate))
-
 enum
 {
   /* normal signals */
@@ -80,7 +73,7 @@ static GdkRGBA DEFAULT_STROKE_COLOR = { 0.64, 0.0, 0.0, 1.0 };
 
 /* static guint signals[LAST_SIGNAL] = { 0, }; */
 
-struct _ShumatePathLayerPrivate
+typedef struct
 {
   ShumateView *view;
 
@@ -126,8 +119,12 @@ struct _ShumatePathLayerPrivate
 
   GList *nodes;
   gboolean redraw_scheduled;
-};
+} ShumatePathLayerPrivate;
 
+G_DEFINE_TYPE_WITH_CODE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER,
+    G_ADD_PRIVATE (ShumatePathLayer)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
 
 static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
@@ -154,7 +151,7 @@ shumate_path_layer_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = self->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
   switch (property_id)
     {
@@ -253,7 +250,7 @@ static void
 shumate_path_layer_dispose (GObject *object)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = self->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
   if (priv->nodes)
     shumate_path_layer_remove_all (SHUMATE_PATH_LAYER (object));
@@ -283,7 +280,7 @@ static void
 shumate_path_layer_finalize (GObject *object)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = self->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
   gdk_rgba_free (priv->stroke_color);
   gdk_rgba_free (priv->fill_color);
@@ -298,8 +295,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumatePathLayerPrivate));
 
   object_class->finalize = shumate_path_layer_finalize;
   object_class->dispose = shumate_path_layer_dispose;
@@ -434,10 +429,8 @@ initialize_child_actor (ShumatePathLayer *self,
 static void
 shumate_path_layer_init (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
-  self->priv = GET_PRIVATE (self);
-  priv = self->priv;
   priv->view = NULL;
 
   priv->visible = TRUE;
@@ -485,16 +478,17 @@ static void
 set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
+  ShumatePathLayer *self = SHUMATE_PATH_LAYER (importable);
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_PATH_LAYER (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumatePathLayer *self = SHUMATE_PATH_LAYER (importable);
-
-  if (self->priv->surface == surface)
+  if (priv->surface == surface)
     return;
 
-  cairo_surface_destroy (self->priv->surface);
-  self->priv->surface = cairo_surface_reference (surface);
+  cairo_surface_destroy (priv->surface);
+  priv->surface = cairo_surface_reference (surface);
   g_object_notify (G_OBJECT (self), "surface");
 }
 
@@ -519,7 +513,7 @@ get_map_size (ShumateView *view, gint *width, gint *height)
 static cairo_surface_t *
 create_merged_surface (ShumatePathLayer *layer)
 {
-  ShumatePathLayerPrivate *priv = layer->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   gint view_width, view_height;
   gint map_width, viewport_x, anchor_x;
   cairo_surface_t *new_surface;
@@ -550,20 +544,21 @@ create_merged_surface (ShumatePathLayer *layer)
 static cairo_surface_t *
 get_surface (ShumateCairoExportable *exportable)
 {
+  ShumatePathLayer *self = SHUMATE_PATH_LAYER (exportable);
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (exportable), NULL);
 
-  ShumatePathLayer *self = SHUMATE_PATH_LAYER (exportable);
-
-  if (self->priv->visible)
+  if (priv->visible)
     {
       /* if the surface hasn't yet been rendered, update it */
-      if (!self->priv->surface)
+      if (!priv->surface)
         {
           cairo_surface_t *new_surface = create_merged_surface (self);
 
           set_surface (SHUMATE_CAIRO_IMPORTABLE (self), new_surface);
         }
-      return SHUMATE_PATH_LAYER (exportable)->priv->surface;
+      return priv->surface;
     }
   else
     return NULL;
@@ -599,7 +594,7 @@ shumate_path_layer_new ()
 static gboolean
 invalidate_canvas (ShumatePathLayer *layer)
 {
-  ShumatePathLayerPrivate *priv = layer->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   gint view_width, view_height;
   gint map_width, map_height;
   gint viewport_x, viewport_y;
@@ -674,9 +669,11 @@ invalidate_canvas (ShumatePathLayer *layer)
 static void
 schedule_redraw (ShumatePathLayer *layer)
 {
-  if (!layer->priv->redraw_scheduled)
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
+  if (!priv->redraw_scheduled)
     {
-      layer->priv->redraw_scheduled = TRUE;
+      priv->redraw_scheduled = TRUE;
       g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50,
           (GSourceFunc) invalidate_canvas,
           g_object_ref (layer),
@@ -700,7 +697,7 @@ add_node (ShumatePathLayer *layer,
     gboolean prepend,
     guint position)
 {
-  ShumatePathLayerPrivate *priv = layer->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
 
   g_signal_connect (G_OBJECT (location), "notify::latitude",
       G_CALLBACK (position_notify), layer);
@@ -743,7 +740,7 @@ shumate_path_layer_add_node (ShumatePathLayer *layer,
 void
 shumate_path_layer_remove_all (ShumatePathLayer *layer)
 {
-  ShumatePathLayerPrivate *priv = layer->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *elem;
 
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
@@ -776,9 +773,12 @@ shumate_path_layer_remove_all (ShumatePathLayer *layer)
 GList *
 shumate_path_layer_get_nodes (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *lst;
 
-  lst = g_list_copy (layer->priv->nodes);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
+
+  lst = g_list_copy (priv->nodes);
   return g_list_reverse (lst);
 }
 
@@ -794,7 +794,7 @@ void
 shumate_path_layer_remove_node (ShumatePathLayer *layer,
     ShumateLocation *location)
 {
-  ShumatePathLayerPrivate *priv = layer->priv;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
 
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
   g_return_if_fail (SHUMATE_IS_LOCATION (location));
@@ -966,22 +966,23 @@ static void
 set_view (ShumateLayer *layer,
     ShumateView *view)
 {
+  ShumatePathLayer *path_layer = SHUMATE_PATH_LAYER (layer);
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (path_layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer) && (SHUMATE_IS_VIEW (view) || view == NULL));
 
-  ShumatePathLayer *path_layer = SHUMATE_PATH_LAYER (layer);
-
-  if (path_layer->priv->view != NULL)
+  if (priv->view != NULL)
     {
-      g_signal_handlers_disconnect_by_func (path_layer->priv->view,
+      g_signal_handlers_disconnect_by_func (priv->view,
           G_CALLBACK (relocate_cb), path_layer);
 
       //g_signal_handlers_disconnect_by_func (path_layer->priv->view,
       //    G_CALLBACK (redraw_path_cb), path_layer);
 
-      g_object_unref (path_layer->priv->view);
+      g_object_unref (priv->view);
     }
 
-  path_layer->priv->view = view;
+  priv->view = view;
 
   if (view != NULL)
     {
@@ -1006,7 +1007,8 @@ set_view (ShumateLayer *layer,
 static ShumateBoundingBox *
 get_bounding_box (ShumateLayer *layer)
 {
-  ShumatePathLayerPrivate *priv = GET_PRIVATE (layer);
+  ShumatePathLayer *path_layer = SHUMATE_PATH_LAYER (layer);
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (path_layer);
   GList *elem;
   ShumateBoundingBox *bbox;
 
@@ -1051,9 +1053,9 @@ void
 shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
     const GdkRGBA *color)
 {
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
 
-  ShumatePathLayerPrivate *priv = layer->priv;
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
   if (priv->fill_color != NULL)
     gdk_rgba_free (priv->fill_color);
@@ -1079,9 +1081,11 @@ shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
 GdkRGBA *
 shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
 
-  return layer->priv->fill_color;
+  return priv->fill_color;
 }
 
 
@@ -1097,9 +1101,9 @@ void
 shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
     const GdkRGBA *color)
 {
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
 
-  ShumatePathLayerPrivate *priv = layer->priv;
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
   if (priv->stroke_color != NULL)
     gdk_rgba_free (priv->stroke_color);
@@ -1125,9 +1129,11 @@ shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
 GdkRGBA *
 shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
 
-  return layer->priv->stroke_color;
+  return priv->stroke_color;
 }
 
 
@@ -1142,9 +1148,11 @@ void
 shumate_path_layer_set_stroke (ShumatePathLayer *layer,
     gboolean value)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  layer->priv->stroke = value;
+  priv->stroke = value;
   g_object_notify (G_OBJECT (layer), "stroke");
 
   schedule_redraw (layer);
@@ -1162,9 +1170,11 @@ shumate_path_layer_set_stroke (ShumatePathLayer *layer,
 gboolean
 shumate_path_layer_get_stroke (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
 
-  return layer->priv->stroke;
+  return priv->stroke;
 }
 
 
@@ -1179,9 +1189,11 @@ void
 shumate_path_layer_set_fill (ShumatePathLayer *layer,
     gboolean value)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  layer->priv->fill = value;
+  priv->fill = value;
   g_object_notify (G_OBJECT (layer), "fill");
 
   schedule_redraw (layer);
@@ -1199,9 +1211,11 @@ shumate_path_layer_set_fill (ShumatePathLayer *layer,
 gboolean
 shumate_path_layer_get_fill (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
 
-  return layer->priv->fill;
+  return priv->fill;
 }
 
 
@@ -1216,9 +1230,11 @@ void
 shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
     gdouble value)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  layer->priv->stroke_width = value;
+  priv->stroke_width = value;
   g_object_notify (G_OBJECT (layer), "stroke-width");
 
   schedule_redraw (layer);
@@ -1236,9 +1252,11 @@ shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
 gdouble
 shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), 0);
 
-  return layer->priv->stroke_width;
+  return priv->stroke_width;
 }
 
 
@@ -1253,9 +1271,11 @@ void
 shumate_path_layer_set_visible (ShumatePathLayer *layer,
     gboolean value)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  layer->priv->visible = value;
+  priv->visible = value;
   /*
   if (value)
     clutter_actor_show (CLUTTER_ACTOR (layer->priv->path_actor));
@@ -1277,9 +1297,11 @@ shumate_path_layer_set_visible (ShumatePathLayer *layer,
 gboolean
 shumate_path_layer_get_visible (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
 
-  return layer->priv->visible;
+  return priv->visible;
 }
 
 
@@ -1294,9 +1316,11 @@ void
 shumate_path_layer_set_closed (ShumatePathLayer *layer,
     gboolean value)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  layer->priv->closed_path = value;
+  priv->closed_path = value;
   g_object_notify (G_OBJECT (layer), "closed");
 
   schedule_redraw (layer);
@@ -1314,9 +1338,11 @@ shumate_path_layer_set_closed (ShumatePathLayer *layer,
 gboolean
 shumate_path_layer_get_closed (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
 
-  return layer->priv->closed_path;
+  return priv->closed_path;
 }
 
 
@@ -1336,9 +1362,10 @@ void
 shumate_path_layer_set_dash (ShumatePathLayer *layer,
     GList *dash_pattern)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
 
-  ShumatePathLayerPrivate *priv = layer->priv;
   GList *iter;
   guint i;
 
@@ -1368,9 +1395,10 @@ shumate_path_layer_set_dash (ShumatePathLayer *layer,
 GList *
 shumate_path_layer_get_dash (ShumatePathLayer *layer)
 {
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
 
-  ShumatePathLayerPrivate *priv = layer->priv;
   GList *list = NULL;
   guint i;
 

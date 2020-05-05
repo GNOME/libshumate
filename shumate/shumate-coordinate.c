@@ -45,19 +45,17 @@ static void set_location (ShumateLocation *location,
 static gdouble get_latitude (ShumateLocation *location);
 static gdouble get_longitude (ShumateLocation *location);
 
-static void location_interface_init (ShumateLocationIface *iface);
+static void location_interface_init (ShumateLocationInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateCoordinate, shumate_coordinate, G_TYPE_INITIALLY_UNOWNED,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_COORDINATE, ShumateCoordinatePrivate))
-
-struct _ShumateCoordinatePrivate
+typedef struct
 {
   gdouble longitude;
   gdouble latitude;
-};
+} ShumateCoordinatePrivate;
+
+G_DEFINE_TYPE_WITH_CODE (ShumateCoordinate, shumate_coordinate, G_TYPE_INITIALLY_UNOWNED,
+    G_ADD_PRIVATE (ShumateCoordinate)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
 
 static void
 shumate_coordinate_get_property (GObject *object,
@@ -66,7 +64,7 @@ shumate_coordinate_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateCoordinate *coordinate = SHUMATE_COORDINATE (object);
-  ShumateCoordinatePrivate *priv = coordinate->priv;
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
   switch (prop_id)
     {
@@ -91,7 +89,7 @@ shumate_coordinate_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateCoordinate *coordinate = SHUMATE_COORDINATE (object);
-  ShumateCoordinatePrivate *priv = coordinate->priv;
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
   switch (prop_id)
     {
@@ -120,9 +118,10 @@ set_location (ShumateLocation *location,
     gdouble latitude,
     gdouble longitude)
 {
-  g_return_if_fail (SHUMATE_IS_COORDINATE (location));
+  ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
-  ShumateCoordinatePrivate *priv = SHUMATE_COORDINATE (location)->priv;
+  g_return_if_fail (SHUMATE_IS_COORDINATE (location));
 
   priv->longitude = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
   priv->latitude = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
@@ -135,9 +134,10 @@ set_location (ShumateLocation *location,
 static gdouble
 get_latitude (ShumateLocation *location)
 {
-  g_return_val_if_fail (SHUMATE_IS_COORDINATE (location), 0.0);
+  ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
-  ShumateCoordinatePrivate *priv = SHUMATE_COORDINATE (location)->priv;
+  g_return_val_if_fail (SHUMATE_IS_COORDINATE (location), 0.0);
 
   return priv->latitude;
 }
@@ -146,45 +146,27 @@ get_latitude (ShumateLocation *location)
 static gdouble
 get_longitude (ShumateLocation *location)
 {
-  g_return_val_if_fail (SHUMATE_IS_COORDINATE (location), 0.0);
+  ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
-  ShumateCoordinatePrivate *priv = SHUMATE_COORDINATE (location)->priv;
+  g_return_val_if_fail (SHUMATE_IS_COORDINATE (location), 0.0);
 
   return priv->longitude;
 }
 
 
 static void
-location_interface_init (ShumateLocationIface *iface)
+location_interface_init (ShumateLocationInterface *iface)
 {
   iface->get_latitude = get_latitude;
   iface->get_longitude = get_longitude;
   iface->set_location = set_location;
 }
 
-
-static void
-shumate_coordinate_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_coordinate_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_coordinate_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_coordinate_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_coordinate_class_init (ShumateCoordinateClass *coordinate_class)
 {
-  g_type_class_add_private (coordinate_class, sizeof (ShumateCoordinatePrivate));
-
   GObjectClass *object_class = G_OBJECT_CLASS (coordinate_class);
-  object_class->finalize = shumate_coordinate_finalize;
-  object_class->dispose = shumate_coordinate_dispose;
   object_class->get_property = shumate_coordinate_get_property;
   object_class->set_property = shumate_coordinate_set_property;
 
@@ -201,9 +183,7 @@ shumate_coordinate_class_init (ShumateCoordinateClass *coordinate_class)
 static void
 shumate_coordinate_init (ShumateCoordinate *coordinate)
 {
-  ShumateCoordinatePrivate *priv = GET_PRIVATE (coordinate);
-
-  coordinate->priv = priv;
+  ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
 
   priv->latitude = 0.0;
   priv->longitude = 0.0;

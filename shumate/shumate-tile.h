@@ -29,26 +29,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE shumate_tile_get_type ()
-
-#define SHUMATE_TILE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_TILE, ShumateTile))
-
-#define SHUMATE_TILE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_TILE, ShumateTileClass))
-
-#define SHUMATE_IS_TILE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_TILE))
-
-#define SHUMATE_IS_TILE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_TILE))
-
-#define SHUMATE_TILE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_TILE, ShumateTileClass))
-
-typedef struct _ShumateTilePrivate ShumateTilePrivate;
-
-typedef struct _ShumateTile ShumateTile;
-typedef struct _ShumateTileClass ShumateTileClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GObject)
 
 /**
  * ShumateState:
@@ -75,20 +56,11 @@ typedef enum
  * The #ShumateTile structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateTile
-{
-  GObject parent;
-
-  ShumateTilePrivate *priv;
-};
 
 struct _ShumateTileClass
 {
   GObjectClass parent_class;
 };
-
-
-GType shumate_tile_get_type (void);
 
 ShumateTile *shumate_tile_new (void);
 ShumateTile *shumate_tile_new_full (guint x,

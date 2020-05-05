@@ -33,16 +33,13 @@
 
 #include <gdk/gdk.h>
 
-G_DEFINE_TYPE (ShumateImageRenderer, shumate_image_renderer, SHUMATE_TYPE_RENDERER)
-
-#define GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_IMAGE_RENDERER, ShumateImageRendererPrivate))
-
-struct _ShumateImageRendererPrivate
+typedef struct
 {
   gchar *data;
   guint size;
-};
+} ShumateImageRendererPrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateImageRenderer, shumate_image_renderer, SHUMATE_TYPE_RENDERER)
 
 typedef struct _RendererData RendererData;
 
@@ -60,20 +57,13 @@ static void set_data (ShumateRenderer *renderer,
 static void render (ShumateRenderer *renderer,
     ShumateTile *tile);
 
-
-static void
-shumate_image_renderer_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_image_renderer_parent_class)->dispose (object);
-}
-
-
 static void
 shumate_image_renderer_finalize (GObject *object)
 {
-  ShumateImageRendererPrivate *priv = GET_PRIVATE (object);
+  ShumateImageRenderer *image_renderer = SHUMATE_IMAGE_RENDERER (object);
+  ShumateImageRendererPrivate *priv = shumate_image_renderer_get_instance_private (image_renderer);
 
-  g_free (priv->data);
+  g_clear_pointer (&priv->data, g_free);
 
   G_OBJECT_CLASS (shumate_image_renderer_parent_class)->finalize (object);
 }
@@ -85,10 +75,7 @@ shumate_image_renderer_class_init (ShumateImageRendererClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateRendererClass *renderer_class = SHUMATE_RENDERER_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShumateImageRendererPrivate));
-
   object_class->finalize = shumate_image_renderer_finalize;
-  object_class->dispose = shumate_image_renderer_dispose;
 
   renderer_class->set_data = set_data;
   renderer_class->render = render;
@@ -98,11 +85,6 @@ shumate_image_renderer_class_init (ShumateImageRendererClass *klass)
 static void
 shumate_image_renderer_init (ShumateImageRenderer *self)
 {
-  ShumateImageRendererPrivate *priv = GET_PRIVATE (self);
-
-  self->priv = priv;
-
-  priv->data = NULL;
 }
 
 
@@ -123,7 +105,8 @@ shumate_image_renderer_new (void)
 static void
 set_data (ShumateRenderer *renderer, const guint8 *data, guint size)
 {
-  ShumateImageRendererPrivate *priv = GET_PRIVATE (renderer);
+  ShumateImageRenderer *image_renderer = SHUMATE_IMAGE_RENDERER (renderer);
+  ShumateImageRendererPrivate *priv = shumate_image_renderer_get_instance_private (image_renderer);
 
   if (priv->data)
     g_free (priv->data);
@@ -233,7 +216,8 @@ finish:
 static void
 render (ShumateRenderer *renderer, ShumateTile *tile)
 {
-  ShumateImageRendererPrivate *priv = GET_PRIVATE (renderer);
+  ShumateImageRenderer *image_renderer = SHUMATE_IMAGE_RENDERER (renderer);
+  ShumateImageRendererPrivate *priv = shumate_image_renderer_get_instance_private (image_renderer);
   GInputStream *stream;
 
   if (!priv->data || priv->size == 0)

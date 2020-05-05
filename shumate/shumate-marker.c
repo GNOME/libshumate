@@ -85,15 +85,9 @@ static void set_location (ShumateLocation *location,
 static gdouble get_latitude (ShumateLocation *location);
 static gdouble get_longitude (ShumateLocation *location);
 
-static void location_interface_init (ShumateLocationIface *iface);
+static void location_interface_init (ShumateLocationInterface *iface);
 
-G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MARKER, ShumateMarkerPrivate))
-
-struct _ShumateMarkerPrivate
+typedef struct
 {
   gdouble lon;
   gdouble lat;
@@ -104,8 +98,11 @@ struct _ShumateMarkerPrivate
   gfloat click_x;
   gfloat click_y;
   gboolean moved;
-};
+} ShumateMarkerPrivate;
 
+G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
+    G_ADD_PRIVATE (ShumateMarker)
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
 
 /**
  * shumate_marker_set_selection_color:
@@ -176,7 +173,7 @@ shumate_marker_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateMarker *marker = SHUMATE_MARKER (object);
-  ShumateMarkerPrivate *priv = marker->priv;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
   switch (prop_id)
     {
@@ -213,7 +210,7 @@ shumate_marker_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateMarker *marker = SHUMATE_MARKER (object);
-  ShumateMarkerPrivate *priv = marker->priv;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
   switch (prop_id)
     {
@@ -263,9 +260,10 @@ set_location (ShumateLocation *location,
     gdouble latitude,
     gdouble longitude)
 {
-  g_return_if_fail (SHUMATE_IS_MARKER (location));
+  ShumateMarker *marker = SHUMATE_MARKER (location);
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
-  ShumateMarkerPrivate *priv = SHUMATE_MARKER (location)->priv;
+  g_return_if_fail (SHUMATE_IS_MARKER (location));
 
   priv->lon = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
   priv->lat = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
@@ -278,9 +276,10 @@ set_location (ShumateLocation *location,
 static gdouble
 get_latitude (ShumateLocation *location)
 {
-  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
+  ShumateMarker *marker = SHUMATE_MARKER (location);
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
-  ShumateMarkerPrivate *priv = SHUMATE_MARKER (location)->priv;
+  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
 
   return priv->lat;
 }
@@ -289,16 +288,17 @@ get_latitude (ShumateLocation *location)
 static gdouble
 get_longitude (ShumateLocation *location)
 {
-  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
+  ShumateMarker *marker = SHUMATE_MARKER (location);
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
-  ShumateMarkerPrivate *priv = SHUMATE_MARKER (location)->priv;
+  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
 
   return priv->lon;
 }
 
 
 static void
-location_interface_init (ShumateLocationIface *iface)
+location_interface_init (ShumateLocationInterface *iface)
 {
   iface->get_latitude = get_latitude;
   iface->get_longitude = get_longitude;
@@ -322,8 +322,6 @@ shumate_marker_finalize (GObject *object)
 static void
 shumate_marker_class_init (ShumateMarkerClass *marker_class)
 {
-  g_type_class_add_private (marker_class, sizeof (ShumateMarkerPrivate));
-
   GObjectClass *object_class = G_OBJECT_CLASS (marker_class);
   object_class->finalize = shumate_marker_finalize;
   object_class->dispose = shumate_marker_dispose;
@@ -604,9 +602,7 @@ button_press_event_cb (ShumateMarker *marker,
 static void
 shumate_marker_init (ShumateMarker *marker)
 {
-  ShumateMarkerPrivate *priv = GET_PRIVATE (marker);
-
-  marker->priv = priv;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
   priv->lat = 0;
   priv->lon = 0;
@@ -637,9 +633,11 @@ void
 shumate_marker_set_selected (ShumateMarker *marker,
     gboolean value)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  marker->priv->selected = value;
+  priv->selected = value;
 
   g_object_notify (G_OBJECT (marker), "selected");
 }
@@ -656,9 +654,11 @@ shumate_marker_set_selected (ShumateMarker *marker,
 gboolean
 shumate_marker_get_selected (ShumateMarker *marker)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
 
-  return marker->priv->selected;
+  return priv->selected;
 }
 
 
@@ -673,9 +673,11 @@ void
 shumate_marker_set_selectable (ShumateMarker *marker,
     gboolean value)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  marker->priv->selectable = value;
+  priv->selectable = value;
 
   g_object_notify (G_OBJECT (marker), "selectable");
 }
@@ -692,9 +694,11 @@ shumate_marker_set_selectable (ShumateMarker *marker,
 gboolean
 shumate_marker_get_selectable (ShumateMarker *marker)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
 
-  return marker->priv->selectable;
+  return priv->selectable;
 }
 
 
@@ -709,9 +713,11 @@ void
 shumate_marker_set_draggable (ShumateMarker *marker,
     gboolean value)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  marker->priv->draggable = value;
+  priv->draggable = value;
 
   g_object_notify (G_OBJECT (marker), "draggable");
 }
@@ -728,8 +734,10 @@ shumate_marker_set_draggable (ShumateMarker *marker,
 gboolean
 shumate_marker_get_draggable (ShumateMarker *marker)
 {
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
   g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
 
-  return marker->priv->draggable;
+  return priv->draggable;
 }
 

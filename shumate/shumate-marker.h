@@ -35,27 +35,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MARKER shumate_marker_get_type ()
-
-#define SHUMATE_MARKER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MARKER, ShumateMarker))
-
-#define SHUMATE_MARKER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MARKER, ShumateMarkerClass))
-
-#define SHUMATE_IS_MARKER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MARKER))
-
-#define SHUMATE_IS_MARKER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MARKER))
-
-#define SHUMATE_MARKER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MARKER, ShumateMarkerClass))
-
-typedef struct _ShumateMarkerPrivate ShumateMarkerPrivate;
-
-typedef struct _ShumateMarker ShumateMarker;
-typedef struct _ShumateMarkerClass ShumateMarkerClass;
-
+G_DECLARE_DERIVABLE_TYPE (ShumateMarker, shumate_marker, SHUMATE, MARKER, GtkWidget)
 
 /**
  * ShumateMarker:
@@ -63,20 +43,11 @@ typedef struct _ShumateMarkerClass ShumateMarkerClass;
  * The #ShumateMarker structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMarker
-{
-  GtkWidget parent;
-
-  ShumateMarkerPrivate *priv;
-};
 
 struct _ShumateMarkerClass
 {
   GtkWidgetClass parent_class;
 };
-
-GType shumate_marker_get_type (void);
-
 
 ShumateMarker *shumate_marker_new (void);
 

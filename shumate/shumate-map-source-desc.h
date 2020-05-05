@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE_DESC shumate_map_source_desc_get_type ()
-
-#define SHUMATE_MAP_SOURCE_DESC(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MAP_SOURCE_DESC, ShumateMapSourceDesc))
-
-#define SHUMATE_MAP_SOURCE_DESC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MAP_SOURCE_DESC, ShumateMapSourceDescClass))
-
-#define SHUMATE_IS_MAP_SOURCE_DESC(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MAP_SOURCE_DESC))
-
-#define SHUMATE_IS_MAP_SOURCE_DESC_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MAP_SOURCE_DESC))
-
-#define SHUMATE_MAP_SOURCE_DESC_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MAP_SOURCE_DESC, ShumateMapSourceDescClass))
-
-typedef struct _ShumateMapSourceDescPrivate ShumateMapSourceDescPrivate;
-
-typedef struct _ShumateMapSourceDesc ShumateMapSourceDesc;
-typedef struct _ShumateMapSourceDescClass ShumateMapSourceDescClass;
+G_DECLARE_FINAL_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, SHUMATE, MAP_SOURCE_DESC, GObject)
 
 /**
  * ShumateMapSourceDesc:
@@ -58,17 +39,6 @@ typedef struct _ShumateMapSourceDescClass ShumateMapSourceDescClass;
  * The #ShumateMapSourceDesc structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMapSourceDesc
-{
-  GObject parent_instance;
-
-  ShumateMapSourceDescPrivate *priv;
-};
-
-struct _ShumateMapSourceDescClass
-{
-  GObjectClass parent_class;
-};
 
 /**
  * ShumateMapSourceConstructor:
@@ -87,8 +57,6 @@ typedef ShumateMapSource* (*ShumateMapSourceConstructor) (ShumateMapSourceDesc *
  * Conversion macro to #ShumateMapSourceConstructor.
  */
 #define SHUMATE_MAP_SOURCE_CONSTRUCTOR (f) ((ShumateMapSourceConstructor) (f))
-
-GType shumate_map_source_desc_get_type (void);
 
 ShumateMapSourceDesc *shumate_map_source_desc_new_full (
     gchar *id,

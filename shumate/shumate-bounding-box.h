@@ -76,6 +76,8 @@ gboolean shumate_bounding_box_covers(ShumateBoundingBox *bbox,
     gdouble latitude,
     gdouble longitude);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateBoundingBox, shumate_bounding_box_free)
+
 G_END_DECLS
 
 #endif

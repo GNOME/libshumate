@@ -55,29 +55,16 @@
 #include <glib.h>
 #include <string.h>
 
-enum
-{
-  /* normal signals */
-  LAST_SIGNAL
-};
-
-enum
-{
-  PROP_0,
-};
-
-/* static guint shumate_map_source_factory_signals[LAST_SIGNAL] = { 0, }; */
 static ShumateMapSourceFactory *instance = NULL;
 
-G_DEFINE_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, G_TYPE_OBJECT);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MAP_SOURCE_FACTORY, ShumateMapSourceFactoryPrivate))
-
-struct _ShumateMapSourceFactoryPrivate
+struct _ShumateMapSourceFactory
 {
+  GObject parent_instance;
+
   GSList *registered_sources;
 };
+
+G_DEFINE_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, G_TYPE_OBJECT);
 
 static ShumateMapSource *shumate_map_source_new_generic (
     ShumateMapSourceDesc *desc);
@@ -88,7 +75,7 @@ shumate_map_source_factory_finalize (GObject *object)
 {
   ShumateMapSourceFactory *factory = SHUMATE_MAP_SOURCE_FACTORY (object);
 
-  g_slist_free (factory->priv->registered_sources);
+  g_clear_pointer (&factory->registered_sources, g_slist_free);
 
   G_OBJECT_CLASS (shumate_map_source_factory_parent_class)->finalize (object);
 }
@@ -121,8 +108,6 @@ shumate_map_source_factory_constructor (GType type,
 static void
 shumate_map_source_factory_class_init (ShumateMapSourceFactoryClass *klass)
 {
-  g_type_class_add_private (klass, sizeof (ShumateMapSourceFactoryPrivate));
-
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
   object_class->constructor = shumate_map_source_factory_constructor;
@@ -133,11 +118,9 @@ shumate_map_source_factory_class_init (ShumateMapSourceFactoryClass *klass)
 static void
 shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
 {
-  ShumateMapSourceFactoryPrivate *priv = GET_PRIVATE (factory);
   ShumateMapSourceDesc *desc;
 
-  factory->priv = priv;
-  priv->registered_sources = NULL;
+  factory->registered_sources = NULL;
 
   desc = shumate_map_source_desc_new_full (
         SHUMATE_MAP_SOURCE_OSM_MAPNIK,
@@ -294,7 +277,9 @@ shumate_map_source_factory_dup_default (void)
 GSList *
 shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
 {
-  return g_slist_copy (factory->priv->registered_sources);
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
+
+  return g_slist_copy (factory->registered_sources);
 }
 
 
@@ -315,7 +300,9 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
 {
   GSList *item;
 
-  item = factory->priv->registered_sources;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
+
+  item = factory->registered_sources;
 
   while (item != NULL)
     {
@@ -357,6 +344,8 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   ShumateMapSource *file_cache;
   guint tile_size;
   ShumateRenderer *renderer;
+
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
   tile_source = shumate_map_source_factory_create (factory, id);
   if (!tile_source)
@@ -401,6 +390,8 @@ shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *fac
   ShumateMapSource *memory_cache;
   ShumateRenderer *renderer;
 
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
+
   tile_source = shumate_map_source_factory_create (factory, id);
   if (!tile_source)
     return NULL;
@@ -431,6 +422,8 @@ shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory
 {
   ShumateMapSource *null_source;
   ShumateRenderer *renderer;
+
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
   renderer = SHUMATE_RENDERER (shumate_error_tile_renderer_new (tile_size));
   null_source = SHUMATE_MAP_SOURCE (shumate_null_tile_source_new_full (renderer));
@@ -467,9 +460,11 @@ gboolean
 shumate_map_source_factory_register (ShumateMapSourceFactory *factory,
     ShumateMapSourceDesc *desc)
 {
-  if(!g_slist_find_custom (factory->priv->registered_sources, desc, (GCompareFunc) compare_id))
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), FALSE);
+
+  if(!g_slist_find_custom (factory->registered_sources, desc, (GCompareFunc) compare_id))
     {
-      factory->priv->registered_sources = g_slist_append (factory->priv->registered_sources, desc);
+      factory->registered_sources = g_slist_append (factory->registered_sources, desc);
       return TRUE;
     }
   return FALSE;

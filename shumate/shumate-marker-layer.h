@@ -35,26 +35,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MARKER_LAYER shumate_marker_layer_get_type ()
-
-#define SHUMATE_MARKER_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MARKER_LAYER, ShumateMarkerLayer))
-
-#define SHUMATE_MARKER_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MARKER_LAYER, ShumateMarkerLayerClass))
-
-#define SHUMATE_IS_MARKER_LAYER(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MARKER_LAYER))
-
-#define SHUMATE_IS_MARKER_LAYER_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MARKER_LAYER))
-
-#define SHUMATE_MARKER_LAYER_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MARKER_LAYER, ShumateMarkerLayerClass))
-
-typedef struct _ShumateMarkerLayerPrivate ShumateMarkerLayerPrivate;
-
-typedef struct _ShumateMarkerLayer ShumateMarkerLayer;
-typedef struct _ShumateMarkerLayerClass ShumateMarkerLayerClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE, MARKER_LAYER, ShumateLayer)
 
 /**
  * ShumateSelectionMode:
@@ -77,19 +58,11 @@ typedef enum
  * The #ShumateMarkerLayer structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMarkerLayer
-{
-  ShumateLayer parent;
-
-  ShumateMarkerLayerPrivate *priv;
-};
 
 struct _ShumateMarkerLayerClass
 {
   ShumateLayerClass parent_class;
 };
-
-GType shumate_marker_layer_get_type (void);
 
 ShumateMarkerLayer *shumate_marker_layer_new (void);
 ShumateMarkerLayer *shumate_marker_layer_new_full (ShumateSelectionMode mode);

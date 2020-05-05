@@ -35,16 +35,13 @@
 #include "shumate-tile-cache.h"
 #include "shumate-tile-source.h"
 
-G_DEFINE_TYPE (ShumateMapSourceChain, shumate_map_source_chain, SHUMATE_TYPE_MAP_SOURCE);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MAP_SOURCE_CHAIN, ShumateMapSourceChainPrivate))
-
-struct _ShumateMapSourceChainPrivate
+typedef struct
 {
   ShumateMapSource *stack_top;
   ShumateMapSource *stack_bottom;
-};
+} ShumateMapSourceChainPrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateMapSourceChain, shumate_map_source_chain, SHUMATE_TYPE_MAP_SOURCE);
 
 static const gchar *get_id (ShumateMapSource *map_source);
 static const gchar *get_name (ShumateMapSource *map_source);
@@ -64,32 +61,21 @@ static void
 shumate_map_source_chain_dispose (GObject *object)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (object);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  while (source_chain->priv->stack_top)
+  while (priv->stack_top)
     shumate_map_source_chain_pop (source_chain);
 
   G_OBJECT_CLASS (shumate_map_source_chain_parent_class)->dispose (object);
 }
 
-
-static void
-shumate_map_source_chain_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_map_source_chain_parent_class)->finalize (object);
-}
-
-
 static void
 shumate_map_source_chain_class_init (ShumateMapSourceChainClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumateMapSourceChainPrivate));
-
-  object_class->finalize = shumate_map_source_chain_finalize;
-  object_class->dispose = shumate_map_source_chain_dispose;
-
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
+
+  object_class->dispose = shumate_map_source_chain_dispose;
 
   map_source_class->get_id = get_id;
   map_source_class->get_name = get_name;
@@ -106,13 +92,6 @@ shumate_map_source_chain_class_init (ShumateMapSourceChainClass *klass)
 static void
 shumate_map_source_chain_init (ShumateMapSourceChain *source_chain)
 {
-  ShumateMapSourceChainPrivate *priv = GET_PRIVATE (source_chain);
-
-  source_chain->priv = priv;
-
-  priv->stack_top = NULL;
-  priv->stack_bottom = NULL;
-
   g_signal_connect (source_chain, "notify::next-source",
       G_CALLBACK (on_set_next_source_cb), NULL);
 }
@@ -136,10 +115,9 @@ static const gchar *
 get_id (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, NULL);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), NULL);
   g_return_val_if_fail (priv->stack_top, NULL);
 
   return shumate_map_source_get_id (priv->stack_top);
@@ -150,10 +128,9 @@ static const gchar *
 get_name (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, NULL);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), NULL);
   g_return_val_if_fail (priv->stack_top, NULL);
 
   return shumate_map_source_get_name (priv->stack_top);
@@ -164,10 +141,9 @@ static const gchar *
 get_license (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, NULL);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), NULL);
   g_return_val_if_fail (priv->stack_top, NULL);
 
   return shumate_map_source_get_license (priv->stack_top);
@@ -178,10 +154,9 @@ static const gchar *
 get_license_uri (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, NULL);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), NULL);
   g_return_val_if_fail (priv->stack_top, NULL);
 
   return shumate_map_source_get_license_uri (priv->stack_top);
@@ -192,10 +167,9 @@ static guint
 get_min_zoom_level (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, 0);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), 0);
   g_return_val_if_fail (priv->stack_top, 0);
 
   return shumate_map_source_get_min_zoom_level (priv->stack_top);
@@ -206,10 +180,9 @@ static guint
 get_max_zoom_level (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, 0);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), 0);
   g_return_val_if_fail (priv->stack_top, 0);
 
   return shumate_map_source_get_max_zoom_level (priv->stack_top);
@@ -220,10 +193,9 @@ static guint
 get_tile_size (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_val_if_fail (source_chain, 0);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source), 0);
   g_return_val_if_fail (priv->stack_top, 0);
 
   return shumate_map_source_get_tile_size (priv->stack_top);
@@ -235,10 +207,9 @@ fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
 
-  g_return_if_fail (source_chain);
-
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source));
   g_return_if_fail (priv->stack_top);
 
   shumate_map_source_fill_tile (priv->stack_top, tile);
@@ -249,9 +220,10 @@ static void
 on_set_next_source_cb (ShumateMapSourceChain *source_chain,
     G_GNUC_UNUSED gpointer user_data)
 {
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
+
   g_return_if_fail (source_chain);
 
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (source_chain);
   ShumateMapSource *next_source;
 
@@ -295,7 +267,7 @@ void
 shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
     ShumateMapSource *map_source)
 {
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
   gboolean is_cache = FALSE;
 
   if (SHUMATE_IS_TILE_CACHE (map_source))
@@ -340,7 +312,7 @@ shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
 void
 shumate_map_source_chain_pop (ShumateMapSourceChain *source_chain)
 {
-  ShumateMapSourceChainPrivate *priv = source_chain->priv;
+  ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
   ShumateMapSource *old_stack_top = priv->stack_top;
   ShumateMapSource *next_source = shumate_map_source_get_next_source (priv->stack_top);
 

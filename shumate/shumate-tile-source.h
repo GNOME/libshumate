@@ -32,26 +32,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE_SOURCE shumate_tile_source_get_type ()
-
-#define SHUMATE_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_TILE_SOURCE, ShumateTileSource))
-
-#define SHUMATE_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_TILE_SOURCE, ShumateTileSourceClass))
-
-#define SHUMATE_IS_TILE_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_TILE_SOURCE))
-
-#define SHUMATE_IS_TILE_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_TILE_SOURCE))
-
-#define SHUMATE_TILE_SOURCE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_TILE_SOURCE, ShumateTileSourceClass))
-
-typedef struct _ShumateTileSourcePrivate ShumateTileSourcePrivate;
-
-typedef struct _ShumateTileSource ShumateTileSource;
-typedef struct _ShumateTileSourceClass ShumateTileSourceClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateTileSource, shumate_tile_source, SHUMATE, TILE_SOURCE, ShumateMapSource)
 
 /**
  * ShumateTileSource:
@@ -59,19 +40,11 @@ typedef struct _ShumateTileSourceClass ShumateTileSourceClass;
  * The #ShumateTileSource structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateTileSource
-{
-  ShumateMapSource parent_instance;
-
-  ShumateTileSourcePrivate *priv;
-};
 
 struct _ShumateTileSourceClass
 {
   ShumateMapSourceClass parent_class;
 };
-
-GType shumate_tile_source_get_type (void);
 
 ShumateTileCache *shumate_tile_source_get_cache (ShumateTileSource *tile_source);
 void shumate_tile_source_set_cache (ShumateTileSource *tile_source,

@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE_CHAIN shumate_map_source_chain_get_type ()
-
-#define SHUMATE_MAP_SOURCE_CHAIN(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MAP_SOURCE_CHAIN, ShumateMapSourceChain))
-
-#define SHUMATE_MAP_SOURCE_CHAIN_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MAP_SOURCE_CHAIN, ShumateMapSourceChainClass))
-
-#define SHUMATE_IS_MAP_SOURCE_CHAIN(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MAP_SOURCE_CHAIN))
-
-#define SHUMATE_IS_MAP_SOURCE_CHAIN_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MAP_SOURCE_CHAIN))
-
-#define SHUMATE_MAP_SOURCE_CHAIN_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MAP_SOURCE_CHAIN, ShumateMapSourceChainClass))
-
-typedef struct _ShumateMapSourceChainPrivate ShumateMapSourceChainPrivate;
-
-typedef struct _ShumateMapSourceChain ShumateMapSourceChain;
-typedef struct _ShumateMapSourceChainClass ShumateMapSourceChainClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateMapSourceChain, shumate_map_source_chain, SHUMATE, MAP_SOURCE_CHAIN, ShumateMapSource)
 
 /**
  * ShumateMapSourceChain:
@@ -58,19 +39,11 @@ typedef struct _ShumateMapSourceChainClass ShumateMapSourceChainClass;
  * The #ShumateMapSourceChain structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMapSourceChain
-{
-  ShumateMapSource parent_instance;
-
-  ShumateMapSourceChainPrivate *priv;
-};
 
 struct _ShumateMapSourceChainClass
 {
   ShumateMapSourceClass parent_class;
 };
-
-GType shumate_map_source_chain_get_type (void);
 
 ShumateMapSourceChain *shumate_map_source_chain_new (void);
 

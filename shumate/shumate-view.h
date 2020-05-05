@@ -39,24 +39,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_VIEW shumate_view_get_type ()
-
-#define SHUMATE_VIEW(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_VIEW, ShumateView))
-
-#define SHUMATE_VIEW_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_VIEW, ShumateViewClass))
-
-#define SHUMATE_IS_VIEW(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_VIEW))
-
-#define SHUMATE_IS_VIEW_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_VIEW))
-
-#define SHUMATE_VIEW_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_VIEW, ShumateViewClass))
-
-typedef struct _ShumateViewPrivate ShumateViewPrivate;
-
+G_DECLARE_DERIVABLE_TYPE (ShumateView, shumate_view, SHUMATE, VIEW, GtkWidget)
 
 /**
  * ShumateView:
@@ -64,19 +47,11 @@ typedef struct _ShumateViewPrivate ShumateViewPrivate;
  * The #ShumateView structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateView
-{
-  GtkWidget parent;
-
-  ShumateViewPrivate *priv;
-};
 
 struct _ShumateViewClass
 {
   GtkWidgetClass parent_class;
 };
-
-GType shumate_view_get_type (void);
 
 ShumateView *shumate_view_new (void);
 

@@ -30,26 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE_CACHE shumate_tile_cache_get_type ()
-
-#define SHUMATE_TILE_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_TILE_CACHE, ShumateTileCache))
-
-#define SHUMATE_TILE_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_TILE_CACHE, ShumateTileCacheClass))
-
-#define SHUMATE_IS_TILE_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_TILE_CACHE))
-
-#define SHUMATE_IS_TILE_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_TILE_CACHE))
-
-#define SHUMATE_TILE_CACHE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_TILE_CACHE, ShumateTileCacheClass))
-
-typedef struct _ShumateTileCachePrivate ShumateTileCachePrivate;
-
-typedef struct _ShumateTileCache ShumateTileCache;
-typedef struct _ShumateTileCacheClass ShumateTileCacheClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateTileCache, shumate_tile_cache, SHUMATE, TILE_CACHE, ShumateMapSource)
 
 /**
  * ShumateTileCache:
@@ -57,12 +38,6 @@ typedef struct _ShumateTileCacheClass ShumateTileCacheClass;
  * The #ShumateTileCache structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateTileCache
-{
-  ShumateMapSource parent_instance;
-
-  ShumateTileCachePrivate *priv;
-};
 
 struct _ShumateTileCacheClass
 {
@@ -77,8 +52,6 @@ struct _ShumateTileCacheClass
   void (*on_tile_filled)(ShumateTileCache *tile_cache,
       ShumateTile *tile);
 };
-
-GType shumate_tile_cache_get_type (void);
 
 void shumate_tile_cache_store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,

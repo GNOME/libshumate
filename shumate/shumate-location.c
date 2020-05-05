@@ -27,8 +27,6 @@
 #include "shumate-location.h"
 #include "shumate-private.h"
 
-typedef ShumateLocationIface ShumateLocationInterface;
-
 G_DEFINE_INTERFACE (ShumateLocation, shumate_location, G_TYPE_OBJECT);
 
 

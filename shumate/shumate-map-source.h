@@ -31,25 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE shumate_map_source_get_type ()
-
-#define SHUMATE_MAP_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MAP_SOURCE, ShumateMapSource))
-
-#define SHUMATE_MAP_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MAP_SOURCE, ShumateMapSourceClass))
-
-#define SHUMATE_IS_MAP_SOURCE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MAP_SOURCE))
-
-#define SHUMATE_IS_MAP_SOURCE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MAP_SOURCE))
-
-#define SHUMATE_MAP_SOURCE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MAP_SOURCE, ShumateMapSourceClass))
-
-typedef struct _ShumateMapSourcePrivate ShumateMapSourcePrivate;
-
-typedef struct _ShumateMapSourceClass ShumateMapSourceClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateMapSource, shumate_map_source, SHUMATE, MAP_SOURCE, GInitiallyUnowned)
 
 /**
  * ShumateMapProjection:
@@ -68,12 +50,6 @@ typedef enum
  * The #ShumateMapSource structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMapSource
-{
-  GInitiallyUnowned parent_instance;
-
-  ShumateMapSourcePrivate *priv;
-};
 
 struct _ShumateMapSourceClass
 {
@@ -91,8 +67,6 @@ struct _ShumateMapSourceClass
   void (*fill_tile)(ShumateMapSource *map_source,
       ShumateTile *tile);
 };
-
-GType shumate_map_source_get_type (void);
 
 ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_source);
 void shumate_map_source_set_next_source (ShumateMapSource *map_source,

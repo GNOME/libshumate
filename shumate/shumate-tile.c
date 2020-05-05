@@ -45,13 +45,28 @@ static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
 static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
 static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
+typedef struct
+{
+  guint x; /* The x position on the map (in pixels) */
+  guint y; /* The y position on the map (in pixels) */
+  guint size; /* The tile's width and height (only support square tiles */
+  guint zoom_level; /* The tile's zoom level */
+
+  ShumateState state; /* The tile state: loading, validation, done */
+  /* The tile actor that will be displayed after shumate_tile_display_content () */
+  //ClutterActor *content_actor;
+  gboolean fade_in;
+
+  GDateTime *modified_time; /* The last modified time of the cache */
+  gchar *etag; /* The HTTP ETag sent by the server */
+  gboolean content_displayed;
+  cairo_surface_t *surface;
+} ShumateTilePrivate;
+
 G_DEFINE_TYPE_WITH_CODE (ShumateTile, shumate_tile, G_TYPE_OBJECT,
+    G_ADD_PRIVATE(ShumateTile)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
-
-#define GET_PRIVATE(o) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((o), SHUMATE_TYPE_TILE, ShumateTilePrivate))
-
 
 enum
 {
@@ -75,24 +90,6 @@ enum
 };
 
 static guint shumate_tile_signals[LAST_SIGNAL] = { 0, };
-
-struct _ShumateTilePrivate
-{
-  guint x; /* The x position on the map (in pixels) */
-  guint y; /* The y position on the map (in pixels) */
-  guint size; /* The tile's width and height (only support square tiles */
-  guint zoom_level; /* The tile's zoom level */
-
-  ShumateState state; /* The tile state: loading, validation, done */
-  /* The tile actor that will be displayed after shumate_tile_display_content () */
-  //ClutterActor *content_actor;
-  gboolean fade_in;
-
-  GDateTime *modified_time; /* The last modified time of the cache */
-  gchar *etag; /* The HTTP ETag sent by the server */
-  gboolean content_displayed;
-  cairo_surface_t *surface;
-};
 
 static void
 shumate_tile_get_property (GObject *object,
@@ -201,7 +198,8 @@ shumate_tile_set_property (GObject *object,
 static void
 shumate_tile_dispose (GObject *object)
 {
-  ShumateTilePrivate *priv = SHUMATE_TILE (object)->priv;
+  ShumateTile *self = SHUMATE_TILE (object);
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   //if (!priv->content_displayed && priv->content_actor)
   //  {
@@ -217,7 +215,8 @@ shumate_tile_dispose (GObject *object)
 static void
 shumate_tile_finalize (GObject *object)
 {
-  ShumateTilePrivate *priv = SHUMATE_TILE (object)->priv;
+  ShumateTile *self = SHUMATE_TILE (object);
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   g_date_time_unref (priv->modified_time);
   g_free (priv->etag);
@@ -230,8 +229,6 @@ static void
 shumate_tile_class_init (ShumateTileClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumateTilePrivate));
 
   object_class->get_property = shumate_tile_get_property;
   object_class->set_property = shumate_tile_set_property;
@@ -394,9 +391,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
 static void
 shumate_tile_init (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = GET_PRIVATE (self);
-
-  self->priv = priv;
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   priv->state = SHUMATE_STATE_NONE;
   priv->x = 0;
@@ -416,16 +411,17 @@ static void
 set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
+  ShumateTile *self = SHUMATE_TILE (importable);
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumateTile *self = SHUMATE_TILE (importable);
-
-  if (self->priv->surface == surface)
+  if (priv->surface == surface)
     return;
 
-  cairo_surface_destroy (self->priv->surface);
-  self->priv->surface = cairo_surface_reference (surface);
+  cairo_surface_destroy (priv->surface);
+  priv->surface = cairo_surface_reference (surface);
   g_object_notify (G_OBJECT (self), "surface");
 }
 
@@ -433,9 +429,12 @@ set_surface (ShumateCairoImportable *importable,
 static cairo_surface_t *
 get_surface (ShumateCairoExportable *exportable)
 {
+  ShumateTile *self = SHUMATE_TILE (exportable);
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_IS_TILE (exportable), NULL);
 
-  return SHUMATE_TILE (exportable)->priv->surface;
+  return priv->surface;
 }
 
 
@@ -477,9 +476,11 @@ shumate_tile_new (void)
 guint
 shumate_tile_get_x (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return self->priv->x;
+  return priv->x;
 }
 
 
@@ -494,9 +495,11 @@ shumate_tile_get_x (ShumateTile *self)
 guint
 shumate_tile_get_y (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return self->priv->y;
+  return priv->y;
 }
 
 
@@ -511,9 +514,11 @@ shumate_tile_get_y (ShumateTile *self)
 guint
 shumate_tile_get_zoom_level (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return self->priv->zoom_level;
+  return priv->zoom_level;
 }
 
 
@@ -528,9 +533,11 @@ shumate_tile_get_zoom_level (ShumateTile *self)
 guint
 shumate_tile_get_size (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return self->priv->size;
+  return priv->size;
 }
 
 
@@ -545,9 +552,11 @@ shumate_tile_get_size (ShumateTile *self)
 ShumateState
 shumate_tile_get_state (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), SHUMATE_STATE_NONE);
 
-  return self->priv->state;
+  return priv->state;
 }
 
 
@@ -562,9 +571,11 @@ void
 shumate_tile_set_x (ShumateTile *self,
     guint x)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
 
-  self->priv->x = x;
+  priv->x = x;
 
   g_object_notify (G_OBJECT (self), "x");
 }
@@ -581,9 +592,11 @@ void
 shumate_tile_set_y (ShumateTile *self,
     guint y)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
 
-  self->priv->y = y;
+  priv->y = y;
 
   g_object_notify (G_OBJECT (self), "y");
 }
@@ -600,9 +613,11 @@ void
 shumate_tile_set_zoom_level (ShumateTile *self,
     guint zoom_level)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
 
-  self->priv->zoom_level = zoom_level;
+  priv->zoom_level = zoom_level;
 
   g_object_notify (G_OBJECT (self), "zoom-level");
 }
@@ -619,9 +634,11 @@ void
 shumate_tile_set_size (ShumateTile *self,
     guint size)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
 
-  self->priv->size = size;
+  priv->size = size;
 
   g_object_notify (G_OBJECT (self), "size");
 }
@@ -638,9 +655,9 @@ void
 shumate_tile_set_state (ShumateTile *self,
     ShumateState state)
 {
-  g_return_if_fail (SHUMATE_TILE (self));
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
-  ShumateTilePrivate *priv = self->priv;
+  g_return_if_fail (SHUMATE_TILE (self));
 
   if (state == priv->state)
     return;
@@ -687,9 +704,11 @@ shumate_tile_new_full (guint x,
 GDateTime *
 shumate_tile_get_modified_time (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
 
-  return self->priv->modified_time;
+  return priv->modified_time;
 }
 
 
@@ -704,10 +723,10 @@ void
 shumate_tile_set_modified_time (ShumateTile *self,
     GDateTime *modified_time)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
   g_return_if_fail (modified_time != NULL);
-
-  ShumateTilePrivate *priv = self->priv;
 
   g_date_time_unref (priv->modified_time);
   priv->modified_time = g_date_time_ref (modified_time);
@@ -725,9 +744,11 @@ shumate_tile_set_modified_time (ShumateTile *self,
 const gchar *
 shumate_tile_get_etag (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), "");
 
-  return self->priv->etag;
+  return priv->etag;
 }
 
 
@@ -742,9 +763,9 @@ void
 shumate_tile_set_etag (ShumateTile *self,
     const gchar *etag)
 {
-  g_return_if_fail (SHUMATE_TILE (self));
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
-  ShumateTilePrivate *priv = self->priv;
+  g_return_if_fail (SHUMATE_TILE (self));
 
   g_free (priv->etag);
   priv->etag = g_strdup (etag);
@@ -805,9 +826,9 @@ fade_in_completed (ClutterActor *actor,
 void
 shumate_tile_display_content (ShumateTile *self)
 {
-  g_return_if_fail (SHUMATE_TILE (self));
+  //ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
-  ShumateTilePrivate *priv = self->priv;
+  g_return_if_fail (SHUMATE_TILE (self));
 
   /*
   if (!priv->content_actor || priv->content_displayed)
@@ -868,9 +889,11 @@ shumate_tile_get_content (ShumateTile *self)
 gboolean
 shumate_tile_get_fade_in (ShumateTile *self)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_TILE (self), FALSE);
 
-  return self->priv->fade_in;
+  return priv->fade_in;
 }
 
 
@@ -885,9 +908,11 @@ void
 shumate_tile_set_fade_in (ShumateTile *self,
     gboolean fade_in)
 {
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_TILE (self));
 
-  self->priv->fade_in = fade_in;
+  priv->fade_in = fade_in;
 
   g_object_notify (G_OBJECT (self), "fade-in");
 }

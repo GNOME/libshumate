@@ -31,26 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_FILE_CACHE shumate_file_cache_get_type ()
-
-#define SHUMATE_FILE_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_FILE_CACHE, ShumateFileCache))
-
-#define SHUMATE_FILE_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_FILE_CACHE, ShumateFileCacheClass))
-
-#define SHUMATE_IS_FILE_CACHE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_FILE_CACHE))
-
-#define SHUMATE_IS_FILE_CACHE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_FILE_CACHE))
-
-#define SHUMATE_FILE_CACHE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_FILE_CACHE, ShumateFileCacheClass))
-
-typedef struct _ShumateFileCachePrivate ShumateFileCachePrivate;
-
-typedef struct _ShumateFileCache ShumateFileCache;
-typedef struct _ShumateFileCacheClass ShumateFileCacheClass;
+G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, ShumateTileCache)
 
 /**
  * ShumateFileCache:
@@ -58,19 +39,11 @@ typedef struct _ShumateFileCacheClass ShumateFileCacheClass;
  * The #ShumateFileCache structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateFileCache
-{
-  ShumateTileCache parent_instance;
-
-  ShumateFileCachePrivate *priv;
-};
 
 struct _ShumateFileCacheClass
 {
   ShumateTileCacheClass parent_class;
 };
-
-GType shumate_file_cache_get_type (void);
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
     const gchar *cache_dir,

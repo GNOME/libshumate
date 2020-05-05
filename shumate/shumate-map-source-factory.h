@@ -35,26 +35,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE_FACTORY shumate_map_source_factory_get_type ()
-
-#define SHUMATE_MAP_SOURCE_FACTORY(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_MAP_SOURCE_FACTORY, ShumateMapSourceFactory))
-
-#define SHUMATE_MAP_SOURCE_FACTORY_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_MAP_SOURCE_FACTORY, ShumateMapSourceFactoryClass))
-
-#define SHUMATE_IS_MAP_SOURCE_FACTORY(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_MAP_SOURCE_FACTORY))
-
-#define SHUMATE_IS_MAP_SOURCE_FACTORY_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_MAP_SOURCE_FACTORY))
-
-#define SHUMATE_MAP_SOURCE_FACTORY_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_MAP_SOURCE_FACTORY, ShumateMapSourceFactoryClass))
-
-typedef struct _ShumateMapSourceFactoryPrivate ShumateMapSourceFactoryPrivate;
-
-typedef struct _ShumateMapSourceFactory ShumateMapSourceFactory;
-typedef struct _ShumateMapSourceFactoryClass ShumateMapSourceFactoryClass;
+G_DECLARE_FINAL_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, SHUMATE, MAP_SOURCE_FACTORY, GObject)
 
 /**
  * ShumateMapSourceFactory:
@@ -62,18 +43,6 @@ typedef struct _ShumateMapSourceFactoryClass ShumateMapSourceFactoryClass;
  * The #ShumateMapSourceFactory structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateMapSourceFactory
-{
-  GObject parent;
-  ShumateMapSourceFactoryPrivate *priv;
-};
-
-struct _ShumateMapSourceFactoryClass
-{
-  GObjectClass parent_class;
-};
-
-GType shumate_map_source_factory_get_type (void);
 
 ShumateMapSourceFactory *shumate_map_source_factory_dup_default (void);
 

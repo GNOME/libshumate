@@ -86,7 +86,7 @@ enum
 
 /* static guint shumate_label_signals[LAST_SIGNAL] = { 0, }; */
 
-struct _ShumateLabelPrivate
+typedef struct
 {
   gchar *text;
   GdkPixbuf *image;
@@ -107,12 +107,9 @@ struct _ShumateLabelPrivate
   gint total_width;
   gint total_height;
   gint point;
-};
+} ShumateLabelPrivate;
 
-G_DEFINE_TYPE (ShumateLabel, shumate_label, SHUMATE_TYPE_MARKER);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_LABEL, ShumateLabelPrivate))
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateLabel, shumate_label, SHUMATE_TYPE_MARKER);
 
 static void draw_label (ShumateLabel *label);
 
@@ -123,7 +120,8 @@ shumate_label_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateLabelPrivate *priv = SHUMATE_LABEL (object)->priv;
+  ShumateLabel *label = SHUMATE_LABEL (object);
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
   switch (prop_id)
     {
@@ -299,7 +297,8 @@ pick (ClutterActor *self,
 static void
 shumate_label_dispose (GObject *object)
 {
-  ShumateLabelPrivate *priv = SHUMATE_LABEL (object)->priv;
+  ShumateLabel *label = SHUMATE_LABEL (object);
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
   /*
   if (priv->image)
@@ -309,11 +308,7 @@ shumate_label_dispose (GObject *object)
     }
    */
 
-  if (priv->attributes)
-    {
-      pango_attr_list_unref (priv->attributes);
-      priv->attributes = NULL;
-    }
+  g_clear_pointer (&priv->attributes, pango_attr_list_unref);
 
   G_OBJECT_CLASS (shumate_label_parent_class)->dispose (object);
 }
@@ -322,37 +317,14 @@ shumate_label_dispose (GObject *object)
 static void
 shumate_label_finalize (GObject *object)
 {
-  ShumateLabelPrivate *priv = SHUMATE_LABEL (object)->priv;
+  ShumateLabel *label = SHUMATE_LABEL (object);
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  if (priv->text)
-    {
-      g_free (priv->text);
-      priv->text = NULL;
-    }
-
-  if (priv->font_name)
-    {
-      g_free (priv->font_name);
-      priv->font_name = NULL;
-    }
-
-  if (priv->color)
-    {
-      gdk_rgba_free (priv->color);
-      priv->color = NULL;
-    }
-
-  if (priv->text_color)
-    {
-      gdk_rgba_free (priv->text_color);
-      priv->text_color = NULL;
-    }
-
-  if (priv->redraw_id)
-    {
-      g_source_remove (priv->redraw_id);
-      priv->redraw_id = 0;
-    }
+  g_clear_pointer (&priv->text, g_free);
+  g_clear_pointer (&priv->font_name, g_free);
+  g_clear_pointer (&priv->color, gdk_rgba_free);
+  g_clear_pointer (&priv->text_color, gdk_rgba_free);
+  g_clear_handle_id (&priv->redraw_id, g_source_remove);
 
   G_OBJECT_CLASS (shumate_label_parent_class)->finalize (object);
 }
@@ -363,8 +335,6 @@ shumate_label_class_init (ShumateLabelClass *klass)
 {
   //ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumateLabelPrivate));
 
   object_class->finalize = shumate_label_finalize;
   object_class->dispose = shumate_label_dispose;
@@ -574,7 +544,7 @@ draw_box (cairo_t *cr,
 static gint
 get_shadow_slope_width (ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = label->priv;
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
   gint x;
 
   if (priv->alignment == PANGO_ALIGN_LEFT)
@@ -593,7 +563,7 @@ draw_shadow (/*ClutterCanvas *canvas,*/
     int height,
     ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = label->priv;
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
   gint x;
   cairo_matrix_t matrix;
 
@@ -633,7 +603,7 @@ draw_background (/*ClutterCanvas *canvas,*/
     int height,
     ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = label->priv;
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
   ShumateMarker *marker = SHUMATE_MARKER (label);
   const GdkRGBA *color;
   GdkRGBA darker_color;
@@ -670,11 +640,11 @@ draw_background (/*ClutterCanvas *canvas,*/
 static void
 draw_label (ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = label->priv;
+  /*ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
   ShumateMarker *marker = SHUMATE_MARKER (label);
   gint height = 0;
   gint total_width = 0, total_height = 0;
-  /*
+  
   ClutterActor *text_actor, *shadow, *background;
 
   text_actor = NULL;
@@ -796,10 +766,11 @@ static gboolean
 redraw_on_idle (gpointer gobject)
 {
   ShumateLabel *label = SHUMATE_LABEL (gobject);
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
   draw_label (label);
-  label->priv->redraw_id = 0;
-  return FALSE;
+  priv->redraw_id = 0;
+  return G_SOURCE_REMOVE;
 }
 
 
@@ -815,7 +786,7 @@ redraw_on_idle (gpointer gobject)
 static void
 shumate_label_queue_redraw (ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = label->priv;
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
   if (!priv->redraw_id)
     {
@@ -840,9 +811,7 @@ notify_selected (GObject *gobject,
 static void
 shumate_label_init (ShumateLabel *label)
 {
-  ShumateLabelPrivate *priv = GET_PRIVATE (label);
-
-  label->priv = priv;
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
   priv->text = NULL;
   //priv->image = NULL;
@@ -917,7 +886,7 @@ shumate_label_new_with_text (const gchar *text,
 
 /**
  * shumate_label_new_with_image:
- * @actor: The image as a @ClutterActor.
+ * @pixbuf: The image as a @GdkPixbuf.
  *
  * Creates a new instance of #ShumateLabel with image.
  *
@@ -1029,9 +998,9 @@ void
 shumate_label_set_text (ShumateLabel *label,
     const gchar *text)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   if (priv->text != NULL)
     g_free (priv->text);
@@ -1053,9 +1022,9 @@ void
 shumate_label_set_image (ShumateLabel *label,
     GdkPixbuf *image)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   g_clear_pointer (&priv->image, g_free);
 
@@ -1082,9 +1051,11 @@ void
 shumate_label_set_use_markup (ShumateLabel *label,
     gboolean markup)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->use_markup = markup;
+  priv->use_markup = markup;
   g_object_notify (G_OBJECT (label), "use-markup");
   shumate_label_queue_redraw (label);
 }
@@ -1101,9 +1072,11 @@ void
 shumate_label_set_alignment (ShumateLabel *label,
     PangoAlignment alignment)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->alignment = alignment;
+  priv->alignment = alignment;
   g_object_notify (G_OBJECT (label), "alignment");
   shumate_label_queue_redraw (label);
 }
@@ -1121,9 +1094,9 @@ void
 shumate_label_set_color (ShumateLabel *label,
     const GdkRGBA *color)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   if (priv->color != NULL)
     gdk_rgba_free (priv->color);
@@ -1149,9 +1122,9 @@ void
 shumate_label_set_text_color (ShumateLabel *label,
     const GdkRGBA *color)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   if (priv->text_color != NULL)
     gdk_rgba_free (priv->text_color);
@@ -1177,9 +1150,9 @@ void
 shumate_label_set_font_name (ShumateLabel *label,
     const gchar *font_name)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   if (priv->font_name != NULL)
     g_free (priv->font_name);
@@ -1204,9 +1177,11 @@ void
 shumate_label_set_wrap (ShumateLabel *label,
     gboolean wrap)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->wrap = wrap;
+  priv->wrap = wrap;
   g_object_notify (G_OBJECT (label), "wrap");
   shumate_label_queue_redraw (label);
 }
@@ -1223,9 +1198,11 @@ void
 shumate_label_set_wrap_mode (ShumateLabel *label,
     PangoWrapMode wrap_mode)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->wrap_mode = wrap_mode;
+  priv->wrap_mode = wrap_mode;
   g_object_notify (G_OBJECT (label), "wrap-mode");
   shumate_label_queue_redraw (label);
 }
@@ -1242,9 +1219,9 @@ void
 shumate_label_set_attributes (ShumateLabel *label,
     PangoAttrList *attributes)
 {
-  g_return_if_fail (SHUMATE_IS_LABEL (label));
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
 
-  ShumateLabelPrivate *priv = label->priv;
+  g_return_if_fail (SHUMATE_IS_LABEL (label));
 
   if (attributes)
     pango_attr_list_ref (attributes);
@@ -1270,9 +1247,11 @@ void
 shumate_label_set_ellipsize (ShumateLabel *label,
     PangoEllipsizeMode ellipsize)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->ellipsize = ellipsize;
+  priv->ellipsize = ellipsize;
   g_object_notify (G_OBJECT (label), "ellipsize");
   shumate_label_queue_redraw (label);
 }
@@ -1289,9 +1268,11 @@ void
 shumate_label_set_single_line_mode (ShumateLabel *label,
     gboolean mode)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->single_line_mode = mode;
+  priv->single_line_mode = mode;
 
   g_object_notify (G_OBJECT (label), "single-line-mode");
   shumate_label_queue_redraw (label);
@@ -1309,9 +1290,11 @@ void
 shumate_label_set_draw_background (ShumateLabel *label,
     gboolean background)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->draw_background = background;
+  priv->draw_background = background;
   g_object_notify (G_OBJECT (label), "draw-background");
   shumate_label_queue_redraw (label);
 }
@@ -1328,9 +1311,11 @@ void
 shumate_label_set_draw_shadow (ShumateLabel *label,
     gboolean shadow)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_if_fail (SHUMATE_IS_LABEL (label));
 
-  label->priv->draw_shadow = shadow;
+  priv->draw_shadow = shadow;
   g_object_notify (G_OBJECT (label), "draw-shadow");
   shumate_label_queue_redraw (label);
 }
@@ -1346,9 +1331,11 @@ shumate_label_set_draw_shadow (ShumateLabel *label,
 GdkPixbuf *
 shumate_label_get_image (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
 
-  return label->priv->image;
+  return priv->image;
 }
 
 /**
@@ -1362,9 +1349,11 @@ shumate_label_get_image (ShumateLabel *label)
 gboolean
 shumate_label_get_use_markup (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->use_markup;
+  return priv->use_markup;
 }
 
 
@@ -1379,9 +1368,11 @@ shumate_label_get_use_markup (ShumateLabel *label)
 const gchar *
 shumate_label_get_text (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->text;
+  return priv->text;
 }
 
 
@@ -1396,9 +1387,11 @@ shumate_label_get_text (ShumateLabel *label)
 PangoAlignment
 shumate_label_get_alignment (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->alignment;
+  return priv->alignment;
 }
 
 
@@ -1413,9 +1406,11 @@ shumate_label_get_alignment (ShumateLabel *label)
 GdkRGBA *
 shumate_label_get_color (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
 
-  return label->priv->color;
+  return priv->color;
 }
 
 
@@ -1430,9 +1425,11 @@ shumate_label_get_color (ShumateLabel *label)
 GdkRGBA *
 shumate_label_get_text_color (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
 
-  return label->priv->text_color;
+  return priv->text_color;
 }
 
 
@@ -1447,9 +1444,11 @@ shumate_label_get_text_color (ShumateLabel *label)
 const gchar *
 shumate_label_get_font_name (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->font_name;
+  return priv->font_name;
 }
 
 
@@ -1464,9 +1463,11 @@ shumate_label_get_font_name (ShumateLabel *label)
 gboolean
 shumate_label_get_wrap (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->wrap;
+  return priv->wrap;
 }
 
 
@@ -1481,9 +1482,11 @@ shumate_label_get_wrap (ShumateLabel *label)
 PangoWrapMode
 shumate_label_get_wrap_mode (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->wrap_mode;
+  return priv->wrap_mode;
 }
 
 
@@ -1498,9 +1501,11 @@ shumate_label_get_wrap_mode (ShumateLabel *label)
 PangoEllipsizeMode
 shumate_label_get_ellipsize (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->ellipsize;
+  return priv->ellipsize;
 }
 
 
@@ -1515,9 +1520,11 @@ shumate_label_get_ellipsize (ShumateLabel *label)
 gboolean
 shumate_label_get_single_line_mode (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->single_line_mode;
+  return priv->single_line_mode;
 }
 
 
@@ -1532,9 +1539,11 @@ shumate_label_get_single_line_mode (ShumateLabel *label)
 gboolean
 shumate_label_get_draw_background (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->draw_background;
+  return priv->draw_background;
 }
 
 
@@ -1549,9 +1558,11 @@ shumate_label_get_draw_background (ShumateLabel *label)
 gboolean
 shumate_label_get_draw_shadow (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), FALSE);
 
-  return label->priv->draw_shadow;
+  return priv->draw_shadow;
 }
 
 
@@ -1566,7 +1577,9 @@ shumate_label_get_draw_shadow (ShumateLabel *label)
 PangoAttrList *
 shumate_label_get_attributes (ShumateLabel *label)
 {
+  ShumateLabelPrivate *priv = shumate_label_get_instance_private (label);
+
   g_return_val_if_fail (SHUMATE_IS_LABEL (label), NULL);
 
-  return label->priv->attributes;
+  return priv->attributes;
 }

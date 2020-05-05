@@ -65,7 +65,7 @@ enum
 
 /* static guint shumate_point_signals[LAST_SIGNAL] = { 0, }; */
 
-struct _ShumatePointPrivate
+typedef struct
 {
   GdkRGBA *color;
   gdouble size;
@@ -73,7 +73,7 @@ struct _ShumatePointPrivate
   cairo_surface_t *surface;
 
   guint redraw_id;
-};
+} ShumatePointPrivate;
 
 static void set_surface (ShumateCairoImportable *importable,
     cairo_surface_t *surface);
@@ -83,12 +83,9 @@ static void cairo_exportable_interface_init (ShumateCairoExportableInterface *if
 static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumatePoint, shumate_point, SHUMATE_TYPE_MARKER,
+    G_ADD_PRIVATE (ShumatePoint)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_POINT, ShumatePointPrivate))
-
 
 static void
 shumate_point_get_property (GObject *object,
@@ -96,7 +93,8 @@ shumate_point_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumatePointPrivate *priv = SHUMATE_POINT (object)->priv;
+  ShumatePoint *point = SHUMATE_POINT (object);
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
 
   switch (prop_id)
     {
@@ -170,7 +168,8 @@ pick (ClutterActor *self,
 static void
 shumate_point_dispose (GObject *object)
 {
-  ShumatePointPrivate *priv = SHUMATE_POINT (object)->priv;
+  ShumatePoint *point = SHUMATE_POINT (object);
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
 
   g_clear_pointer (&priv->surface, cairo_surface_destroy);
 
@@ -181,13 +180,10 @@ shumate_point_dispose (GObject *object)
 static void
 shumate_point_finalize (GObject *object)
 {
-  ShumatePointPrivate *priv = SHUMATE_POINT (object)->priv;
+  ShumatePoint *point = SHUMATE_POINT (object);
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
 
-  if (priv->color)
-    {
-      gdk_rgba_free (priv->color);
-      priv->color = NULL;
-    }
+  g_clear_pointer (&priv->color, gdk_rgba_free);
 
   /*
   if (priv->canvas)
@@ -206,8 +202,6 @@ shumate_point_class_init (ShumatePointClass *klass)
 {
   //ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  g_type_class_add_private (klass, sizeof (ShumatePointPrivate));
 
   object_class->finalize = shumate_point_finalize;
   object_class->dispose = shumate_point_dispose;
@@ -250,7 +244,7 @@ draw (/*ClutterCanvas *canvas,*/
       gint           height,
       ShumatePoint *point)
 {
-  ShumatePointPrivate *priv = point->priv;
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
   gdouble size = priv->size;
   gdouble radius = size / 2.0;
   const GdkRGBA *color;
@@ -289,9 +283,7 @@ notify_selected (GObject *gobject,
 static void
 shumate_point_init (ShumatePoint *point)
 {
-  ShumatePointPrivate *priv = GET_PRIVATE (point);
-
-  point->priv = priv;
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
 
   priv->color = gdk_rgba_copy (&DEFAULT_COLOR);
   priv->size = 12;
@@ -313,25 +305,29 @@ static void
 set_surface (ShumateCairoImportable *importable,
      cairo_surface_t *surface)
 {
+  ShumatePoint *self = SHUMATE_POINT (importable);
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_POINT (importable));
   g_return_if_fail (surface != NULL);
 
-  ShumatePoint *self = SHUMATE_POINT (importable);
-
-  if (self->priv->surface == surface)
+  if (priv->surface == surface)
     return;
 
-  cairo_surface_destroy (self->priv->surface);
-  self->priv->surface = cairo_surface_reference (surface);
+  cairo_surface_destroy (priv->surface);
+  priv->surface = cairo_surface_reference (surface);
   g_object_notify (G_OBJECT (self), "surface");
 }
 
 static cairo_surface_t *
 get_surface (ShumateCairoExportable *exportable)
 {
+  ShumatePoint *self = SHUMATE_POINT (exportable);
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (self);
+
   g_return_val_if_fail (SHUMATE_POINT (exportable), NULL);
 
-  return SHUMATE_POINT (exportable)->priv->surface;
+  return priv->surface;
 }
 
 
@@ -395,11 +391,11 @@ void
 shumate_point_set_size (ShumatePoint *point,
     gdouble size)
 {
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
+
   g_return_if_fail (SHUMATE_IS_POINT (point));
 
-  ShumatePointPrivate *priv = point->priv;
-
-  point->priv->size = size;
+  priv->size = size;
   /*
   clutter_canvas_set_size (CLUTTER_CANVAS (priv->canvas), size, size);
   clutter_actor_set_size (CLUTTER_ACTOR (point), priv->size, priv->size);
@@ -421,9 +417,11 @@ shumate_point_set_size (ShumatePoint *point,
 gdouble
 shumate_point_get_size (ShumatePoint *point)
 {
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
+
   g_return_val_if_fail (SHUMATE_IS_POINT (point), 0);
 
-  return point->priv->size;
+  return priv->size;
 }
 
 
@@ -439,9 +437,9 @@ void
 shumate_point_set_color (ShumatePoint *point,
     const GdkRGBA *color)
 {
-  g_return_if_fail (SHUMATE_IS_POINT (point));
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
 
-  ShumatePointPrivate *priv = point->priv;
+  g_return_if_fail (SHUMATE_IS_POINT (point));
 
   if (priv->color != NULL)
     gdk_rgba_free (priv->color);
@@ -466,7 +464,9 @@ shumate_point_set_color (ShumatePoint *point,
 GdkRGBA *
 shumate_point_get_color (ShumatePoint *point)
 {
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
+
   g_return_val_if_fail (SHUMATE_IS_POINT (point), NULL);
 
-  return point->priv->color;
+  return priv->color;
 }

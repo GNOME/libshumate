@@ -67,24 +67,21 @@ enum
   PROP_USER_AGENT
 };
 
-G_DEFINE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_TILE_SOURCE);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_NETWORK_TILE_SOURCE, ShumateNetworkTileSourcePrivate))
-
-/* The osm.org tile set require us to use no more than 2 simultaneous
- * connections so let that be the default.
- */
-#define MAX_CONNS_DEFAULT 2
-
-struct _ShumateNetworkTileSourcePrivate
+typedef struct
 {
   gboolean offline;
   gchar *uri_format;
   gchar *proxy_uri;
   SoupSession *soup_session;
   gint max_conns;
-};
+} ShumateNetworkTileSourcePrivate;
+
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_TILE_SOURCE);
+
+/* The osm.org tile set require us to use no more than 2 simultaneous
+ * connections so let that be the default.
+ */
+#define MAX_CONNS_DEFAULT 2
 
 typedef struct
 {
@@ -123,7 +120,8 @@ shumate_network_tile_source_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateNetworkTileSourcePrivate *priv = SHUMATE_NETWORK_TILE_SOURCE (object)->priv;
+  ShumateNetworkTileSource *tile_source  = SHUMATE_NETWORK_TILE_SOURCE (object);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
   switch (prop_id)
     {
@@ -188,13 +186,13 @@ shumate_network_tile_source_set_property (GObject *object,
 static void
 shumate_network_tile_source_dispose (GObject *object)
 {
-  ShumateNetworkTileSourcePrivate *priv = SHUMATE_NETWORK_TILE_SOURCE (object)->priv;
+  ShumateNetworkTileSource *tile_source  = SHUMATE_NETWORK_TILE_SOURCE (object);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
   if (priv->soup_session)
     {
       soup_session_abort (priv->soup_session);
-      g_object_unref (priv->soup_session);
-      priv->soup_session = NULL;
+      g_clear_object (&priv->soup_session);
     }
 
   G_OBJECT_CLASS (shumate_network_tile_source_parent_class)->dispose (object);
@@ -204,21 +202,14 @@ shumate_network_tile_source_dispose (GObject *object)
 static void
 shumate_network_tile_source_finalize (GObject *object)
 {
-  ShumateNetworkTileSourcePrivate *priv = SHUMATE_NETWORK_TILE_SOURCE (object)->priv;
+  ShumateNetworkTileSource *tile_source  = SHUMATE_NETWORK_TILE_SOURCE (object);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
-  g_free (priv->uri_format);
-  g_free (priv->proxy_uri);
+  g_clear_pointer (&priv->uri_format, g_free);
+  g_clear_pointer (&priv->proxy_uri, g_free);
 
   G_OBJECT_CLASS (shumate_network_tile_source_parent_class)->finalize (object);
 }
-
-
-static void
-shumate_network_tile_source_constructed (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_network_tile_source_parent_class)->constructed (object);
-}
-
 
 static void
 shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
@@ -227,13 +218,10 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
 
-  g_type_class_add_private (klass, sizeof (ShumateNetworkTileSourcePrivate));
-
   object_class->finalize = shumate_network_tile_source_finalize;
   object_class->dispose = shumate_network_tile_source_dispose;
   object_class->get_property = shumate_network_tile_source_get_property;
   object_class->set_property = shumate_network_tile_source_set_property;
-  object_class->constructed = shumate_network_tile_source_constructed;
 
   map_source_class->fill_tile = fill_tile;
 
@@ -311,9 +299,7 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
 static void
 shumate_network_tile_source_init (ShumateNetworkTileSource *tile_source)
 {
-  ShumateNetworkTileSourcePrivate *priv = GET_PRIVATE (tile_source);
-
-  tile_source->priv = priv;
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
   priv->proxy_uri = NULL;
   priv->uri_format = NULL;
@@ -396,9 +382,11 @@ shumate_network_tile_source_new_full (const gchar *id,
 const gchar *
 shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source), NULL);
 
-  return tile_source->priv->uri_format;
+  return priv->uri_format;
 }
 
 
@@ -420,9 +408,9 @@ void
 shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
     const gchar *uri_format)
 {
-  g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source));
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
-  ShumateNetworkTileSourcePrivate *priv = tile_source->priv;
+  g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source));
 
   g_free (priv->uri_format);
   priv->uri_format = g_strdup (uri_format);
@@ -442,9 +430,11 @@ shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_sourc
 const gchar *
 shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source), NULL);
 
-  return tile_source->priv->proxy_uri;
+  return priv->proxy_uri;
 }
 
 
@@ -459,9 +449,10 @@ void
 shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source,
     const gchar *proxy_uri)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source));
 
-  ShumateNetworkTileSourcePrivate *priv = tile_source->priv;
   SoupURI *uri = NULL;
 
   g_free (priv->proxy_uri);
@@ -493,9 +484,11 @@ shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source
 gboolean
 shumate_network_tile_source_get_offline (ShumateNetworkTileSource *tile_source)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source), FALSE);
 
-  return tile_source->priv->offline;
+  return priv->offline;
 }
 
 
@@ -510,9 +503,11 @@ void
 shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
     gboolean offline)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source));
 
-  tile_source->priv->offline = offline;
+  priv->offline = offline;
 
   g_object_notify (G_OBJECT (tile_source), "offline");
 }
@@ -531,9 +526,11 @@ shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
 gint
 shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_val_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source), 0);
 
-  return tile_source->priv->max_conns;
+  return priv->max_conns;
 }
 
 
@@ -551,12 +548,14 @@ void
 shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source,
     gint max_conns)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source));
-  g_return_if_fail (SOUP_IS_SESSION (tile_source->priv->soup_session));
+  g_return_if_fail (SOUP_IS_SESSION (priv->soup_session));
 
-  tile_source->priv->max_conns = max_conns;
+  priv->max_conns = max_conns;
 
-  g_object_set (G_OBJECT (tile_source->priv->soup_session),
+  g_object_set (G_OBJECT (priv->soup_session),
       "max-conns-per-host", max_conns,
       "max-conns", max_conns,
       NULL);
@@ -576,10 +575,10 @@ shumate_network_tile_source_set_user_agent (
     ShumateNetworkTileSource *tile_source,
     const gchar *user_agent)
 {
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (tile_source)
       && user_agent != NULL);
-
-  ShumateNetworkTileSourcePrivate *priv = tile_source->priv;
 
   if (priv->soup_session)
     g_object_set (G_OBJECT (priv->soup_session), "user-agent",
@@ -594,7 +593,7 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
     gint y,
     gint z)
 {
-  ShumateNetworkTileSourcePrivate *priv = tile_source->priv;
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
   gchar **tokens;
   gchar *token;
@@ -780,8 +779,9 @@ tile_state_notify (ShumateTile *tile,
 {
   if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE && data->map_source && data->msg)
     {
+      ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (data->map_source);
+      ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
       DEBUG ("Canceling tile download");
-      ShumateNetworkTileSourcePrivate *priv = SHUMATE_NETWORK_TILE_SOURCE (data->map_source)->priv;
       soup_session_cancel_message (priv->soup_session, data->msg, SOUP_STATUS_CANCELLED);
     }
 }
@@ -806,11 +806,11 @@ static void
 fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile)
 {
+  ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (map_source);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
+
   g_return_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (map_source));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
-
-  ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (map_source);
-  ShumateNetworkTileSourcePrivate *priv = tile_source->priv;
 
   if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
     return;

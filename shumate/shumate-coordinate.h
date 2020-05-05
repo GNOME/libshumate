@@ -32,27 +32,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_COORDINATE shumate_coordinate_get_type ()
-
-#define SHUMATE_COORDINATE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST ((obj), SHUMATE_TYPE_COORDINATE, ShumateCoordinate))
-
-#define SHUMATE_COORDINATE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST ((klass), SHUMATE_TYPE_COORDINATE, ShumateCoordinateClass))
-
-#define SHUMATE_IS_COORDINATE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SHUMATE_TYPE_COORDINATE))
-
-#define SHUMATE_IS_COORDINATE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE ((klass), SHUMATE_TYPE_COORDINATE))
-
-#define SHUMATE_COORDINATE_GET_CLASS(obj) \
-  (G_TYPE_INSTANCE_GET_CLASS ((obj), SHUMATE_TYPE_COORDINATE, ShumateCoordinateClass))
-
-typedef struct _ShumateCoordinatePrivate ShumateCoordinatePrivate;
-
-typedef struct _ShumateCoordinate ShumateCoordinate;
-typedef struct _ShumateCoordinateClass ShumateCoordinateClass;
-
+G_DECLARE_DERIVABLE_TYPE (ShumateCoordinate, shumate_coordinate, SHUMATE, COORDINATE, GInitiallyUnowned)
 
 /**
  * ShumateCoordinate:
@@ -60,19 +40,11 @@ typedef struct _ShumateCoordinateClass ShumateCoordinateClass;
  * The #ShumateCoordinate structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateCoordinate
-{
-  GInitiallyUnowned parent;
-
-  ShumateCoordinatePrivate *priv;
-};
 
 struct _ShumateCoordinateClass
 {
   GInitiallyUnownedClass parent_class;
 };
-
-GType shumate_coordinate_get_type (void);
 
 ShumateCoordinate *shumate_coordinate_new (void);
 

@@ -30,27 +30,8 @@
 G_DEFINE_ABSTRACT_TYPE (ShumateLayer, shumate_layer, G_TYPE_OBJECT)
 
 static void
-shumate_layer_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_layer_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_layer_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_layer_parent_class)->finalize (object);
-}
-
-
-static void
 shumate_layer_class_init (ShumateLayerClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
-  object_class->finalize = shumate_layer_finalize;
-  object_class->dispose = shumate_layer_dispose;
-
   klass->set_view = NULL;
   klass->get_bounding_box = NULL;
 }

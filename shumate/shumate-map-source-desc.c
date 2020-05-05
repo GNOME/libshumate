@@ -45,8 +45,10 @@ enum
   PROP_DATA,
 };
 
-struct _ShumateMapSourceDescPrivate
+struct _ShumateMapSourceDesc
 {
+  GObject parent_instance;
+
   gchar *id;
   gchar *name;
   gchar *license;
@@ -61,10 +63,6 @@ struct _ShumateMapSourceDescPrivate
 };
 
 G_DEFINE_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, G_TYPE_OBJECT);
-
-#define GET_PRIVATE(obj) \
-  (G_TYPE_INSTANCE_GET_PRIVATE ((obj), SHUMATE_TYPE_MAP_SOURCE_DESC, ShumateMapSourceDescPrivate))
-
 
 static void set_id (ShumateMapSourceDesc *desc,
     const gchar *id);
@@ -96,52 +94,52 @@ shumate_map_source_desc_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  ShumateMapSourceDescPrivate *priv = SHUMATE_MAP_SOURCE_DESC (object)->priv;
+  ShumateMapSourceDesc *self = SHUMATE_MAP_SOURCE_DESC (object);
 
   switch (prop_id)
     {
     case PROP_ID:
-      g_value_set_string (value, priv->id);
+      g_value_set_string (value, self->id);
       break;
 
     case PROP_NAME:
-      g_value_set_string (value, priv->name);
+      g_value_set_string (value, self->name);
       break;
 
     case PROP_LICENSE:
-      g_value_set_string (value, priv->license);
+      g_value_set_string (value, self->license);
       break;
 
     case PROP_LICENSE_URI:
-      g_value_set_string (value, priv->license_uri);
+      g_value_set_string (value, self->license_uri);
       break;
 
     case PROP_URI_FORMAT:
-      g_value_set_string (value, priv->uri_format);
+      g_value_set_string (value, self->uri_format);
       break;
 
     case PROP_MIN_ZOOM_LEVEL:
-      g_value_set_uint (value, priv->min_zoom_level);
+      g_value_set_uint (value, self->min_zoom_level);
       break;
 
     case PROP_MAX_ZOOM_LEVEL:
-      g_value_set_uint (value, priv->max_zoom_level);
+      g_value_set_uint (value, self->max_zoom_level);
       break;
 
     case PROP_TILE_SIZE:
-      g_value_set_uint (value, priv->tile_size);
+      g_value_set_uint (value, self->tile_size);
       break;
 
     case PROP_PROJECTION:
-      g_value_set_enum (value, priv->projection);
+      g_value_set_enum (value, self->projection);
       break;
 
     case PROP_CONSTRUCTOR:
-      g_value_set_pointer (value, priv->constructor);
+      g_value_set_pointer (value, self->constructor);
       break;
 
     case PROP_DATA:
-      g_value_set_pointer (value, priv->data);
+      g_value_set_pointer (value, self->data);
       break;
 
     default:
@@ -208,26 +206,16 @@ shumate_map_source_desc_set_property (GObject *object,
     }
 }
 
-
-static void
-shumate_map_source_desc_dispose (GObject *object)
-{
-/*  ShumateMapSourceDesc *desc = SHUMATE_MAP_SOURCE_DESC (object); */
-
-  G_OBJECT_CLASS (shumate_map_source_desc_parent_class)->dispose (object);
-}
-
-
 static void
 shumate_map_source_desc_finalize (GObject *object)
 {
-  ShumateMapSourceDescPrivate *priv = SHUMATE_MAP_SOURCE_DESC (object)->priv;
+  ShumateMapSourceDesc *self = SHUMATE_MAP_SOURCE_DESC (object);
 
-  g_free (priv->id);
-  g_free (priv->name);
-  g_free (priv->license);
-  g_free (priv->license_uri);
-  g_free (priv->uri_format);
+  g_clear_pointer (&self->id, g_free);
+  g_clear_pointer (&self->name, g_free);
+  g_clear_pointer (&self->license, g_free);
+  g_clear_pointer (&self->license_uri, g_free);
+  g_clear_pointer (&self->uri_format, g_free);
 
   G_OBJECT_CLASS (shumate_map_source_desc_parent_class)->finalize (object);
 }
@@ -238,10 +226,7 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  g_type_class_add_private (klass, sizeof (ShumateMapSourceDescPrivate));
-
   object_class->finalize = shumate_map_source_desc_finalize;
-  object_class->dispose = shumate_map_source_desc_dispose;
   object_class->get_property = shumate_map_source_desc_get_property;
   object_class->set_property = shumate_map_source_desc_set_property;
 
@@ -398,21 +383,17 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
 static void
 shumate_map_source_desc_init (ShumateMapSourceDesc *desc)
 {
-  ShumateMapSourceDescPrivate *priv = GET_PRIVATE (desc);
-
-  desc->priv = priv;
-
-  priv->id = NULL;
-  priv->name = NULL;
-  priv->license = NULL;
-  priv->license_uri = NULL;
-  priv->uri_format = NULL;
-  priv->min_zoom_level = 0;
-  priv->max_zoom_level = 20;
-  priv->tile_size = 256;
-  priv->projection = SHUMATE_MAP_PROJECTION_MERCATOR;
-  priv->constructor = NULL;
-  priv->data = NULL;
+  desc->id = NULL;
+  desc->name = NULL;
+  desc->license = NULL;
+  desc->license_uri = NULL;
+  desc->uri_format = NULL;
+  desc->min_zoom_level = 0;
+  desc->max_zoom_level = 20;
+  desc->tile_size = 256;
+  desc->projection = SHUMATE_MAP_PROJECTION_MERCATOR;
+  desc->constructor = NULL;
+  desc->data = NULL;
 }
 
 
@@ -478,7 +459,7 @@ shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->id;
+  return desc->id;
 }
 
 
@@ -495,7 +476,7 @@ shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->name;
+  return desc->name;
 }
 
 
@@ -512,7 +493,7 @@ shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->license;
+  return desc->license;
 }
 
 
@@ -529,7 +510,7 @@ shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->license_uri;
+  return desc->license_uri;
 }
 
 
@@ -546,7 +527,7 @@ shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->uri_format;
+  return desc->uri_format;
 }
 
 
@@ -563,7 +544,7 @@ shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->priv->min_zoom_level;
+  return desc->min_zoom_level;
 }
 
 
@@ -580,7 +561,7 @@ shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->priv->max_zoom_level;
+  return desc->max_zoom_level;
 }
 
 
@@ -597,7 +578,7 @@ shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->priv->tile_size;
+  return desc->tile_size;
 }
 
 
@@ -614,7 +595,7 @@ shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), SHUMATE_MAP_PROJECTION_MERCATOR);
 
-  return desc->priv->projection;
+  return desc->projection;
 }
 
 
@@ -631,7 +612,7 @@ shumate_map_source_desc_get_data (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->data;
+  return desc->data;
 }
 
 
@@ -648,7 +629,7 @@ shumate_map_source_desc_get_constructor (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->priv->constructor;
+  return desc->constructor;
 }
 
 
@@ -658,10 +639,8 @@ set_id (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  ShumateMapSourceDescPrivate *priv = desc->priv;
-
-  g_free (priv->id);
-  priv->id = g_strdup (id);
+  g_free (desc->id);
+  desc->id = g_strdup (id);
 
   g_object_notify (G_OBJECT (desc), "id");
 }
@@ -673,10 +652,8 @@ set_name (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  ShumateMapSourceDescPrivate *priv = desc->priv;
-
-  g_free (priv->name);
-  priv->name = g_strdup (name);
+  g_free (desc->name);
+  desc->name = g_strdup (name);
 
   g_object_notify (G_OBJECT (desc), "name");
 }
@@ -688,10 +665,8 @@ set_license (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  ShumateMapSourceDescPrivate *priv = desc->priv;
-
-  g_free (priv->license);
-  priv->license = g_strdup (license);
+  g_free (desc->license);
+  desc->license = g_strdup (license);
 
   g_object_notify (G_OBJECT (desc), "license");
 }
@@ -703,10 +678,8 @@ set_license_uri (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  ShumateMapSourceDescPrivate *priv = desc->priv;
-
-  g_free (priv->license_uri);
-  priv->license_uri = g_strdup (license_uri);
+  g_free (desc->license_uri);
+  desc->license_uri = g_strdup (license_uri);
 
   g_object_notify (G_OBJECT (desc), "license-uri");
 }
@@ -718,10 +691,8 @@ set_uri_format (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  ShumateMapSourceDescPrivate *priv = desc->priv;
-
-  g_free (priv->uri_format);
-  priv->uri_format = g_strdup (uri_format);
+  g_free (desc->uri_format);
+  desc->uri_format = g_strdup (uri_format);
 
   g_object_notify (G_OBJECT (desc), "uri-format");
 }
@@ -733,7 +704,7 @@ set_min_zoom_level (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->min_zoom_level = zoom_level;
+  desc->min_zoom_level = zoom_level;
 
   g_object_notify (G_OBJECT (desc), "min-zoom-level");
 }
@@ -745,7 +716,7 @@ set_max_zoom_level (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->max_zoom_level = zoom_level;
+  desc->max_zoom_level = zoom_level;
 
   g_object_notify (G_OBJECT (desc), "max-zoom-level");
 }
@@ -757,7 +728,7 @@ set_tile_size (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->tile_size = tile_size;
+  desc->tile_size = tile_size;
 
   g_object_notify (G_OBJECT (desc), "tile-size");
 }
@@ -769,7 +740,7 @@ set_projection (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->projection = projection;
+  desc->projection = projection;
 
   g_object_notify (G_OBJECT (desc), "projection");
 }
@@ -781,7 +752,7 @@ set_data (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->data = data;
+  desc->data = data;
 
   g_object_notify (G_OBJECT (desc), "data");
 }
@@ -793,7 +764,7 @@ set_constructor (ShumateMapSourceDesc *desc,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
-  desc->priv->constructor = constructor;
+  desc->constructor = constructor;
 
   g_object_notify (G_OBJECT (desc), "constructor");
 }
