@@ -20,25 +20,30 @@
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
 
-int
-main (int argc, char *argv[])
+static void
+activate (GtkApplication* app,
+          gpointer        user_data)
 {
   GtkWidget *window;
   ShumateView *view;
 
-  gtk_init ();
-
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_size_request (window, 800, 600);
-  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-
   /* Create the map view */
   view = shumate_view_new ();
+
+  window = gtk_application_window_new (app);
+  gtk_window_set_title (GTK_WINDOW (window), "Window");
+  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
   gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
-
-  gtk_widget_show (GTK_WIDGET (view));
   gtk_widget_show (window);
-  gtk_main ();
+}
 
-  return 0;
+int
+main (int argc, char *argv[])
+{
+  g_autoptr(GtkApplication) app = NULL;
+
+  app = gtk_application_new ("org.shumate.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+
+  return g_application_run (G_APPLICATION (app), argc, argv);
 }

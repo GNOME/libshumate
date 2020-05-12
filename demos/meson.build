@@ -1,8 +1,8 @@
 libshumate_demos = [
   ['minimal', 'minimal.c'],
-  ['launcher', ['launcher.c', 'markers.c']],
-  ['url-marker', 'url-marker.c'],
-  ['create_destroy_test', 'create-destroy-test.c'],
+#  ['launcher', ['launcher.c', 'markers.c']],
+#  ['url-marker', 'url-marker.c'],
+#  ['create_destroy_test', 'create-destroy-test.c'],
 ]
 
 foreach demo: libshumate_demos
@@ -20,6 +20,8 @@ foreach demo: libshumate_demos
 endforeach
 
 subdir('icons')
+# Disable everything untilthe port to Gtk4 is finished
+subdir_done()
 
 if generate_vapi == true
   libshumate_vala_demos = [
