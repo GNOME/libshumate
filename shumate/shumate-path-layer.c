@@ -34,8 +34,6 @@
 
 #include "shumate-path-layer.h"
 
-#include "shumate-cairo-exportable.h"
-#include "shumate-cairo-importable.h"
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-private.h"
@@ -45,9 +43,6 @@
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <glib.h>
-
-static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
-static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
 
 enum
 {
@@ -65,7 +60,6 @@ enum
   PROP_FILL_COLOR,
   PROP_STROKE,
   PROP_VISIBLE,
-  PROP_SURFACE,
 };
 
 static GdkRGBA DEFAULT_FILL_COLOR = { 0.8, 0.0, 0.0, 0.67 };
@@ -121,14 +115,7 @@ typedef struct
   gboolean redraw_scheduled;
 } ShumatePathLayerPrivate;
 
-G_DEFINE_TYPE_WITH_CODE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER,
-    G_ADD_PRIVATE (ShumatePathLayer)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
-
-static void set_surface (ShumateCairoImportable *importable,
-    cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER);
 
 /*
 static gboolean redraw_path (ClutterCanvas *canvas,
@@ -183,10 +170,6 @@ shumate_path_layer_get_property (GObject *object,
       g_value_set_boolean (value, priv->visible);
       break;
 
-    case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (self)));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -234,10 +217,6 @@ shumate_path_layer_set_property (GObject *object,
     case PROP_VISIBLE:
       shumate_path_layer_set_visible (SHUMATE_PATH_LAYER (object),
           g_value_get_boolean (value));
-      break;
-
-   case PROP_SURFACE:
-      set_surface (SHUMATE_CAIRO_IMPORTABLE (object), g_value_get_boxed (value));
       break;
 
     default:
@@ -396,19 +375,6 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           "The path's visibility",
           TRUE,
           SHUMATE_PARAM_READWRITE));
-
-  /**
-   * ShumatePathLayer:surface:
-   *
-   * The Cairo surface backing the layer
-   */
-  g_object_class_install_property (object_class,
-      PROP_SURFACE,
-      g_param_spec_boxed ("surface",
-          "Surface",
-          "Cairo surface representaion",
-          CAIRO_GOBJECT_TYPE_SURFACE,
-          G_PARAM_READWRITE));
 }
 
 /*
@@ -473,25 +439,6 @@ shumate_path_layer_init (ShumatePathLayer *self)
    */
 }
 
-
-static void
-set_surface (ShumateCairoImportable *importable,
-     cairo_surface_t *surface)
-{
-  ShumatePathLayer *self = SHUMATE_PATH_LAYER (importable);
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
-
-  g_return_if_fail (SHUMATE_PATH_LAYER (importable));
-  g_return_if_fail (surface != NULL);
-
-  if (priv->surface == surface)
-    return;
-
-  cairo_surface_destroy (priv->surface);
-  priv->surface = cairo_surface_reference (surface);
-  g_object_notify (G_OBJECT (self), "surface");
-}
-
 static void
 get_map_size (ShumateView *view, gint *width, gint *height)
 {
@@ -540,43 +487,6 @@ create_merged_surface (ShumatePathLayer *layer)
 
   return new_surface;
 }
-
-static cairo_surface_t *
-get_surface (ShumateCairoExportable *exportable)
-{
-  ShumatePathLayer *self = SHUMATE_PATH_LAYER (exportable);
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
-
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (exportable), NULL);
-
-  if (priv->visible)
-    {
-      /* if the surface hasn't yet been rendered, update it */
-      if (!priv->surface)
-        {
-          cairo_surface_t *new_surface = create_merged_surface (self);
-
-          set_surface (SHUMATE_CAIRO_IMPORTABLE (self), new_surface);
-        }
-      return priv->surface;
-    }
-  else
-    return NULL;
-}
-
-
-static void
-cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
-{
-  iface->get_surface = get_surface;
-}
-
-static void
-cairo_importable_interface_init (ShumateCairoImportableInterface *iface)
-{
-  iface->set_surface = set_surface;
-}
-
 
 /**
  * shumate_path_layer_new:

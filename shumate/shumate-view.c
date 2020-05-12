@@ -56,7 +56,6 @@
 #include "shumate-debug.h"
 
 #include "shumate.h"
-#include "shumate-cairo-exportable.h"
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-marshal.h"

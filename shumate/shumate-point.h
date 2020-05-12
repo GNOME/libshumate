@@ -27,6 +27,7 @@
 #include <shumate/shumate-marker.h>
 
 #include <gdk/gdk.h>
+#include <cairo-gobject.h>
 
 G_BEGIN_DECLS
 
@@ -59,6 +60,9 @@ void shumate_point_set_size (ShumatePoint *point,
     gdouble size);
 gdouble shumate_point_get_size (ShumatePoint *point);
 
+cairo_surface_t *shumate_point_get_surface (ShumatePoint *point);
+void shumate_point_set_surface (ShumatePoint *point,
+    cairo_surface_t *surface);
 
 G_END_DECLS
 

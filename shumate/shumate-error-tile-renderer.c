@@ -27,8 +27,6 @@
 
 #include "shumate-error-tile-renderer.h"
 
-#include "shumate-cairo-importable.h"
-
 #include <gdk/gdk.h>
 
 typedef struct

@@ -30,8 +30,6 @@
 
 #include "shumate.h"
 
-#include "shumate-cairo-exportable.h"
-#include "shumate-cairo-importable.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
 #include "shumate-private.h"
@@ -75,17 +73,7 @@ typedef struct
   guint redraw_id;
 } ShumatePointPrivate;
 
-static void set_surface (ShumateCairoImportable *importable,
-    cairo_surface_t *surface);
-static cairo_surface_t *get_surface (ShumateCairoExportable *exportable);
-
-static void cairo_exportable_interface_init (ShumateCairoExportableInterface *iface);
-static void cairo_importable_interface_init (ShumateCairoImportableInterface *iface);
-
-G_DEFINE_TYPE_WITH_CODE (ShumatePoint, shumate_point, SHUMATE_TYPE_MARKER,
-    G_ADD_PRIVATE (ShumatePoint)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_EXPORTABLE, cairo_exportable_interface_init)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_CAIRO_IMPORTABLE, cairo_importable_interface_init));
+G_DEFINE_TYPE_WITH_PRIVATE (ShumatePoint, shumate_point, SHUMATE_TYPE_MARKER);
 
 static void
 shumate_point_get_property (GObject *object,
@@ -107,7 +95,7 @@ shumate_point_get_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      g_value_set_boxed (value, get_surface (SHUMATE_CAIRO_EXPORTABLE (object)));
+      g_value_set_boxed (value, priv->surface);
       break;
 
     default:
@@ -135,7 +123,7 @@ shumate_point_set_property (GObject *object,
       break;
 
     case PROP_SURFACE:
-      set_surface (SHUMATE_CAIRO_IMPORTABLE (object), g_value_get_boxed (value));
+      shumate_point_set_surface (point, g_value_get_boxed (value));
       break;
 
     default:
@@ -249,7 +237,7 @@ draw (/*ClutterCanvas *canvas,*/
   gdouble radius = size / 2.0;
   const GdkRGBA *color;
 
-  set_surface (SHUMATE_CAIRO_IMPORTABLE (point), cairo_get_target (cr));
+  shumate_point_set_surface (point, cairo_get_target (cr));
 
   cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
   cairo_paint (cr);
@@ -299,50 +287,6 @@ shumate_point_init (ShumatePoint *point)
 
   g_signal_connect (point, "notify::selected", G_CALLBACK (notify_selected), NULL);
 }
-
-
-static void
-set_surface (ShumateCairoImportable *importable,
-     cairo_surface_t *surface)
-{
-  ShumatePoint *self = SHUMATE_POINT (importable);
-  ShumatePointPrivate *priv = shumate_point_get_instance_private (self);
-
-  g_return_if_fail (SHUMATE_POINT (importable));
-  g_return_if_fail (surface != NULL);
-
-  if (priv->surface == surface)
-    return;
-
-  cairo_surface_destroy (priv->surface);
-  priv->surface = cairo_surface_reference (surface);
-  g_object_notify (G_OBJECT (self), "surface");
-}
-
-static cairo_surface_t *
-get_surface (ShumateCairoExportable *exportable)
-{
-  ShumatePoint *self = SHUMATE_POINT (exportable);
-  ShumatePointPrivate *priv = shumate_point_get_instance_private (self);
-
-  g_return_val_if_fail (SHUMATE_POINT (exportable), NULL);
-
-  return priv->surface;
-}
-
-
-static void
-cairo_exportable_interface_init (ShumateCairoExportableInterface *iface)
-{
-  iface->get_surface = get_surface;
-}
-
-static void
-cairo_importable_interface_init (ShumateCairoImportableInterface *iface)
-{
-  iface->set_surface = set_surface;
-}
-
 
 /**
  * shumate_point_new:
@@ -469,4 +413,44 @@ shumate_point_get_color (ShumatePoint *point)
   g_return_val_if_fail (SHUMATE_IS_POINT (point), NULL);
 
   return priv->color;
+}
+
+/**
+ * shumate_point_get_surface:
+ * @point: the #ShumatePoint
+ *
+ * Returns: (transfer none): A #cairo_surface_t
+ */
+cairo_surface_t *
+shumate_point_get_surface (ShumatePoint *point)
+{
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
+
+  g_return_val_if_fail (SHUMATE_IS_POINT (point), NULL);
+
+  return priv->surface;
+}
+
+/**
+ * shumate_point_set_surface:
+ * @point: the #ShumatePoint
+ * @surface: a #cairo_surface_t
+ *
+ */
+void
+shumate_point_set_surface (ShumatePoint *point,
+    cairo_surface_t *surface)
+{
+  ShumatePointPrivate *priv = shumate_point_get_instance_private (point);
+
+  g_return_if_fail (SHUMATE_IS_POINT (point));
+
+  if (priv->surface == surface)
+    return;
+
+  g_clear_pointer (&priv->surface, cairo_surface_destroy);
+  if (surface)
+    priv->surface = cairo_surface_reference (surface);
+
+  g_object_notify (G_OBJECT (point), "surface");
 }

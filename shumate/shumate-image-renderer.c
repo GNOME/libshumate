@@ -28,9 +28,6 @@
 
 #include "shumate-image-renderer.h"
 
-#include "shumate-cairo-exportable.h"
-#include "shumate-cairo-importable.h"
-
 #include <gdk/gdk.h>
 
 typedef struct
@@ -171,7 +168,7 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
   cr = cairo_create (image_surface);
   gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
   cairo_paint (cr);
-  shumate_cairo_importable_set_surface (SHUMATE_CAIRO_IMPORTABLE (tile), image_surface);
+  shumate_tile_set_surface (tile, image_surface);
   cairo_destroy (cr);
 
   /* Load the image into clutter */

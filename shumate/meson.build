@@ -1,8 +1,6 @@
 libshumate_public_h = [
   'shumate-adjustment.h',
   'shumate-bounding-box.h',
-  'shumate-cairo-exportable.h',
-  'shumate-cairo-importable.h',
   'shumate-coordinate.h',
   'shumate-defines.h',
   'shumate-error-tile-renderer.h',
@@ -42,8 +40,6 @@ libshumate_private_h = [
 libshumate_sources = [
   'shumate-adjustment.c',
   'shumate-bounding-box.c',
-  'shumate-cairo-exportable.c',
-  'shumate-cairo-importable.c',
   'shumate-coordinate.c',
   'shumate-debug.c',
   'shumate-error-tile-renderer.c',
