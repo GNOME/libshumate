@@ -25,7 +25,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <cairo-gobject.h>
+#include <gdk/gdk.h>
 
 G_BEGIN_DECLS
 
@@ -100,9 +100,9 @@ void shumate_tile_set_fade_in (ShumateTile *self,
 
 void shumate_tile_display_content (ShumateTile *self);
 
-cairo_surface_t *shumate_tile_get_surface (ShumateTile *self);
-void shumate_tile_set_surface (ShumateTile *self,
-    cairo_surface_t *surface);
+GdkTexture *shumate_tile_get_texture (ShumateTile *self);
+void shumate_tile_set_texture (ShumateTile *self,
+    GdkTexture *texture);
 G_END_DECLS
 
 #endif /* SHUMATE_MAP_TILE_H */

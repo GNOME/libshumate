@@ -33,7 +33,6 @@
 #include <math.h>
 #include <gdk/gdk.h>
 #include <gio/gio.h>
-#include <cairo-gobject.h>
 
 typedef struct
 {
@@ -50,7 +49,7 @@ typedef struct
   GDateTime *modified_time; /* The last modified time of the cache */
   gchar *etag; /* The HTTP ETag sent by the server */
   gboolean content_displayed;
-  cairo_surface_t *surface;
+  GdkTexture *texture;
 } ShumateTilePrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateTile, shumate_tile, G_TYPE_OBJECT);
@@ -66,7 +65,7 @@ enum
   PROP_CONTENT,
   PROP_ETAG,
   PROP_FADE_IN,
-  PROP_SURFACE
+  PROP_TEXTURE
 };
 
 enum
@@ -120,8 +119,8 @@ shumate_tile_get_property (GObject *object,
       g_value_set_boolean (value, shumate_tile_get_fade_in (self));
       break;
 
-    case PROP_SURFACE:
-      g_value_set_boxed (value, shumate_tile_get_surface (self));
+    case PROP_TEXTURE:
+      g_value_set_object (value, shumate_tile_get_texture (self));
       break;
 
     default:
@@ -172,8 +171,8 @@ shumate_tile_set_property (GObject *object,
       shumate_tile_set_fade_in (self, g_value_get_boolean (value));
       break;
 
-    case PROP_SURFACE:
-      shumate_tile_set_surface (self, g_value_get_boxed (value));
+    case PROP_TEXTURE:
+      shumate_tile_set_texture (self, g_value_get_object (value));
       break;
 
     default:
@@ -194,7 +193,7 @@ shumate_tile_dispose (GObject *object)
   //    priv->content_actor = NULL;
   //  }
 
-  g_clear_pointer (&priv->surface, cairo_surface_destroy);
+  g_clear_object (&priv->texture);
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
 }
 
@@ -205,8 +204,8 @@ shumate_tile_finalize (GObject *object)
   ShumateTile *self = SHUMATE_TILE (object);
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
-  g_date_time_unref (priv->modified_time);
-  g_free (priv->etag);
+  g_clear_pointer (&priv->modified_time, g_date_time_unref);
+  g_clear_pointer (&priv->etag, g_free);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->finalize (object);
 }
@@ -339,16 +338,16 @@ shumate_tile_class_init (ShumateTileClass *klass)
           G_PARAM_READWRITE));
 
   /**
-   * ShumateTile:surface:
+   * ShumateTile:texture:
    *
-   * The Cairo surface backing the tile
+   * The #GdkTexture backing the tile
    */
   g_object_class_install_property (object_class,
-      PROP_SURFACE,
-      g_param_spec_boxed ("surface",
-          "Surface",
-          "Cairo surface representaion",
-          CAIRO_GOBJECT_TYPE_SURFACE,
+      PROP_TEXTURE,
+      g_param_spec_object ("texture",
+          "Texture",
+          "Gdk Texture representaion",
+          GDK_TYPE_TEXTURE,
           G_PARAM_READWRITE));
 
   /**
@@ -670,7 +669,9 @@ shumate_tile_set_modified_time (ShumateTile *self,
   g_return_if_fail (SHUMATE_TILE (self));
   g_return_if_fail (modified_time != NULL);
 
-  g_date_time_unref (priv->modified_time);
+  if (priv->modified_time)
+    g_date_time_unref (priv->modified_time);
+
   priv->modified_time = g_date_time_ref (modified_time);
 }
 
@@ -856,45 +857,39 @@ shumate_tile_set_fade_in (ShumateTile *self,
 
   priv->fade_in = fade_in;
 
-  g_object_notify (G_OBJECT (self), "surface");
+  g_object_notify (G_OBJECT (self), "texture");
 }
 
 /**
- * shumate_tile_get_surface:
+ * shumate_tile_get_texture:
  * @self: the #ShumateTile
  *
- * Returns: (transfer none): A #cairo_surface_t
+ * Returns: (transfer none): A #GdkTexture
  */
-cairo_surface_t *
-shumate_tile_get_surface (ShumateTile *self)
+GdkTexture *
+shumate_tile_get_texture (ShumateTile *self)
 {
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
 
-  return priv->surface;
+  return priv->texture;
 }
 
 /**
- * shumate_tile_set_surface:
+ * shumate_tile_set_texture:
  * @self: the #ShumateTile
- * @surface: a #cairo_surface_t
+ * @texture: a #GdkTexture
  *
  */
 void
-shumate_tile_set_surface (ShumateTile *self,
-    cairo_surface_t *surface)
+shumate_tile_set_texture (ShumateTile *self,
+    GdkTexture *texture)
 {
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->surface == surface)
-    return;
-
-  g_clear_pointer (&priv->surface, cairo_surface_destroy);
-  if (surface)
-    priv->surface = cairo_surface_reference (surface);
-
-  g_object_notify (G_OBJECT (self), "surface");
+  if (g_set_object (&priv->texture, texture))
+    g_object_notify (G_OBJECT (self), "texture");
 }

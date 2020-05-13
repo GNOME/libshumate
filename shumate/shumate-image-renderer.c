@@ -141,13 +141,8 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
 {
   ShumateTile *tile = data->tile;
   gboolean error = TRUE;
-  //ClutterActor *actor = NULL;
-  GdkPixbuf *pixbuf;
-  //ClutterContent *content;
-  gfloat width, height;
-  cairo_surface_t *image_surface = NULL;
-  cairo_format_t format;
-  cairo_t *cr;
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(GdkTexture) texture = NULL;
 
   pixbuf = gdk_pixbuf_new_from_stream_finish (res, NULL);
   if (!pixbuf)
@@ -156,57 +151,21 @@ image_rendered_cb (GInputStream *stream, GAsyncResult *res, RendererData *data)
       goto finish;
     }
 
-  width = gdk_pixbuf_get_width (pixbuf);
-  height = gdk_pixbuf_get_height (pixbuf);
-  format = (gdk_pixbuf_get_has_alpha (pixbuf) ? CAIRO_FORMAT_ARGB32 : CAIRO_FORMAT_RGB24);
-  image_surface = cairo_image_surface_create (format, width, height);
-  if (cairo_surface_status (image_surface) != CAIRO_STATUS_SUCCESS)
-    {
-      g_warning ("Bad surface");
-      goto finish;
-    }
-  cr = cairo_create (image_surface);
-  gdk_cairo_set_source_pixbuf (cr, pixbuf, 0, 0);
-  cairo_paint (cr);
-  shumate_tile_set_surface (tile, image_surface);
-  cairo_destroy (cr);
-
-  /* Load the image into clutter */
-  width = height = shumate_tile_get_size (tile);
-  /* content = clutter_canvas_new (); */
-  /* clutter_canvas_set_size (CLUTTER_CANVAS (content), width, height); */
-  /* g_signal_connect (content, "draw", G_CALLBACK (image_tile_draw_cb), tile); */
-  /* clutter_content_invalidate (content); */
-
-  /* actor = clutter_actor_new (); */
-  /* clutter_actor_set_size (actor, width, height); */
-  /* clutter_actor_set_content (actor, content); */
-  /* g_object_unref (content); */
-  /* has to be set for proper opacity */
-  /* clutter_actor_set_offscreen_redirect (actor, CLUTTER_OFFSCREEN_REDIRECT_AUTOMATIC_FOR_OPACITY); */
+  texture = gdk_texture_new_for_pixbuf (pixbuf);
+  shumate_tile_set_texture (tile, texture);
 
   error = FALSE;
 
 finish:
 
-  /*
-  if (actor)
-    shumate_tile_set_content (tile, actor);
-  */
-
   g_signal_emit_by_name (tile, "render-complete", data->data, data->size, error);
 
-  if (pixbuf)
-    g_object_unref (pixbuf);
-
-  if (image_surface)
-    cairo_surface_destroy (image_surface);
-
   g_object_unref (data->renderer);
-  g_object_unref (tile);
-  g_object_unref (stream);
   g_free (data->data);
   g_slice_free (RendererData, data);
+
+  g_object_unref (tile);
+  g_object_unref (stream);
 }
 
 
