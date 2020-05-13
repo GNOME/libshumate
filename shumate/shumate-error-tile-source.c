@@ -18,7 +18,7 @@
  */
 
 /**
- * SECTION:shumate-null-tile-source
+ * SECTION:shumate-error-tile-source
  * @short_description: A tile source that doesn't load map data from anywhere
  *
  * This map source does not provide any input data to the associated renderer.
@@ -26,20 +26,20 @@
  * of any input such as in the case of the #ShumateErrorTileRenderer.
  */
 
-#include "shumate-null-tile-source.h"
+#include "shumate-error-tile-source.h"
 
 #include "shumate-debug.h"
 #include "shumate-bounding-box.h"
 #include "shumate-enum-types.h"
 #include "shumate-tile.h"
 
-G_DEFINE_TYPE (ShumateNullTileSource, shumate_null_tile_source, SHUMATE_TYPE_TILE_SOURCE)
+G_DEFINE_TYPE (ShumateErrorTileSource, shumate_error_tile_source, SHUMATE_TYPE_TILE_SOURCE)
 
 static void fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile);
 
 static void
-shumate_null_tile_source_class_init (ShumateNullTileSourceClass *klass)
+shumate_error_tile_source_class_init (ShumateErrorTileSourceClass *klass)
 {
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
@@ -48,25 +48,25 @@ shumate_null_tile_source_class_init (ShumateNullTileSourceClass *klass)
 
 
 static void
-shumate_null_tile_source_init (ShumateNullTileSource *self)
+shumate_error_tile_source_init (ShumateErrorTileSource *self)
 {
 }
 
 
 /**
- * shumate_null_tile_source_new_full:
+ * shumate_error_tile_source_new_full:
  * @renderer: the #ShumateRenderer used to render tiles
  *
- * Constructor of #ShumateNullTileSource.
+ * Constructor of #ShumateErrorTileSource.
  *
- * Returns: a constructed #ShumateNullTileSource object
+ * Returns: a constructed #ShumateErrorTileSource object
  */
-ShumateNullTileSource *
-shumate_null_tile_source_new_full (ShumateRenderer *renderer)
+ShumateErrorTileSource *
+shumate_error_tile_source_new_full (ShumateRenderer *renderer)
 {
-  ShumateNullTileSource *source;
+  ShumateErrorTileSource *source;
 
-  source = g_object_new (SHUMATE_TYPE_NULL_TILE_SOURCE,
+  source = g_object_new (SHUMATE_TYPE_ERROR_TILE_SOURCE,
         "renderer", renderer,
         NULL);
   return source;
@@ -110,7 +110,7 @@ static void
 fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile)
 {
-  g_return_if_fail (SHUMATE_IS_NULL_TILE_SOURCE (map_source));
+  g_return_if_fail (SHUMATE_IS_ERROR_TILE_SOURCE (map_source));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
 
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);

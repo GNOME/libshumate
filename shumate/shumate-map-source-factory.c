@@ -420,15 +420,15 @@ ShumateMapSource *
 shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
     guint tile_size)
 {
-  ShumateMapSource *null_source;
+  ShumateMapSource *error_source;
   ShumateRenderer *renderer;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
   renderer = SHUMATE_RENDERER (shumate_error_tile_renderer_new (tile_size));
-  null_source = SHUMATE_MAP_SOURCE (shumate_null_tile_source_new_full (renderer));
+  error_source = SHUMATE_MAP_SOURCE (shumate_error_tile_source_new_full (renderer));
 
-  return null_source;
+  return error_source;
 }
 
 

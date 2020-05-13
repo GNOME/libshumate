@@ -52,7 +52,7 @@
 #include "shumate/shumate-map-source-chain.h"
 
 #include "shumate/shumate-network-tile-source.h"
-#include "shumate/shumate-null-tile-source.h"
+#include "shumate/shumate-error-tile-source.h"
 
 #include "shumate/shumate-memory-cache.h"
 #include "shumate/shumate-file-cache.h"

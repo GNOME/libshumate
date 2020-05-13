@@ -237,21 +237,21 @@ ShumateNetworkBboxTileSourcePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-null-tile-source</FILE>
-<TITLE>ShumateNullTileSource</TITLE>
-ShumateNullTileSource
-shumate_null_tile_source_new_full
+<FILE>shumate-error-tile-source</FILE>
+<TITLE>ShumateErrorTileSource</TITLE>
+ShumateErrorTileSource
+shumate_error_tile_source_new_full
 <SUBSECTION Standard>
-SHUMATE_NULL_TILE_SOURCE
-SHUMATE_IS_NULL_TILE_SOURCE
-SHUMATE_TYPE_NULL_TILE_SOURCE
-shumate_null_tile_source_get_type
-SHUMATE_NULL_TILE_SOURCE_CLASS
-SHUMATE_IS_NULL_TILE_SOURCE_CLASS
-SHUMATE_NULL_TILE_SOURCE_GET_CLASS
+SHUMATE_ERROR_TILE_SOURCE
+SHUMATE_IS_ERROR_TILE_SOURCE
+SHUMATE_TYPE_ERROR_TILE_SOURCE
+shumate_error_tile_source_get_type
+SHUMATE_ERROR_TILE_SOURCE_CLASS
+SHUMATE_IS_ERROR_TILE_SOURCE_CLASS
+SHUMATE_ERROR_TILE_SOURCE_GET_CLASS
 <SUBSECTION Private>
-ShumateNullTileSourceClass
-ShumateNullTileSourcePrivate
+ShumateErrorTileSourceClass
+ShumateErrorTileSourcePrivate
 </SECTION>
 
 <SECTION>

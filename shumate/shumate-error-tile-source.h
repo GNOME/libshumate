@@ -21,31 +21,31 @@
 #error "Only <shumate/shumate.h> can be included directly."
 #endif
 
-#ifndef _SHUMATE_NULL_TILE_SOURCE
-#define _SHUMATE_NULL_TILE_SOURCE
+#ifndef __SHUMATE_ERROR_TILE_SOURCE__
+#define __SHUMATE_ERROR_TILE_SOURCE__
 #include <glib-object.h>
 
 #include <shumate/shumate-tile-source.h>
 
 G_BEGIN_DECLS
 
-#define SHUMATE_TYPE_NULL_TILE_SOURCE shumate_null_tile_source_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateNullTileSource, shumate_null_tile_source, SHUMATE, NULL_TILE_SOURCE, ShumateTileSource)
+#define SHUMATE_TYPE_ERROR_TILE_SOURCE shumate_error_tile_source_get_type ()
+G_DECLARE_DERIVABLE_TYPE (ShumateErrorTileSource, shumate_error_tile_source, SHUMATE, ERROR_TILE_SOURCE, ShumateTileSource)
 
 /**
- * ShumateNullTileSource:
+ * ShumateErrorTileSource:
  *
- * The #ShumateNullTileSource structure contains only private data
+ * The #ShumateErrorTileSource structure contains only private data
  * and should be accessed using the provided API
  */
-struct _ShumateNullTileSourceClass
+struct _ShumateErrorTileSourceClass
 {
   ShumateTileSourceClass parent_class;
 };
 
-ShumateNullTileSource *shumate_null_tile_source_new_full (ShumateRenderer *renderer);
+ShumateErrorTileSource *shumate_error_tile_source_new_full (ShumateRenderer *renderer);
 
 
 G_END_DECLS
 
-#endif /* _SHUMATE_NULL_TILE_SOURCE */
+#endif /* __SHUMATE_ERROR_TILE_SOURCE__ */
