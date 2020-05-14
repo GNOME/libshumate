@@ -21,8 +21,6 @@ shumate_map_source_get_meters_per_pixel
 shumate_map_source_fill_tile
 shumate_map_source_get_next_source
 shumate_map_source_set_next_source
-shumate_map_source_get_renderer
-shumate_map_source_set_renderer
 <SUBSECTION Standard>
 SHUMATE_MAP_SOURCE
 SHUMATE_IS_MAP_SOURCE
@@ -594,62 +592,6 @@ SHUMATE_MEMORY_CACHE_GET_CLASS
 <SUBSECTION Private>
 ShumateMemoryCacheClass
 ShumateMemoryCachePrivate
-</SECTION>
-
-<SECTION>
-<FILE>shumate-renderer</FILE>
-<TITLE>ShumateRenderer</TITLE>
-ShumateRenderer
-shumate_renderer_set_data
-shumate_renderer_render
-<SUBSECTION Standard>
-SHUMATE_RENDERER
-SHUMATE_IS_RENDERER
-SHUMATE_TYPE_RENDERER
-shumate_renderer_get_type
-SHUMATE_RENDERER_CLASS
-SHUMATE_IS_RENDERER_CLASS
-SHUMATE_RENDERER_GET_CLASS
-<SUBSECTION Private>
-ShumateRendererClass
-</SECTION>
-
-<SECTION>
-<FILE>shumate-error-tile-renderer</FILE>
-<TITLE>ShumateErrorTileRenderer</TITLE>
-ShumateErrorTileRenderer
-shumate_error_tile_renderer_new
-shumate_error_tile_renderer_set_tile_size
-shumate_error_tile_renderer_get_tile_size
-<SUBSECTION Standard>
-SHUMATE_ERROR_TILE_RENDERER
-SHUMATE_IS_ERROR_TILE_RENDERER
-SHUMATE_TYPE_ERROR_TILE_RENDERER
-shumate_error_tile_renderer_get_type
-SHUMATE_ERROR_TILE_RENDERER_CLASS
-SHUMATE_IS_ERROR_TILE_RENDERER_CLASS
-SHUMATE_ERROR_TILE_RENDERER_GET_CLASS
-<SUBSECTION Private>
-ShumateErrorTileRendererClass
-ShumateErrorTileRendererPrivate
-</SECTION>
-
-<SECTION>
-<FILE>shumate-image-renderer</FILE>
-<TITLE>ShumateImageRenderer</TITLE>
-ShumateImageRenderer
-shumate_image_renderer_new
-<SUBSECTION Standard>
-SHUMATE_IMAGE_RENDERER
-SHUMATE_IS_IMAGE_RENDERER
-SHUMATE_TYPE_IMAGE_RENDERER
-shumate_image_renderer_get_type
-SHUMATE_IMAGE_RENDERER_CLASS
-SHUMATE_IS_IMAGE_RENDERER_CLASS
-SHUMATE_IMAGE_RENDERER_GET_CLASS
-<SUBSECTION Private>
-ShumateImageRendererClass
-ShumateImageRendererPrivate
 </SECTION>
 
 <SECTION>

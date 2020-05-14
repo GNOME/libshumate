@@ -33,6 +33,32 @@
 #include "shumate-enum-types.h"
 #include "shumate-tile.h"
 
+static GdkTexture *
+texture_new_for_surface (cairo_surface_t *surface)
+{
+  g_autoptr(GBytes) bytes = NULL;
+  GdkTexture *texture;
+
+  g_return_val_if_fail (cairo_surface_get_type (surface) == CAIRO_SURFACE_TYPE_IMAGE, NULL);
+  g_return_val_if_fail (cairo_image_surface_get_width (surface) > 0, NULL);
+  g_return_val_if_fail (cairo_image_surface_get_height (surface) > 0, NULL);
+
+  bytes = g_bytes_new_with_free_func (cairo_image_surface_get_data (surface),
+                                      cairo_image_surface_get_height (surface)
+                                      * cairo_image_surface_get_stride (surface),
+                                      (GDestroyNotify) cairo_surface_destroy,
+                                      cairo_surface_reference (surface));
+  
+  texture = gdk_memory_texture_new (cairo_image_surface_get_width (surface),
+                                    cairo_image_surface_get_height (surface),
+                                    GDK_MEMORY_B8G8R8A8_PREMULTIPLIED,
+                                    bytes,
+                                    cairo_image_surface_get_stride (surface));
+
+  return texture;
+}
+
+
 G_DEFINE_TYPE (ShumateErrorTileSource, shumate_error_tile_source, SHUMATE_TYPE_TILE_SOURCE)
 
 static void fill_tile (ShumateMapSource *map_source,
@@ -55,54 +81,15 @@ shumate_error_tile_source_init (ShumateErrorTileSource *self)
 
 /**
  * shumate_error_tile_source_new_full:
- * @renderer: the #ShumateRenderer used to render tiles
  *
  * Constructor of #ShumateErrorTileSource.
  *
  * Returns: a constructed #ShumateErrorTileSource object
  */
 ShumateErrorTileSource *
-shumate_error_tile_source_new_full (ShumateRenderer *renderer)
+shumate_error_tile_source_new_full (void)
 {
-  ShumateErrorTileSource *source;
-
-  source = g_object_new (SHUMATE_TYPE_ERROR_TILE_SOURCE,
-        "renderer", renderer,
-        NULL);
-  return source;
-}
-
-
-static void
-tile_rendered_cb (ShumateTile *tile,
-    gpointer data,
-    guint size,
-    gboolean error,
-    ShumateMapSource *map_source)
-{
-  ShumateMapSource *next_source;
-
-  g_signal_handlers_disconnect_by_func (tile, tile_rendered_cb, map_source);
-
-  next_source = shumate_map_source_get_next_source (map_source);
-
-  if (!error)
-    {
-      ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
-      ShumateTileCache *tile_cache = shumate_tile_source_get_cache (tile_source);
-
-      if (tile_cache && data)
-        shumate_tile_cache_store_tile (tile_cache, tile, data, size);
-
-      shumate_tile_set_fade_in (tile, TRUE);
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
-    }
-  else if (next_source)
-    shumate_map_source_fill_tile (next_source, tile);
-
-  g_object_unref (map_source);
-  g_object_unref (tile);
+  return g_object_new (SHUMATE_TYPE_ERROR_TILE_SOURCE, NULL);
 }
 
 
@@ -120,18 +107,45 @@ fill_tile (ShumateMapSource *map_source,
 
   if (shumate_tile_get_state (tile) != SHUMATE_STATE_LOADED)
     {
-      ShumateRenderer *renderer;
+      g_autoptr(GdkTexture) texture = NULL;
+      guint tile_size = shumate_tile_get_size (tile);
+      cairo_surface_t *surface;
+      cairo_t *cr;
+      cairo_pattern_t *pat;
 
-      renderer = shumate_map_source_get_renderer (map_source);
+      surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, tile_size, tile_size);
+      cr = cairo_create (surface);
 
-      g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
+      // draw a linear gray to white pattern
+      pat = cairo_pattern_create_linear (tile_size / 2.0, 0.0, tile_size, tile_size / 2.0);
+      cairo_pattern_add_color_stop_rgb (pat, 0, 0.686, 0.686, 0.686);
+      cairo_pattern_add_color_stop_rgb (pat, 1, 0.925, 0.925, 0.925);
+      cairo_set_source (cr, pat);
+      cairo_rectangle (cr, 0, 0, tile_size, tile_size);
+      cairo_fill (cr);
 
-      g_object_ref (map_source);
-      g_object_ref (tile);
+      cairo_pattern_destroy (pat);
 
-      g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), map_source);
+      // draw the red cross
+      cairo_set_source_rgb (cr, 0.424, 0.078, 0.078);
+      cairo_set_line_width (cr, 14.0);
+      cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
+      cairo_move_to (cr, 24, 24);
+      cairo_line_to (cr, 50, 50);
+      cairo_move_to (cr, 50, 24);
+      cairo_line_to (cr, 24, 50);
+      cairo_stroke (cr);
 
-      shumate_renderer_render (renderer, tile);
+      cairo_destroy (cr);
+      cairo_surface_flush (surface);
+
+      texture = texture_new_for_surface (surface);
+      cairo_surface_destroy (surface);
+
+      shumate_tile_set_texture (tile, texture);
+      shumate_tile_set_fade_in (tile, TRUE);
+      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+      shumate_tile_display_content (tile);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
     shumate_map_source_fill_tile (next_source, tile);

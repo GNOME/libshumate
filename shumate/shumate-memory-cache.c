@@ -161,21 +161,18 @@ shumate_memory_cache_class_init (ShumateMemoryCacheClass *klass)
 /**
  * shumate_memory_cache_new_full:
  * @size_limit: maximum number of tiles stored in the cache
- * @renderer: the #ShumateRenderer used for tiles rendering
  *
  * Constructor of #ShumateMemoryCache.
  *
  * Returns: a constructed #ShumateMemoryCache
  */
 ShumateMemoryCache *
-shumate_memory_cache_new_full (guint size_limit,
-    ShumateRenderer *renderer)
+shumate_memory_cache_new_full (guint size_limit)
 {
   ShumateMemoryCache *cache;
 
   cache = g_object_new (SHUMATE_TYPE_MEMORY_CACHE,
         "size-limit", size_limit,
-        "renderer", renderer,
         NULL);
 
   return cache;
@@ -269,37 +266,6 @@ delete_queue_member (QueueMember *member, gpointer user_data)
     }
 }
 
-
-static void
-tile_rendered_cb (ShumateTile *tile,
-    gpointer data,
-    guint size,
-    gboolean error,
-    ShumateMapSource *map_source)
-{
-  ShumateMapSource *next_source;
-
-  g_signal_handlers_disconnect_by_func (tile, tile_rendered_cb, map_source);
-
-  next_source = shumate_map_source_get_next_source (map_source);
-
-  if (!error)
-    {
-      if (SHUMATE_IS_TILE_CACHE (next_source))
-        shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
-
-      shumate_tile_set_fade_in (tile, FALSE);
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
-    }
-  else if (next_source)
-    shumate_map_source_fill_tile (next_source, tile);
-
-  g_object_unref (map_source);
-  g_object_unref (tile);
-}
-
-
 static void
 fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile)
@@ -316,31 +282,38 @@ fill_tile (ShumateMapSource *map_source,
     {
       ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (map_source);
       ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
-      ShumateRenderer *renderer;
       GList *link;
-      gchar *key;
+      g_autofree gchar *key = generate_queue_key (memory_cache, tile);
 
-      key = generate_queue_key (memory_cache, tile);
       link = g_hash_table_lookup (priv->hash_table, key);
-      g_free (key);
       if (link)
         {
+          g_autoptr(GInputStream) stream = NULL;
+          g_autoptr(GError) error = NULL;
+          g_autoptr(GdkPixbuf) pixbuf = NULL;
+          g_autoptr(GdkTexture) texture = NULL;
           QueueMember *member = link->data;
 
           move_queue_member_to_head (priv->queue, link);
 
-          renderer = shumate_map_source_get_renderer (map_source);
+          stream = g_memory_input_stream_new_from_data (member->data, member->size, NULL);
+          pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
+          if (!pixbuf)
+            {
+              if (next_source)
+                shumate_map_source_fill_tile (next_source, tile);
 
-          g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
+              return;
+            }
 
-          g_object_ref (map_source);
-          g_object_ref (tile);
+          if (SHUMATE_IS_TILE_CACHE (next_source))
+            shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
 
-          g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), map_source);
-
-          shumate_renderer_set_data (renderer, (guint8 *) member->data, member->size);
-          shumate_renderer_render (renderer, tile);
-
+          texture = gdk_texture_new_for_pixbuf (pixbuf);
+          shumate_tile_set_texture (tile, texture);
+          shumate_tile_set_fade_in (tile, FALSE);
+          shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+          shumate_tile_display_content (tile);
           return;
         }
     }

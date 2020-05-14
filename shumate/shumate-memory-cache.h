@@ -44,8 +44,7 @@ struct _ShumateMemoryCacheClass
   ShumateTileCacheClass parent_class;
 };
 
-ShumateMemoryCache *shumate_memory_cache_new_full (guint size_limit,
-    ShumateRenderer *renderer);
+ShumateMemoryCache *shumate_memory_cache_new_full (guint size_limit);
 
 guint shumate_memory_cache_get_size_limit (ShumateMemoryCache *memory_cache);
 void shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,

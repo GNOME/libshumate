@@ -93,12 +93,6 @@
     </chapter>
   </part>
   <part>
-    <title>Renderer API</title>
-    <xi:include href="xml/shumate-renderer.xml"/>
-    <xi:include href="xml/shumate-image-renderer.xml"/>
-    <xi:include href="xml/shumate-error-tile-renderer.xml"/>
-  </part>
-  <part>
     <title>Others</title>
     <xi:include href="xml/shumate-tile.xml"/>
     <xi:include href="xml/shumate-bounding-box.xml"/>

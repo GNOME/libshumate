@@ -43,7 +43,7 @@ struct _ShumateErrorTileSourceClass
   ShumateTileSourceClass parent_class;
 };
 
-ShumateErrorTileSource *shumate_error_tile_source_new_full (ShumateRenderer *renderer);
+ShumateErrorTileSource *shumate_error_tile_source_new_full (void);
 
 
 G_END_DECLS

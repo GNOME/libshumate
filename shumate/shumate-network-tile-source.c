@@ -85,20 +85,17 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_sourc
 
 typedef struct
 {
-  ShumateMapSource *map_source;
-  SoupMessage *msg;
-} TileCancelledData;
-
-typedef struct
-{
-  ShumateMapSource *map_source;
+  ShumateNetworkTileSource *self;
+  GCancellable *cancellable;
   ShumateTile *tile;
-  TileCancelledData *cancelled_data;
+  SoupMessage *msg;
 } TileLoadedData;
 
 typedef struct
 {
-  ShumateMapSource *map_source;
+  ShumateNetworkTileSource *self;
+  GCancellable *cancellable;
+  ShumateTile *tile;
   gchar *etag;
 } TileRenderedData;
 
@@ -107,7 +104,7 @@ static void fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile);
 static void tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
-    TileCancelledData *data);
+    GCancellable *cancellable);
 
 static gchar *get_tile_uri (ShumateNetworkTileSource *source,
     gint x,
@@ -334,7 +331,6 @@ shumate_network_tile_source_init (ShumateNetworkTileSource *tile_source)
  * @tile_size: the map source's tile size (in pixels)
  * @projection: the map source's projection
  * @uri_format: the URI to fetch the tiles from, see #shumate_network_tile_source_set_uri_format
- * @renderer: the #ShumateRenderer used to render tiles
  *
  * Constructor of #ShumateNetworkTileSource.
  *
@@ -349,8 +345,7 @@ shumate_network_tile_source_new_full (const gchar *id,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    const gchar *uri_format,
-    ShumateRenderer *renderer)
+    const gchar *uri_format)
 {
   ShumateNetworkTileSource *source;
 
@@ -364,7 +359,6 @@ shumate_network_tile_source_new_full (const gchar *id,
         "tile-size", tile_size,
         "projection", projection,
         "uri-format", uri_format,
-        "renderer", renderer,
         NULL);
   return source;
 }
@@ -640,71 +634,95 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
 
 
 static void
-tile_rendered_cb (ShumateTile *tile,
-    gpointer data,
-    guint size,
-    gboolean error,
-    TileRenderedData *user_data)
+on_pixbuf_created (GObject      *source_object,
+                   GAsyncResult *res,
+                   gpointer      user_data)
 {
-  ShumateMapSource *map_source = user_data->map_source;
-  ShumateMapSource *next_source;
-  gchar *etag = user_data->etag;
+  TileRenderedData *rendered_data = (TileRenderedData *) user_data;
+  g_autoptr(ShumateNetworkTileSource) self = g_steal_pointer (&rendered_data->self);
+  g_autoptr(GCancellable) cancellable = g_steal_pointer (&rendered_data->cancellable);
+  g_autoptr(ShumateTile) tile = g_steal_pointer (&rendered_data->tile);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(GdkTexture) texture = NULL;
+  g_autofree gchar *etag = g_steal_pointer (&rendered_data->etag);
+  ShumateTileCache *tile_cache = shumate_tile_source_get_cache (SHUMATE_TILE_SOURCE (self));
 
-  g_signal_handlers_disconnect_by_func (tile, tile_rendered_cb, user_data);
-  g_slice_free (TileRenderedData, user_data);
+  g_slice_free (TileRenderedData, rendered_data);
+  g_signal_handlers_disconnect_by_func (tile, tile_state_notify, cancellable);
 
-  next_source = shumate_map_source_get_next_source (map_source);
-
-  if (!error)
+  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
+  if (!pixbuf)
     {
-      ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
-      ShumateTileCache *tile_cache = shumate_tile_source_get_cache (tile_source);
+      ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          DEBUG ("Download of tile %d, %d got cancelled",
+              shumate_tile_get_x (tile), shumate_tile_get_y (tile));
+          return;
+        }
 
-      if (etag != NULL)
-        shumate_tile_set_etag (tile, etag);
+      if (next_source)
+        shumate_map_source_fill_tile (next_source, tile);
 
-      if (tile_cache && data)
-        shumate_tile_cache_store_tile (tile_cache, tile, data, size);
-
-      shumate_tile_set_fade_in (tile, TRUE);
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
+      return;
     }
-  else if (next_source)
-    shumate_map_source_fill_tile (next_source, tile);
 
-  g_free (etag);
-  g_object_unref (map_source);
-  g_object_unref (tile);
+
+  if (etag != NULL)
+    shumate_tile_set_etag (tile, etag);
+
+  if (tile_cache)
+    {
+      g_autoptr(GError) error = NULL;
+      g_autofree gchar *buffer = NULL;
+      gsize buffer_size;
+      if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
+        g_warning ("Unable to export tile: %s", error->message);
+      else
+        shumate_tile_cache_store_tile (tile_cache, tile, buffer, buffer_size);
+    }
+
+  texture = gdk_texture_new_for_pixbuf (pixbuf);
+  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_fade_in (tile, TRUE);
+  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+  shumate_tile_display_content (tile);
 }
 
-
 static void
-tile_loaded_cb (G_GNUC_UNUSED SoupSession *session,
-    SoupMessage *msg,
-    gpointer user_data)
+on_message_sent (GObject *source_object,
+                 GAsyncResult *res,
+                 gpointer user_data)
 {
   TileLoadedData *callback_data = (TileLoadedData *) user_data;
-  ShumateMapSource *map_source = callback_data->map_source;
-  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
+  g_autoptr(SoupMessage) msg = g_steal_pointer (&callback_data->msg);
+  g_autoptr(ShumateNetworkTileSource) self = g_steal_pointer (&callback_data->self);
+  g_autoptr(GCancellable) cancellable = g_steal_pointer (&callback_data->cancellable);
+  g_autoptr(ShumateTile) tile = g_steal_pointer (&callback_data->tile);
+  g_autoptr(GInputStream) input_stream = NULL;
+  g_autoptr(GError) error = NULL;
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (self);
+  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (self);
   ShumateTileCache *tile_cache = shumate_tile_source_get_cache (tile_source);
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-  ShumateTile *tile = callback_data->tile;
+  ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
   const gchar *etag;
   TileRenderedData *data;
-  ShumateRenderer *renderer;
 
-  g_signal_handlers_disconnect_by_func (tile, tile_state_notify, callback_data->cancelled_data);
   g_slice_free (TileLoadedData, callback_data);
 
-  DEBUG ("Got reply %d", msg->status_code);
-
-  if (msg->status_code == SOUP_STATUS_CANCELLED)
+  input_stream = soup_session_send_finish (priv->soup_session, res, &error);
+  if (!input_stream)
     {
-      DEBUG ("Download of tile %d, %d got cancelled",
-          shumate_tile_get_x (tile), shumate_tile_get_y (tile));
-      goto cleanup;
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          DEBUG ("Download of tile %d, %d got cancelled",
+              shumate_tile_get_x (tile), shumate_tile_get_y (tile));
+          return;
+        }
     }
+  
+  DEBUG ("Got reply %d", msg->status_code);
 
   if (msg->status_code == SOUP_STATUS_NOT_MODIFIED)
     {
@@ -720,69 +738,40 @@ tile_loaded_cb (G_GNUC_UNUSED SoupSession *session,
           shumate_tile_get_y (tile),
           soup_status_get_phrase (msg->status_code));
 
-      goto load_next;
+      if (next_source)
+        shumate_map_source_fill_tile (next_source, tile);
+
+      return;
     }
 
   /* Verify if the server sent an etag and save it */
   etag = soup_message_headers_get_one (msg->response_headers, "ETag");
   DEBUG ("Received ETag %s", etag);
 
-  renderer = shumate_map_source_get_renderer (map_source);
-  g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
-
   data = g_slice_new (TileRenderedData);
-  data->map_source = map_source;
+  data->self = g_object_ref (self);
+  data->cancellable = g_object_ref (cancellable);
+  data->tile = g_object_ref (tile);
   data->etag = g_strdup (etag);
 
-  g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), data);
-
-  shumate_renderer_set_data (renderer, (guint8*) msg->response_body->data, msg->response_body->length);
-  shumate_renderer_render (renderer, tile);
-
+  gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, data);
   return;
-
-load_next:
-  if (next_source)
-    shumate_map_source_fill_tile (next_source, tile);
-
-  goto cleanup;
 
 finish:
   shumate_tile_set_fade_in (tile, TRUE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
   shumate_tile_display_content (tile);
-
-cleanup:
-  g_object_unref (tile);
-  g_object_unref (map_source);
 }
-
-
-static void
-destroy_cancelled_data (TileCancelledData *data,
-    G_GNUC_UNUSED GClosure *closure)
-{
-  if (data->map_source)
-    g_object_remove_weak_pointer (G_OBJECT (data->map_source), (gpointer *) &data->map_source);
-
-  if (data->msg)
-    g_object_remove_weak_pointer (G_OBJECT (data->msg), (gpointer *) &data->msg);
-
-  g_slice_free (TileCancelledData, data);
-}
-
 
 static void
 tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
-    TileCancelledData *data)
+    GCancellable *cancellable)
 {
-  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE && data->map_source && data->msg)
+  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
     {
-      ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (data->map_source);
-      ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
       DEBUG ("Canceling tile download");
-      soup_session_cancel_message (priv->soup_session, data->msg, SOUP_STATUS_CANCELLED);
+      g_cancellable_cancel (cancellable);
     }
 }
 
@@ -817,16 +806,20 @@ fill_tile (ShumateMapSource *map_source,
 
   if (!priv->offline)
     {
-      TileLoadedData *callback_data;
-      SoupMessage *msg;
-      gchar *uri;
+      g_autoptr(GCancellable) cancellable = g_cancellable_new ();
+      TileLoadedData *callback_data = g_slice_new (TileLoadedData);
+      g_autofree gchar *uri = NULL;
 
       uri = get_tile_uri (tile_source,
             shumate_tile_get_x (tile),
             shumate_tile_get_y (tile),
             shumate_tile_get_zoom_level (tile));
-      msg = soup_message_new (SOUP_METHOD_GET, uri);
-      g_free (uri);
+
+      callback_data = g_slice_new (TileLoadedData);
+      callback_data->tile = g_object_ref (tile);
+      callback_data->self = g_object_ref (tile_source);
+      callback_data->cancellable = g_cancellable_new ();
+      callback_data->msg = soup_message_new (SOUP_METHOD_GET, uri);
 
       if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
         {
@@ -842,40 +835,21 @@ fill_tile (ShumateMapSource *map_source,
           if (etag)
             {
               DEBUG ("If-None-Match: %s", etag);
-              soup_message_headers_append (msg->request_headers,
+              soup_message_headers_append (callback_data->msg->request_headers,
                   "If-None-Match", etag);
             }
           else if (date)
             {
               DEBUG ("If-Modified-Since %s", date);
-              soup_message_headers_append (msg->request_headers,
+              soup_message_headers_append (callback_data->msg->request_headers,
                   "If-Modified-Since", date);
             }
 
           g_free (date);
         }
 
-      TileCancelledData *tile_cancelled_data = g_slice_new (TileCancelledData);
-      tile_cancelled_data->map_source = map_source;
-      tile_cancelled_data->msg = msg;
-
-      g_object_add_weak_pointer (G_OBJECT (msg), (gpointer *) &tile_cancelled_data->msg);
-      g_object_add_weak_pointer (G_OBJECT (map_source), (gpointer *) &tile_cancelled_data->map_source);
-
-      g_signal_connect_data (tile, "notify::state", G_CALLBACK (tile_state_notify),
-          tile_cancelled_data, (GClosureNotify) destroy_cancelled_data, 0);
-
-      callback_data = g_slice_new (TileLoadedData);
-      callback_data->tile = tile;
-      callback_data->map_source = map_source;
-      callback_data->cancelled_data = tile_cancelled_data;
-
-      g_object_ref (map_source);
-      g_object_ref (tile);
-
-      soup_session_queue_message (priv->soup_session, msg,
-          tile_loaded_cb,
-          callback_data);
+      g_signal_connect_object (tile, "notify::state", G_CALLBACK (tile_state_notify), cancellable, 0);
+      soup_session_send_async (priv->soup_session, callback_data->msg, NULL, on_message_sent, callback_data);
     }
   else
     {

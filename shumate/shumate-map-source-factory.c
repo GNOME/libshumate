@@ -49,8 +49,6 @@
 #include "shumate-private.h"
 #include "shumate-network-tile-source.h"
 #include "shumate-map-source-chain.h"
-#include "shumate-error-tile-renderer.h"
-#include "shumate-image-renderer.h"
 
 #include <glib.h>
 #include <string.h>
@@ -343,7 +341,6 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   ShumateMapSource *memory_cache;
   ShumateMapSource *file_cache;
   guint tile_size;
-  ShumateRenderer *renderer;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
@@ -354,11 +351,9 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   tile_size = shumate_map_source_get_tile_size (tile_source);
   error_source = shumate_map_source_factory_create_error_source (factory, tile_size);
 
-  renderer = SHUMATE_RENDERER (shumate_image_renderer_new ());
-  file_cache = SHUMATE_MAP_SOURCE (shumate_file_cache_new_full (100000000, NULL, renderer));
+  file_cache = SHUMATE_MAP_SOURCE (shumate_file_cache_new_full (100000000, NULL));
 
-  renderer = SHUMATE_RENDERER (shumate_image_renderer_new ());
-  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100, renderer));
+  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100));
 
   source_chain = shumate_map_source_chain_new ();
   shumate_map_source_chain_push (source_chain, error_source);
@@ -388,7 +383,6 @@ shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *fac
   ShumateMapSourceChain *source_chain;
   ShumateMapSource *tile_source;
   ShumateMapSource *memory_cache;
-  ShumateRenderer *renderer;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
@@ -396,8 +390,7 @@ shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *fac
   if (!tile_source)
     return NULL;
 
-  renderer = SHUMATE_RENDERER (shumate_image_renderer_new ());
-  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100, renderer));
+  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100));
 
   source_chain = shumate_map_source_chain_new ();
   shumate_map_source_chain_push (source_chain, tile_source);
@@ -421,12 +414,10 @@ shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory
     guint tile_size)
 {
   ShumateMapSource *error_source;
-  ShumateRenderer *renderer;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
 
-  renderer = SHUMATE_RENDERER (shumate_error_tile_renderer_new (tile_size));
-  error_source = SHUMATE_MAP_SOURCE (shumate_error_tile_source_new_full (renderer));
+  error_source = SHUMATE_MAP_SOURCE (shumate_error_tile_source_new_full ());
 
   return error_source;
 }
@@ -475,7 +466,6 @@ static ShumateMapSource *
 shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
 {
   ShumateMapSource *map_source;
-  ShumateRenderer *renderer;
   const gchar *id, *name, *license, *license_uri, *uri_format;
   guint min_zoom, max_zoom, tile_size;
   ShumateMapProjection projection;
@@ -490,8 +480,6 @@ shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
   projection = shumate_map_source_desc_get_projection (desc);
   uri_format = shumate_map_source_desc_get_uri_format (desc);
 
-  renderer = SHUMATE_RENDERER (shumate_image_renderer_new ());
-
   map_source = SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_full (
             id,
             name,
@@ -501,8 +489,7 @@ shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
             max_zoom,
             tile_size,
             projection,
-            uri_format,
-            renderer));
+            uri_format));
 
   return map_source;
 }

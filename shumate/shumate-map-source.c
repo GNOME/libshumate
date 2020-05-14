@@ -59,7 +59,6 @@
 typedef struct
 {
   ShumateMapSource *next_source;
-  ShumateRenderer *renderer;
 } ShumateMapSourcePrivate;
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
@@ -68,7 +67,6 @@ enum
 {
   PROP_0,
   PROP_NEXT_SOURCE,
-  PROP_RENDERER,
 };
 
 static void
@@ -84,10 +82,6 @@ shumate_map_source_get_property (GObject *object,
     {
     case PROP_NEXT_SOURCE:
       g_value_set_object (value, priv->next_source);
-      break;
-
-    case PROP_RENDERER:
-      g_value_set_object (value, priv->renderer);
       break;
 
     default:
@@ -111,11 +105,6 @@ shumate_map_source_set_property (GObject *object,
           g_value_get_object (value));
       break;
 
-    case PROP_RENDERER:
-      shumate_map_source_set_renderer (map_source,
-          g_value_get_object (value));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -129,7 +118,6 @@ shumate_map_source_dispose (GObject *object)
   ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
   g_clear_object (&priv->next_source);
-  g_clear_object (&priv->renderer);
 
   G_OBJECT_CLASS (shumate_map_source_parent_class)->dispose (object);
 }
@@ -167,18 +155,6 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
         SHUMATE_TYPE_MAP_SOURCE,
         G_PARAM_READWRITE);
   g_object_class_install_property (object_class, PROP_NEXT_SOURCE, pspec);
-
-  /**
-   * ShumateMapSource:renderer:
-   *
-   * Renderer used for tiles rendering.
-   */
-  pspec = g_param_spec_object ("renderer",
-        "Tile renderer",
-        "Tile renderer used to render tiles",
-        SHUMATE_TYPE_RENDERER,
-        G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_RENDERER, pspec);
 }
 
 
@@ -188,7 +164,6 @@ shumate_map_source_init (ShumateMapSource *map_source)
   ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
 
   priv->next_source = NULL;
-  priv->renderer = NULL;
 }
 
 
@@ -209,26 +184,6 @@ shumate_map_source_get_next_source (ShumateMapSource *map_source)
 
   return priv->next_source;
 }
-
-
-/**
- * shumate_map_source_get_renderer:
- * @map_source: a #ShumateMapSource
- *
- * Get the renderer used for tiles rendering.
- *
- * Returns: (transfer none): the renderer.
- */
-ShumateRenderer *
-shumate_map_source_get_renderer (ShumateMapSource *map_source)
-{
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
-
-  return priv->renderer;
-}
-
 
 /**
  * shumate_map_source_set_next_source:
@@ -259,33 +214,6 @@ shumate_map_source_set_next_source (ShumateMapSource *map_source,
 
   g_object_notify (G_OBJECT (map_source), "next-source");
 }
-
-
-/**
- * shumate_map_source_set_renderer:
- * @map_source: a #ShumateMapSource
- * @renderer: the renderer
- *
- * Sets the renderer used for tiles rendering.
- */
-void
-shumate_map_source_set_renderer (ShumateMapSource *map_source,
-    ShumateRenderer *renderer)
-{
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
-  g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
-
-  if (priv->renderer != NULL)
-    g_object_unref (priv->renderer);
-
-  g_object_ref_sink (renderer);
-  priv->renderer = renderer;
-
-  g_object_notify (G_OBJECT (map_source), "renderer");
-}
-
 
 /**
  * shumate_map_source_get_id:

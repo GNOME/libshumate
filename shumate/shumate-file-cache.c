@@ -339,7 +339,6 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  * @size_limit: maximum size of the cache in bytes
  * @cache_dir: (allow-none): the directory where the cache is created. When cache_dir == NULL,
  * a cache in ~/.cache/shumate is used.
- * @renderer: the #ShumateRenderer used for tiles rendering
  *
  * Constructor of #ShumateFileCache.
  *
@@ -347,15 +346,13 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  */
 ShumateFileCache *
 shumate_file_cache_new_full (guint size_limit,
-    const gchar *cache_dir,
-    ShumateRenderer *renderer)
+    const gchar *cache_dir)
 {
   ShumateFileCache *cache;
 
   cache = g_object_new (SHUMATE_TYPE_FILE_CACHE,
         "size-limit", size_limit,
         "cache-dir", cache_dir,
-        "renderer", renderer,
         NULL);
   return cache;
 }
@@ -472,63 +469,65 @@ tile_is_expired (ShumateFileCache *file_cache,
 
 typedef struct
 {
-  ShumateMapSource *map_source;
+  ShumateFileCache *self;
   ShumateTile *tile;
 } FileLoadedData;
 
 static void
-tile_rendered_cb (ShumateTile *tile,
-    gpointer data,
-    guint size,
-    gboolean error,
-    FileLoadedData *user_data)
+file_loaded_data_free (FileLoadedData *data)
 {
-  ShumateMapSource *map_source = user_data->map_source;
-  GFile *file;
-  ShumateFileCache *file_cache;
-  ShumateMapSource *next_source;
-  ShumateFileCachePrivate *priv;
-  GFileInfo *info = NULL;
-  GDateTime *modified_time;
-  gchar *filename = NULL;
+  g_clear_object (&data->self);
+  g_clear_object (&data->tile);
+  g_slice_free (FileLoadedData, data);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FileLoadedData, file_loaded_data_free)
 
-  g_signal_handlers_disconnect_by_func (tile, tile_rendered_cb, user_data);
-  g_slice_free (FileLoadedData, user_data);
+static void
+on_pixbuf_created (GObject *source_object,
+                   GAsyncResult *res,
+                   gpointer user_data)
+{
+  g_autoptr(FileLoadedData) loaded_data = user_data;
+  ShumateFileCache *self = loaded_data->self;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
+  ShumateTile *tile = loaded_data->tile;
+  ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(GdkTexture) texture = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree gchar *filename = NULL;
+  g_autoptr(GFileInfo) info = NULL;
 
-  next_source = shumate_map_source_get_next_source (map_source);
-  file_cache = SHUMATE_FILE_CACHE (map_source);
-  priv = shumate_file_cache_get_instance_private (file_cache);
-
-  if (error)
+  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
+  if (!pixbuf)
     {
       DEBUG ("Tile rendering failed");
       goto load_next;
     }
 
+  texture = gdk_texture_new_for_pixbuf (pixbuf);
+  shumate_tile_set_texture (tile, texture);
   shumate_tile_set_state (tile, SHUMATE_STATE_LOADED);
 
-  filename = get_filename (file_cache, tile);
+  filename = get_filename (self, tile);
   file = g_file_new_for_path (filename);
 
   /* Retrieve modification time */
   info = g_file_query_info (file,
-        G_FILE_ATTRIBUTE_TIME_MODIFIED,
-        G_FILE_QUERY_INFO_NONE, NULL, NULL);
+                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                            G_FILE_QUERY_INFO_NONE, NULL, NULL);
   if (info)
     {
-      modified_time = g_file_info_get_modification_date_time (info);
+      g_autoptr(GDateTime) modified_time = g_file_info_get_modification_date_time (info);
       shumate_tile_set_modified_time (tile, modified_time);
-
-      g_date_time_unref (modified_time);
-      g_object_unref (info);
     }
-  g_object_unref (file);
 
   /* Notify other caches that the tile has been filled */
   if (SHUMATE_IS_TILE_CACHE (next_source))
     shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
 
-  if (tile_is_expired (file_cache, tile))
+  if (tile_is_expired (self, tile))
     {
       int sql_rc = SQLITE_OK;
 
@@ -570,7 +569,7 @@ tile_rendered_cb (ShumateTile *tile,
       shumate_tile_set_fade_in (tile, FALSE);
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
       shumate_tile_display_content (tile);
-      goto cleanup;
+      return;
     }
 
 load_next:
@@ -582,52 +581,35 @@ load_next:
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
       shumate_tile_display_content (tile);
     }
-
-cleanup:
-  g_free (filename);
-  g_object_unref (tile);
-  g_object_unref (map_source);
 }
 
 
 static void
-file_loaded_cb (GFile *file,
-    GAsyncResult *res,
-    FileLoadedData *user_data)
+on_file_loaded (GObject      *source_object,
+                GAsyncResult *res,
+                gpointer      user_data)
 {
-  gboolean ok;
-  gchar *contents;
-  gsize length;
-  GError *error = NULL;
-  ShumateTile *tile = user_data->tile;
-  ShumateMapSource *map_source = user_data->map_source;
-  ShumateRenderer *renderer;
+  g_autoptr(FileLoadedData) loaded_data = user_data;
+  ShumateFileCache *self = loaded_data->self;
+  ShumateTile *tile = loaded_data->tile;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GInputStream) input_stream = NULL;
 
-  ok = g_file_load_contents_finish (file, res, &contents, &length, NULL, &error);
-
-  if (!ok)
+  input_stream = G_INPUT_STREAM (g_file_read_finish (G_FILE (source_object), res, &error));
+  if (!input_stream)
     {
-      gchar *path;
+      g_autofree gchar *path = g_file_get_path (G_FILE (source_object));
+      ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
 
-      path = g_file_get_path (file);
       DEBUG ("Failed to load tile %s, error: %s", path, error->message);
-      g_free (path);
-      contents = NULL;
-      length = 0;
-      g_error_free (error);
+
+      if (next_source)
+        shumate_map_source_fill_tile (next_source, tile);
+
+      return;
     }
 
-  g_object_unref (file);
-
-  renderer = shumate_map_source_get_renderer (map_source);
-
-  g_return_if_fail (SHUMATE_IS_RENDERER (renderer));
-
-  g_signal_connect (tile, "render-complete", G_CALLBACK (tile_rendered_cb), user_data);
-
-  shumate_renderer_set_data (renderer, (guint8*) contents, length);
-  g_free (contents);
-  shumate_renderer_render (renderer, tile);
+  gdk_pixbuf_new_from_stream_async (input_stream, NULL, on_pixbuf_created, g_steal_pointer (&loaded_data));
 }
 
 
@@ -635,7 +617,9 @@ static void
 fill_tile (ShumateMapSource *map_source,
     ShumateTile *tile)
 {
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (map_source));
+  ShumateFileCache *self = (ShumateFileCache *)map_source;
+  
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
 
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
@@ -646,23 +630,19 @@ fill_tile (ShumateMapSource *map_source,
   if (shumate_tile_get_state (tile) != SHUMATE_STATE_LOADED)
     {
       FileLoadedData *user_data;
-      gchar *filename;
-      GFile *file;
+      g_autoptr(GFile) file = NULL;
+      g_autofree gchar *filename = NULL;
 
-      filename = get_filename (SHUMATE_FILE_CACHE (map_source), tile);
+      filename = get_filename (self, tile);
       file = g_file_new_for_path (filename);
-      g_free (filename);
 
       user_data = g_slice_new (FileLoadedData);
-      user_data->tile = tile;
-      user_data->map_source = map_source;
-
-      g_object_ref (tile);
-      g_object_ref (map_source);
+      user_data->self = g_object_ref (self);
+      user_data->tile = g_object_ref (tile);
 
       DEBUG ("fill of %s", filename);
 
-      g_file_load_contents_async (file, NULL, (GAsyncReadyCallback) file_loaded_cb, user_data);
+      g_file_read_async (file, G_PRIORITY_DEFAULT, NULL, on_file_loaded, user_data);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
     shumate_map_source_fill_tile (next_source, tile);

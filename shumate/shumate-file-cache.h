@@ -46,8 +46,7 @@ struct _ShumateFileCacheClass
 };
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
-    const gchar *cache_dir,
-    ShumateRenderer *renderer);
+    const gchar *cache_dir);
 
 guint shumate_file_cache_get_size_limit (ShumateFileCache *file_cache);
 void shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,

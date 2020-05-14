@@ -26,7 +26,6 @@
 
 #include <shumate/shumate-defines.h>
 #include <shumate/shumate-tile.h>
-#include <shumate/shumate-renderer.h>
 
 G_BEGIN_DECLS
 
@@ -71,10 +70,6 @@ struct _ShumateMapSourceClass
 ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_source);
 void shumate_map_source_set_next_source (ShumateMapSource *map_source,
     ShumateMapSource *next_source);
-
-ShumateRenderer *shumate_map_source_get_renderer (ShumateMapSource *map_source);
-void shumate_map_source_set_renderer (ShumateMapSource *map_source,
-    ShumateRenderer *renderer);
 
 const gchar *shumate_map_source_get_id (ShumateMapSource *map_source);
 const gchar *shumate_map_source_get_name (ShumateMapSource *map_source);

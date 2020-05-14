@@ -45,7 +45,6 @@
 #include "shumate/shumate-map-source.h"
 #include "shumate/shumate-tile-source.h"
 #include "shumate/shumate-tile-cache.h"
-#include "shumate/shumate-renderer.h"
 
 #include "shumate/shumate-map-source-factory.h"
 
@@ -56,9 +55,6 @@
 
 #include "shumate/shumate-memory-cache.h"
 #include "shumate/shumate-file-cache.h"
-
-#include "shumate/shumate-image-renderer.h"
-#include "shumate/shumate-error-tile-renderer.h"
 
 #undef __SHUMATE_SHUMATE_H_INSIDE__
 

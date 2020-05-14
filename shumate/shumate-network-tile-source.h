@@ -53,8 +53,7 @@ ShumateNetworkTileSource *shumate_network_tile_source_new_full (const gchar *id,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    const gchar *uri_format,
-    ShumateRenderer *renderer);
+    const gchar *uri_format);
 
 const gchar *shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
