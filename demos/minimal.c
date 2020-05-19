@@ -24,17 +24,17 @@ static void
 activate (GtkApplication* app,
           gpointer        user_data)
 {
-  GtkWidget *window;
+  GtkWindow *window;
   ShumateView *view;
 
   /* Create the map view */
   view = shumate_view_new ();
 
-  window = gtk_application_window_new (app);
-  gtk_window_set_title (GTK_WINDOW (window), "Window");
-  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
-  gtk_widget_show (window);
+  window = GTK_WINDOW (gtk_application_window_new (app));
+  gtk_window_set_title (window, "Window");
+  gtk_window_set_default_size (window, 200, 200);
+  gtk_window_set_child (window, GTK_WIDGET (view));
+  gtk_window_present (window);
 }
 
 int
