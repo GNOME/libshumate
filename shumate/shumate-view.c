@@ -1,8 +1,9 @@
 /*
  * Copyright (C) 2008-2009 Pierre-Luc Beaudoin <pierre-luc@pierlux.com>
  * Copyright (C) 2010-2013 Jiri Techet <techet@gmail.com>
- * Copyright (C) 2012 Collabora Ltd. <http://www.collabora.co.uk/>
+ * Copyright (C) 2012,2020 Collabora Ltd. (https://www.collabora.com/)
  * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
+ * Copyright (C) 2020 Corentin Noël <corentin.noel@collabora.com>
  *
  *
  * This library is free software; you can redistribute it and/or
@@ -65,21 +66,12 @@
 #include "shumate-tile.h"
 #include "shumate-license.h"
 
-//#include <clutter/clutter.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <math.h>
-//#include <shumate-kinetic-scroll-view.h>
 #include <shumate-viewport.h>
 #include <shumate-adjustment.h>
-
-/* #define VIEW_LOG */
-#ifdef VIEW_LOG
-#define DEBUG_LOG() g_print ("%s\n", __FUNCTION__);
-#else
-#define DEBUG_LOG()
-#endif
 
 enum
 {
@@ -111,7 +103,6 @@ enum
   PROP_HORIZONTAL_WRAP
 };
 
-#define PADDING 10
 static guint signals[LAST_SIGNAL] = { 0, };
 
 #define ZOOM_LEVEL_OUT_OF_RANGE(priv, level) \
@@ -239,7 +230,7 @@ typedef struct
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
 
 //static void exclusive_destroy_clone (ClutterActor *clone);
-static void update_clones (ShumateView *view);
+//static void update_clones (ShumateView *view);
 /*static gboolean scroll_event (ClutterActor *actor,
     ClutterScrollEvent *event,
     ShumateView *view);*/
@@ -264,9 +255,9 @@ static void viewport_pos_changed_cb (GObject *gobject,
 static ClutterActor *sample_user_layer_at_pos (ShumateView *view,
     gfloat x,
     gfloat y);*/
-static void swap_user_layer_slots (ShumateView *view,
+/*static void swap_user_layer_slots (ShumateView *view,
     gint original_index,
-    gint clone_index);
+    gint clone_index);*/
 /*static gboolean viewport_motion_cb (ClutterActor *actor,
     ClutterMotionEvent *event,
     ShumateView *view);
@@ -341,8 +332,6 @@ get_longitude (ShumateView *view,
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
   if (priv->hwrap)
@@ -360,8 +349,6 @@ update_coords (ShumateView *view,
     gdouble y,
     gboolean notify)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   priv->viewport_x = x;
@@ -386,11 +373,9 @@ position_viewport (ShumateView *view,
     gdouble x,
     gdouble y)
 {
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  /* ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gint old_bg_offset_x = 0, old_bg_offset_y = 0;
-  gfloat bg_width, bg_height;
+  gfloat bg_width, bg_height;*/
 
   /* remember the relative offset of the background tile */
   /*
@@ -468,8 +453,6 @@ static void
 panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
     ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = view->priv;
   gdouble x, y;
 
@@ -486,11 +469,9 @@ panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
 }
 */
 
-static gboolean
+/*static gboolean
 zoom_timeout_cb (gpointer data)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = data;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -498,15 +479,14 @@ zoom_timeout_cb (gpointer data)
   priv->zoom_timeout = 0;
 
   return FALSE;
-}
+}*/
 
 
-static gboolean
+/* static gboolean
 scroll_event (G_GNUC_UNUSED ShumateView *this,
     GdkEvent *event,
     ShumateView *view)
 {
-  DEBUG_LOG ()
   GdkScrollDirection direction;
   gdk_event_get_scroll_direction(event, &direction);
   gdouble x, y;
@@ -528,7 +508,7 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
       gdk_event_get_scroll_deltas (event, &dx, &dy);
 
       priv->accumulated_scroll_dy += dy;
-      /* add some small value to avoid missing step for values like 0.999999 */
+      // add some small value to avoid missing step for values like 0.999999
       if (dy > 0)
         steps = (int) (priv->accumulated_scroll_dy + 0.01);
       else
@@ -543,13 +523,11 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
 
   return view_set_zoom_level_at (view, zoom_level, TRUE, x, y);
 }
-
+*/
 
 static void
 resize_viewport (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   gdouble lower_x = 0;
   gdouble lower_y = 0;
   gdouble upper_x = G_MAXINT16;
@@ -604,8 +582,6 @@ shumate_view_get_property (GObject *object,
     GValue *value,
     GParamSpec *pspec)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = SHUMATE_VIEW (object);
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -701,8 +677,6 @@ shumate_view_set_property (GObject *object,
     const GValue *value,
     GParamSpec *pspec)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = SHUMATE_VIEW (object);
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -787,8 +761,6 @@ shumate_view_set_property (GObject *object,
 static void
 shumate_view_dispose (GObject *object)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = SHUMATE_VIEW (object);
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -887,8 +859,6 @@ shumate_view_dispose (GObject *object)
 static void
 shumate_view_finalize (GObject *object)
 {
-  DEBUG_LOG ()
-
 /*  ShumateViewPrivate *priv = SHUMATE_VIEW (object)->priv; */
 
   G_OBJECT_CLASS (shumate_view_parent_class)->finalize (object);
@@ -897,8 +867,6 @@ shumate_view_finalize (GObject *object)
 static void
 shumate_view_class_init (ShumateViewClass *shumateViewClass)
 {
-  DEBUG_LOG ()
-
   GObjectClass *object_class = G_OBJECT_CLASS (shumateViewClass);
   object_class->dispose = shumate_view_dispose;
   object_class->finalize = shumate_view_finalize;
@@ -1201,8 +1169,6 @@ static void
 shumate_view_realized_cb (ShumateView *view,
     G_GNUC_UNUSED GParamSpec *pspec)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   if (!gtk_widget_get_realized (GTK_WIDGET (view)))
@@ -1222,8 +1188,6 @@ shumate_view_realized_cb (ShumateView *view,
 static gboolean
 _update_idle_cb (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   //if (!priv->kinetic_scroll)
@@ -1283,12 +1247,12 @@ exclusive_destroy_clone (ClutterActor *clone)
 }
  */
 
-static void
+/*static void
 add_clone (ShumateView *view,
     gint x)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  //ClutterActor *map_clone, *user_clone;
+  //ClutterActor *map_clone, *user_clone;*/
 
   /* Map layer clones */
   //map_clone = clutter_clone_new (priv->map_layer);
@@ -1306,14 +1270,12 @@ add_clone (ShumateView *view,
 
   /* Inserting clones in the slots following the real user layer (order must be kept)*/
   //priv->user_layer_slots = g_list_append (priv->user_layer_slots, user_clone);
-}
+//}
 
 
 /* static void */
 /* update_clones (ShumateView *view) */
 /* { */
-/*   DEBUG_LOG () */
-
 /*   ShumateViewPrivate *priv = view->priv; */
 /*   gint map_size; */
 /*   gfloat view_width; */
@@ -1353,7 +1315,7 @@ slice_free_gint64 (gpointer data)
 }
 
 
-static guint
+/*static guint
 view_find_suitable_zoom (ShumateView *view,
     gdouble factor)
 {
@@ -1373,7 +1335,7 @@ view_find_suitable_zoom (ShumateView *view,
     }
 
   return zoom_level;
-}
+}*/
 
 /*
 static gboolean
@@ -1462,8 +1424,6 @@ zoom_gesture_cancel_cb (ClutterGestureAction *gesture,
 static void
 shumate_view_init (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateMapSourceFactory *factory;
   ShumateMapSource *source;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
@@ -1558,8 +1518,6 @@ shumate_view_init (ShumateView *view)
 static gboolean
 redraw_timeout_cb (gpointer data)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = data;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble x, y;
@@ -1582,8 +1540,6 @@ viewport_pos_changed_cb (G_GNUC_UNUSED GObject *gobject,
     G_GNUC_UNUSED GParamSpec *arg1,
     ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble x, y;
 
@@ -1677,8 +1633,6 @@ sample_user_layer_at_pos (ShumateView *view,
 //    ClutterButtonEvent *event,
 //    ShumateView *view)
 //{
-//  DEBUG_LOG ()
-//
 //  ShumateViewPrivate *priv = view->priv;
 //
 //  if (!priv->hwrap)
@@ -1734,13 +1688,11 @@ sample_user_layer_at_pos (ShumateView *view,
 //}
 
 
-static void
+/*static void
 shumate_view_scroll (ShumateView *view,
     gint deltax,
     gint deltay)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble lat, lon;
   gint x, y;
@@ -1755,7 +1707,7 @@ shumate_view_scroll (ShumateView *view,
     shumate_view_go_to_with_duration (view, lat, lon, 300);
   else
     shumate_view_center_on (view, lat, lon);
-}
+}*/
 
 /**
  * shumate_view_new:
@@ -1767,8 +1719,6 @@ shumate_view_scroll (ShumateView *view,
 ShumateView *
 shumate_view_new (void)
 {
-  DEBUG_LOG ()
-
   return g_object_new (SHUMATE_TYPE_VIEW, NULL);
 }
 
@@ -1786,7 +1736,6 @@ shumate_view_center_on (ShumateView *view,
     gdouble latitude,
     gdouble longitude)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -1814,8 +1763,6 @@ timeline_new_frame (G_GNUC_UNUSED ClutterTimeline *timeline,
     G_GNUC_UNUSED gint frame_num,
     GoToContext *ctx)
 {
-  DEBUG_LOG ()
-
   gdouble alpha;
   gdouble lat;
   gdouble lon;
@@ -1834,8 +1781,6 @@ static void
 timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
     ShumateView *view)
 {
-  DEBUG_LOG ()
-
   shumate_view_stop_go_to (view);
 }
 */
@@ -1850,7 +1795,6 @@ timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
 void
 shumate_view_stop_go_to (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -1883,7 +1827,6 @@ shumate_view_go_to (ShumateView *view,
     gdouble latitude,
     gdouble longitude)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   guint duration = priv->goto_duration;
@@ -1901,7 +1844,6 @@ shumate_view_go_to_with_duration (ShumateView *view,
     gdouble longitude,
     guint duration) /* In ms */
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -1956,7 +1898,6 @@ shumate_view_go_to_with_duration (ShumateView *view,
 void
 shumate_view_zoom_in (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -1974,7 +1915,6 @@ shumate_view_zoom_in (ShumateView *view)
 void
 shumate_view_zoom_out (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -1982,7 +1922,7 @@ shumate_view_zoom_out (ShumateView *view)
   shumate_view_set_zoom_level (view, priv->zoom_level - 1);
 }
 
-static void
+/*static void
 paint_surface (ShumateView *view,
     cairo_t *cr,
     cairo_surface_t *surface,
@@ -1997,20 +1937,20 @@ paint_surface (ShumateView *view,
   cairo_set_source_surface (cr,
                             surface,
                             x, y);
-  cairo_paint_with_alpha (cr, opacity);
+  cairo_paint_with_alpha (cr, opacity);*/
 
   /* Paint each surface num_right_clones - 1 extra times on the right
    * (last clone is not actually visible) and once in the left
    * in order to horizontally wrap.
    */
-  if (priv->hwrap)
+/*  if (priv->hwrap)
     {
       gint i;
 
       for (i = 0; i < priv->num_right_clones + 1; i++)
-        {
+        {*/
           /* Don't repaint original layer */
-          if (i == 1)
+          /*if (i == 1)
             continue;
 
           cairo_set_source_surface (cr,
@@ -2019,13 +1959,12 @@ paint_surface (ShumateView *view,
           cairo_paint_with_alpha (cr, opacity);
         }
     }
-}
+}*/
 
-static void
+/*static void
 layers_to_surface (ShumateView *view,
     cairo_t *cr)
 {
-  /*
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -2044,8 +1983,8 @@ layers_to_surface (ShumateView *view,
 
       paint_surface (view, cr, surface, 0, 0, 255);
     }
-   */
 }
+ */
 
 
 /**
@@ -2065,11 +2004,10 @@ layers_to_surface (ShumateView *view,
  * Returns: (transfer full): a #cairo_surface_t or %NULL on failure. Free with
  *          cairo_surface_destroy() when done.
  */
-cairo_surface_t *
+/*cairo_surface_t *
 shumate_view_to_surface (ShumateView *view,
     gboolean include_layers)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
@@ -2088,7 +2026,6 @@ shumate_view_to_surface (ShumateView *view,
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
   cr = cairo_create (surface);
 
-  /*
   clutter_actor_iter_init (&iter, priv->map_layer);
   while (clutter_actor_iter_next (&iter, &child))
     {
@@ -2116,14 +2053,13 @@ shumate_view_to_surface (ShumateView *view,
           paint_surface (view, cr, tile_surface, x, y, opacity);
         }
     }
-   */
 
     if (include_layers)
       layers_to_surface (view, cr);
 
     cairo_destroy (cr);
     return surface;
-}
+}*/
 
 
 /**
@@ -2137,8 +2073,6 @@ void
 shumate_view_set_zoom_level (ShumateView *view,
     guint zoom_level)
 {
-  DEBUG_LOG ()
-
   g_return_if_fail (SHUMATE_IS_VIEW (view));
 
   view_set_zoom_level_at (view, zoom_level, FALSE, 0, 0);
@@ -2156,7 +2090,6 @@ void
 shumate_view_set_min_zoom_level (ShumateView *view,
     guint min_zoom_level)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2185,7 +2118,6 @@ void
 shumate_view_set_max_zoom_level (ShumateView *view,
     guint max_zoom_level)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2272,8 +2204,6 @@ void
 shumate_view_add_layer (ShumateView *view,
     ShumateLayer *layer)
 {
-  DEBUG_LOG ()
-
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
@@ -2294,8 +2224,6 @@ void
 shumate_view_remove_layer (ShumateView *view,
     ShumateLayer *layer)
 {
-  DEBUG_LOG ()
-
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
@@ -2320,8 +2248,6 @@ shumate_view_x_to_longitude (ShumateView *view,
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
   return get_longitude (view, priv->zoom_level, x + priv->viewport_x);
@@ -2343,8 +2269,6 @@ shumate_view_y_to_latitude (ShumateView *view,
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble latitude;
-
-  DEBUG_LOG ()
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
@@ -2372,8 +2296,6 @@ shumate_view_longitude_to_x (ShumateView *view,
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble x;
 
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
 
   x = shumate_map_source_get_x (priv->map_source, priv->zoom_level, longitude);
@@ -2398,8 +2320,6 @@ shumate_view_latitude_to_y (ShumateView *view,
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble y;
 
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
 
   y = shumate_map_source_get_y (priv->map_source, priv->zoom_level, latitude);
@@ -2420,7 +2340,6 @@ shumate_view_get_viewport_anchor (ShumateView *view,
     gint *anchor_x,
     gint *anchor_y)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2441,7 +2360,6 @@ shumate_view_get_viewport_origin (ShumateView *view,
     gint *x,
     gint *y)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2460,8 +2378,6 @@ shumate_view_get_viewport_origin (ShumateView *view,
 static void
 fill_background_tiles (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = view->priv;
   ClutterActorIter iter;
   ClutterActor *child;
@@ -2579,8 +2495,6 @@ load_tile_for_source (ShumateView *view,
 static gboolean
 fill_tile_cb (FillTileCallbackData *data)
 {
-  DEBUG_LOG ()
-
   ShumateView *view = data->view;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gint x = data->x;
@@ -2615,8 +2529,6 @@ static void
 load_visible_tiles (ShumateView *view,
     gboolean relocate)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   //ClutterActorIter iter;
   gint size;
@@ -2739,10 +2651,7 @@ load_visible_tiles (ShumateView *view,
 static void
 remove_all_tiles (ShumateView *view)
 {
-  DEBUG_LOG ()
-
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  /*
+  /*ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   ClutterActorIter iter;
   ClutterActor *child;
 
@@ -2768,8 +2677,6 @@ remove_all_tiles (ShumateView *view)
 void
 shumate_view_reload_tiles (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   remove_all_tiles (view);
 
   load_visible_tiles (view, FALSE);
@@ -2780,8 +2687,6 @@ tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
     ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateState tile_state = shumate_tile_get_state (tile);
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -2822,7 +2727,6 @@ void
 shumate_view_set_map_source (ShumateView *view,
     ShumateMapSource *source)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view) &&
@@ -2874,8 +2778,6 @@ void
 shumate_view_set_deceleration (ShumateView *view,
     gdouble rate)
 {
-  DEBUG_LOG ()
-
   g_return_if_fail (SHUMATE_IS_VIEW (view) &&
       rate < 2.0 && rate > 1.0001);
 
@@ -2895,7 +2797,6 @@ void
 shumate_view_set_kinetic_mode (ShumateView *view,
     gboolean kinetic)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2917,7 +2818,6 @@ void
 shumate_view_set_keep_center_on_resize (ShumateView *view,
     gboolean value)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2938,7 +2838,6 @@ void
 shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2959,7 +2858,6 @@ void
 shumate_view_set_animate_zoom (ShumateView *view,
     gboolean value)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -2983,8 +2881,6 @@ shumate_view_ensure_visible (ShumateView *view,
     ShumateBoundingBox *bbox,
     gboolean animate)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   guint zoom_level = priv->zoom_level;
   gboolean good_size = FALSE;
@@ -3039,8 +2935,6 @@ void
 shumate_view_ensure_layers_visible (ShumateView *view,
     gboolean animate)
 {
-  DEBUG_LOG ()
-
   //ClutterActorIter iter;
   //ClutterActor *child;
   ShumateBoundingBox *bbox;
@@ -3080,8 +2974,6 @@ void
 shumate_view_set_background_pattern (ShumateView *view,
     ClutterContent *background)
 {
-  DEBUG_LOG ()
-
   g_return_if_fail (SHUMATE_IS_VIEW (view));
 
   ShumateViewPrivate *priv = view->priv;
@@ -3106,8 +2998,6 @@ shumate_view_set_background_pattern (ShumateView *view,
 ClutterContent *
 shumate_view_get_background_pattern (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
 
   ShumateViewPrivate *priv = view->priv;
@@ -3128,7 +3018,6 @@ void
 shumate_view_set_horizontal_wrap (ShumateView *view,
     gboolean wrap)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -3182,7 +3071,6 @@ shumate_view_set_horizontal_wrap (ShumateView *view,
 gboolean
 shumate_view_get_horizontal_wrap (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
@@ -3239,8 +3127,6 @@ view_set_zoom_level_at (ShumateView *view,
     gint x,
     gint y)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   gdouble new_x, new_y;
   gdouble offset_x = x;
@@ -3290,7 +3176,6 @@ view_set_zoom_level_at (ShumateView *view,
 guint
 shumate_view_get_zoom_level (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
@@ -3310,7 +3195,6 @@ shumate_view_get_zoom_level (ShumateView *view)
 guint
 shumate_view_get_min_zoom_level (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
@@ -3330,7 +3214,6 @@ shumate_view_get_min_zoom_level (ShumateView *view)
 guint
 shumate_view_get_max_zoom_level (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
@@ -3351,7 +3234,6 @@ shumate_view_get_max_zoom_level (ShumateView *view)
 ShumateMapSource *
 shumate_view_get_map_source (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
@@ -3371,8 +3253,6 @@ shumate_view_get_map_source (ShumateView *view)
 gdouble
 shumate_view_get_deceleration (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
   gdouble decel = 0.0;
@@ -3392,7 +3272,6 @@ shumate_view_get_deceleration (ShumateView *view)
 gboolean
 shumate_view_get_kinetic_mode (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
@@ -3412,7 +3291,6 @@ shumate_view_get_kinetic_mode (ShumateView *view)
 gboolean
 shumate_view_get_keep_center_on_resize (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
@@ -3432,7 +3310,6 @@ shumate_view_get_keep_center_on_resize (ShumateView *view)
 gboolean
 shumate_view_get_zoom_on_double_click (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
@@ -3452,7 +3329,6 @@ shumate_view_get_zoom_on_double_click (ShumateView *view)
 gboolean
 shumate_view_get_animate_zoom (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
@@ -3471,7 +3347,6 @@ shumate_view_get_animate_zoom (ShumateView *view)
 gdouble
 shumate_view_get_center_latitude (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
@@ -3491,7 +3366,6 @@ shumate_view_get_center_latitude (ShumateView *view)
 gdouble
 shumate_view_get_center_longitude (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
@@ -3511,7 +3385,6 @@ shumate_view_get_center_longitude (ShumateView *view)
 ShumateState
 shumate_view_get_state (ShumateView *view)
 {
-  DEBUG_LOG ()
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), SHUMATE_STATE_NONE);
@@ -3615,8 +3488,6 @@ shumate_view_get_bounding_box_for_zoom_level (ShumateView *view,
 ShumateBoundingBox *
 shumate_view_get_bounding_box (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
@@ -3639,8 +3510,6 @@ shumate_view_add_overlay_source (ShumateView *view,
     ShumateMapSource *map_source,
     guint8 opacity)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -3666,8 +3535,6 @@ void
 shumate_view_remove_overlay_source (ShumateView *view,
     ShumateMapSource *map_source)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
@@ -3692,8 +3559,6 @@ shumate_view_remove_overlay_source (ShumateView *view,
 GList *
 shumate_view_get_overlay_sources (ShumateView *view)
 {
-  DEBUG_LOG ()
-
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
