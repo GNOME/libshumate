@@ -26,7 +26,6 @@
 
 #include "shumate-adjustment.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 
 G_DEFINE_TYPE (ShumateAdjustment, shumate_adjustment, G_TYPE_OBJECT)
 
@@ -190,7 +189,7 @@ shumate_adjustment_class_init (ShumateAdjustmentClass *klass)
           -G_MAXDOUBLE,
           G_MAXDOUBLE,
           0.0,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
       PROP_UPPER,
       g_param_spec_double ("upper",
@@ -199,7 +198,7 @@ shumate_adjustment_class_init (ShumateAdjustmentClass *klass)
           -G_MAXDOUBLE,
           G_MAXDOUBLE,
           0.0,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
       PROP_VALUE,
       g_param_spec_double ("value",
@@ -208,7 +207,7 @@ shumate_adjustment_class_init (ShumateAdjustmentClass *klass)
           -G_MAXDOUBLE,
           G_MAXDOUBLE,
           0.0,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
   g_object_class_install_property (object_class,
       PROP_STEP_INC,
       g_param_spec_double ("step-increment",
@@ -217,7 +216,7 @@ shumate_adjustment_class_init (ShumateAdjustmentClass *klass)
           -G_MAXDOUBLE,
           G_MAXDOUBLE,
           0.0,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   signals[CHANGED] =
     g_signal_new ("changed",

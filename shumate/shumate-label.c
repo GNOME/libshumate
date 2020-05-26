@@ -41,7 +41,6 @@
 #include "shumate.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-tile.h"
 
 #include <gdk/gdk.h>
@@ -353,7 +352,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Text",
           "The text of the label",
           "",
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:image:
@@ -366,7 +365,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Image",
           "The image of the label",
           CLUTTER_TYPE_ACTOR,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
    */
 
   /**
@@ -379,7 +378,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Use Markup",
           "The text uses markup",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:alignment:
@@ -392,7 +391,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "The label's alignment",
           PANGO_TYPE_ALIGNMENT,
           PANGO_ALIGN_LEFT,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:color:
@@ -404,7 +403,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Color",
           "The label's color",
           GDK_TYPE_RGBA,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:text-color:
@@ -416,7 +415,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Text Color",
           "The label's text color",
           GDK_TYPE_RGBA,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:font-name:
@@ -428,7 +427,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Font Name",
           "The label's text font name",
           "Sans 11",
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:wrap:
@@ -440,7 +439,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Wrap",
           "The label's text wrap",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:wrap-mode:
@@ -453,7 +452,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "The label's text wrap mode",
           PANGO_TYPE_WRAP_MODE,
           PANGO_WRAP_WORD,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:ellipsize:
@@ -466,7 +465,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "The label's text ellipsize mode",
           PANGO_TYPE_ELLIPSIZE_MODE,
           PANGO_ELLIPSIZE_NONE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:draw-background:
@@ -478,7 +477,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Draw Background",
           "The label has a background",
           TRUE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
 /**
    * ShumateLabel:draw-shadow:
@@ -490,7 +489,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Draw Shadow",
           "The label background has a shadow",
           TRUE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLabel:single-line-mode:
@@ -502,7 +501,7 @@ shumate_label_class_init (ShumateLabelClass *klass)
           "Single Line Mode",
           "The label's single line mode",
           TRUE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 

@@ -29,7 +29,6 @@
 #include "shumate-scale.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-enum-types.h"
 #include "shumate-view.h"
 

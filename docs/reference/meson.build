@@ -15,7 +15,6 @@ libshumate_reference_ignored_h = [
   'shumate-features.h',
   'shumate-kinetic-scroll-view.h',
   'shumate-marshal.h',
-  'shumate-private.h',
   'shumate-viewport.h',
   'shumate.h',
 ]

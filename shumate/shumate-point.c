@@ -32,7 +32,6 @@
 
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-tile.h"
 
 #include <cairo/cairo-gobject.h>
@@ -203,7 +202,7 @@ shumate_point_class_init (ShumatePointClass *klass)
           "Color",
           "The point's color",
           GDK_TYPE_RGBA,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (object_class, PROP_SIZE,
       g_param_spec_double ("size",
@@ -212,7 +211,7 @@ shumate_point_class_init (ShumatePointClass *klass)
           0,
           G_MAXDOUBLE,
           12,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   g_object_class_install_property (object_class,
       PROP_SURFACE,

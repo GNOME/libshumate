@@ -25,7 +25,6 @@
  */
 
 #include "shumate-location.h"
-#include "shumate-private.h"
 
 G_DEFINE_INTERFACE (ShumateLocation, shumate_location, G_TYPE_OBJECT);
 
@@ -45,7 +44,7 @@ shumate_location_default_init (ShumateLocationInterface *iface)
           -180.0f,
           180.0f,
           0.0f,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLocation:latitude:
@@ -59,7 +58,7 @@ shumate_location_default_init (ShumateLocationInterface *iface)
           -90.0f,
           90.0f,
           0.0f,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 

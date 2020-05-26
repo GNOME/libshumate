@@ -28,7 +28,6 @@
 
 #include "config.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-location.h"
 
 enum

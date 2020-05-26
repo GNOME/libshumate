@@ -36,7 +36,6 @@
 
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
-#include "shumate-private.h"
 #include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
@@ -294,7 +293,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           "Closed Path",
           "The Path is Closed",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumatePathLayer:fill:
@@ -307,7 +306,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           "Fill",
           "The shape is filled",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumatePathLayer:stroke:
@@ -320,7 +319,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           "Stroke",
           "The shape is stroked",
           TRUE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumatePathLayer:stroke-color:
@@ -361,7 +360,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           0,
           100.0,
           2.0,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumatePathLayer:visible:
@@ -374,7 +373,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
           "Visible",
           "The path's visibility",
           TRUE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 /*

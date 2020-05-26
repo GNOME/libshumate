@@ -29,7 +29,6 @@
 #include "shumate-license.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-enum-types.h"
 #include "shumate-view.h"
 
@@ -226,7 +225,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
           "Additional license",
           "Additional license text",
           "",
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateLicense:alignment:
@@ -240,7 +239,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
           "The license's alignment",
           PANGO_TYPE_ALIGNMENT,
           PANGO_ALIGN_LEFT,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 

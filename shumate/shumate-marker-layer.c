@@ -32,7 +32,6 @@
 
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
-#include "shumate-private.h"
 #include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
@@ -147,7 +146,7 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
           "Determines the type of selection that will be performed.",
           SHUMATE_TYPE_SELECTION_MODE,
           SHUMATE_SELECTION_NONE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 

@@ -27,7 +27,6 @@
 #include "shumate-tile.h"
 
 #include "shumate-enum-types.h"
-#include "shumate-private.h"
 #include "shumate-marshal.h"
 
 #include <math.h>

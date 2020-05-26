@@ -42,7 +42,6 @@
 #include "shumate.h"
 #include "shumate-defines.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-tile.h"
 
 #include <glib.h>
@@ -338,7 +337,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
           "Selected",
           "The sighlighted state of the marker",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateMarker:selectable:
@@ -350,7 +349,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
           "Selectable",
           "The draggable state of the marker",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateMarker:draggable:
@@ -362,7 +361,7 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
           "Draggable",
           "The draggable state of the marker",
           FALSE,
-          SHUMATE_PARAM_READWRITE));
+          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateMarker::button-press:

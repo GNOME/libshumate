@@ -26,7 +26,6 @@
 
 #include "shumate-view.h"
 #include "shumate-viewport.h"
-#include "shumate-private.h"
 
 typedef struct {
   gdouble x;

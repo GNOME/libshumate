@@ -44,7 +44,6 @@
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 
 #include <errno.h>
 #include <gdk/gdk.h>

@@ -46,7 +46,6 @@
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
 #include "shumate-marshal.h"
-#include "shumate-private.h"
 #include "shumate-network-tile-source.h"
 #include "shumate-map-source-chain.h"
 
