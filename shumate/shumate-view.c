@@ -60,6 +60,7 @@
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-marshal.h"
+#include "shumate-map-layer.h"
 #include "shumate-map-source.h"
 #include "shumate-map-source-factory.h"
 #include "shumate-tile.h"
@@ -767,11 +768,16 @@ shumate_view_dispose (GObject *object)
 {
   ShumateView *view = SHUMATE_VIEW (object);
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  GtkWidget *child;
 
   if (priv->goto_context != NULL)
     shumate_view_stop_go_to (view);
 
+  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
+    gtk_widget_unparent (child);
+
   g_clear_pointer (&priv->viewport, shumate_viewport_stop);
+
   g_clear_object (&priv->map_source);
 
   g_list_free_full (priv->overlay_sources, g_object_unref);
@@ -1089,6 +1095,8 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                   g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE,
                   0);
+
+  gtk_widget_class_set_layout_manager_type (GTK_WIDGET_CLASS (shumateViewClass), GTK_TYPE_BIN_LAYOUT);
 }
 
 
@@ -1357,6 +1365,7 @@ shumate_view_init (ShumateView *view)
   ShumateMapSourceFactory *factory;
   ShumateMapSource *source;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapLayer *layer;
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
@@ -1442,6 +1451,8 @@ shumate_view_init (ShumateView *view)
   //                  G_CALLBACK (kinetic_scroll_key_press_cb), NULL);
 
   /* Setup license */
+  layer = shumate_map_layer_new (priv->map_source);
+  shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 }
 
 
@@ -2137,6 +2148,7 @@ shumate_view_add_layer (ShumateView  *view,
 
   //clutter_actor_add_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
   shumate_layer_set_view (layer, view);
+  gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (view), NULL);
   //clutter_actor_set_child_above_sibling (view->priv->user_layers, CLUTTER_ACTOR (layer), NULL);
 }
 
