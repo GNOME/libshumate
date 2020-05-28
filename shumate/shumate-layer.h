@@ -26,11 +26,12 @@
 
 #include <shumate/shumate-defines.h>
 #include <shumate/shumate-bounding-box.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LAYER shumate_layer_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GObject)
+G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GtkWidget)
 
 /**
  * ShumateLayer:
@@ -41,7 +42,7 @@ G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GObject)
 
 struct _ShumateLayerClass
 {
-  GObjectClass parent_class;
+  GtkWidgetClass parent_class;
 
   void (*set_view)(ShumateLayer *layer,
       ShumateView *view);

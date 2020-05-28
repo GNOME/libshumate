@@ -27,7 +27,7 @@
 
 #include "shumate-layer.h"
 
-G_DEFINE_ABSTRACT_TYPE (ShumateLayer, shumate_layer, G_TYPE_OBJECT)
+G_DEFINE_ABSTRACT_TYPE (ShumateLayer, shumate_layer, GTK_TYPE_WIDGET)
 
 static void
 shumate_layer_class_init (ShumateLayerClass *klass)
@@ -78,4 +78,8 @@ shumate_layer_get_bounding_box (ShumateLayer *layer)
 static void
 shumate_layer_init (ShumateLayer *self)
 {
+  g_object_set (G_OBJECT (self),
+                "hexpand", TRUE,
+                "vexpand", TRUE,
+                NULL);
 }
