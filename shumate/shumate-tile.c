@@ -51,7 +51,7 @@ typedef struct
   GdkTexture *texture;
 } ShumateTilePrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateTile, shumate_tile, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateTile, shumate_tile, GTK_TYPE_WIDGET);
 
 enum
 {
@@ -75,6 +75,43 @@ enum
 };
 
 static guint shumate_tile_signals[LAST_SIGNAL] = { 0, };
+
+static void
+shumate_tile_snapshot (GtkWidget   *widget,
+                       GtkSnapshot *snapshot)
+{
+  ShumateTile *self = SHUMATE_TILE (widget);
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
+  if (priv->texture)
+    {
+      gtk_snapshot_append_texture (snapshot,
+                                   priv->texture,
+                                   &GRAPHENE_RECT_INIT(
+                                     0, 0,
+                                     gdk_texture_get_width (priv->texture),
+                                     gdk_texture_get_height (priv->texture)
+                                   ));
+    }
+}
+
+static GtkSizeRequestMode 
+shumate_tile_get_request_mode (GtkWidget *widget)
+{
+  return GTK_SIZE_REQUEST_CONSTANT_SIZE;
+}
+
+static void
+shumate_tile_measure (GtkWidget      *widget,
+                      GtkOrientation  orientation,
+                      int             for_size,
+                      int            *minimum,
+                      int            *natural,
+                      int            *minimum_baseline,
+                      int            *natural_baseline)
+{
+  
+}
 
 static void
 shumate_tile_get_property (GObject *object,
@@ -214,12 +251,17 @@ static void
 shumate_tile_class_init (ShumateTileClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->get_property = shumate_tile_get_property;
   object_class->set_property = shumate_tile_set_property;
   object_class->dispose = shumate_tile_dispose;
   object_class->finalize = shumate_tile_finalize;
 
+  widget_class->snapshot = shumate_tile_snapshot;
+  widget_class->measure = shumate_tile_measure;
+  widget_class->get_request_mode = shumate_tile_get_request_mode;
+  
   /**
    * ShumateTile:x:
    *
@@ -387,7 +429,6 @@ shumate_tile_init (ShumateTile *self)
   priv->etag = NULL;
   priv->fade_in = FALSE;
   priv->content_displayed = FALSE;
-
   //priv->content_actor = NULL;
 }
 
@@ -890,5 +931,8 @@ shumate_tile_set_texture (ShumateTile *self,
   g_return_if_fail (SHUMATE_TILE (self));
 
   if (g_set_object (&priv->texture, texture))
-    g_object_notify (G_OBJECT (self), "texture");
+    {
+      g_object_notify (G_OBJECT (self), "texture");
+      gtk_widget_queue_draw (GTK_WIDGET (self));
+    }
 }

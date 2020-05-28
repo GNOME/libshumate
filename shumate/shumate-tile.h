@@ -25,12 +25,12 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gdk/gdk.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE shumate_tile_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GObject)
+G_DECLARE_DERIVABLE_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GtkWidget)
 
 /**
  * ShumateState:
@@ -60,7 +60,7 @@ typedef enum
 
 struct _ShumateTileClass
 {
-  GObjectClass parent_class;
+  GtkWidgetClass parent_class;
 };
 
 ShumateTile *shumate_tile_new (void);

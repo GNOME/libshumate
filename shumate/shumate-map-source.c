@@ -545,5 +545,6 @@ shumate_map_source_fill_tile (ShumateMapSource *map_source,
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
 
+  shumate_tile_set_state (tile, SHUMATE_STATE_LOADING);
   SHUMATE_MAP_SOURCE_GET_CLASS (map_source)->fill_tile (map_source, tile);
 }
