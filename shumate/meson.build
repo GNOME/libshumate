@@ -82,9 +82,6 @@ libshumate_c_args = [
   '-DG_LOG_DOMAIN="@0@"'.format(package_name),
 ]
 
-libshumate_link_args = [
-]
-
 features_h = configuration_data()
 
 libshumate_features_h = configure_file(
@@ -158,14 +155,13 @@ install_headers(
   )
 )
 
-libshumate_sha = shared_library(
+libshumate_lib = library(
   package_string,
   libshumate_sources,
   version: lib_version,
   include_directories: rootdir,
   dependencies: libshumate_deps,
   c_args: libshumate_c_args,
-  link_args: libshumate_link_args,
   install: true,
   install_dir: libdir,
 )
@@ -186,7 +182,7 @@ if generate_gir == true
   ]
 
   libshumate_gir = gnome.generate_gir(
-    libshumate_sha,
+    libshumate_lib,
     sources: libshumate_sources + libshumate_public_h,
     nsversion: api_version,
     namespace: 'Shumate',
@@ -195,7 +191,6 @@ if generate_gir == true
     header: 'shumate/shumate.h',
     export_packages: [package_string],
     includes: libshumate_gir_includes,
-    link_with: libshumate_sha,
     install: true,
     install_dir_gir: girdir,
     install_dir_typelib: typelibdir,
@@ -228,19 +223,17 @@ if generate_gir == true
 endif
 
 libshumate_dep = declare_dependency(
-  link_with: libshumate_sha,
+  link_with: libshumate_lib,
   include_directories: rootdir,
   dependencies: libshumate_deps,
   sources: libshumate_dep_sources,
 )
 
 libshumate_pc = pkg.generate(
+  libshumate_lib,
   name: package_string,
   description: 'Map View for GTK',
-  requires: ['glib-2.0', 'gobject-2.0', 'gtk+-4.0'],
-  requires_private: ['gio-2.0', 'cairo', 'libsoup-2.4', 'sqlite3'],
-  version: version,
+  requires: [glib_dep, gobject_dep, gtk_dep],
   subdirs: package_string,
-  libraries: libshumate_sha,
   install_dir: pkgconfigdir,
 )
