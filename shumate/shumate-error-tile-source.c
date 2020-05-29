@@ -145,7 +145,6 @@ fill_tile (ShumateMapSource *map_source,
       shumate_tile_set_texture (tile, texture);
       shumate_tile_set_fade_in (tile, TRUE);
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
     shumate_map_source_fill_tile (next_source, tile);
@@ -153,6 +152,5 @@ fill_tile (ShumateMapSource *map_source,
     {
       /* if we have some content, use the tile even if it wasn't validated */
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
     }
 }

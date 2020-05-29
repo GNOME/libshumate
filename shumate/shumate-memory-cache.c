@@ -313,7 +313,6 @@ fill_tile (ShumateMapSource *map_source,
           shumate_tile_set_texture (tile, texture);
           shumate_tile_set_fade_in (tile, FALSE);
           shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-          shumate_tile_display_content (tile);
           return;
         }
     }
@@ -324,7 +323,6 @@ fill_tile (ShumateMapSource *map_source,
     {
       /* if we have some content, use the tile even if it wasn't validated */
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      shumate_tile_display_content (tile);
     }
 }
 

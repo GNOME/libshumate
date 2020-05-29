@@ -65,44 +65,45 @@ struct _ShumateTileClass
 
 ShumateTile *shumate_tile_new (void);
 ShumateTile *shumate_tile_new_full (guint x,
-    guint y,
-    guint size,
-    guint zoom_level);
+                                    guint y,
+                                    guint size,
+                                    guint zoom_level);
 
 guint shumate_tile_get_x (ShumateTile *self);
-guint shumate_tile_get_y (ShumateTile *self);
-guint shumate_tile_get_zoom_level (ShumateTile *self);
-guint shumate_tile_get_size (ShumateTile *self);
-ShumateState shumate_tile_get_state (ShumateTile *self);
-//ClutterActor *shumate_tile_get_content (ShumateTile *self);
-GDateTime *shumate_tile_get_modified_time (ShumateTile *self);
-const gchar *shumate_tile_get_etag (ShumateTile *self);
-gboolean shumate_tile_get_fade_in (ShumateTile *self);
-
 void shumate_tile_set_x (ShumateTile *self,
-    guint x);
-void shumate_tile_set_y (ShumateTile *self,
-    guint y);
-void shumate_tile_set_zoom_level (ShumateTile *self,
-    guint zoom_level);
-void shumate_tile_set_size (ShumateTile *self,
-    guint size);
-void shumate_tile_set_state (ShumateTile *self,
-    ShumateState state);
-//void shumate_tile_set_content (ShumateTile *self,
-//    ClutterActor *actor);
-void shumate_tile_set_etag (ShumateTile *self,
-    const gchar *etag);
-void shumate_tile_set_modified_time (ShumateTile *self,
-    GDateTime *modified_time);
-void shumate_tile_set_fade_in (ShumateTile *self,
-    gboolean fade_in);
+                         guint        x);
 
-void shumate_tile_display_content (ShumateTile *self);
+guint shumate_tile_get_y (ShumateTile *self);
+void shumate_tile_set_y (ShumateTile *self,
+                         guint        y);
+
+guint shumate_tile_get_zoom_level (ShumateTile *self);
+void shumate_tile_set_zoom_level (ShumateTile *self,
+                                  guint        zoom_level);
+
+guint shumate_tile_get_size (ShumateTile *self);
+void shumate_tile_set_size (ShumateTile *self,
+                            guint size);
+
+ShumateState shumate_tile_get_state (ShumateTile *self);
+void shumate_tile_set_state (ShumateTile *self,
+                             ShumateState state);
+
+GDateTime *shumate_tile_get_modified_time (ShumateTile *self);
+void shumate_tile_set_modified_time (ShumateTile *self,
+                                     GDateTime   *modified_time);
+
+const gchar *shumate_tile_get_etag (ShumateTile *self);
+void shumate_tile_set_etag (ShumateTile *self,
+                            const gchar *etag);
+
+gboolean shumate_tile_get_fade_in (ShumateTile *self);
+void shumate_tile_set_fade_in (ShumateTile *self,
+                               gboolean     fade_in);
 
 GdkTexture *shumate_tile_get_texture (ShumateTile *self);
 void shumate_tile_set_texture (ShumateTile *self,
-    GdkTexture *texture);
+                               GdkTexture  *texture);
 G_END_DECLS
 
 #endif /* SHUMATE_MAP_TILE_H */

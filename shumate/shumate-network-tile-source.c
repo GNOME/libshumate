@@ -686,7 +686,6 @@ on_pixbuf_created (GObject      *source_object,
   shumate_tile_set_texture (tile, texture);
   shumate_tile_set_fade_in (tile, TRUE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-  shumate_tile_display_content (tile);
 }
 
 static void
@@ -759,7 +758,6 @@ on_message_sent (GObject *source_object,
 finish:
   shumate_tile_set_fade_in (tile, TRUE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-  shumate_tile_display_content (tile);
 }
 
 static void
