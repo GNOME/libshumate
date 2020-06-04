@@ -158,6 +158,7 @@ install_headers(
 libshumate_lib = library(
   package_string,
   libshumate_sources,
+  shumate_resources,
   version: lib_version,
   include_directories: rootdir,
   dependencies: libshumate_deps,
@@ -201,6 +202,7 @@ if generate_gir == true
 
   libshumate_dep_sources += [
     libshumate_gir,
+    shumate_resources,
   ]
 
   if generate_vapi == true and libshumate_gir.length() > 0

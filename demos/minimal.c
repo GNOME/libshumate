@@ -25,15 +25,26 @@ activate (GtkApplication* app,
           gpointer        user_data)
 {
   GtkWindow *window;
+  GtkWidget *overlay;
   ShumateView *view;
+  ShumateScale *scale;
 
   /* Create the map view */
+  overlay = gtk_overlay_new ();
   view = shumate_view_new ();
+  gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
+  scale = shumate_scale_new ();
+  g_object_set (G_OBJECT (scale),
+                "valign", GTK_ALIGN_END,
+                "halign", GTK_ALIGN_START,
+                NULL);
+  shumate_scale_connect_view (scale, view);
+  gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (scale));
 
   window = GTK_WINDOW (gtk_application_window_new (app));
   gtk_window_set_title (window, "Window");
   gtk_window_set_default_size (window, 200, 200);
-  gtk_window_set_child (window, GTK_WIDGET (view));
+  gtk_window_set_child (window, GTK_WIDGET (overlay));
   gtk_window_present (window);
 }
 

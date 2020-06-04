@@ -100,6 +100,8 @@ if generate_vapi and not vapigen_dep.found()
   generate_vapi = false
 endif
 
+subdir('data')
+
 subdir('shumate')
 
 subdir('docs')

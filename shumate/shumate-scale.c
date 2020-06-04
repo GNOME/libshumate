@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2011-2013 Jiri Techet <techet@gmail.com>
  * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
+ * Copyright (C) 2020 Collabora Ltd. (https://www.collabora.com)
+ * Copyright (C) 2020 Corentin Noël <corentin.noel@collabora.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,61 +21,209 @@
 
 /**
  * SECTION:shumate-scale
- * @short_description: An actor displaying a scale.
+ * @short_description: A widget displaying a scale.
  *
- * An actor displaying a scale.
+ * A widget displaying a scale.
+ *
+ * # CSS nodes
+ *
+ * |[<!-- language="plain" -->
+ * map-scale
+ * ├── label[.metric][.imperial]
+ * ]|
+ *
+ * ShumateScale uses a single CSS node with name map-scale, it has up to two
+ * childs different labels.
+
  */
 
 #include "config.h"
 
 #include "shumate-scale.h"
-#include "shumate-defines.h"
-#include "shumate-marshal.h"
 #include "shumate-enum-types.h"
 #include "shumate-view.h"
 
-#include <glib.h>
 #include <glib-object.h>
-#include <cairo.h>
 #include <math.h>
 #include <string.h>
 
-
 enum
 {
-  /* normal signals */
-  LAST_SIGNAL
-};
-
-enum
-{
-  PROP_0,
-  PROP_SCALE_UNIT,
+  PROP_UNIT = 1,
   PROP_MAX_SCALE_WIDTH,
+  N_PROPERTIES,
 };
 
-/* static guint shumate_scale_signals[LAST_SIGNAL] = { 0, }; */
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 struct _ShumateScale
 {
-  GObject parent_instance;
+  GtkWidget parent_instance;
 
-  ShumateUnit scale_unit;
+  ShumateUnit unit;
   guint max_scale_width;
-  gfloat text_height;
-  //ClutterContent *canvas;
 
   ShumateView *view;
-  gboolean redraw_scheduled;
+
+  GtkWidget *metric_label;
+  GtkWidget *imperial_label;
 };
 
-G_DEFINE_TYPE (ShumateScale, shumate_scale, G_TYPE_OBJECT);
+G_DEFINE_TYPE (ShumateScale, shumate_scale, GTK_TYPE_WIDGET);
 
-#define SCALE_HEIGHT  5
-#define GAP_SIZE 2
-#define SCALE_INSIDE_PADDING 10
-#define SCALE_LINE_WIDTH 2
+#define FEET_IN_METERS 3.280839895
 
+#define FEET_IN_A_MILE 5280.0
+
+/*
+ * shumate_scale_compute_length:
+ * @self: a #ShumateScale
+ *
+ * This loop will find the pretty value to display on the scale.
+ * It will be run once for metric units, and twice for imperials
+ * so that both feet and miles have pretty numbers.
+ */
+static gboolean
+shumate_scale_compute_length (ShumateScale *self,
+                              ShumateUnit   unit,
+                              gfloat       *out_scale_width,
+                              gfloat       *out_base,
+                              gboolean     *out_is_small_unit)
+{
+  ShumateMapSource *map_source;
+  gint zoom_level;
+  gdouble lat, lon;
+  gfloat scale_width;
+  gfloat base;
+  gfloat factor;
+  gboolean is_small_unit = TRUE;
+  gfloat m_per_pixel;
+
+  g_assert (SHUMATE_IS_SCALE (self));
+
+  if (out_scale_width)
+    *out_scale_width = 0;
+
+  if (out_base)
+    *out_base = 1;
+
+  if (out_is_small_unit)
+    *out_is_small_unit = TRUE;
+
+  if (!self->view)
+    return FALSE;
+
+  scale_width = self->max_scale_width;
+  zoom_level = shumate_view_get_zoom_level (self->view);
+  map_source = shumate_view_get_map_source (self->view);
+  lat = shumate_view_get_center_latitude (self->view);
+  lon = shumate_view_get_center_longitude (self->view);
+  m_per_pixel = shumate_map_source_get_meters_per_pixel (map_source,
+                                                         zoom_level,
+                                                         lat,
+                                                         lon);
+
+  if (unit == SHUMATE_UNIT_IMPERIAL)
+    m_per_pixel *= FEET_IN_METERS;  /* m_per_pixel is now in ft */
+
+  do
+    {
+      /* Keep the previous power of 10 */
+      base = floor (log (m_per_pixel * scale_width) / log (10));
+      base = pow (10, base);
+
+      /* How many times can it be fitted in our max scale width */
+      g_assert (base > 0);
+      g_assert (m_per_pixel * scale_width / base > 0);
+      scale_width /= m_per_pixel * scale_width / base;
+      g_assert (scale_width > 0);
+      factor = floor (self->max_scale_width / scale_width);
+      base *= factor;
+      scale_width *= factor;
+
+      if (unit == SHUMATE_UNIT_METRIC)
+        {
+          if (base / 1000.0 >= 1)
+            {
+              base /= 1000.0; /* base is now in km */
+              is_small_unit = FALSE;
+            }
+
+          break;
+        }
+      else if (unit == SHUMATE_UNIT_IMPERIAL)
+        {
+          if (is_small_unit && base / FEET_IN_A_MILE >= 1)
+            {
+              m_per_pixel /= FEET_IN_A_MILE; /* m_per_pixel is now in miles */
+              is_small_unit = FALSE;
+              /* we need to recompute the base because 1000 ft != 1 mile */
+            }
+          else
+            break;
+        }
+    } while (TRUE);
+
+
+  if (out_scale_width)
+    *out_scale_width = scale_width;
+
+  if (out_base)
+    *out_base = base;
+
+  if (out_is_small_unit)
+    *out_is_small_unit = is_small_unit;
+
+  return TRUE;
+}
+
+static void
+shumate_scale_on_scale_changed (ShumateScale *self)
+{
+  gfloat metric_scale_width, metric_base;
+  gfloat imperial_scale_width, imperial_base;
+  gboolean metric_is_small_unit, imperial_is_small_unit;
+  g_autofree gchar *metric_label = NULL;
+  g_autofree gchar *imperial_label = NULL;
+
+  shumate_scale_compute_length (self, SHUMATE_UNIT_METRIC, &metric_scale_width, &metric_base, &metric_is_small_unit);
+  shumate_scale_compute_length (self, SHUMATE_UNIT_IMPERIAL, &imperial_scale_width, &imperial_base, &imperial_is_small_unit);
+
+  gtk_widget_set_size_request (self->metric_label, metric_scale_width, -1);
+  gtk_widget_set_size_request (self->imperial_label, imperial_scale_width, -1);
+
+  if (metric_is_small_unit)
+    metric_label = g_strdup_printf ("%d m", (int) metric_base);
+  else
+    metric_label = g_strdup_printf ("%d km", (int) metric_base);
+
+  gtk_label_set_label (GTK_LABEL (self->metric_label), metric_label);
+
+  if (imperial_is_small_unit)
+    imperial_label = g_strdup_printf ("%d ft", (int) imperial_base);
+  else
+    imperial_label = g_strdup_printf ("%d mi", (int) imperial_base);
+
+  gtk_label_set_label (GTK_LABEL (self->imperial_label), imperial_label);
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+}
+
+static void
+on_latitude_changed (ShumateScale *self,
+                     G_GNUC_UNUSED GParamSpec *pspec,
+                     ShumateView *view)
+{
+  shumate_scale_on_scale_changed (self);
+}
+
+
+static void
+on_zoom_level_changed (ShumateScale *self,
+                       G_GNUC_UNUSED GParamSpec *pspec,
+                       ShumateView *view)
+{
+  shumate_scale_on_scale_changed (self);
+}
 
 static void
 shumate_scale_get_property (GObject *object,
@@ -85,12 +235,12 @@ shumate_scale_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_MAX_SCALE_WIDTH:
-      g_value_set_uint (value, scale->max_scale_width);
+    case PROP_UNIT:
+      g_value_set_enum (value, scale->unit);
       break;
 
-    case PROP_SCALE_UNIT:
-      g_value_set_enum (value, scale->scale_unit);
+    case PROP_MAX_SCALE_WIDTH:
+      g_value_set_uint (value, scale->max_scale_width);
       break;
 
     default:
@@ -109,12 +259,12 @@ shumate_scale_set_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_MAX_SCALE_WIDTH:
-      shumate_scale_set_max_width (scale, g_value_get_uint (value));
+    case PROP_UNIT:
+      shumate_scale_set_unit (scale, g_value_get_enum (value));
       break;
 
-    case PROP_SCALE_UNIT:
-      shumate_scale_set_unit (scale, g_value_get_enum (value));
+    case PROP_MAX_SCALE_WIDTH:
+      shumate_scale_set_max_width (scale, g_value_get_uint (value));
       break;
 
     default:
@@ -129,17 +279,10 @@ shumate_scale_dispose (GObject *object)
   ShumateScale *scale = SHUMATE_SCALE (object);
 
   if (scale->view)
-    {
-      shumate_scale_disconnect_view (SHUMATE_SCALE (object));
-    }
+    shumate_scale_disconnect_view (SHUMATE_SCALE (object));
 
-  /*
-  if (priv->canvas)
-    {
-      g_object_unref (priv->canvas);
-      priv->canvas = NULL;
-    }
-   */
+  g_clear_pointer (&scale->metric_label, gtk_widget_unparent);
+  g_clear_pointer (&scale->imperial_label, gtk_widget_unparent);
 
   G_OBJECT_CLASS (shumate_scale_parent_class)->dispose (object);
 }
@@ -148,6 +291,8 @@ static void
 shumate_scale_class_init (ShumateScaleClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GdkDisplay *display;
 
   object_class->dispose = shumate_scale_dispose;
   object_class->get_property = shumate_scale_get_property;
@@ -158,242 +303,72 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    *
    * The size of the map scale on screen in pixels.
    */
-  g_object_class_install_property (object_class,
-      PROP_MAX_SCALE_WIDTH,
-      g_param_spec_uint ("max-width",
-          "The width of the scale",
-          "The max width of the scale"
-          "on screen",
-          1,
-          2000,
-          100,
-          G_PARAM_READWRITE));
+  obj_properties[PROP_MAX_SCALE_WIDTH] =
+    g_param_spec_uint ("max-width",
+                       "The width of the scale",
+                       "The max width of the scale on screen",
+                       1, G_MAXUINT, 150,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateScale:unit:
    *
    * The scale's units.
    */
-  g_object_class_install_property (object_class,
-      PROP_SCALE_UNIT,
-      g_param_spec_enum ("unit",
-          "The scale's unit",
-          "The map scale's unit",
-          SHUMATE_TYPE_UNIT,
-          SHUMATE_UNIT_KM,
-          G_PARAM_READWRITE));
-}
+  obj_properties[PROP_UNIT] =
+    g_param_spec_enum ("unit",
+                       "The scale's unit",
+                       "The map scale's unit",
+                       SHUMATE_TYPE_UNIT,
+                       SHUMATE_UNIT_BOTH,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
-static gboolean
-redraw_scale (/*ClutterCanvas *canvas,*/
-    cairo_t *cr,
-    int w,
-    int h,
-    ShumateScale *scale)
-{
-  gboolean is_small_unit = TRUE;  /* indicates if using meters */
-  //ClutterActor *text;
-  gfloat width, height;
-  gfloat m_per_pixel;
-  gfloat scale_width = scale->max_scale_width;
-  gchar *label;
-  gfloat base;
-  gfloat factor;
-  gboolean final_unit = FALSE;
-  gint zoom_level;
-  gdouble lat, lon;
-  gfloat offset;
-  ShumateMapSource *map_source;
+  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-scale"));
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
 
-  if (!scale->view)
-    return FALSE;
-
-  zoom_level = shumate_view_get_zoom_level (scale->view);
-  map_source = shumate_view_get_map_source (scale->view);
-  lat = shumate_view_get_center_latitude (scale->view);
-  lon = shumate_view_get_center_longitude (scale->view);
-  m_per_pixel = shumate_map_source_get_meters_per_pixel (map_source,
-        zoom_level, lat, lon);
-
-  if (scale->scale_unit == SHUMATE_UNIT_MILES)
-    m_per_pixel *= 3.28;  /* m_per_pixel is now in ft */
-
-  /* This loop will find the pretty value to display on the scale.
-   * It will be run once for metric units, and twice for imperials
-   * so that both feet and miles have pretty numbers.
-   */
-  do
+  display = gdk_display_get_default ();
+  if (display)
     {
-      /* Keep the previous power of 10 */
-      base = floor (log (m_per_pixel * scale_width) / log (10));
-      base = pow (10, base);
-
-      /* How many times can it be fitted in our max scale width */
-      g_assert (base > 0);
-      g_assert (m_per_pixel * scale_width / base > 0);
-      scale_width /= m_per_pixel * scale_width / base;
-      g_assert (scale_width > 0);
-      factor = floor (scale->max_scale_width / scale_width);
-      base *= factor;
-      scale_width *= factor;
-
-      if (scale->scale_unit == SHUMATE_UNIT_KM)
-        {
-          if (base / 1000.0 >= 1)
-            {
-              base /= 1000.0; /* base is now in km */
-              is_small_unit = FALSE;
-            }
-          final_unit = TRUE; /* Don't need to recompute */
-        }
-      else if (scale->scale_unit == SHUMATE_UNIT_MILES)
-        {
-          if (is_small_unit && base / 5280.0 >= 1)
-            {
-              m_per_pixel /= 5280.0; /* m_per_pixel is now in miles */
-              is_small_unit = FALSE;
-              /* we need to recompute the base because 1000 ft != 1 mile */
-            }
-          else
-            final_unit = TRUE;
-        }
-    } while (!final_unit);
-
-  //text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-far-label");
-  label = g_strdup_printf ("%g", base);
-  /* Get only digits width for centering */
-  //clutter_text_set_text (CLUTTER_TEXT (text), label);
-  g_free (label);
-  //clutter_actor_get_size (text, &width, NULL);
-  /* actual label with unit */
-  label = g_strdup_printf ("%g %s", base,
-        scale->scale_unit == SHUMATE_UNIT_KM ?
-        (is_small_unit ? "m" : "km") :
-        (is_small_unit ? "ft" : "miles"));
-  //clutter_text_set_text (CLUTTER_TEXT (text), label);
-  g_free (label);
-  //clutter_actor_set_position (text, ceil (scale_width - width / 2) + SCALE_INSIDE_PADDING, SCALE_INSIDE_PADDING);
-
-  //text = clutter_container_find_child_by_name (CLUTTER_CONTAINER (scale), "scale-mid-label");
-  label = g_strdup_printf ("%g", base / 2.0);
-  /*
-  clutter_text_set_text (CLUTTER_TEXT (text), label);
-  clutter_actor_get_size (text, &width, &height);
-  clutter_actor_set_position (text, ceil ((scale_width - width) / 2) + SCALE_INSIDE_PADDING, SCALE_INSIDE_PADDING);
-   */
-  g_free (label);
-
-  /* Draw the line */
-  cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
-  cairo_paint (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-
-  cairo_set_source_rgb (cr, 0, 0, 0);
-  cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
-  cairo_set_line_width (cr, SCALE_LINE_WIDTH);
-
-  offset = SCALE_INSIDE_PADDING + scale->text_height + GAP_SIZE;
-
-  /* First tick */
-  cairo_move_to (cr, SCALE_INSIDE_PADDING, offset);
-  cairo_line_to (cr, SCALE_INSIDE_PADDING, offset + SCALE_HEIGHT);
-  cairo_stroke (cr);
-
-  /* Line */
-  cairo_move_to (cr, SCALE_INSIDE_PADDING, offset + SCALE_HEIGHT);
-  cairo_line_to (cr, scale_width + SCALE_INSIDE_PADDING, offset + SCALE_HEIGHT);
-  cairo_stroke (cr);
-
-  /* Middle tick */
-  cairo_move_to (cr, scale_width / 2 + SCALE_INSIDE_PADDING, offset);
-  cairo_line_to (cr, scale_width / 2 + SCALE_INSIDE_PADDING, offset + SCALE_HEIGHT);
-  cairo_stroke (cr);
-
-  /* Last tick */
-  cairo_move_to (cr, scale_width + SCALE_INSIDE_PADDING, offset);
-  cairo_line_to (cr, scale_width + SCALE_INSIDE_PADDING, offset + SCALE_HEIGHT);
-  cairo_stroke (cr);
-
-  return FALSE;
-}
-
-
-static gboolean
-invalidate_canvas (ShumateScale *layer)
-{
-  //clutter_content_invalidate (priv->canvas);
-  layer->redraw_scheduled = FALSE;
-
-  return FALSE;
-}
-
-
-static void
-schedule_redraw (ShumateScale *layer)
-{
-  if (!layer->redraw_scheduled)
-    {
-      layer->redraw_scheduled = TRUE;
-      g_idle_add_full (G_PRIORITY_HIGH + 50,
-          (GSourceFunc) invalidate_canvas,
-          g_object_ref (layer),
-          (GDestroyNotify) g_object_unref);
+      g_autoptr(GtkCssProvider) provider = gtk_css_provider_new ();
+      gtk_css_provider_load_from_resource (provider, "/org/gnome/shumate/scale.css");
+      gtk_style_context_add_provider_for_display (display,
+                                                  GTK_STYLE_PROVIDER (provider),
+                                                  GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
     }
 }
 
-
 static void
-create_scale (ShumateScale *scale)
+shumate_scale_init (ShumateScale *self)
 {
-  /*
-  ClutterActor *text, *scale_actor;
-  gfloat width, height;
-  ShumateScalePrivate *priv = scale->priv;
+  GtkWidget *self_widget = GTK_WIDGET (self);
+  GtkLayoutManager *layout = gtk_widget_get_layout_manager (self_widget);
 
-  clutter_actor_destroy_all_children (CLUTTER_ACTOR (scale));
+  self->unit = SHUMATE_UNIT_BOTH;
+  self->max_scale_width = 150;
+  self->view = NULL;
 
-  text = clutter_text_new_with_text ("Sans 9", "X km");
-  clutter_actor_set_name (text, "scale-far-label");
-  clutter_actor_add_child (CLUTTER_ACTOR (scale), text);
+  gtk_orientable_set_orientation (GTK_ORIENTABLE (layout), GTK_ORIENTATION_VERTICAL);
+  gtk_widget_add_css_class (self_widget, GTK_STYLE_CLASS_VERTICAL);
 
-  text = clutter_text_new_with_text ("Sans 9", "X");
-  clutter_actor_set_name (text, "scale-mid-label");
-  clutter_actor_add_child (CLUTTER_ACTOR (scale), text);
+  self->metric_label = gtk_label_new (NULL);
+  g_object_set (G_OBJECT (self->metric_label),
+                "xalign", 0.0f,
+                "halign", GTK_ALIGN_START,
+                "ellipsize", PANGO_ELLIPSIZE_END,
+                NULL);
+  gtk_widget_add_css_class (self->metric_label, "metric");
+  self->imperial_label = gtk_label_new (NULL);
+  g_object_set (G_OBJECT (self->imperial_label),
+                "xalign", 0.0f,
+                "halign", GTK_ALIGN_START,
+                "ellipsize", PANGO_ELLIPSIZE_END,
+                NULL);
+  gtk_widget_add_css_class (self->imperial_label, "imperial");
 
-  text = clutter_text_new_with_text ("Sans 9", "0");
-  clutter_actor_add_child (CLUTTER_ACTOR (scale), text);
-  clutter_actor_get_size (text, &width, &priv->text_height);
-  clutter_actor_set_position (text, SCALE_INSIDE_PADDING - ceil (width / 2), SCALE_INSIDE_PADDING);
-
-  width = priv->max_scale_width + 2 * SCALE_INSIDE_PADDING;
-  height = SCALE_HEIGHT + priv->text_height + GAP_SIZE + 2 * SCALE_INSIDE_PADDING;
-
-  priv->canvas = clutter_canvas_new ();
-  clutter_canvas_set_size (CLUTTER_CANVAS (priv->canvas), width, height);
-  g_signal_connect (priv->canvas, "draw", G_CALLBACK (redraw_scale), scale);
-
-  scale_actor = clutter_actor_new ();
-  clutter_actor_set_size (scale_actor, width, height);
-  clutter_actor_set_content (scale_actor, priv->canvas);
-  clutter_actor_add_child (CLUTTER_ACTOR (scale), scale_actor);
-
-  clutter_actor_set_opacity (CLUTTER_ACTOR (scale), 200);
-   */
-
-  schedule_redraw (scale);
-}
-
-
-static void
-shumate_scale_init (ShumateScale *scale)
-{
-  scale->scale_unit = SHUMATE_UNIT_KM;
-  scale->max_scale_width = 100;
-  scale->view = NULL;
-  scale->redraw_scheduled = FALSE;
-
-  create_scale (scale);
+  gtk_widget_insert_after (self->metric_label, self_widget, NULL);
+  gtk_widget_insert_after (self->imperial_label, self_widget, self->metric_label);
 }
 
 
@@ -425,8 +400,8 @@ shumate_scale_set_max_width (ShumateScale *scale,
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
   scale->max_scale_width = value;
-  create_scale (scale);
   g_object_notify (G_OBJECT (scale), "max-width");
+  shumate_scale_on_scale_changed (scale);
 }
 
 
@@ -439,13 +414,17 @@ shumate_scale_set_max_width (ShumateScale *scale,
  */
 void
 shumate_scale_set_unit (ShumateScale *scale,
-    ShumateUnit unit)
+                        ShumateUnit   unit)
 {
   g_return_if_fail (SHUMATE_IS_SCALE (scale));
 
-  scale->scale_unit = unit;
+  scale->unit = unit;
+
+  gtk_widget_set_visible (scale->metric_label, unit == SHUMATE_UNIT_METRIC || unit == SHUMATE_UNIT_BOTH);
+  gtk_widget_set_visible (scale->imperial_label, unit == SHUMATE_UNIT_IMPERIAL || unit == SHUMATE_UNIT_BOTH);
+
   g_object_notify (G_OBJECT (scale), "unit");
-  schedule_redraw (scale);
+  shumate_scale_on_scale_changed (scale);
 }
 
 
@@ -479,53 +458,48 @@ shumate_scale_get_unit (ShumateScale *scale)
 {
   g_return_val_if_fail (SHUMATE_IS_SCALE (scale), FALSE);
 
-  return scale->scale_unit;
+  return scale->unit;
 }
-
-
-static void
-redraw_scale_cb (G_GNUC_UNUSED GObject *gobject,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateScale *scale)
-{
-  schedule_redraw (scale);
-}
-
 
 /**
  * shumate_scale_connect_view:
- * @scale: a #ShumateScale
+ * @self: a #ShumateScale
  * @view: a #ShumateView
  *
  * This method connects to the necessary signals of #ShumateView to make the
  * scale adapt to the current latitude and longitude.
  */
 void
-shumate_scale_connect_view (ShumateScale *scale,
-    ShumateView *view)
+shumate_scale_connect_view (ShumateScale *self,
+                            ShumateView  *view)
 {
-  g_return_if_fail (SHUMATE_IS_SCALE (scale));
+  g_return_if_fail (SHUMATE_IS_SCALE (self));
 
-  scale->view = g_object_ref (view);
-  g_signal_connect (view, "notify::latitude",
-      G_CALLBACK (redraw_scale_cb), scale);
-  schedule_redraw (scale);
+  if (self->view == view)
+    return;
+
+  if (self->view)
+    shumate_scale_disconnect_view (self);
+
+  self->view = g_object_ref (view);
+  g_signal_connect_swapped (view, "notify::latitude", G_CALLBACK (on_latitude_changed), self);
+  g_signal_connect_swapped (view, "notify::zoom-level", G_CALLBACK (on_zoom_level_changed), self);
+  shumate_scale_on_scale_changed (self);
 }
 
 
 /**
  * shumate_scale_disconnect_view:
- * @scale: a #ShumateScale
+ * @self: a #ShumateScale
  *
  * This method disconnects from the signals previously connected by shumate_scale_connect_view().
  */
 void
-shumate_scale_disconnect_view (ShumateScale *scale)
+shumate_scale_disconnect_view (ShumateScale *self)
 {
-  g_return_if_fail (SHUMATE_IS_SCALE (scale));
+  g_return_if_fail (SHUMATE_IS_SCALE (self));
 
-  g_signal_handlers_disconnect_by_func (scale->view,
-      redraw_scale_cb,
-      scale);
-  g_clear_object (&scale->view);
+  g_signal_handlers_disconnect_by_data (self->view, self);
+
+  g_clear_object (&self->view);
 }
