@@ -24,77 +24,66 @@
 
 #define PADDING 10
 
-static gboolean
-map_view_button_release_cb (G_GNUC_UNUSED GtkWidget *widget,
-    GdkEvent *event,
-    ShumateView *view)
+static void
+map_view_button_release_cb (GtkGestureClick *gesture,
+                            gint             n_press,
+                            gdouble          x,
+                            gdouble          y,
+                            ShumateView     *view)
 {
   gdouble lat, lon;
 
-  lon = shumate_view_x_to_longitude (view, event->button.x);
-  lat = shumate_view_y_to_latitude (view, event->button.y);
+  lon = shumate_view_x_to_longitude (view, x);
+  lat = shumate_view_y_to_latitude (view, y);
 
   g_print ("Map clicked at %f, %f \n", lat, lon);
-
-  return TRUE;
 }
 
-
-static gboolean
-zoom_in (G_GNUC_UNUSED GtkWidget *widget,
-    G_GNUC_UNUSED GdkEventButton *event,
-    ShumateView *view)
+static void
+activate (GtkApplication* app,
+          gpointer        user_data)
 {
-  shumate_view_zoom_in (view);
-  return TRUE;
-}
-
-
-static gboolean
-zoom_out (G_GNUC_UNUSED GtkWidget *widget,
-    G_GNUC_UNUSED GdkEventButton *event,
-    ShumateView *view)
-{
-  shumate_view_zoom_out (view);
-  return TRUE;
-}
-
-
-int
-main (int argc,
-    char *argv[])
-{
-  GtkWidget *window;
+  GtkWindow *window;
+  GtkWidget *overlay;
+  GtkGesture *click_gesture;
   ShumateView *view;
   ShumateMarkerLayer *layer;
   ShumatePathLayer *path;
-  gfloat width, total_width = 0;
-
-  gtk_init ();
-
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_size_request (window, 800, 600);
-  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
   /* Create the map view */
+  overlay = gtk_overlay_new ();
   view = shumate_view_new ();
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
+  gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
   layer = create_marker_layer (view, &path);
   shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 
-  g_signal_connect (G_OBJECT (view), "button-press-event",
-                    G_CALLBACK (map_view_button_release_cb), view);
+  click_gesture = gtk_gesture_click_new ();
+  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (click_gesture));
+  g_signal_connect (click_gesture, "released", G_CALLBACK (map_view_button_release_cb), view);
 
   /* Finish initialising the map view */
-  g_object_set (G_OBJECT (view), "zoom-level", 12,
-      "kinetic-mode", TRUE, NULL);
+  g_object_set (view,
+                "zoom-level", 12,
+                "kinetic-mode", TRUE,
+                NULL);
   shumate_view_center_on (view, 45.466, -73.75);
 
-  gtk_widget_show (window);
-  gtk_widget_show (GTK_WIDGET (view));
-  gtk_main ();
+  window = GTK_WINDOW (gtk_application_window_new (app));
+  gtk_window_set_title (window, "Window");
+  gtk_window_set_default_size (window, 800, 600);
+  gtk_window_set_child (window, GTK_WIDGET (overlay));
+  gtk_window_present (window);
+}
 
-  return 0;
+int
+main (int argc, char *argv[])
+{
+  g_autoptr(GtkApplication) app = NULL;
+
+  app = gtk_application_new ("org.shumate.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+
+  return g_application_run (G_APPLICATION (app), argc, argv);
 }

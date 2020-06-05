@@ -1,8 +1,8 @@
 libshumate_demos = [
   ['minimal', 'minimal.c'],
-#  ['launcher', ['launcher.c', 'markers.c']],
-#  ['url-marker', 'url-marker.c'],
-#  ['create_destroy_test', 'create-destroy-test.c'],
+  ['launcher', ['launcher.c', 'markers.c']],
+  ['url-marker', 'url-marker.c'],
+  ['create_destroy_test', 'create-destroy-test.c'],
 ]
 
 foreach demo: libshumate_demos

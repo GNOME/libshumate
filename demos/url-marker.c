@@ -174,29 +174,25 @@ create_marker_from_url (ShumateMarkerLayer *layer,
   soup_session_queue_message (session, message, image_downloaded_cb, data);
 }
 
-
-int
-main (int argc, char *argv[])
+static void
+activate (GtkApplication* app,
+          gpointer        user_data)
 {
-  ShumateView *view;
   GtkWindow *window;
+  GtkWidget *overlay;
+  ShumateView *view;
   ShumateMarkerLayer *layer;
   SoupSession *session;
 
-  gtk_init ();
-
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_size_request (GTK_WIDGET (window), 800, 600);
-  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-
   /* Create the map view */
+  overlay = gtk_overlay_new ();
   view = shumate_view_new ();
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
+  gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
   layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
-  shumate_view_add_layer (SHUMATE_VIEW (view), SHUMATE_LAYER (layer));
-  session = soup_session_async_new ();
+  shumate_view_add_layer (view, SHUMATE_LAYER (layer));
+  session = soup_session_new ();
   create_marker_from_url (layer, session, 48.218611, 17.146397,
       "http://hexten.net/cpan-faces/potyl.jpg");
   create_marker_from_url (layer, session, 48.21066, 16.31476,
@@ -205,14 +201,26 @@ main (int argc, char *argv[])
       "http://bratislava.pm.org/images/whoiswho/jnthn.jpg");
 
   /* Finish initialising the map view */
-  g_object_set (G_OBJECT (view), "zoom-level", 10,
-      "kinetic-mode", TRUE, NULL);
-  shumate_view_center_on (SHUMATE_VIEW (view), 48.22, 16.8);
+  g_object_set (view,
+                "zoom-level", 10,
+                "kinetic-mode", TRUE,
+                NULL);
+  shumate_view_center_on (view, 48.22, 16.8);
 
-  gtk_widget_show (GTK_WIDGET (window));
-  gtk_main ();
+  window = GTK_WINDOW (gtk_application_window_new (app));
+  gtk_window_set_title (window, "Window");
+  gtk_window_set_default_size (window, 800, 600);
+  gtk_window_set_child (window, GTK_WIDGET (overlay));
+  gtk_window_present (window);
+}
 
-  g_object_unref (session);
+int
+main (int argc, char *argv[])
+{
+  g_autoptr(GtkApplication) app = NULL;
 
-  return 0;
+  app = gtk_application_new ("org.shumate.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+
+  return g_application_run (G_APPLICATION (app), argc, argv);
 }

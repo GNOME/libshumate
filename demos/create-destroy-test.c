@@ -20,56 +20,58 @@
 #include <shumate/shumate.h>
 #include <gtk/gtk.h>
 
-static GtkWidget *window;
-
-static ShumateView *
-create_view ()
-{
-  ShumateView *view;
-
-  /* Create the map view */
-  view = shumate_view_new ();
-  gtk_container_add (GTK_CONTAINER (window), GTK_WIDGET (view));
-
-  shumate_view_set_zoom_level (view, 12);
-  shumate_view_center_on (view, 45.466, -73.75);
-  
-  return view;
-}
-
+static GtkWidget *view = NULL;
 
 static gboolean
-callback (void *data)
+callback (GtkWidget *parent)
 {
-  static ShumateView *view = NULL;
-  
   if (!view)
-  {
-    view = create_view();
-  }
+    {
+      /* Create the map view */
+      view = GTK_WIDGET (shumate_view_new ());
+      gtk_widget_insert_after (view, parent, NULL);
+
+      shumate_view_set_zoom_level (SHUMATE_VIEW (view), 12);
+      shumate_view_center_on (SHUMATE_VIEW (view), 45.466, -73.75);
+    }
   else
-  {
-    gtk_widget_destroy (GTK_WIDGET (view));
-    view = NULL;
-  }
-  
-  return TRUE;
+    g_clear_pointer (&view, gtk_widget_unparent);
+
+  return G_SOURCE_CONTINUE;
 }
 
+static gboolean
+on_close_request (GtkWindow *window,
+                  gpointer   user_data)
+{
+  g_source_remove (GPOINTER_TO_UINT (user_data));
+  return FALSE;
+}
+
+static void
+activate (GtkApplication *app,
+          gpointer        user_data)
+{
+  GtkWidget *grid;
+  guint timeout_id;
+  GtkWindow *window = GTK_WINDOW (gtk_application_window_new (app));
+  gtk_window_set_title (window, "Window");
+  gtk_window_set_default_size (window, 800, 600);
+  grid = gtk_grid_new ();
+  gtk_window_set_child (window, grid);
+  gtk_window_present (window);
+
+  timeout_id = g_timeout_add (100, G_SOURCE_FUNC (callback), grid);
+  g_signal_connect (window, "close-request", G_CALLBACK (on_close_request), GUINT_TO_POINTER (timeout_id));
+}
 
 int
 main (int argc, char *argv[])
 {
-  gtk_init ();
+  g_autoptr(GtkApplication) app = NULL;
 
-  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_size_request (GTK_WIDGET (window), 800, 600);
-  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+  app = gtk_application_new ("org.shumate.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
 
-  g_timeout_add (100, (GSourceFunc) callback, NULL);
-
-  gtk_widget_show (window);
-  gtk_main ();
-
-  return 0;
+  return g_application_run (G_APPLICATION (app), argc, argv);
 }

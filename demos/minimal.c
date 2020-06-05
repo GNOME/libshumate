@@ -29,6 +29,7 @@ activate (GtkApplication* app,
   ShumateView *view;
   ShumateScale *scale;
   ShumateLicense *license;
+  ShumatePathLayer *path_layer;
 
   /* Create the map view */
   overlay = gtk_overlay_new ();
@@ -50,9 +51,12 @@ activate (GtkApplication* app,
   shumate_license_connect_view (license, view);
   gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (license));
 
+  path_layer = shumate_path_layer_new ();
+  shumate_view_add_layer (view, SHUMATE_LAYER (path_layer));
+
   window = GTK_WINDOW (gtk_application_window_new (app));
   gtk_window_set_title (window, "Window");
-  gtk_window_set_default_size (window, 200, 200);
+  gtk_window_set_default_size (window, 800, 600);
   gtk_window_set_child (window, GTK_WIDGET (overlay));
   gtk_window_present (window);
 }
