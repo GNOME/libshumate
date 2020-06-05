@@ -28,6 +28,7 @@ activate (GtkApplication* app,
   GtkWidget *overlay;
   ShumateView *view;
   ShumateScale *scale;
+  ShumateLicense *license;
 
   /* Create the map view */
   overlay = gtk_overlay_new ();
@@ -40,6 +41,14 @@ activate (GtkApplication* app,
                 NULL);
   shumate_scale_connect_view (scale, view);
   gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (scale));
+
+  license = shumate_license_new ();
+  g_object_set (G_OBJECT (license),
+                "valign", GTK_ALIGN_END,
+                "halign", GTK_ALIGN_END,
+                NULL);
+  shumate_license_connect_view (license, view);
+  gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (license));
 
   window = GTK_WINDOW (gtk_application_window_new (app));
   gtk_window_set_title (window, "Window");

@@ -27,60 +27,45 @@
 #include "config.h"
 
 #include "shumate-license.h"
-#include "shumate-defines.h"
-#include "shumate-marshal.h"
-#include "shumate-enum-types.h"
 #include "shumate-view.h"
-
-#include <glib.h>
-#include <glib-object.h>
-#include <cairo.h>
-#include <math.h>
-#include <pango/pango.h>
-#include <string.h>
 
 enum
 {
-  PROP_0,
-  PROP_LICENSE_EXTRA,
-  PROP_ALIGNMENT,
+  PROP_EXTRA_TEXT = 1,
+  PROP_XALIGN,
+  N_PROPERTIES,
 };
 
-/* static guint shumate_license_signals[LAST_SIGNAL] = { 0, }; */
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 struct _ShumateLicense
 {
-  GObject parent_instance;
+  GtkWidget parent_instance;
 
-  gchar *extra_text; /* Extra license text */
-  //ClutterActor *license_actor;
-  PangoAlignment alignment;
+  GtkWidget *extra_text_label;
+  GtkWidget *license_label;
 
   ShumateView *view;
 };
 
-G_DEFINE_TYPE (ShumateLicense, shumate_license, G_TYPE_OBJECT);
-
-#define WIDTH_PADDING 10
-#define HEIGHT_PADDING 7
-
+G_DEFINE_TYPE (ShumateLicense, shumate_license, GTK_TYPE_WIDGET);
 
 static void
-shumate_license_get_property (GObject *object,
-    guint prop_id,
-    GValue *value,
-    GParamSpec *pspec)
+shumate_license_get_property (GObject    *object,
+                              guint       prop_id,
+                              GValue     *value,
+                              GParamSpec *pspec)
 {
-  ShumateLicense *license = SHUMATE_LICENSE (object);
+  ShumateLicense *self = SHUMATE_LICENSE (object);
 
   switch (prop_id)
     {
-    case PROP_LICENSE_EXTRA:
-      g_value_set_string (value, license->extra_text);
+    case PROP_EXTRA_TEXT:
+      g_value_set_string (value, gtk_label_get_label (GTK_LABEL (self->extra_text_label)));
       break;
 
-    case PROP_ALIGNMENT:
-      g_value_set_enum (value, license->alignment);
+    case PROP_XALIGN:
+      g_value_set_float (value, gtk_label_get_xalign (GTK_LABEL (self->license_label)));
       break;
 
     default:
@@ -90,21 +75,21 @@ shumate_license_get_property (GObject *object,
 
 
 static void
-shumate_license_set_property (GObject *object,
-    guint prop_id,
-    const GValue *value,
-    GParamSpec *pspec)
+shumate_license_set_property (GObject      *object,
+                              guint         prop_id,
+                              const GValue *value,
+                              GParamSpec   *pspec)
 {
   ShumateLicense *license = SHUMATE_LICENSE (object);
 
   switch (prop_id)
     {
-    case PROP_LICENSE_EXTRA:
+    case PROP_EXTRA_TEXT:
       shumate_license_set_extra_text (license, g_value_get_string (value));
       break;
 
-    case PROP_ALIGNMENT:
-      shumate_license_set_alignment (license, g_value_get_enum (value));
+    case PROP_XALIGN:
+      shumate_license_set_xalign (license, g_value_get_float (value));
       break;
 
     default:
@@ -112,102 +97,46 @@ shumate_license_set_property (GObject *object,
     }
 }
 
-
 static void
-redraw_license (ShumateLicense *license)
+shumate_license_assign_source (ShumateLicense *self)
 {
-  gchar *text;
-  gfloat width, height;
   ShumateMapSource *map_source;
-  GList *overlay_sources, *iter;
 
-  if (!license->view)
-    return;
+  g_assert (SHUMATE_IS_LICENSE (self));
 
-  map_source = shumate_view_get_map_source (license->view);
-
-  if (!map_source)
-    return;
-
-  if (license->extra_text)
-    text = g_strjoin ("\n",
-          license->extra_text,
-          shumate_map_source_get_license (map_source),
-          NULL);
-  else
-    text = g_strdup (shumate_map_source_get_license (map_source));
-
-  overlay_sources = shumate_view_get_overlay_sources (license->view);
-  for (iter = overlay_sources; iter; iter = iter->next)
-    {
-      ShumateMapSource *map_source = iter->data;
-      const gchar *overlay_license = shumate_map_source_get_license (map_source);
-
-      if (g_strrstr (text, overlay_license) == NULL)
-        {
-          gchar *old_text = text;
-          text = g_strjoin ("\n",
-                text,
-                shumate_map_source_get_license (map_source),
-                NULL);
-          g_free (old_text);
-        }
-    }
-  g_list_free (overlay_sources);
-
-  /*
-  clutter_text_set_text (CLUTTER_TEXT (priv->license_actor), text);
-  clutter_actor_get_size (priv->license_actor, &width, &height);
-  clutter_actor_set_size (CLUTTER_ACTOR (license), width + 2 * WIDTH_PADDING, height + 2 * HEIGHT_PADDING);
-  clutter_actor_set_position (priv->license_actor, WIDTH_PADDING, HEIGHT_PADDING);
-  */
-  g_free (text);
+  map_source = shumate_view_get_map_source (self->view);
+  gtk_label_set_label (GTK_LABEL (self->license_label), shumate_map_source_get_license (map_source));
 }
-
 
 static void
-redraw_license_cb (G_GNUC_UNUSED GObject *gobject,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateLicense *license)
+on_map_source_changed (ShumateLicense *self,
+                       GParamSpec     *pspec,
+                       ShumateView    *view)
 {
-  redraw_license (license);
+  shumate_license_assign_source (self);
 }
-
 
 static void
 shumate_license_dispose (GObject *object)
 {
   ShumateLicense *self = SHUMATE_LICENSE (object);
 
-  //priv->license_actor = NULL;
-
   if (self->view)
-    {
-      shumate_license_disconnect_view (self);
-      self->view = NULL;
-    }
+    shumate_license_disconnect_view (self);
+
+  g_clear_pointer (&self->extra_text_label, gtk_widget_unparent);
+  g_clear_pointer (&self->license_label, gtk_widget_unparent);
 
   G_OBJECT_CLASS (shumate_license_parent_class)->dispose (object);
 }
-
-
-static void
-shumate_license_finalize (GObject *object)
-{
-  ShumateLicense *self = SHUMATE_LICENSE (object);
-
-  g_clear_pointer (&self->extra_text, g_free);
-
-  G_OBJECT_CLASS (shumate_license_parent_class)->finalize (object);
-}
-
 
 static void
 shumate_license_class_init (ShumateLicenseClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GdkDisplay *display;
 
-  object_class->finalize = shumate_license_finalize;
   object_class->dispose = shumate_license_dispose;
   object_class->get_property = shumate_license_get_property;
   object_class->set_property = shumate_license_set_property;
@@ -219,44 +148,62 @@ shumate_license_class_init (ShumateLicenseClass *klass)
    * license will be added below it. Your text can have multiple lines, just use
    * "\n" in between.
    */
-  g_object_class_install_property (object_class,
-      PROP_LICENSE_EXTRA,
-      g_param_spec_string ("extra-text",
-          "Additional license",
-          "Additional license text",
-          "",
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  obj_properties[PROP_EXTRA_TEXT] =
+    g_param_spec_string ("extra-text",
+                         "Additional license",
+                         "Additional license text",
+                         NULL,
+                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
-   * ShumateLicense:alignment:
+   * ShumateLicense:xalign:
    *
-   * The license's alignment
+   * The license's horizontal alignment
    */
-  g_object_class_install_property (object_class,
-      PROP_ALIGNMENT,
-      g_param_spec_enum ("alignment",
-          "Alignment",
-          "The license's alignment",
-          PANGO_TYPE_ALIGNMENT,
-          PANGO_ALIGN_LEFT,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  obj_properties[PROP_XALIGN] =
+    g_param_spec_float ("xalign",
+                        "Horizontal Alignment",
+                        "X alignment of the child",
+                        0.0, 1.0, 0.5,
+                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
+
+  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-license"));
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
+
+  display = gdk_display_get_default ();
+  if (display)
+    {
+      g_autoptr(GtkCssProvider) provider = gtk_css_provider_new ();
+      gtk_css_provider_load_from_resource (provider, "/org/gnome/shumate/license.css");
+      gtk_style_context_add_provider_for_display (display,
+                                                  GTK_STYLE_PROVIDER (provider),
+                                                  GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
+    }
 }
 
 
 static void
-shumate_license_init (ShumateLicense *license)
+shumate_license_init (ShumateLicense *self)
 {
-  license->extra_text = NULL;
-  license->view = NULL;
-  license->alignment = PANGO_ALIGN_RIGHT;
+  self->view = NULL;
+  self->license_label = gtk_label_new (NULL);
+  self->extra_text_label = gtk_label_new (NULL);
 
-  /*
-  priv->license_actor = clutter_text_new ();
-  clutter_text_set_font_name (CLUTTER_TEXT (priv->license_actor), "sans 8");
-  clutter_text_set_line_alignment (CLUTTER_TEXT (priv->license_actor), priv->alignment);
-  clutter_actor_set_opacity (priv->license_actor, 128);
-  clutter_actor_add_child (CLUTTER_ACTOR (license), priv->license_actor);
-  */
+  g_object_set (gtk_widget_get_layout_manager (GTK_WIDGET (self)),
+                "orientation", GTK_ORIENTATION_VERTICAL,
+                NULL);
+  g_object_set (self->license_label,
+                "xalign", 1.0f,
+                NULL);
+  g_object_set (self->extra_text_label,
+                "visible", FALSE,
+                "xalign", 1.0f,
+                NULL);
+
+  gtk_widget_insert_after (self->license_label, GTK_WIDGET (self), NULL);
+  gtk_widget_insert_after (self->extra_text_label, GTK_WIDGET (self), self->license_label);
 }
 
 
@@ -284,19 +231,20 @@ shumate_license_new (void)
  */
 void
 shumate_license_connect_view (ShumateLicense *license,
-    ShumateView *view)
+                              ShumateView    *view)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
+  if (license->view == view)
+    return;
+
+  if (license->view)
+    shumate_license_disconnect_view (license);
+
   license->view = g_object_ref (view);
 
-  g_signal_connect (view, "notify::map-source",
-      G_CALLBACK (redraw_license_cb), license);
-  g_signal_connect (view, "notify::width",
-      G_CALLBACK (redraw_license_cb), license);
-  g_signal_connect (view, "notify::height",
-      G_CALLBACK (redraw_license_cb), license);
-  redraw_license (license);
+  g_signal_connect_swapped (view, "notify::map-source", G_CALLBACK (on_map_source_changed), license);
+  shumate_license_assign_source (license);
 }
 
 
@@ -311,9 +259,8 @@ shumate_license_disconnect_view (ShumateLicense *license)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  g_signal_handlers_disconnect_by_func (license->view,
-      redraw_license_cb,
-      license);
+  g_signal_handlers_disconnect_by_data (license->view, license);
+
   g_clear_object (&license->view);
 }
 
@@ -328,16 +275,14 @@ shumate_license_disconnect_view (ShumateLicense *license)
  */
 void
 shumate_license_set_extra_text (ShumateLicense *license,
-    const gchar *text)
+                                const gchar    *text)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  if (license->extra_text)
-    g_free (license->extra_text);
+  gtk_label_set_label (GTK_LABEL (license->extra_text_label), text);
+  gtk_widget_set_visible (license->extra_text_label, text != NULL);
 
-  license->extra_text = g_strdup (text);
-  g_object_notify (G_OBJECT (license), "extra-text");
-  redraw_license (license);
+  g_object_notify_by_pspec (G_OBJECT (license), obj_properties[PROP_EXTRA_TEXT]);
 }
 
 
@@ -352,43 +297,44 @@ shumate_license_set_extra_text (ShumateLicense *license,
 const gchar *
 shumate_license_get_extra_text (ShumateLicense *license)
 {
-  g_return_val_if_fail (SHUMATE_IS_LICENSE (license), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_LICENSE (license), NULL);
 
-  return license->extra_text;
+  return gtk_label_get_label (GTK_LABEL (license->extra_text_label));
 }
 
 
 /**
- * shumate_license_set_alignment:
+ * shumate_license_set_xalign:
  * @license: a #ShumateLicense
- * @alignment: The license's text alignment
+ * @xalign: The license's text horizontal alignment
  *
- * Set the license's text alignment.
+ * Set the license's text horizontal alignment.
  */
 void
-shumate_license_set_alignment (ShumateLicense *license,
-    PangoAlignment alignment)
+shumate_license_set_xalign (ShumateLicense *license,
+                            gfloat          xalign)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
-  license->alignment = alignment;
-  //clutter_text_set_line_alignment (CLUTTER_TEXT (license->priv->license_actor), alignment);
-  g_object_notify (G_OBJECT (license), "alignment");
+  gtk_label_set_xalign (GTK_LABEL (license->license_label), xalign);
+  gtk_label_set_xalign (GTK_LABEL (license->extra_text_label), xalign);
+
+  g_object_notify_by_pspec (G_OBJECT (license), obj_properties[PROP_XALIGN]);
 }
 
 
 /**
- * shumate_license_get_alignment:
+ * shumate_license_get_xalign:
  * @license: The license
  *
- * Get the license's text alignment.
+ * Get the license's text horizontal alignment.
  *
- * Returns: the license's text alignment.
+ * Returns: the license's text horizontal alignment.
  */
-PangoAlignment
-shumate_license_get_alignment (ShumateLicense *license)
+gfloat
+shumate_license_get_xalign (ShumateLicense *license)
 {
-  g_return_val_if_fail (SHUMATE_IS_LICENSE (license), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_LICENSE (license), 1.0f);
 
-  return license->alignment;
+  return gtk_label_get_xalign (GTK_LABEL (license->license_label));
 }

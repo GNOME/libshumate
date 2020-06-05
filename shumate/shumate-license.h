@@ -27,12 +27,12 @@
 #include <shumate/shumate-defines.h>
 
 #include <glib-object.h>
-#include <pango/pango.h>
+#include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_LICENSE shumate_license_get_type ()
-G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GObject)
+G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GtkWidget)
 
 /**
  * ShumateLicense:
@@ -44,15 +44,15 @@ G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GObject
 ShumateLicense *shumate_license_new (void);
 
 void shumate_license_set_extra_text (ShumateLicense *license,
-    const gchar *text);
+                                     const gchar    *text);
 const gchar *shumate_license_get_extra_text (ShumateLicense *license);
 
-void shumate_license_set_alignment (ShumateLicense *license,
-    PangoAlignment alignment);
-PangoAlignment shumate_license_get_alignment (ShumateLicense *license);
+void shumate_license_set_xalign (ShumateLicense *license,
+                                 gfloat          xalign);
+gfloat shumate_license_get_xalign (ShumateLicense *license);
 
 void shumate_license_connect_view (ShumateLicense *license,
-    ShumateView *view);
+                                   ShumateView    *view);
 void shumate_license_disconnect_view (ShumateLicense *license);
 
 G_END_DECLS

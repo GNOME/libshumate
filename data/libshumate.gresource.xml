@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/org/gnome/shumate/">
     <file compressed="true">scale.css</file>
+    <file compressed="true">license.css</file>
   </gresource>
 </gresources>
