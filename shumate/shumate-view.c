@@ -266,16 +266,11 @@ static ClutterActor *sample_user_layer_at_pos (ShumateView *view,
 static gboolean viewport_press_cb (ClutterActor *actor,
     ClutterButtonEvent *event,
     ShumateView *view);*/
-static void load_visible_tiles (ShumateView *view,
-    gboolean relocate);
 static gboolean view_set_zoom_level_at (ShumateView *view,
     guint zoom_level,
     gboolean use_event_coord,
     gint x,
     gint y);
-static void tile_state_notify (ShumateTile *tile,
-    G_GNUC_UNUSED GParamSpec *pspec,
-    ShumateView *view);
 /*static gboolean kinetic_scroll_key_press_cb (ShumateView *view,
     ClutterKeyEvent *event);*/
 static void shumate_view_go_to_with_duration (ShumateView *view,
@@ -299,10 +294,6 @@ static void get_tile_bounds (ShumateView *view,
     guint *min_y,
     guint *max_x,
     guint *max_y);
-static gboolean tile_in_tile_table (ShumateView *view,
-    GHashTable *table,
-    gint tile_x,
-    gint tile_y);
 
 static gdouble
 x_to_wrap_x (gdouble x, gdouble width)
@@ -433,7 +424,6 @@ position_viewport (ShumateView *view,
 /*   gint tile_size, column_count, row_count; */
 
 /*   clutter_actor_destroy_all_children (priv->zoom_layer); */
-/*   load_visible_tiles (view, TRUE); */
 /*   g_signal_emit_by_name (view, "layer-relocated", NULL); */
 
   /* Clutter clones need their source actor to have an explicitly set size to display properly */
@@ -469,7 +459,6 @@ panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
   shumate_viewport_get_origin (SHUMATE_VIEWPORT (priv->viewport), &x, &y);
 
   update_coords (view, x, y, TRUE);
-  load_visible_tiles (view, FALSE);
 }
 */
 
@@ -826,6 +815,7 @@ static void
 shumate_view_class_init (ShumateViewClass *shumateViewClass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (shumateViewClass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (shumateViewClass);
   object_class->dispose = shumate_view_dispose;
   object_class->finalize = shumate_view_finalize;
   object_class->get_property = shumate_view_get_property;
@@ -1096,7 +1086,8 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                   G_TYPE_NONE,
                   0);
 
-  gtk_widget_class_set_layout_manager_type (GTK_WIDGET_CLASS (shumateViewClass), GTK_TYPE_BIN_LAYOUT);
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
+  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-view"));
 }
 
 
@@ -1137,8 +1128,6 @@ _update_idle_cb (ShumateView *view)
 
   if (priv->keep_center_on_resize)
     shumate_view_center_on (view, priv->latitude, priv->longitude);
-  else
-    load_visible_tiles (view, FALSE);
 
   if (priv->hwrap)
     {
@@ -1453,6 +1442,8 @@ shumate_view_init (ShumateView *view)
   /* Setup license */
   layer = shumate_map_layer_new (priv->map_source);
   shumate_view_add_layer (view, SHUMATE_LAYER (layer));
+
+  
 }
 
 
@@ -1468,7 +1459,6 @@ redraw_timeout_cb (gpointer data)
   if (priv->location_updated || (gint)ABS (x - priv->viewport_x) > 0 || (gint)ABS (y - priv->viewport_y) > 0)
     {
       update_coords (view, x, y, TRUE);
-      load_visible_tiles (view, FALSE);
       priv->location_updated = FALSE;
     }
 
@@ -1504,7 +1494,6 @@ viewport_pos_changed_cb (G_GNUC_UNUSED GObject *gobject,
   if (ABS (x - priv->viewport_x) > 100 || ABS (y - priv->viewport_y) > 100)
     {
       update_coords (view, x, y, FALSE);
-      load_visible_tiles (view, FALSE);
       priv->location_updated = TRUE;
     }
 }
@@ -1694,7 +1683,6 @@ shumate_view_center_on (ShumateView *view,
     position_viewport (view, x_to_wrap_x (x, get_map_width (view)), y);
   else
     position_viewport (view, x, y);
-  load_visible_tiles (view, FALSE);
 }
 
 /*
@@ -1863,146 +1851,6 @@ shumate_view_zoom_out (ShumateView *view)
   shumate_view_set_zoom_level (view, priv->zoom_level - 1);
 }
 
-/*static void
-paint_surface (ShumateView *view,
-    cairo_t *cr,
-    cairo_surface_t *surface,
-    double x,
-    double y,
-    double opacity)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  gint map_width = get_map_width (view);
-
-  cairo_set_source_surface (cr,
-                            surface,
-                            x, y);
-  cairo_paint_with_alpha (cr, opacity);*/
-
-  /* Paint each surface num_right_clones - 1 extra times on the right
-   * (last clone is not actually visible) and once in the left
-   * in order to horizontally wrap.
-   */
-/*  if (priv->hwrap)
-    {
-      gint i;
-
-      for (i = 0; i < priv->num_right_clones + 1; i++)
-        {*/
-          /* Don't repaint original layer */
-          /*if (i == 1)
-            continue;
-
-          cairo_set_source_surface (cr,
-                            surface,
-                            x + (i - 1) * map_width, y);
-          cairo_paint_with_alpha (cr, opacity);
-        }
-    }
-}*/
-
-/*static void
-layers_to_surface (ShumateView *view,
-    cairo_t *cr)
-{
-  ClutterActorIter iter;
-  ClutterActor *child;
-
-  clutter_actor_iter_init (&iter, view->priv->user_layers);
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateLayer *layer = SHUMATE_LAYER (child);
-      cairo_surface_t *surface;
-
-      if (!SHUMATE_IS_CAIRO_EXPORTABLE (layer))
-        continue;
-
-      surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (layer));
-      if (!surface)
-        continue;
-
-      paint_surface (view, cr, surface, 0, 0, 255);
-    }
-}
- */
-
-
-/**
- * shumate_view_to_surface:
- * @view: a #ShumateView
- * @include_layers: Set to %TRUE if you want to include layers
- *
- * Will generate a #cairo_surface_t that represents the current view
- * of the map. Without any markers or layers. If the current #ShumateRenderer
- * used does not support this, this function will return %NULL.
- *
- * If @include_layers is set to %TRUE all layers that implement
- * #ShumateExportable will be included in the surface.
- *
- * The #ShumateView also need to be in #SHUMATE_STATE_DONE state.
- *
- * Returns: (transfer full): a #cairo_surface_t or %NULL on failure. Free with
- *          cairo_surface_destroy() when done.
- */
-/*cairo_surface_t *
-shumate_view_to_surface (ShumateView *view,
-    gboolean include_layers)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  cairo_surface_t *surface;
-  cairo_t *cr;
-  //ClutterActorIter iter;
-  //ClutterActor *child;
-  gdouble width, height;
-
-  if (priv->state != SHUMATE_STATE_DONE)
-    return NULL;
-
-  width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
-  height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
-  cr = cairo_create (surface);
-
-  clutter_actor_iter_init (&iter, priv->map_layer);
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateTile *tile = SHUMATE_TILE (child);
-      guint tile_x = shumate_tile_get_x (tile);
-      guint tile_y = shumate_tile_get_y (tile);
-      guint tile_size = shumate_tile_get_size (tile);
-
-      if (tile_in_tile_table (view, priv->tile_map, tile_x, tile_y))
-        {
-          cairo_surface_t *tile_surface;
-          double x, y, opacity;
-
-          tile_surface = shumate_cairo_exportable_get_surface (SHUMATE_CAIRO_EXPORTABLE (tile));
-          if (!tile_surface)
-            {
-              cairo_destroy (cr);
-              cairo_surface_destroy (surface);
-              return NULL;
-            }
-          opacity = ((double) clutter_actor_get_opacity (CLUTTER_ACTOR (tile))) / 255.0;
-          x = ((double) tile_x * tile_size) - priv->viewport_x;
-          y = ((double) tile_y * tile_size) - priv->viewport_y;
-
-          paint_surface (view, cr, tile_surface, x, y, opacity);
-        }
-    }
-
-    if (include_layers)
-      layers_to_surface (view, cr);
-
-    cairo_destroy (cr);
-    return surface;
-}*/
-
-
 /**
  * shumate_view_set_zoom_level:
  * @view: a #ShumateView
@@ -2146,10 +1994,8 @@ shumate_view_add_layer (ShumateView  *view,
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  //clutter_actor_add_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
   shumate_layer_set_view (layer, view);
-  gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (view), NULL);
-  //clutter_actor_set_child_above_sibling (view->priv->user_layers, CLUTTER_ACTOR (layer), NULL);
+  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (view), NULL);
 }
 
 
@@ -2362,232 +2208,6 @@ fill_background_tiles (ShumateView *view)
  */
 
 static void
-tile_table_set (ShumateView *view,
-    GHashTable *table,
-    gint tile_x,
-    gint tile_y,
-    gboolean value)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint64 count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level);
-  gint64 *key = g_slice_alloc (sizeof(gint64));
-  *key = (gint64)tile_y * count + tile_x;
-  if (value)
-    g_hash_table_insert (table, key, GINT_TO_POINTER (TRUE));
-  else
-    {
-      g_hash_table_remove (table, key);
-      g_slice_free (gint64, key);
-    }
-}
-
-
-static gboolean
-tile_in_tile_table (ShumateView *view,
-    GHashTable *table,
-    gint tile_x,
-    gint tile_y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint64 count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level);
-  gint64 key = (gint64)tile_y * count + tile_x;
-  return GPOINTER_TO_INT (g_hash_table_lookup (table, &key));
-}
-
-
-static void
-load_tile_for_source (ShumateView *view,
-    ShumateMapSource *source,
-    gint opacity,
-    gint size,
-    gint x,
-    gint y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  ShumateTile *tile = shumate_tile_new ();
-
-  DEBUG ("Loading tile %d, %d, %d", priv->zoom_level, x, y);
-
-  shumate_tile_set_x (tile, x);
-  shumate_tile_set_y (tile, y);
-  shumate_tile_set_zoom_level (tile, priv->zoom_level);
-  shumate_tile_set_size (tile, size);
-  //clutter_actor_set_opacity (CLUTTER_ACTOR (tile), opacity);
-
-  g_signal_connect (tile, "notify::state", G_CALLBACK (tile_state_notify), view);
-  //clutter_actor_add_child (priv->map_layer, CLUTTER_ACTOR (tile));
-  //shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), CLUTTER_ACTOR (tile), x * size, y * size);
-
-  /* updates shumate_view state automatically as
-     notify::state signal is connected  */
-  shumate_tile_set_state (tile, SHUMATE_STATE_LOADING);
-
-  shumate_map_source_fill_tile (source, tile);
-
-  if (source != priv->map_source)
-    g_object_set_data (G_OBJECT (tile), "overlay", GINT_TO_POINTER (TRUE));
-}
-
-
-static gboolean
-fill_tile_cb (FillTileCallbackData *data)
-{
-  ShumateView *view = data->view;
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint x = data->x;
-  gint y = data->y;
-  gint size = data->size;
-  gint zoom_level = data->zoom_level;
-
-  if (!tile_in_tile_table (view, priv->tile_map, x, y) &&
-      zoom_level == priv->zoom_level &&
-      data->map_source == priv->map_source &&
-      tile_in_tile_table (view, priv->visible_tiles, x, y))
-    {
-      GList *iter;
-
-      load_tile_for_source (view, priv->map_source, 255, size, x, y);
-      for (iter = priv->overlay_sources; iter; iter = iter->next)
-        {
-          gint opacity = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (iter->data), "opacity"));
-          load_tile_for_source (view, iter->data, opacity, size, x, y);
-        }
-
-      tile_table_set (view, priv->tile_map, x, y, TRUE);
-    }
-
-  g_object_unref (view);
-  g_slice_free (FillTileCallbackData, data);
-
-  return FALSE;
-}
-
-static void
-load_visible_tiles (ShumateView *view,
-                    gboolean     relocate)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  //ClutterActorIter iter;
-  gint size;
-  //ClutterActor *child;
-  gint x_count, y_count, column_count;
-  guint min_x, min_y, max_x, max_y;
-  gint arm_size, arm_max, turn;
-  gint dirs[5] = { 0, 1, 0, -1, 0 };
-  gint i, x, y;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  size = shumate_map_source_get_tile_size (priv->map_source);
-  get_tile_bounds (view, &min_x, &min_y, &max_x, &max_y);
-
-  x_count = ceil ((gfloat) priv->viewport_width / size) + 1;
-  column_count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level);
-
-  if (priv->hwrap)
-    {
-      priv->tile_x_first = priv->viewport_x / size;
-      priv->tile_x_last = priv->tile_x_first + x_count;
-    }
-  else
-    {
-      priv->tile_x_first = CLAMP (priv->viewport_x / size, min_x, max_x);
-      priv->tile_x_last = priv->tile_x_first + x_count;
-      priv->tile_x_last = CLAMP (priv->tile_x_last, priv->tile_x_first, max_x);
-      x_count = priv->tile_x_last - priv->tile_x_first;
-    }
-
-  y_count = ceil ((gfloat) priv->viewport_height / size) + 1;
-  priv->tile_y_first = CLAMP (priv->viewport_y / size, min_y, max_y);
-  priv->tile_y_last = priv->tile_y_first + y_count;
-  priv->tile_y_last = CLAMP (priv->tile_y_last, priv->tile_y_first, max_y);
-  y_count = priv->tile_y_last - priv->tile_y_first;
-
-  DEBUG ("Range %d, %d to %d, %d", priv->tile_x_first, priv->tile_y_first, priv->tile_x_last, priv->tile_y_last);
-
-  g_hash_table_remove_all (priv->visible_tiles);
-  for (x = priv->tile_x_first; x < priv->tile_x_last; x++)
-    for (y = priv->tile_y_first; y < priv->tile_y_last; y++)
-      {
-        gint tile_x = x;
-
-        if (priv->hwrap)
-          tile_x = x_to_wrap_x (tile_x, column_count);
-
-        tile_table_set (view, priv->visible_tiles, tile_x, y, TRUE);
-      }
-
-  /* fill background tiles */
-  //if (priv->background_content != NULL)
-  //    fill_background_tiles (view);
-
-  /* Get rid of old tiles first */
-  /*
-  clutter_actor_iter_init (&iter, priv->map_layer);
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateTile *tile = SHUMATE_TILE (child);
-
-      gint tile_x = shumate_tile_get_x (tile);
-      gint tile_y = shumate_tile_get_y (tile);
-
-      if (!tile_in_tile_table (view, priv->visible_tiles, tile_x, tile_y))
-        {
-          shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-          clutter_actor_iter_destroy (&iter);
-          tile_table_set (view, priv->tile_map, tile_x, tile_y, FALSE);
-        }
-      else if (relocate)
-        shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport), CLUTTER_ACTOR (tile), tile_x * size, tile_y * size);
-    }
-   */
-
-  /* Load new tiles if needed */
-  x = priv->tile_x_first + x_count / 2 - 1;
-  y = priv->tile_y_first + y_count / 2 - 1;
-  arm_max = MAX (x_count, y_count) + 2;
-  arm_size = 1;
-
-  for (turn = 0; arm_size < arm_max; turn++)
-    {
-      for (i = 0; i < arm_size; i++)
-        {
-          gint tile_x = x;
-
-          if (priv->hwrap)
-            tile_x = x_to_wrap_x (tile_x, column_count);
-
-          if (!tile_in_tile_table (view, priv->tile_map, tile_x, y) &&
-              tile_in_tile_table (view, priv->visible_tiles, tile_x, y))
-            {
-              FillTileCallbackData *data;
-
-              DEBUG ("Loading tile %d, %d, %d", priv->zoom_level, x, y);
-
-              data = g_slice_new (FillTileCallbackData);
-              data->x = tile_x;
-              data->y = y;
-              data->size = size;
-              data->zoom_level = priv->zoom_level;
-              /* used only to check that the map source didn't change before the
-               * idle function is called */
-              data->map_source = priv->map_source;
-              data->view = g_object_ref (view);
-
-              g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50, (GSourceFunc) fill_tile_cb, data, NULL);
-            }
-
-          x += dirs[turn % 4 + 1];
-          y += dirs[turn % 4];
-        }
-
-      if (turn % 2 == 1)
-        arm_size++;
-    }
-}
-
-
-static void
 remove_all_tiles (ShumateView *view)
 {
   /*ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
@@ -2617,41 +2237,7 @@ void
 shumate_view_reload_tiles (ShumateView *view)
 {
   remove_all_tiles (view);
-
-  load_visible_tiles (view, FALSE);
 }
-
-static void
-tile_state_notify (ShumateTile              *tile,
-                   G_GNUC_UNUSED GParamSpec *pspec,
-                   ShumateView              *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  ShumateState tile_state = shumate_tile_get_state (tile);
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  if (tile_state == SHUMATE_STATE_LOADING)
-    {
-      if (priv->tiles_loading == 0)
-        {
-          priv->state = SHUMATE_STATE_LOADING;
-          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_STATE]);
-        }
-      priv->tiles_loading++;
-    }
-  else if (tile_state == SHUMATE_STATE_DONE)
-    {
-      if (priv->tiles_loading > 0)
-        priv->tiles_loading--;
-      if (priv->tiles_loading == 0)
-        {
-          priv->state = SHUMATE_STATE_DONE;
-          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_STATE]);
-        }
-    }
-}
-
 
 /**
  * shumate_view_set_map_source:
@@ -2994,8 +2580,6 @@ shumate_view_set_horizontal_wrap (ShumateView *view,
     position_viewport (view, x_to_wrap_x (priv->viewport_x, map_width), priv->viewport_y);
   else
     position_viewport (view, priv->viewport_x - ((gint)priv->viewport_width / map_width / 2) * map_width, priv->viewport_y);
-
-  load_visible_tiles (view, FALSE);
 }
 
 
@@ -3099,7 +2683,6 @@ view_set_zoom_level_at (ShumateView *view,
         position_viewport (view, x_to_wrap_x (new_x, get_map_width (view)), new_y);
       else
         position_viewport (view, new_x, new_y);
-      load_visible_tiles (view, FALSE);
 
       /* TODO: animate zoom */
     }

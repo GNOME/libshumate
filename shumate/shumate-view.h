@@ -109,8 +109,6 @@ void shumate_view_add_layer (ShumateView *view,
     ShumateLayer *layer);
 void shumate_view_remove_layer (ShumateView *view,
     ShumateLayer *layer);
-cairo_surface_t * shumate_view_to_surface (ShumateView *view,
-    gboolean include_layers);
 
 guint shumate_view_get_zoom_level (ShumateView *view);
 guint shumate_view_get_min_zoom_level (ShumateView *view);
