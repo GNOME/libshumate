@@ -242,7 +242,7 @@ draw (/*ClutterCanvas *canvas,*/
   cairo_paint (cr);
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-  if (shumate_marker_get_selected (SHUMATE_MARKER (point)))
+  if (shumate_marker_is_selected (SHUMATE_MARKER (point)))
     color = shumate_marker_get_selection_color ();
   else
     color = priv->color;

@@ -32,6 +32,7 @@ libshumate_public_h = [
 
 libshumate_private_h = [
   'shumate-debug.h',
+  'shumate-marker-private.h',
 ]
 
 libshumate_sources = [

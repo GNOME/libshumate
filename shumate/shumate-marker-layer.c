@@ -39,20 +39,15 @@
 
 enum
 {
-  /* normal signals */
-  LAST_SIGNAL
+  PROP_SELECTION_MODE = 1,
+  N_PROPERTIES
 };
 
-enum
-{
-  PROP_0,
-  PROP_SELECTION_MODE,
-};
-
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 typedef struct
 {
-  ShumateSelectionMode mode;
+  GtkSelectionMode mode;
   ShumateView *view;
 } ShumateMarkerLayerPrivate;
 
@@ -139,14 +134,15 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
    *
    * Determines the type of selection that will be performed.
    */
-  g_object_class_install_property (object_class,
-      PROP_SELECTION_MODE,
-      g_param_spec_enum ("selection-mode",
-          "Selection Mode",
-          "Determines the type of selection that will be performed.",
-          SHUMATE_TYPE_SELECTION_MODE,
-          SHUMATE_SELECTION_NONE,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  obj_properties[PROP_SELECTION_MODE] =
+    g_param_spec_enum ("selection-mode",
+                       "Selection Mode",
+                       "Determines the type of selection that will be performed.",
+                       GTK_TYPE_SELECTION_MODE,
+                       GTK_SELECTION_NONE,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 }
 
 
@@ -155,7 +151,7 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
 
-  priv->mode = SHUMATE_SELECTION_NONE;
+  priv->mode = GTK_TYPE_SELECTION_MODE;
   priv->view = NULL;
 }
 
@@ -182,7 +178,7 @@ shumate_marker_layer_new ()
  * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
  */
 ShumateMarkerLayer *
-shumate_marker_layer_new_full (ShumateSelectionMode mode)
+shumate_marker_layer_new_full (GtkSelectionMode mode)
 {
   return g_object_new (SHUMATE_TYPE_MARKER_LAYER, "selection-mode", mode, NULL);
 }
@@ -226,7 +222,7 @@ marker_selected_cb (ShumateMarker *marker,
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
 
-  if (priv->mode == SHUMATE_SELECTION_SINGLE && shumate_marker_get_selected (marker))
+  if (priv->mode == GTK_SELECTION_SINGLE && shumate_marker_is_selected (marker))
     set_selected_all_but_one (layer, marker, FALSE);
 }
 
@@ -300,7 +296,7 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  shumate_marker_set_selectable (marker, priv->mode != SHUMATE_SELECTION_NONE);
+  shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
 
   g_signal_connect (G_OBJECT (marker), "notify::selected",
       G_CALLBACK (marker_selected_cb), layer);
@@ -623,16 +619,16 @@ shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer)
 /**
  * shumate_marker_layer_set_selection_mode:
  * @layer: a #ShumateMarkerLayer
- * @mode: a #ShumateSelectionMode value
+ * @mode: a #GtkSelectionMode value
  *
  * Sets the selection mode of the layer.
  *
- * NOTE: changing selection mode to SHUMATE_SELECTION_NONE or
- * SHUMATE_SELECTION_SINGLE will clear all previously selected markers.
+ * NOTE: changing selection mode to %GTK_SELECTION_NONE, %GTK_SELECTION_SINGLE
+ * or %GTK_SELECTION_BROWSE will clear all previously selected markers.
  */
 void
 shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
-    ShumateSelectionMode mode)
+                                         GtkSelectionMode    mode)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
 
@@ -640,12 +636,13 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
 
   if (priv->mode == mode)
     return;
+
   priv->mode = mode;
 
-  if (mode != SHUMATE_SELECTION_MULTIPLE)
+  if (mode != GTK_SELECTION_MULTIPLE)
     set_selected_all_but_one (layer, NULL, FALSE);
 
-  g_object_notify (G_OBJECT (layer), "selection-mode");
+  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_SELECTION_MODE]);
 }
 
 
@@ -657,12 +654,12 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
  *
  * Returns: the selection mode of the layer.
  */
-ShumateSelectionMode
+GtkSelectionMode
 shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
 
-  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), SHUMATE_SELECTION_SINGLE);
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), GTK_SELECTION_NONE);
 
   return priv->mode;
 }

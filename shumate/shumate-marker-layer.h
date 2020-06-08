@@ -30,27 +30,13 @@
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-bounding-box.h>
 
+#include <gtk/gtk.h>
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MARKER_LAYER shumate_marker_layer_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE, MARKER_LAYER, ShumateLayer)
-
-/**
- * ShumateSelectionMode:
- * @SHUMATE_SELECTION_NONE: No marker can be selected.
- * @SHUMATE_SELECTION_SINGLE: Only one marker can be selected.
- * @SHUMATE_SELECTION_MULTIPLE: Multiple marker can be selected.
- *
- * Selection mode
- */
-typedef enum
-{
-  SHUMATE_SELECTION_NONE,
-  SHUMATE_SELECTION_SINGLE,
-  SHUMATE_SELECTION_MULTIPLE
-} ShumateSelectionMode;
 
 /**
  * ShumateMarkerLayer:
@@ -65,7 +51,7 @@ struct _ShumateMarkerLayerClass
 };
 
 ShumateMarkerLayer *shumate_marker_layer_new (void);
-ShumateMarkerLayer *shumate_marker_layer_new_full (ShumateSelectionMode mode);
+ShumateMarkerLayer *shumate_marker_layer_new_full (GtkSelectionMode mode);
 
 void shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
     ShumateMarker *marker);
@@ -88,8 +74,8 @@ void shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer);
 void shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer);
 
 void shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
-    ShumateSelectionMode mode);
-ShumateSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer);
+                                              GtkSelectionMode    mode);
+GtkSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer);
 
 G_END_DECLS
 

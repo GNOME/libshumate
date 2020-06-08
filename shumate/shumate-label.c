@@ -612,7 +612,7 @@ draw_background (/*ClutterCanvas *canvas,*/
   cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
   /* If selected, add the selection color to the marker's color */
-  if (shumate_marker_get_selected (marker))
+  if (shumate_marker_is_selected (marker))
     color = shumate_marker_get_selection_color ();
   else
     color = priv->color;

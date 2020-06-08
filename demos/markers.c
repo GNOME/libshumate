@@ -29,7 +29,7 @@ create_marker_layer (G_GNUC_UNUSED ShumateView *view, ShumatePathLayer **path)
   GdkRGBA orange = { 0.95, 0.6, 0.03, 0.75 };
 
   *path = shumate_path_layer_new ();
-  layer = shumate_marker_layer_new_full (SHUMATE_SELECTION_SINGLE);
+  layer = shumate_marker_layer_new_full (GTK_SELECTION_SINGLE);
 
   marker = SHUMATE_MARKER (shumate_label_new_with_text ("Montréal\n<span size=\"xx-small\">Québec</span>",
         "Serif 14", NULL, NULL));

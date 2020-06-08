@@ -59,9 +59,7 @@ void shumate_marker_set_draggable (ShumateMarker *marker,
     gboolean value);
 gboolean shumate_marker_get_draggable (ShumateMarker *marker);
 
-void shumate_marker_set_selected (ShumateMarker *marker,
-    gboolean value);
-gboolean shumate_marker_get_selected (ShumateMarker *marker);
+gboolean shumate_marker_is_selected (ShumateMarker *marker);
 
 void shumate_marker_animate_in (ShumateMarker *marker);
 void shumate_marker_animate_in_with_delay (ShumateMarker *marker,

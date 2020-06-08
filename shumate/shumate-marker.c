@@ -56,35 +56,15 @@ static GdkRGBA SELECTED_TEXT_COLOR = { 1.0, 1.0, 1.0, 1.0 };
 
 enum
 {
-  /* normal signals */
-  BUTTON_PRESS_SIGNAL,
-  BUTTON_RELEASE_SIGNAL,
-  DRAG_MOTION_SIGNAL,
-  DRAG_FINISH_SIGNAL,
-  LAST_SIGNAL,
-};
+  PROP_SELECTABLE = 1,
+  PROP_DRAGGABLE,
+  N_PROPERTIES,
 
-static guint signals[LAST_SIGNAL] = { 0, };
-
-enum
-{
-  PROP_0,
   PROP_LONGITUDE,
   PROP_LATITUDE,
-  PROP_SELECTED,
-  PROP_SELECTABLE,
-  PROP_DRAGGABLE,
 };
 
-/* static guint shumate_marker_signals[LAST_SIGNAL] = { 0, }; */
-
-static void set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude);
-static gdouble get_latitude (ShumateLocation *location);
-static gdouble get_longitude (ShumateLocation *location);
-
-static void location_interface_init (ShumateLocationInterface *iface);
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 typedef struct
 {
@@ -98,6 +78,8 @@ typedef struct
   gfloat click_y;
   gboolean moved;
 } ShumateMarkerPrivate;
+
+static void location_interface_init (ShumateLocationInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
     G_ADD_PRIVATE (ShumateMarker)
@@ -165,6 +147,48 @@ shumate_marker_get_selection_text_color ()
 }
 
 
+
+static void
+shumate_marker_set_location (ShumateLocation *location,
+                             gdouble          latitude,
+                             gdouble          longitude)
+{
+  ShumateMarker *marker = (ShumateMarker *) location;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_assert (SHUMATE_IS_MARKER (location));
+
+  priv->lon = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
+  priv->lat = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
+
+  g_object_notify (G_OBJECT (location), "latitude");
+  g_object_notify (G_OBJECT (location), "longitude");
+}
+
+
+static gdouble
+shumate_marker_get_latitude (ShumateLocation *location)
+{
+  ShumateMarker *marker = (ShumateMarker *) location;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_assert (SHUMATE_IS_MARKER (location));
+
+  return priv->lat;
+}
+
+
+static gdouble
+shumate_marker_get_longitude (ShumateLocation *location)
+{
+  ShumateMarker *marker = (ShumateMarker *) location;
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_assert (SHUMATE_IS_MARKER (location));
+
+  return priv->lon;
+}
+
 static void
 shumate_marker_get_property (GObject *object,
     guint prop_id,
@@ -182,10 +206,6 @@ shumate_marker_get_property (GObject *object,
 
     case PROP_LATITUDE:
       g_value_set_double (value, priv->lat);
-      break;
-
-    case PROP_SELECTED:
-      g_value_set_boolean (value, priv->selected);
       break;
 
     case PROP_SELECTABLE:
@@ -216,21 +236,14 @@ shumate_marker_set_property (GObject *object,
     case PROP_LONGITUDE:
       {
         gdouble lon = g_value_get_double (value);
-        set_location (SHUMATE_LOCATION (marker), priv->lat, lon);
+        shumate_marker_set_location (SHUMATE_LOCATION (marker), priv->lat, lon);
         break;
       }
 
     case PROP_LATITUDE:
       {
         gdouble lat = g_value_get_double (value);
-        set_location (SHUMATE_LOCATION (marker), lat, priv->lon);
-        break;
-      }
-
-    case PROP_SELECTED:
-      {
-        gboolean bvalue = g_value_get_boolean (value);
-        shumate_marker_set_selected (marker, bvalue);
+        shumate_marker_set_location (SHUMATE_LOCATION (marker), lat, priv->lon);
         break;
       }
 
@@ -253,188 +266,38 @@ shumate_marker_set_property (GObject *object,
     }
 }
 
-
-static void
-set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude)
-{
-  ShumateMarker *marker = SHUMATE_MARKER (location);
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_if_fail (SHUMATE_IS_MARKER (location));
-
-  priv->lon = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
-  priv->lat = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
-
-  g_object_notify (G_OBJECT (location), "latitude");
-  g_object_notify (G_OBJECT (location), "longitude");
-}
-
-
-static gdouble
-get_latitude (ShumateLocation *location)
-{
-  ShumateMarker *marker = SHUMATE_MARKER (location);
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
-
-  return priv->lat;
-}
-
-
-static gdouble
-get_longitude (ShumateLocation *location)
-{
-  ShumateMarker *marker = SHUMATE_MARKER (location);
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_val_if_fail (SHUMATE_IS_MARKER (location), 0.0);
-
-  return priv->lon;
-}
-
-
-static void
-location_interface_init (ShumateLocationInterface *iface)
-{
-  iface->get_latitude = get_latitude;
-  iface->get_longitude = get_longitude;
-  iface->set_location = set_location;
-}
-
-
-static void
-shumate_marker_dispose (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_marker_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_marker_finalize (GObject *object)
-{
-  G_OBJECT_CLASS (shumate_marker_parent_class)->finalize (object);
-}
-
 static void
 shumate_marker_class_init (ShumateMarkerClass *marker_class)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (marker_class);
-  object_class->finalize = shumate_marker_finalize;
-  object_class->dispose = shumate_marker_dispose;
   object_class->get_property = shumate_marker_get_property;
   object_class->set_property = shumate_marker_set_property;
-
-  /**
-   * ShumateMarker:selected:
-   *
-   * The selected state of the marker
-   */
-  g_object_class_install_property (object_class, PROP_SELECTED,
-      g_param_spec_boolean ("selected",
-          "Selected",
-          "The sighlighted state of the marker",
-          FALSE,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
   /**
    * ShumateMarker:selectable:
    *
    * The selectable state of the marker
    */
-  g_object_class_install_property (object_class, PROP_SELECTABLE,
-      g_param_spec_boolean ("selectable",
-          "Selectable",
-          "The draggable state of the marker",
-          FALSE,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  obj_properties[PROP_SELECTABLE] =
+    g_param_spec_boolean ("selectable",
+                          "Selectable",
+                          "The draggable state of the marker",
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMarker:draggable:
    *
    * The draggable state of the marker
    */
-  g_object_class_install_property (object_class, PROP_DRAGGABLE,
-      g_param_spec_boolean ("draggable",
-          "Draggable",
-          "The draggable state of the marker",
-          FALSE,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+  obj_properties[PROP_DRAGGABLE] =
+    g_param_spec_boolean ("draggable",
+                          "Draggable",
+                          "The draggable state of the marker",
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * ShumateMarker::button-press:
-   * @self: a #ShumateMarker
-   * @event: the underlying ClutterEvent
-   *
-   * Emitted when button is pressed.
-   */
-  signals[BUTTON_PRESS_SIGNAL] =
-    g_signal_new ("button-press",
-        G_OBJECT_CLASS_TYPE (object_class),
-        G_SIGNAL_RUN_LAST,
-        0, NULL, NULL,
-        g_cclosure_marshal_VOID__BOXED,
-        G_TYPE_NONE,
-        1,
-        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  /**
-   * ShumateMarker::button-release:
-   * @self: a #ShumateMarker
-   * @event: the underlying ClutterEvent
-   *
-   * Emitted when button is released. This signal is not emmitted at the end of dragging.
-   */
-  signals[BUTTON_RELEASE_SIGNAL] =
-    g_signal_new ("button-release",
-        G_OBJECT_CLASS_TYPE (object_class),
-        G_SIGNAL_RUN_LAST,
-        0, NULL, NULL,
-        g_cclosure_marshal_VOID__BOXED,
-        G_TYPE_NONE,
-        1,
-        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  /**
-   * ShumateMarker::drag-motion:
-   * @self: a #ShumateMarker
-   * @dx: by how much the marker has been moved in the x direction
-   * @dy: by how much the marker has been moved in the y direction
-   * @event: the underlying ClutterEvent
-   *
-   * Emmitted when the marker is dragged by mouse. dx and dy specify by how much
-   * the marker has been dragged since last time.
-   */
-  signals[DRAG_MOTION_SIGNAL] =
-    g_signal_new ("drag-motion",
-        G_OBJECT_CLASS_TYPE (object_class),
-        G_SIGNAL_RUN_LAST,
-        0, NULL, NULL,
-        _shumate_marshal_VOID__DOUBLE_DOUBLE_BOXED,
-        G_TYPE_NONE,
-        3,
-        G_TYPE_DOUBLE, G_TYPE_DOUBLE, GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
-  /**
-   * ShumateMarker::drag-finish:
-   * @self: a #ShumateMarker
-   * @event: the underlying ClutterEvent
-   *
-   * Emitted when marker dragging ends (i.e. the button is released at the end
-   * of dragging).
-   */
-  signals[DRAG_FINISH_SIGNAL] =
-    g_signal_new ("drag-finish",
-        G_OBJECT_CLASS_TYPE (object_class),
-        G_SIGNAL_RUN_LAST,
-        0, NULL, NULL,
-        g_cclosure_marshal_VOID__BOXED,
-        G_TYPE_NONE,
-        1,
-        GDK_TYPE_EVENT | G_SIGNAL_TYPE_STATIC_SCOPE);
-
+  g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
   g_object_class_override_property (object_class,
       PROP_LONGITUDE,
@@ -445,6 +308,25 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
       "latitude");
 }
 
+static void
+shumate_marker_init (ShumateMarker *marker)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  priv->lat = 0;
+  priv->lon = 0;
+  priv->selected = FALSE;
+  priv->selectable = TRUE;
+  priv->draggable = FALSE;
+}
+
+static void
+location_interface_init (ShumateLocationInterface *iface)
+{
+  iface->get_latitude = shumate_marker_get_latitude;
+  iface->get_longitude = shumate_marker_get_longitude;
+  iface->set_location = shumate_marker_set_location;
+}
 
 /**
  * shumate_marker_new:
@@ -460,167 +342,7 @@ shumate_marker_new (void)
 }
 
 
-#if 0
-static gboolean
-motion_event_cb (ShumateMarker *marker,
-    GdkEventMotion *event)
-{
-  ShumateMarkerPrivate *priv = marker->priv;
-  gfloat x, y;
-
-  if (gdk_event_get_event_type(event) != GDK_DRAG_MOTION)
-    return FALSE;
-
-  /*
-  if (clutter_actor_transform_stage_point (CLUTTER_ACTOR (marker),
-          event->x,
-          event->y,
-          &x, &y))
-    {
-      g_signal_emit_by_name (marker, "drag-motion",
-          x - priv->click_x, y - priv->click_y, event);
-      priv->moved = TRUE;
-    }
-   */
-
-  return TRUE;
-}
-
-
-static gboolean
-capture_release_event_cb (ShumateMarker *marker,
-    GdkEventButton *event)
-{
-  ShumateMarkerPrivate *priv = marker->priv;
-  guint button;
-  gdk_event_get_button(event, &button);
-
-  if ((gdk_event_get_event_type(event) != GDK_BUTTON_RELEASE) ||
-      (button != 1))
-    return FALSE;
-
-  /*
-  g_signal_handlers_disconnect_by_func (stage,
-      motion_event_cb,
-      marker);
-  g_signal_handlers_disconnect_by_func (stage,
-      capture_release_event_cb,
-      marker);
-  */
-
-  if (priv->moved)
-    g_signal_emit_by_name (marker, "drag-finish", event);
-  else
-    g_signal_emit_by_name (marker, "button-release", event);
-
-  return TRUE;
-}
-
-
-static gboolean
-button_release_event_cb (ShumateMarker *marker,
-    GdkEventButton *event)
-{
-  guint button;
-  gdk_event_get_button(event, &button);
-
-  if ((gdk_event_get_event_type(event) != GDK_BUTTON_RELEASE) ||
-      (button != 1))
-    return FALSE;
-
-  g_signal_handlers_disconnect_by_func (marker,
-      button_release_event_cb, marker);
-
-  g_signal_emit_by_name (marker, "button-release", event);
-
-  return TRUE;
-}
-
-
-static gboolean
-button_press_event_cb (ShumateMarker *marker,
-    GdkEventButton *event)
-{
-  ShumateMarkerPrivate *priv = marker->priv;
-  guint button;
-  gdk_event_get_button(event, &button);
-
-  if (gdk_event_get_event_type(event) != GDK_BUTTON_PRESS ||
-      button != 1)
-    {
-      return FALSE;
-    }
-
-  if (priv->draggable)
-    {
-      /*
-      if (clutter_actor_transform_stage_point (actor, bevent->x, bevent->y,
-              &priv->click_x, &priv->click_y))
-        {
-          priv->moved = FALSE;
-          g_signal_connect (stage,
-              "captured-event",
-              G_CALLBACK (motion_event_cb),
-              marker);
-
-          g_signal_connect (stage,
-              "captured-event",
-              G_CALLBACK (capture_release_event_cb),
-              marker);
-        }
-       */
-    }
-  else
-    {
-      g_signal_connect (marker,
-          "button-release-event",
-          G_CALLBACK (button_release_event_cb),
-          marker);
-    }
-
-  if (priv->selectable)
-    shumate_marker_set_selected (marker, TRUE);
-
-  if (priv->selectable || priv->draggable)
-    {
-      /*
-      ClutterActor *parent;
-
-      parent = clutter_actor_get_parent (CLUTTER_ACTOR (marker));
-      clutter_actor_set_child_above_sibling (parent, CLUTTER_ACTOR (marker), NULL);
-       */
-    }
-
-  g_signal_emit_by_name (marker, "button-press", event);
-
-  return TRUE;
-}
-#endif
-
-
-static void
-shumate_marker_init (ShumateMarker *marker)
-{
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  priv->lat = 0;
-  priv->lon = 0;
-  priv->selected = FALSE;
-  priv->selectable = TRUE;
-  priv->draggable = FALSE;
-
-#if 0
-  gtk_widget_set_has_surface (GTK_WIDGET (marker), FALSE);
-
-  g_signal_connect (marker,
-      "button-press-event",
-      G_CALLBACK (button_press_event_cb),
-      marker);
-#endif
-}
-
-
-/**
+/*
  * shumate_marker_set_selected:
  * @marker: a #ShumateMarker
  * @value: the selected state
@@ -630,20 +352,18 @@ shumate_marker_init (ShumateMarker *marker)
  */
 void
 shumate_marker_set_selected (ShumateMarker *marker,
-    gboolean value)
+                             gboolean       value)
 {
   ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
   priv->selected = value;
-
-  g_object_notify (G_OBJECT (marker), "selected");
 }
 
 
 /**
- * shumate_marker_get_selected:
+ * shumate_marker_is_selected:
  * @marker: a #ShumateMarker
  *
  * Checks whether the marker is selected.
@@ -651,7 +371,7 @@ shumate_marker_set_selected (ShumateMarker *marker,
  * Returns: the selected or not state of the marker.
  */
 gboolean
-shumate_marker_get_selected (ShumateMarker *marker)
+shumate_marker_is_selected (ShumateMarker *marker)
 {
   ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
@@ -670,7 +390,7 @@ shumate_marker_get_selected (ShumateMarker *marker)
  */
 void
 shumate_marker_set_selectable (ShumateMarker *marker,
-    gboolean value)
+                               gboolean       value)
 {
   ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
@@ -678,7 +398,7 @@ shumate_marker_set_selectable (ShumateMarker *marker,
 
   priv->selectable = value;
 
-  g_object_notify (G_OBJECT (marker), "selectable");
+  g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_SELECTABLE]);
 }
 
 
@@ -710,7 +430,7 @@ shumate_marker_get_selectable (ShumateMarker *marker)
  */
 void
 shumate_marker_set_draggable (ShumateMarker *marker,
-    gboolean value)
+                              gboolean       value)
 {
   ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
 
@@ -718,7 +438,7 @@ shumate_marker_set_draggable (ShumateMarker *marker,
 
   priv->draggable = value;
 
-  g_object_notify (G_OBJECT (marker), "draggable");
+  g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_DRAGGABLE]);
 }
 
 
