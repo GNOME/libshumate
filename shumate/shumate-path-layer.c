@@ -45,26 +45,18 @@
 
 enum
 {
-  /* normal signals */
-  LAST_SIGNAL
-};
-
-enum
-{
-  PROP_0,
-  PROP_CLOSED_PATH,
+  PROP_CLOSED_PATH = 1,
   PROP_STROKE_WIDTH,
   PROP_STROKE_COLOR,
   PROP_FILL,
   PROP_FILL_COLOR,
   PROP_STROKE,
   PROP_VISIBLE,
+  N_PROPERTIES
 };
 
 static GdkRGBA DEFAULT_FILL_COLOR = { 0.8, 0.0, 0.0, 0.67 };
 static GdkRGBA DEFAULT_STROKE_COLOR = { 0.64, 0.0, 0.0, 1.0 };
-
-/* static guint signals[LAST_SIGNAL] = { 0, }; */
 
 typedef struct
 {
@@ -94,15 +86,6 @@ typedef struct
    *
    * If horizontal wrap is disabled, the left_actor won't render
    * anything.
-   */
-  /*
-  ClutterActor *path_actor;
-
-  ClutterActor *right_actor;
-  ClutterActor *left_actor;
-
-  ClutterContent *right_canvas;
-  ClutterContent *left_canvas;
    */
   cairo_surface_t *right_surface;
   cairo_surface_t *left_surface;
@@ -267,17 +250,42 @@ shumate_path_layer_finalize (GObject *object)
   G_OBJECT_CLASS (shumate_path_layer_parent_class)->finalize (object);
 }
 
+static void
+shumate_path_layer_snapshot (GtkWidget   *widget,
+                             GtkSnapshot *snapshot)
+{
+  ShumatePathLayer *self = (ShumatePathLayer *)widget;
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
+  gint width, height;
+  cairo_t *cr;
+
+  if (!priv->view)
+    return;
+
+  width = gtk_widget_get_width (widget);
+  height = gtk_widget_get_height (widget);
+
+  cr = gtk_snapshot_append_cairo (snapshot, &GRAPHENE_RECT_INIT(0, 0, width, height));
+
+  // TODO: Draw the actual layer
+
+  cairo_destroy (cr);
+}
+
 
 static void
 shumate_path_layer_class_init (ShumatePathLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->finalize = shumate_path_layer_finalize;
   object_class->dispose = shumate_path_layer_dispose;
   object_class->get_property = shumate_path_layer_get_property;
   object_class->set_property = shumate_path_layer_set_property;
+
+  widget_class->snapshot = shumate_path_layer_snapshot;
 
   layer_class->set_view = set_view;
   layer_class->get_bounding_box = get_bounding_box;
@@ -428,6 +436,7 @@ shumate_path_layer_init (ShumatePathLayer *self)
 
   priv->right_surface_updated = FALSE;
   priv->left_surface_updated = FALSE;
+
 
   /*
   clutter_canvas_set_size (CLUTTER_CANVAS (priv->right_canvas), 255, 255);
@@ -690,7 +699,6 @@ shumate_path_layer_get_nodes (ShumatePathLayer *layer)
   lst = g_list_copy (priv->nodes);
   return g_list_reverse (lst);
 }
-
 
 /**
  * shumate_path_layer_remove_node:
