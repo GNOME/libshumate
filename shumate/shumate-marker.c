@@ -38,6 +38,7 @@
 #include "config.h"
 
 #include "shumate-marker.h"
+#include "shumate-marker-private.h"
 
 #include "shumate.h"
 #include "shumate-defines.h"
@@ -70,7 +71,9 @@ typedef struct
 {
   gdouble lon;
   gdouble lat;
-  gboolean selected;
+
+  guint selected    :1;
+
   gboolean selectable;
   gboolean draggable;
 
@@ -145,6 +148,7 @@ shumate_marker_get_selection_text_color ()
 {
   return &SELECTED_TEXT_COLOR;
 }
+
 
 
 
@@ -267,9 +271,10 @@ shumate_marker_set_property (GObject *object,
 }
 
 static void
-shumate_marker_class_init (ShumateMarkerClass *marker_class)
+shumate_marker_class_init (ShumateMarkerClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (marker_class);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   object_class->get_property = shumate_marker_get_property;
   object_class->set_property = shumate_marker_set_property;
 
@@ -306,12 +311,15 @@ shumate_marker_class_init (ShumateMarkerClass *marker_class)
   g_object_class_override_property (object_class,
       PROP_LATITUDE,
       "latitude");
+
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
+  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-marker"));
 }
 
 static void
-shumate_marker_init (ShumateMarker *marker)
+shumate_marker_init (ShumateMarker *self)
 {
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (self);
 
   priv->lat = 0;
   priv->lon = 0;
@@ -358,7 +366,19 @@ shumate_marker_set_selected (ShumateMarker *marker,
 
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
-  priv->selected = value;
+  if (!priv->selectable)
+    return;
+
+  if (priv->selected != value)
+    {
+      priv->selected = value;
+      if (value)
+        gtk_widget_set_state_flags (GTK_WIDGET (marker),
+                                    GTK_STATE_FLAG_SELECTED, FALSE);
+      else
+        gtk_widget_unset_state_flags (GTK_WIDGET (marker),
+                                      GTK_STATE_FLAG_SELECTED);
+    }
 }
 
 

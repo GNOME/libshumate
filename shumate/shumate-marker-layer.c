@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include "shumate-marker-layer.h"
+#include "shumate-marker-private.h"
 
 #include "shumate-defines.h"
 #include "shumate-enum-types.h"
@@ -53,15 +54,62 @@ typedef struct
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER);
 
-static void marker_selected_cb (ShumateMarker *marker,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateMarkerLayer *layer);
-
 static void set_view (ShumateLayer *layer,
     ShumateView *view);
 
 static ShumateBoundingBox *get_bounding_box (ShumateLayer *layer);
 
+static void
+set_selected_all_but_one (ShumateMarkerLayer *self,
+    ShumateMarker *not_selected,
+    gboolean select)
+{
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
+  GtkWidget *child;
+
+  for (child = gtk_widget_get_first_child (GTK_WIDGET (self));
+       child != NULL;
+       child = gtk_widget_get_next_sibling (child))
+    {
+      ShumateMarker *marker = SHUMATE_MARKER (child);
+
+      if (marker != not_selected)
+        {
+          shumate_marker_set_selected (marker, select);
+          shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
+        }
+    }
+}
+
+static void
+on_click_gesture_released (ShumateMarkerLayer *self,
+                           gint                n_press,
+                           gdouble             x,
+                           gdouble             y,
+                           GtkGestureClick    *gesture)
+{
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
+  GtkWidget *self_widget = GTK_WIDGET (self);
+  GtkWidget *child;
+  ShumateMarker *marker;
+
+  child = gtk_widget_pick (self_widget, x, y, GTK_PICK_DEFAULT);
+  if (!child)
+    return;
+
+  while (child != NULL && gtk_widget_get_parent (child) != self_widget)
+    child = gtk_widget_get_parent (child);
+
+  marker = SHUMATE_MARKER (child);
+  if (!marker)
+    return;
+
+  if (priv->mode != GTK_SELECTION_BROWSE || !shumate_marker_is_selected (marker))
+    shumate_marker_set_selected (marker, !shumate_marker_is_selected (marker));
+
+  if ((priv->mode == GTK_SELECTION_SINGLE || priv->mode == GTK_SELECTION_BROWSE) && shumate_marker_is_selected (marker))
+    set_selected_all_but_one (self, marker, FALSE);
+}
 
 static void
 shumate_marker_layer_get_property (GObject *object,
@@ -120,6 +168,7 @@ static void
 shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
   ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->dispose = shumate_marker_layer_dispose;
@@ -143,6 +192,8 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
+  
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_FIXED_LAYOUT);
 }
 
 
@@ -150,9 +201,14 @@ static void
 shumate_marker_layer_init (ShumateMarkerLayer *self)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
+  GtkGesture *click_gesture;
 
   priv->mode = GTK_TYPE_SELECTION_MODE;
   priv->view = NULL;
+
+  click_gesture = gtk_gesture_click_new ();
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
+  g_signal_connect_swapped (click_gesture, "released", G_CALLBACK (on_click_gesture_released), self);
 }
 
 /**
@@ -184,54 +240,15 @@ shumate_marker_layer_new_full (GtkSelectionMode mode)
 }
 
 static void
-set_selected_all_but_one (ShumateMarkerLayer *layer,
-    ShumateMarker *not_selected,
-    gboolean select)
-{
-  /*
-  ClutterActorIter iter;
-  ClutterActor *child;
-
-  clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateMarker *marker = SHUMATE_MARKER (child);
-
-      if (marker != not_selected)
-        {
-          g_signal_handlers_block_by_func (marker,
-              G_CALLBACK (marker_selected_cb),
-              layer);
-
-          shumate_marker_set_selected (marker, select);
-          shumate_marker_set_selectable (marker, layer->priv->mode != SHUMATE_SELECTION_NONE);
-
-          g_signal_handlers_unblock_by_func (marker,
-              G_CALLBACK (marker_selected_cb),
-              layer);
-        }
-    }
-   */
-}
-
-
-static void
-marker_selected_cb (ShumateMarker *marker,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateMarkerLayer *layer)
-{
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
-
-  if (priv->mode == GTK_SELECTION_SINGLE && shumate_marker_is_selected (marker))
-    set_selected_all_but_one (layer, marker, FALSE);
-}
-
-
-static void
-set_marker_position (ShumateMarkerLayer *layer, ShumateMarker *marker)
+set_marker_position (ShumateMarkerLayer *layer,
+                     ShumateMarker      *marker)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   gint x, y, origin_x, origin_y;
+  int marker_width, marker_height;
+  int width, height;
+
+  g_assert (SHUMATE_IS_MARKER_LAYER (layer));
 
   /* layer not yet added to the view */
   if (priv->view == NULL)
@@ -243,7 +260,44 @@ set_marker_position (ShumateMarkerLayer *layer, ShumateMarker *marker)
   y = shumate_view_latitude_to_y (priv->view,
         shumate_location_get_latitude (SHUMATE_LOCATION (marker))) + origin_y;
 
-  //clutter_actor_set_position (CLUTTER_ACTOR (marker), x, y);
+  x -= origin_x;
+  y -= origin_y;
+  marker_width = gtk_widget_get_width (GTK_WIDGET (marker));
+  marker_height = gtk_widget_get_height (GTK_WIDGET (marker));
+  width = gtk_widget_get_width (GTK_WIDGET (layer));
+  height = gtk_widget_get_height (GTK_WIDGET (layer));
+  if (x < 0 && -x < marker_width/2)
+    {
+      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
+      return;
+    }
+  else if (y < 0 && -y < marker_height/2)
+    {
+      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
+      return;
+    }
+  else if (x > width + marker_width/2)
+    {
+      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
+      return;
+    }
+  else if (y > height + marker_height/2)
+    {
+      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
+      return;
+    }
+  else
+    {
+      GtkLayoutManager *layout;
+      GtkLayoutChild *layout_child;
+      GskTransform *transform;
+
+      layout = gtk_widget_get_layout_manager (GTK_WIDGET (layer));
+      layout_child = gtk_layout_manager_get_layout_child (layout, GTK_WIDGET (marker));
+      transform = gsk_transform_translate (NULL, &GRAPHENE_POINT_INIT (x - marker_width/2, y - marker_height/2));
+      gtk_fixed_layout_child_set_transform (GTK_FIXED_LAYOUT_CHILD (layout_child), transform);
+      gtk_widget_set_visible (GTK_WIDGET (marker), TRUE);
+    }
 }
 
 
@@ -298,16 +352,13 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 
   shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
 
-  g_signal_connect (G_OBJECT (marker), "notify::selected",
-      G_CALLBACK (marker_selected_cb), layer);
-
   g_signal_connect (G_OBJECT (marker), "notify::latitude",
       G_CALLBACK (marker_position_notify), layer);
 
-  g_signal_connect (G_OBJECT (marker), "drag-motion",
-      G_CALLBACK (marker_move_by_cb), layer);
+  /*g_signal_connect (G_OBJECT (marker), "drag-motion",
+      G_CALLBACK (marker_move_by_cb), layer);*/
 
-  //clutter_actor_add_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
+  gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (layer), NULL);
   set_marker_position (layer, marker);
 }
 
@@ -333,9 +384,6 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
       GObject *marker = G_OBJECT (child);
 
       g_signal_handlers_disconnect_by_func (marker,
-          G_CALLBACK (marker_selected_cb), layer);
-
-      g_signal_handlers_disconnect_by_func (marker,
           G_CALLBACK (marker_position_notify), layer);
 
       g_signal_handlers_disconnect_by_func (marker,
@@ -359,10 +407,20 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
 GList *
 shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
 {
-  GList *lst;
+  GList *list = NULL;
+  GtkWidget *child;
 
-  //lst = clutter_actor_get_children (CLUTTER_ACTOR (layer));
-  return g_list_reverse (lst);
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
+
+  for (child = gtk_widget_get_last_child (GTK_WIDGET (layer));
+       child != NULL;
+       child = gtk_widget_get_prev_sibling (child))
+    {
+      ShumateMarker *marker = SHUMATE_MARKER (child);
+      list = g_list_prepend (list, marker);
+    }
+
+  return list;
 }
 
 
@@ -378,22 +436,19 @@ GList *
 shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
 {
   GList *selected = NULL;
+  GtkWidget *child;
 
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
 
-  /*
-  ClutterActorIter iter;
-  ClutterActor *child;
-
-  clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
-  while (clutter_actor_iter_next (&iter, &child))
+  for (child = gtk_widget_get_last_child (GTK_WIDGET (layer));
+       child != NULL;
+       child = gtk_widget_get_prev_sibling (child))
     {
       ShumateMarker *marker = SHUMATE_MARKER (child);
 
-      if (shumate_marker_get_selected (marker))
+      if (shumate_marker_is_selected (marker))
         selected = g_list_prepend (selected, marker);
     }
-   */
 
   return selected;
 }
@@ -412,9 +467,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
 {
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  g_signal_handlers_disconnect_by_func (G_OBJECT (marker),
-      G_CALLBACK (marker_selected_cb), layer);
+  g_return_if_fail (gtk_widget_get_parent (GTK_WIDGET (marker)) == GTK_WIDGET (layer));
 
   g_signal_handlers_disconnect_by_func (G_OBJECT (marker),
       G_CALLBACK (marker_position_notify), layer);
@@ -422,7 +475,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
   g_signal_handlers_disconnect_by_func (marker,
       G_CALLBACK (marker_move_by_cb), layer);
 
-  //clutter_actor_remove_child (CLUTTER_ACTOR (layer), CLUTTER_ACTOR (marker));
+  gtk_widget_unparent (GTK_WIDGET (marker));
 }
 
 
