@@ -35,56 +35,6 @@ ShumateMapSourcePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-label</FILE>
-<TITLE>ShumateLabel</TITLE>
-ShumateLabel
-shumate_label_new
-shumate_label_new_with_text
-shumate_label_new_with_image
-shumate_label_new_from_file
-shumate_label_new_full
-shumate_label_set_text
-shumate_label_set_image
-shumate_label_set_use_markup
-shumate_label_set_alignment
-shumate_label_set_color
-shumate_label_set_text_color
-shumate_label_set_font_name
-shumate_label_set_wrap
-shumate_label_set_wrap_mode
-shumate_label_set_attributes
-shumate_label_set_single_line_mode
-shumate_label_set_ellipsize
-shumate_label_set_draw_background
-shumate_label_set_draw_shadow
-shumate_label_get_use_markup
-shumate_label_get_text
-shumate_label_get_image
-shumate_label_get_alignment
-shumate_label_get_color
-shumate_label_get_text_color
-shumate_label_get_font_name
-shumate_label_get_wrap
-shumate_label_get_wrap_mode
-shumate_label_get_ellipsize
-shumate_label_get_single_line_mode
-shumate_label_get_draw_background
-shumate_label_get_attributes
-shumate_label_get_draw_shadow
-<SUBSECTION Standard>
-SHUMATE_LABEL
-SHUMATE_IS_LABEL
-SHUMATE_TYPE_LABEL
-shumate_label_get_type
-SHUMATE_LABEL_CLASS
-SHUMATE_IS_LABEL_CLASS
-SHUMATE_LABEL_GET_CLASS
-<SUBSECTION Private>
-ShumateLabelClass
-ShumateLabelPrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-marker</FILE>
 <TITLE>ShumateMarker</TITLE>
 ShumateMarker
@@ -210,28 +160,6 @@ SHUMATE_NETWORK_TILE_SOURCE_GET_CLASS
 <SUBSECTION Private>
 ShumateNetworkTileSourceClass
 ShumateNetworkTileSourcePrivate
-</SECTION>
-
-<SECTION>
-<FILE>shumate-network-bbox-tile-source</FILE>
-<TITLE>ShumateNetworkBboxTileSource</TITLE>
-ShumateNetworkBboxTileSource
-shumate_network_bbox_tile_source_new_full
-shumate_network_bbox_tile_source_load_map_data
-shumate_network_bbox_tile_source_get_api_uri
-shumate_network_bbox_tile_source_set_api_uri
-shumate_network_bbox_tile_source_set_user_agent
-<SUBSECTION Standard>
-SHUMATE_NETWORK_BBOX_TILE_SOURCE
-SHUMATE_IS_NETWORK_BBOX_TILE_SOURCE
-SHUMATE_TYPE_NETWORK_BBOX_TILE_SOURCE
-shumate_network_bbox_tile_source_get_type
-SHUMATE_NETWORK_BBOX_TILE_SOURCE_CLASS
-SHUMATE_IS_NETWORK_BBOX_TILE_SOURCE_CLASS
-SHUMATE_NETWORK_BBOX_TILE_SOURCE_GET_CLASS
-<SUBSECTION Private>
-ShumateNetworkBboxTileSourceClass
-ShumateNetworkBboxTileSourcePrivate
 </SECTION>
 
 <SECTION>
@@ -361,11 +289,6 @@ SHUMATE_CHECK_VERSION
 <TITLE>ShumatePoint</TITLE>
 ShumatePoint
 shumate_point_new
-shumate_point_new_full
-shumate_point_set_color
-shumate_point_get_color
-shumate_point_set_size
-shumate_point_get_size
 <SUBSECTION Standard>
 SHUMATE_POINT
 SHUMATE_IS_POINT
@@ -665,6 +588,24 @@ ShumatePathLayerPrivate
 </SECTION>
 
 <SECTION>
+<FILE>shumate-map-layer</FILE>
+<TITLE>ShumateMapLayer</TITLE>
+ShumateMapLayer
+shumate_map_layer_new
+<SUBSECTION Standard>
+SHUMATE_MAP_LAYER
+SHUMATE_IS_MAP_LAYER
+SHUMATE_TYPE_MAP_LAYER
+shumate_map_layer_get_type
+SHUMATE_MAP_LAYER_CLASS
+SHUMATE_IS_MAP_LAYER_CLASS
+SHUMATE_MAP_LAYER_GET_CLASS
+<SUBSECTION Private>
+ShumateMapLayerClass
+ShumateMapLayerPrivate
+</SECTION>
+
+<SECTION>
 <FILE>shumate-coordinate</FILE>
 <TITLE>ShumateCoordinate</TITLE>
 ShumateCoordinate
@@ -697,32 +638,4 @@ SHUMATE_IS_LOCATION
 SHUMATE_TYPE_LOCATION
 shumate_location_get_type
 SHUMATE_LOCATION_GET_IFACE
-</SECTION>
-
-<SECTION>
-<FILE>shumate-cairo-exportable</FILE>
-<TITLE>ShumateCairoExportable</TITLE>
-ShumateCairoExportable
-ShumateCairoExportableInterface
-shumate_cairo_exportable_get_surface
-<SUBSECTION Standard>
-SHUMATE_CAIRO_EXPORTABLE
-SHUMATE_IS_CAIRO_EXPORTABLE
-SHUMATE_TYPE_CAIRO_EXPORTABLE
-shumate_cairo_exportable_get_type
-SHUMATE_CAIRO_EXPORTABLE_GET_IFACE
-</SECTION>
-
-<SECTION>
-<FILE>shumate-cairo-importable</FILE>
-<TITLE>ShumateCairoImportable</TITLE>
-ShumateCairoImportable
-ShumateCairoImportableInterface
-shumate_cairo_importable_set_surface
-<SUBSECTION Standard>
-SHUMATE_CAIRO_IMPORTABLE
-SHUMATE_IS_CAIRO_IMPORTABLE
-SHUMATE_TYPE_CAIRO_IMPORTABLE
-shumate_cairo_importable_get_type
-SHUMATE_CAIRO_IMPORTABLE_GET_IFACE
 </SECTION>
