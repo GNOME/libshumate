@@ -32,7 +32,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_POINT shumate_point_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumatePoint, shumate_point, SHUMATE, POINT, ShumateMarker)
+G_DECLARE_FINAL_TYPE (ShumatePoint, shumate_point, SHUMATE, POINT, ShumateMarker)
 
 /**
  * ShumatePoint:
@@ -41,28 +41,7 @@ G_DECLARE_DERIVABLE_TYPE (ShumatePoint, shumate_point, SHUMATE, POINT, ShumateMa
  * and should be accessed using the provided API
  */
 
-struct _ShumatePointClass
-{
-  ShumateMarkerClass parent_class;
-};
-
-
-ShumatePoint *shumate_point_new (void);
-
-ShumatePoint *shumate_point_new_full (gdouble size,
-    const GdkRGBA *color);
-
-void shumate_point_set_color (ShumatePoint *point,
-    const GdkRGBA *color);
-GdkRGBA *shumate_point_get_color (ShumatePoint *point);
-
-void shumate_point_set_size (ShumatePoint *point,
-    gdouble size);
-gdouble shumate_point_get_size (ShumatePoint *point);
-
-cairo_surface_t *shumate_point_get_surface (ShumatePoint *point);
-void shumate_point_set_surface (ShumatePoint *point,
-    cairo_surface_t *surface);
+ShumateMarker *shumate_point_new (void);
 
 G_END_DECLS
 

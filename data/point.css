@@ -1,0 +1,7 @@
+map-point {
+  min-width: 12px;
+  min-height: 12px;
+  background: @theme_selected_bg_color;
+  border: 2px solid @theme_selected_fg_color;
+  border-radius: 50%;
+}
