@@ -34,6 +34,7 @@ shumate_layer_class_init (ShumateLayerClass *klass)
 {
   klass->set_view = NULL;
   klass->get_bounding_box = NULL;
+  gtk_widget_class_set_css_name (GTK_WIDGET_CLASS (klass), g_intern_static_string ("map-layer"));
 }
 
 
