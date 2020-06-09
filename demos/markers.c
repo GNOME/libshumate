@@ -26,47 +26,49 @@ create_marker_layer (G_GNUC_UNUSED ShumateView *view, ShumatePathLayer **path)
 {
   ShumateMarker *marker;
   ShumateMarkerLayer *layer;
-  GdkRGBA orange = { 0.95, 0.6, 0.03, 0.75 };
+  GtkWidget *label;
 
   *path = shumate_path_layer_new ();
   layer = shumate_marker_layer_new_full (GTK_SELECTION_SINGLE);
 
-  marker = SHUMATE_MARKER (shumate_label_new_with_text ("Montréal\n<span size=\"xx-small\">Québec</span>",
-        "Serif 14", NULL, NULL));
-  shumate_label_set_use_markup (SHUMATE_LABEL (marker), TRUE);
-  shumate_label_set_alignment (SHUMATE_LABEL (marker), PANGO_ALIGN_RIGHT);
-  shumate_label_set_color (SHUMATE_LABEL (marker), &orange);
+  marker = shumate_marker_new ();
+  label = gtk_label_new ("Montréal\n<span size=\"xx-small\">Québec</span>");
+  gtk_label_set_justify (GTK_LABEL (label), GTK_JUSTIFY_RIGHT);
+  gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
+  gtk_widget_insert_before (label, GTK_WIDGET (marker), NULL);
 
   shumate_location_set_location (SHUMATE_LOCATION (marker),
       45.528178, -73.563788);
-  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, marker);
   shumate_path_layer_add_node (*path, SHUMATE_LOCATION (marker));
 
-  marker = SHUMATE_MARKER (shumate_label_new_from_file ("icons/emblem-generic.png", NULL));
-  shumate_label_set_text (SHUMATE_LABEL (marker), "New York");
+  marker = shumate_marker_new ();
+  gtk_widget_insert_before (gtk_image_new_from_icon_name ("emblem-generic"), GTK_WIDGET (marker), NULL);
+  gtk_widget_set_tooltip_text (GTK_WIDGET (marker), "New York");
   shumate_location_set_location (SHUMATE_LOCATION (marker), 40.77, -73.98);
-  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, marker);
   shumate_path_layer_add_node (*path, SHUMATE_LOCATION (marker));
 
-  marker = SHUMATE_MARKER (shumate_label_new_from_file ("icons/emblem-important.png", NULL));
+  marker = shumate_marker_new ();
+  gtk_widget_insert_before (gtk_image_new_from_icon_name ("emblem-important"), GTK_WIDGET (marker), NULL);
   shumate_location_set_location (SHUMATE_LOCATION (marker), 47.130885,
       -70.764141);
-  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, marker);
   shumate_path_layer_add_node (*path, SHUMATE_LOCATION (marker));
 
-  marker = SHUMATE_MARKER (shumate_point_new ());
+  marker = shumate_point_new ();
   shumate_location_set_location (SHUMATE_LOCATION (marker), 45.130885,
       -65.764141);
-  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, marker);
   shumate_path_layer_add_node (*path, SHUMATE_LOCATION (marker));
 
-  marker = SHUMATE_MARKER (shumate_label_new_from_file ("icons/emblem-favorite.png", NULL));
-  shumate_label_set_draw_background (SHUMATE_LABEL (marker), FALSE);
+  marker = shumate_marker_new ();
+  gtk_widget_insert_before (gtk_image_new_from_icon_name ("emblem-favorite"), GTK_WIDGET (marker), NULL);
   shumate_location_set_location (SHUMATE_LOCATION (marker), 45.41484,
       -71.918907);
-  shumate_marker_layer_add_marker (layer, SHUMATE_MARKER (marker));
+  shumate_marker_layer_add_marker (layer, marker);
   shumate_path_layer_add_node (*path, SHUMATE_LOCATION (marker));
-  
+
   shumate_marker_layer_set_all_markers_draggable (layer);
 
   return layer;

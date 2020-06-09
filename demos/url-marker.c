@@ -24,69 +24,11 @@
 /* The data needed for constructing a marker */
 typedef struct
 {
+  SoupMessage *message;
   ShumateMarkerLayer *layer;
   gdouble latitude;
   gdouble longitude;
 } MarkerData;
-
-/**
- * Returns a GdkPixbuf from a given SoupMessage. This function assumes that the
- * message has completed successfully.
- * If there's an error building the GdkPixbuf the function will return NULL and
- * set error accordingly.
- *
- * The GdkPixbuf has to be freed with g_object_unref.
- */
-static GdkPixbuf *
-pixbuf_new_from_message (SoupMessage *message,
-    GError **error)
-{
-  const gchar *mime_type = NULL;
-  GdkPixbufLoader *loader = NULL;
-  GdkPixbuf *pixbuf = NULL;
-  gboolean pixbuf_is_open = FALSE;
-
-  *error = NULL;
-
-  /*  Use a pixbuf loader that can load images of the same mime-type as the
-      message.
-   */
-  mime_type = soup_message_headers_get_one (message->response_headers,
-        "Content-Type");
-  loader = gdk_pixbuf_loader_new_with_mime_type (mime_type, error);
-  if (loader != NULL)
-    pixbuf_is_open = TRUE;
-  if (*error != NULL)
-    goto cleanup;
-
-
-  gdk_pixbuf_loader_write (
-      loader,
-      (guchar *) message->response_body->data,
-      message->response_body->length,
-      error);
-  if (*error != NULL)
-    goto cleanup;
-
-  gdk_pixbuf_loader_close (loader, error);
-  pixbuf_is_open = FALSE;
-  if (*error != NULL)
-    goto cleanup;
-
-  pixbuf = gdk_pixbuf_loader_get_pixbuf (loader);
-  if (pixbuf == NULL)
-    goto cleanup;
-  g_object_ref (G_OBJECT (pixbuf));
-
-cleanup:
-  if (pixbuf_is_open)
-    gdk_pixbuf_loader_close (loader, NULL);
-
-  if (loader != NULL)
-    g_object_unref (G_OBJECT (loader));
-
-  return pixbuf;
-}
 
 
 /**
@@ -98,55 +40,47 @@ cleanup:
  * This callback expects the parameter data to be a valid ShumateMarkerLayer.
  */
 static void
-image_downloaded_cb (SoupSession *session,
-    SoupMessage *message,
-    gpointer data)
+image_downloaded_cb (GObject      *source_object,
+                     GAsyncResult *res,
+                     gpointer      user_data)
 {
-  MarkerData *marker_data = NULL;
-  SoupURI *uri = NULL;
-  char *url = NULL;
-  GError *error = NULL;
-  GdkPixbuf *pixbuf = NULL;
-  ShumateLabel *marker = NULL;
+  g_autofree MarkerData *marker_data = user_data;
+  g_autoptr(GInputStream) stream = NULL;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(ShumateMarkerLayer) layer = g_steal_pointer (&marker_data->layer);
+  g_autoptr(SoupMessage) message = g_steal_pointer (&marker_data->message);
+  g_autofree gchar *url = soup_uri_to_string (soup_message_get_uri (message), FALSE);
+  ShumateMarker *marker = NULL;
+  guint status_code = 0;
 
-  if (data == NULL)
-    goto cleanup;
-  marker_data = (MarkerData *) data;
-
-  /* Deal only with finished messages */
-  uri = soup_message_get_uri (message);
-  url = soup_uri_to_string (uri, FALSE);
-  if (!SOUP_STATUS_IS_SUCCESSFUL (message->status_code))
+  stream = soup_session_send_finish (SOUP_SESSION (source_object), res, &error);
+  if (!stream)
     {
-      g_print ("Download of %s failed with error code %d\n", url,
-          message->status_code);
-      goto cleanup;
+      g_print ("Download of %s failed: %s\n", url, error->message);
+      return;
     }
 
-  pixbuf = pixbuf_new_from_message (message, &error);
-  if (error != NULL)
+  g_object_get (message, "status-code", &status_code, NULL);
+  if (!SOUP_STATUS_IS_SUCCESSFUL (status_code))
+    {
+      g_print ("Download of %s failed: %s (%u)\n", url, soup_status_get_phrase (status_code), status_code);
+      return;
+    }
+
+  pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
+  if (!pixbuf)
     {
       g_print ("Failed to convert %s into an image: %s\n", url, error->message);
-      goto cleanup;
+      return;
     }
 
   /* Finally create a marker with the texture */
-  marker = shumate_label_new_with_image (pixbuf);
+  marker = shumate_marker_new ();
+  gtk_widget_insert_before (gtk_image_new_from_pixbuf (pixbuf), GTK_WIDGET (marker), NULL);
   shumate_location_set_location (SHUMATE_LOCATION (marker),
       marker_data->latitude, marker_data->longitude);
-  shumate_marker_layer_add_marker (marker_data->layer, SHUMATE_MARKER (marker));
-
-cleanup:
-  if (marker_data)
-    g_object_unref (marker_data->layer);
-  g_slice_free (MarkerData, marker_data);
-  g_free (url);
-
-  if (error != NULL)
-    g_error_free (error);
-
-  if (pixbuf != NULL)
-    g_object_unref (G_OBJECT (pixbuf));
+  shumate_marker_layer_add_marker (layer, marker);
 }
 
 
@@ -162,20 +96,19 @@ create_marker_from_url (ShumateMarkerLayer *layer,
     gdouble longitude,
     const gchar *url)
 {
-  SoupMessage *message;
   MarkerData *data;
 
-  data = g_slice_new (MarkerData);
+  data = g_new0 (MarkerData, 1);
+  data->message = soup_message_new ("GET", url);
   data->layer = g_object_ref (layer);
   data->latitude = latitude;
   data->longitude = longitude;
 
-  message = soup_message_new ("GET", url);
-  soup_session_queue_message (session, message, image_downloaded_cb, data);
+  soup_session_send_async (session, data->message, NULL, image_downloaded_cb, data);
 }
 
 static void
-activate (GtkApplication* app,
+activate (GtkApplication *app,
           gpointer        user_data)
 {
   GtkWindow *window;
