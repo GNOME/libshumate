@@ -633,6 +633,20 @@ on_drag_gesture_drag_end (ShumateView    *self,
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LONGITUDE]);
 }
 
+static gboolean
+on_scroll_controller_scroll (ShumateView              *self,
+                             gdouble                   dx,
+                             gdouble                   dy,
+                             GtkEventControllerScroll *controller)
+{
+  if (dy > 0)
+    shumate_view_zoom_in (self);
+  else
+    shumate_view_zoom_out (self);
+
+  return TRUE;
+}
+
 static void
 shumate_view_get_property (GObject *object,
     guint prop_id,
@@ -1419,6 +1433,7 @@ shumate_view_init (ShumateView *view)
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   ShumateMapLayer *layer;
   GtkGesture *drag_gesture;
+  GtkEventController *scroll_controller;
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
@@ -1514,6 +1529,10 @@ shumate_view_init (ShumateView *view)
   g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), view);
   g_signal_connect_swapped (drag_gesture, "drag-end", G_CALLBACK (on_drag_gesture_drag_end), view);
   gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (drag_gesture));
+
+  scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
+  g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), view);
+  gtk_widget_add_controller (GTK_WIDGET (view), scroll_controller);
 }
 
 
