@@ -69,7 +69,8 @@ static void delete_tile (ShumateFileCache *file_cache,
 static gboolean create_cache_dir (const gchar *dir_name);
 
 static void fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile);
+                       ShumateTile      *tile,
+                       GCancellable     *cancellable);
 
 static void store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
@@ -471,6 +472,7 @@ typedef struct
 {
   ShumateFileCache *self;
   ShumateTile *tile;
+  GCancellable *cancellable;
 } FileLoadedData;
 
 static void
@@ -478,6 +480,7 @@ file_loaded_data_free (FileLoadedData *data)
 {
   g_clear_object (&data->self);
   g_clear_object (&data->tile);
+  g_clear_object (&data->cancellable);
   g_slice_free (FileLoadedData, data);
 }
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FileLoadedData, file_loaded_data_free)
@@ -573,7 +576,7 @@ on_pixbuf_created (GObject *source_object,
 
 load_next:
   if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile);
+    shumate_map_source_fill_tile (next_source, tile, loaded_data->cancellable);
   else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
     {
       /* if we have some content, use the tile even if it wasn't validated */
@@ -602,7 +605,7 @@ on_file_loaded (GObject      *source_object,
       DEBUG ("Failed to load tile %s, error: %s", path, error->message);
 
       if (next_source)
-        shumate_map_source_fill_tile (next_source, tile);
+        shumate_map_source_fill_tile (next_source, tile, loaded_data->cancellable);
 
       return;
     }
@@ -613,7 +616,8 @@ on_file_loaded (GObject      *source_object,
 
 static void
 fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile)
+           ShumateTile      *tile,
+           GCancellable     *cancellable)
 {
   ShumateFileCache *self = (ShumateFileCache *)map_source;
   
@@ -634,16 +638,18 @@ fill_tile (ShumateMapSource *map_source,
       filename = get_filename (self, tile);
       file = g_file_new_for_path (filename);
 
-      user_data = g_slice_new (FileLoadedData);
+      user_data = g_slice_new0 (FileLoadedData);
       user_data->self = g_object_ref (self);
       user_data->tile = g_object_ref (tile);
+      if (cancellable)
+        user_data->cancellable = g_object_ref (cancellable);
 
       DEBUG ("fill of %s", filename);
 
       g_file_read_async (file, G_PRIORITY_DEFAULT, NULL, on_file_loaded, user_data);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile);
+    shumate_map_source_fill_tile (next_source, tile, cancellable);
   else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
     {
       /* if we have some content, use the tile even if it wasn't validated */

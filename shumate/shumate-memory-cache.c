@@ -59,7 +59,8 @@ typedef struct
 
 
 static void fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile);
+                       ShumateTile      *tile,
+                       GCancellable     *cancellable);
 
 static void store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
@@ -268,7 +269,8 @@ delete_queue_member (QueueMember *member, gpointer user_data)
 
 static void
 fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile)
+           ShumateTile      *tile,
+           GCancellable     *cancellable)
 {
   g_return_if_fail (SHUMATE_IS_MEMORY_CACHE (map_source));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -301,7 +303,7 @@ fill_tile (ShumateMapSource *map_source,
           if (!pixbuf)
             {
               if (next_source)
-                shumate_map_source_fill_tile (next_source, tile);
+                shumate_map_source_fill_tile (next_source, tile, cancellable);
 
               return;
             }
@@ -318,7 +320,7 @@ fill_tile (ShumateMapSource *map_source,
     }
 
   if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile);
+    shumate_map_source_fill_tile (next_source, tile, cancellable);
   else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
     {
       /* if we have some content, use the tile even if it wasn't validated */

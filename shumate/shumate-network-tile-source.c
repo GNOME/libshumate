@@ -100,7 +100,8 @@ typedef struct
 
 
 static void fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile);
+                       ShumateTile      *tile,
+                       GCancellable     *cancellable);
 static void tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
     GCancellable *cancellable);
@@ -662,7 +663,7 @@ on_pixbuf_created (GObject      *source_object,
         }
 
       if (next_source)
-        shumate_map_source_fill_tile (next_source, tile);
+        shumate_map_source_fill_tile (next_source, tile, cancellable);
 
       return;
     }
@@ -716,6 +717,8 @@ on_message_sent (GObject *source_object,
         {
           DEBUG ("Download of tile %d, %d got cancelled",
               shumate_tile_get_x (tile), shumate_tile_get_y (tile));
+
+          g_signal_handlers_disconnect_by_func (tile, tile_state_notify, cancellable);
           return;
         }
     }
@@ -726,7 +729,11 @@ on_message_sent (GObject *source_object,
     {
       if (tile_cache)
         shumate_tile_cache_refresh_tile_time (tile_cache, tile);
-      goto finish;
+
+      g_signal_handlers_disconnect_by_func (tile, tile_state_notify, cancellable);
+      shumate_tile_set_fade_in (tile, TRUE);
+      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+      return;
     }
 
   if (!SOUP_STATUS_IS_SUCCESSFUL (msg->status_code))
@@ -736,8 +743,9 @@ on_message_sent (GObject *source_object,
           shumate_tile_get_y (tile),
           soup_status_get_phrase (msg->status_code));
 
+      g_signal_handlers_disconnect_by_func (tile, tile_state_notify, cancellable);
       if (next_source)
-        shumate_map_source_fill_tile (next_source, tile);
+        shumate_map_source_fill_tile (next_source, tile, cancellable);
 
       return;
     }
@@ -746,18 +754,14 @@ on_message_sent (GObject *source_object,
   etag = soup_message_headers_get_one (msg->response_headers, "ETag");
   DEBUG ("Received ETag %s", etag);
 
-  data = g_slice_new (TileRenderedData);
+  data = g_slice_new0 (TileRenderedData);
   data->self = g_object_ref (self);
-  data->cancellable = g_object_ref (cancellable);
+  if (data->cancellable)
+    data->cancellable = g_object_ref (cancellable);
   data->tile = g_object_ref (tile);
   data->etag = g_strdup (etag);
 
   gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, data);
-  return;
-
-finish:
-  shumate_tile_set_fade_in (tile, TRUE);
-  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
 }
 
 static void
@@ -790,7 +794,8 @@ get_modified_time_string (ShumateTile *tile)
 
 static void
 fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile)
+           ShumateTile      *tile,
+           GCancellable     *cancellable)
 {
   ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (map_source);
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
@@ -803,8 +808,7 @@ fill_tile (ShumateMapSource *map_source,
 
   if (!priv->offline)
     {
-      g_autoptr(GCancellable) cancellable = g_cancellable_new ();
-      TileLoadedData *callback_data = g_slice_new (TileLoadedData);
+      TileLoadedData *callback_data = g_slice_new0 (TileLoadedData);
       g_autofree gchar *uri = NULL;
 
       uri = get_tile_uri (tile_source,
@@ -812,10 +816,10 @@ fill_tile (ShumateMapSource *map_source,
             shumate_tile_get_y (tile),
             shumate_tile_get_zoom_level (tile));
 
-      callback_data = g_slice_new (TileLoadedData);
       callback_data->tile = g_object_ref (tile);
       callback_data->self = g_object_ref (tile_source);
-      callback_data->cancellable = g_cancellable_new ();
+      if (cancellable)
+        callback_data->cancellable = g_object_ref (cancellable);
       callback_data->msg = soup_message_new (SOUP_METHOD_GET, uri);
 
       if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
@@ -846,13 +850,13 @@ fill_tile (ShumateMapSource *map_source,
         }
 
       g_signal_connect_object (tile, "notify::state", G_CALLBACK (tile_state_notify), cancellable, 0);
-      soup_session_send_async (priv->soup_session, callback_data->msg, NULL, on_message_sent, callback_data);
+      soup_session_send_async (priv->soup_session, callback_data->msg, cancellable, on_message_sent, callback_data);
     }
   else
     {
       ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
 
       if (SHUMATE_IS_MAP_SOURCE (next_source))
-        shumate_map_source_fill_tile (next_source, tile);
+        shumate_map_source_fill_tile (next_source, tile, cancellable);
     }
 }

@@ -30,6 +30,7 @@ struct _ShumateMapLayer
   GPtrArray *tiles_positions;
   guint required_tiles_x;
   guint required_tiles_y;
+  GHashTable *tile_fill;
 };
 
 G_DEFINE_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE_TYPE_LAYER)
@@ -146,10 +147,18 @@ shumate_map_layer_compute_grid (ShumateMapLayer *self)
                   shumate_tile_get_y (child) != y ||
                   shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
                 {
+                  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
+                  if (cancellable)
+                    g_cancellable_cancel (cancellable);
+
                   shumate_tile_set_zoom_level (child, zoom_level);
                   shumate_tile_set_x (child, tile_x % source_columns);
                   shumate_tile_set_y (child, tile_y % source_rows);
-                  shumate_map_source_fill_tile (self->map_source, child);
+
+                  cancellable = g_cancellable_new ();
+                  shumate_tile_set_texture (child, NULL);
+                  shumate_map_source_fill_tile (self->map_source, child, cancellable);
+                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
                 }
             }
 
@@ -244,6 +253,7 @@ shumate_map_layer_dispose (GObject *object)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
 
+  g_clear_pointer (&self->tile_fill, g_hash_table_unref);
   g_clear_pointer (&self->tiles_positions, g_ptr_array_unref);
   g_clear_object (&self->map_source);
 
@@ -414,7 +424,7 @@ shumate_map_layer_set_view (ShumateLayer *layer,
     {
       g_signal_connect_swapped (view, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
       g_signal_connect_swapped (view, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
-      g_signal_connect_swapped (view, "notify::zoom_level", G_CALLBACK (on_view_zoom_level_changed), self);
+      g_signal_connect_swapped (view, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
     }
 }
 
@@ -466,6 +476,7 @@ shumate_map_layer_init (ShumateMapLayer *self)
                 "overflow", GTK_OVERFLOW_HIDDEN,
                 NULL);
   self->tiles_positions = g_ptr_array_new_with_free_func ((GDestroyNotify) tile_grid_position_free);
+  self->tile_fill = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, g_object_unref);
 }
 
 ShumateMapLayer *

@@ -64,7 +64,8 @@ struct _ShumateMapSourceClass
   ShumateMapProjection (*get_projection)(ShumateMapSource *map_source);
 
   void (*fill_tile)(ShumateMapSource *map_source,
-      ShumateTile *tile);
+                    ShumateTile      *tile,
+                    GCancellable     *cancellable);
 };
 
 ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_source);
@@ -102,7 +103,8 @@ gdouble shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
     gdouble longitude);
 
 void shumate_map_source_fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile);
+                                   ShumateTile      *tile,
+                                   GCancellable     *cancellable);
 
 G_END_DECLS
 

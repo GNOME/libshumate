@@ -61,41 +61,11 @@ texture_new_for_surface (cairo_surface_t *surface)
 
 G_DEFINE_TYPE (ShumateErrorTileSource, shumate_error_tile_source, SHUMATE_TYPE_TILE_SOURCE)
 
-static void fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile);
-
-static void
-shumate_error_tile_source_class_init (ShumateErrorTileSourceClass *klass)
-{
-  ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
-
-  map_source_class->fill_tile = fill_tile;
-}
-
-
-static void
-shumate_error_tile_source_init (ShumateErrorTileSource *self)
-{
-}
-
-
-/**
- * shumate_error_tile_source_new_full:
- *
- * Constructor of #ShumateErrorTileSource.
- *
- * Returns: a constructed #ShumateErrorTileSource object
- */
-ShumateErrorTileSource *
-shumate_error_tile_source_new_full (void)
-{
-  return g_object_new (SHUMATE_TYPE_ERROR_TILE_SOURCE, NULL);
-}
-
 
 static void
 fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile)
+           ShumateTile      *tile,
+           GCancellable     *cancellable)
 {
   g_return_if_fail (SHUMATE_IS_ERROR_TILE_SOURCE (map_source));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -147,10 +117,38 @@ fill_tile (ShumateMapSource *map_source,
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile);
+    shumate_map_source_fill_tile (next_source, tile, cancellable);
   else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
     {
       /* if we have some content, use the tile even if it wasn't validated */
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
     }
+}
+
+static void
+shumate_error_tile_source_class_init (ShumateErrorTileSourceClass *klass)
+{
+  ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
+
+  map_source_class->fill_tile = fill_tile;
+}
+
+
+static void
+shumate_error_tile_source_init (ShumateErrorTileSource *self)
+{
+}
+
+
+/**
+ * shumate_error_tile_source_new_full:
+ *
+ * Constructor of #ShumateErrorTileSource.
+ *
+ * Returns: a constructed #ShumateErrorTileSource object
+ */
+ShumateErrorTileSource *
+shumate_error_tile_source_new_full (void)
+{
+  return g_object_new (SHUMATE_TYPE_ERROR_TILE_SOURCE, NULL);
 }

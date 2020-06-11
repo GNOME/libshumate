@@ -535,16 +535,18 @@ shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
  * shumate_map_source_fill_tile:
  * @map_source: a #ShumateMapSource
  * @tile: a #ShumateTile
+ * @cancellable: a #GCancellable or %NULL
  *
  * Fills the tile with image data (either from cache, network or rendered
  * locally).
  */
 void
 shumate_map_source_fill_tile (ShumateMapSource *map_source,
-    ShumateTile *tile)
+                              ShumateTile      *tile,
+                              GCancellable     *cancellable)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
 
   shumate_tile_set_state (tile, SHUMATE_STATE_LOADING);
-  SHUMATE_MAP_SOURCE_GET_CLASS (map_source)->fill_tile (map_source, tile);
+  SHUMATE_MAP_SOURCE_GET_CLASS (map_source)->fill_tile (map_source, tile, cancellable);
 }
