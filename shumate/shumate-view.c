@@ -223,6 +223,8 @@ typedef struct
   gdouble focus_lon;
   gboolean zoom_started;
   gdouble accumulated_scroll_dy;
+  gdouble drag_begin_lat;
+  gdouble drag_begin_lon;
 
   ShumateBoundingBox *world_bbox;
 
@@ -568,6 +570,67 @@ resize_viewport (ShumateView *view)
   shumate_adjustment_set_values (hadjust, shumate_adjustment_get_value (hadjust), lower_x, upper_x, 1.0);
   shumate_adjustment_set_values (vadjust, shumate_adjustment_get_value (vadjust), lower_y, upper_y, 1.0);
   g_signal_handlers_unblock_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
+}
+
+static void
+on_drag_gesture_drag_begin (ShumateView    *self,
+                            gdouble         start_x,
+                            gdouble         start_y,
+                            GtkGestureDrag *gesture)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  g_assert (SHUMATE_IS_VIEW (self));
+
+  priv->drag_begin_lon = priv->longitude;
+  priv->drag_begin_lat = priv->latitude;
+
+  gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grabbing");
+}
+
+static void
+on_drag_gesture_drag_update (ShumateView    *self,
+                             gdouble         offset_x,
+                             gdouble         offset_y,
+                             GtkGestureDrag *gesture)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  double x, y;
+
+  g_assert (SHUMATE_IS_VIEW (self));
+
+  x = shumate_view_longitude_to_x (self, priv->drag_begin_lon) - offset_x;
+  y = shumate_view_latitude_to_y (self, priv->drag_begin_lat) - offset_y;
+
+  priv->longitude = shumate_view_x_to_longitude (self, x);
+  priv->latitude = shumate_view_y_to_latitude (self, y);
+
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LATITUDE]);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LONGITUDE]);
+}
+
+static void
+on_drag_gesture_drag_end (ShumateView    *self,
+                          gdouble         offset_x,
+                          gdouble         offset_y,
+                          GtkGestureDrag *gesture)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  double x, y;
+
+  g_assert (SHUMATE_IS_VIEW (self));
+
+  x = shumate_view_longitude_to_x (self, priv->drag_begin_lon) - offset_x;
+  y = shumate_view_latitude_to_y (self, priv->drag_begin_lat) - offset_y;
+
+  priv->longitude = shumate_view_x_to_longitude (self, x);
+  priv->latitude = shumate_view_y_to_latitude (self, y);
+  priv->drag_begin_lon = 0;
+  priv->drag_begin_lat = 0;
+
+  gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LATITUDE]);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LONGITUDE]);
 }
 
 static void
@@ -1355,6 +1418,7 @@ shumate_view_init (ShumateView *view)
   ShumateMapSource *source;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   ShumateMapLayer *layer;
+  GtkGesture *drag_gesture;
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
@@ -1403,6 +1467,8 @@ shumate_view_init (ShumateView *view)
   priv->user_layer_slots = NULL;
   priv->hwrap = FALSE;
 
+  gtk_widget_set_cursor_from_name (GTK_WIDGET (view), "grab");
+
   //clutter_actor_set_background_color (CLUTTER_ACTOR (view), &color);
 
   g_signal_connect (view, "notify::width", G_CALLBACK (view_size_changed_cb), NULL);
@@ -1443,7 +1509,11 @@ shumate_view_init (ShumateView *view)
   layer = shumate_map_layer_new (priv->map_source);
   shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 
-  
+  drag_gesture = gtk_gesture_drag_new ();
+  g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), view);
+  g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), view);
+  g_signal_connect_swapped (drag_gesture, "drag-end", G_CALLBACK (on_drag_gesture_drag_end), view);
+  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (drag_gesture));
 }
 
 
