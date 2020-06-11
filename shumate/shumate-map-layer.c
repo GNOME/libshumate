@@ -116,17 +116,17 @@ shumate_map_layer_compute_grid (ShumateMapLayer *self)
   source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
   width = gtk_widget_get_width (GTK_WIDGET (self));
   height = gtk_widget_get_height (GTK_WIDGET (self));
-  x_offset = -(gint)(((self->required_tiles_x) * tile_size - width)/2);
-  y_offset = -(gint)(((self->required_tiles_y) * tile_size - height)/2);
+  x_offset = -(gint)(((self->required_tiles_x) * tile_size - width)/2) - center_x % tile_size;
+  y_offset = -(gint)(((self->required_tiles_y) * tile_size - height)/2) - center_y % tile_size;
   child_allocation.x = x_offset;
   child_allocation.width = tile_size;
   child_allocation.height = tile_size;
 
-  tile_x = center_x - self->required_tiles_x/2;
+  tile_x = center_x/tile_size - self->required_tiles_x/2;
   for (gint x = 0; x < self->required_tiles_x; x++)
     {
       child_allocation.y = y_offset;
-      tile_y = center_y - self->required_tiles_y/2;
+      tile_y = center_y/tile_size - self->required_tiles_y/2;
       for (gint y = 0; y < self->required_tiles_y; y++)
         {
           TileGridPosition *tile_child;
