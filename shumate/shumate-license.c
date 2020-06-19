@@ -44,8 +44,7 @@ struct _ShumateLicense
 
   GtkWidget *extra_text_label;
   GtkWidget *license_label;
-
-  ShumateView *view;
+  GPtrArray *map_sources;
 };
 
 G_DEFINE_TYPE (ShumateLicense, shumate_license, GTK_TYPE_WIDGET);
@@ -98,22 +97,24 @@ shumate_license_set_property (GObject      *object,
 }
 
 static void
-shumate_license_assign_source (ShumateLicense *self)
+shumate_license_sources_changed (ShumateLicense *self)
 {
-  ShumateMapSource *map_source;
+  g_autoptr(GString) license_str = NULL;
+  guint i;
 
   g_assert (SHUMATE_IS_LICENSE (self));
 
-  map_source = shumate_view_get_map_source (self->view);
-  gtk_label_set_label (GTK_LABEL (self->license_label), shumate_map_source_get_license (map_source));
-}
+  license_str = g_string_new (NULL);
+  for (i = 0; i < self->map_sources->len; i++)
+    {
+      ShumateMapSource *map_source = g_ptr_array_index (self->map_sources, i);
+      if (i == 0)
+        g_string_append (license_str, shumate_map_source_get_license (map_source));
+      else
+        g_string_append_printf (license_str, "\n%s", shumate_map_source_get_license (map_source));
+    }
 
-static void
-on_map_source_changed (ShumateLicense *self,
-                       GParamSpec     *pspec,
-                       ShumateView    *view)
-{
-  shumate_license_assign_source (self);
+  gtk_label_set_label (GTK_LABEL (self->license_label), license_str->str);
 }
 
 static void
@@ -121,9 +122,7 @@ shumate_license_dispose (GObject *object)
 {
   ShumateLicense *self = SHUMATE_LICENSE (object);
 
-  if (self->view)
-    shumate_license_disconnect_view (self);
-
+  g_clear_pointer (&self->map_sources, g_ptr_array_unref);
   g_clear_pointer (&self->extra_text_label, gtk_widget_unparent);
   g_clear_pointer (&self->license_label, gtk_widget_unparent);
 
@@ -187,7 +186,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
 static void
 shumate_license_init (ShumateLicense *self)
 {
-  self->view = NULL;
+  self->map_sources = g_ptr_array_new_with_free_func (g_object_unref);
   self->license_label = gtk_label_new (NULL);
   self->extra_text_label = gtk_label_new (NULL);
 
@@ -219,51 +218,6 @@ shumate_license_new (void)
 {
   return SHUMATE_LICENSE (g_object_new (SHUMATE_TYPE_LICENSE, NULL));
 }
-
-
-/**
- * shumate_license_connect_view:
- * @license: The license
- * @view: a #ShumateView
- *
- * This method connects to the necessary signals of #ShumateView to make the
- * license change automatically when the map source changes.
- */
-void
-shumate_license_connect_view (ShumateLicense *license,
-                              ShumateView    *view)
-{
-  g_return_if_fail (SHUMATE_IS_LICENSE (license));
-
-  if (license->view == view)
-    return;
-
-  if (license->view)
-    shumate_license_disconnect_view (license);
-
-  license->view = g_object_ref (view);
-
-  g_signal_connect_swapped (view, "notify::map-source", G_CALLBACK (on_map_source_changed), license);
-  shumate_license_assign_source (license);
-}
-
-
-/**
- * shumate_license_disconnect_view:
- * @license: The license
- *
- * This method disconnects from the signals previously connected by shumate_license_connect_view().
- */
-void
-shumate_license_disconnect_view (ShumateLicense *license)
-{
-  g_return_if_fail (SHUMATE_IS_LICENSE (license));
-
-  g_signal_handlers_disconnect_by_data (license->view, license);
-
-  g_clear_object (&license->view);
-}
-
 
 /**
  * shumate_license_set_extra_text:
@@ -337,4 +291,34 @@ shumate_license_get_xalign (ShumateLicense *license)
   g_return_val_if_fail (SHUMATE_IS_LICENSE (license), 1.0f);
 
   return gtk_label_get_xalign (GTK_LABEL (license->license_label));
+}
+
+void
+shumate_license_append_map_source (ShumateLicense   *license,
+                                   ShumateMapSource *map_source)
+{
+  g_return_if_fail (SHUMATE_IS_LICENSE (license));
+
+  g_ptr_array_add (license->map_sources, g_object_ref (map_source));
+  shumate_license_sources_changed (license);
+}
+
+void
+shumate_license_prepend_map_source (ShumateLicense   *license,
+                                    ShumateMapSource *map_source)
+{
+  g_return_if_fail (SHUMATE_IS_LICENSE (license));
+
+  g_ptr_array_insert (license->map_sources, 0, g_object_ref (map_source));
+  shumate_license_sources_changed (license);
+}
+
+void
+shumate_license_remove_map_source (ShumateLicense   *license,
+                                   ShumateMapSource *map_source)
+{
+  g_return_if_fail (SHUMATE_IS_LICENSE (license));
+
+  g_ptr_array_remove (license->map_sources, map_source);
+  shumate_license_sources_changed (license);
 }

@@ -28,7 +28,7 @@
 #include <shumate/shumate-defines.h>
 #include <shumate/shumate-marker.h>
 #include <shumate/shumate-layer.h>
-#include <shumate/shumate-bounding-box.h>
+#include <shumate/shumate-viewport.h>
 
 #include <gtk/gtk.h>
 #include <glib-object.h>
@@ -50,8 +50,9 @@ struct _ShumateMarkerLayerClass
   ShumateLayerClass parent_class;
 };
 
-ShumateMarkerLayer *shumate_marker_layer_new (void);
-ShumateMarkerLayer *shumate_marker_layer_new_full (GtkSelectionMode mode);
+ShumateMarkerLayer *shumate_marker_layer_new (ShumateViewport *viewport);
+ShumateMarkerLayer *shumate_marker_layer_new_full (ShumateViewport *viewport,
+                                                   GtkSelectionMode mode);
 
 void shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
     ShumateMarker *marker);

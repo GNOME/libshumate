@@ -26,42 +26,48 @@
 #define __SHUMATE_VIEWPORT_H__
 
 #include <glib-object.h>
-#include "shumate-adjustment.h"
-#include "shumate-view.h"
+
+#include <shumate/shumate-location.h>
+#include <shumate/shumate-map-source.h>
 
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_VIEWPORT shumate_viewport_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateViewport, shumate_viewport, SHUMATE, VIEWPORT, GObject)
-
-struct _ShumateViewportClass
-{
-  GObjectClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumateViewport, shumate_viewport, SHUMATE, VIEWPORT, GObject)
 
 ShumateViewport *shumate_viewport_new (void);
 
-void shumate_viewport_set_origin (ShumateViewport *viewport,
-    gdouble x,
-    gdouble y);
+void shumate_viewport_set_zoom_level (ShumateViewport *self,
+                                      guint            zoom_level);
+guint shumate_viewport_get_zoom_level (ShumateViewport *self);
 
-void shumate_viewport_get_origin (ShumateViewport *viewport,
-    gdouble *x,
-    gdouble *y);
-void shumate_viewport_stop (ShumateViewport *viewport);
+void shumate_viewport_set_max_zoom_level (ShumateViewport *self,
+                                          guint            max_zoom_level);
+guint shumate_viewport_get_max_zoom_level (ShumateViewport *self);
 
-void shumate_viewport_get_adjustments (ShumateViewport *viewport,
-    ShumateView *view,
-    ShumateAdjustment **hadjustment,
-    ShumateAdjustment **vadjustment);
+void shumate_viewport_set_min_zoom_level (ShumateViewport *self,
+                                          guint            min_zoom_level);
+guint shumate_viewport_get_min_zoom_level (ShumateViewport *self);
 
-void shumate_viewport_set_adjustments (ShumateViewport *viewport,
-    ShumateAdjustment *hadjustment,
-    ShumateAdjustment *vadjustment);
+void shumate_viewport_zoom_in (ShumateViewport *self);
+void shumate_viewport_zoom_out (ShumateViewport *self);
 
-void shumate_viewport_get_anchor (ShumateViewport *viewport,
-    gint *x,
-    gint *y);
+void shumate_viewport_set_reference_map_source (ShumateViewport  *self,
+                                                ShumateMapSource *map_source);
+ShumateMapSource *shumate_viewport_get_reference_map_source (ShumateViewport  *self);
+
+gdouble shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
+                                                GtkWidget       *widget,
+                                                gdouble          x);
+gdouble shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
+                                               GtkWidget       *widget,
+                                               gdouble          y);
+gdouble shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
+                                                GtkWidget       *widget,
+                                                gdouble          longitude);
+gdouble shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
+                                               GtkWidget       *widget,
+                                               gdouble          latitude);
 
 G_END_DECLS
 

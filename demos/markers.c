@@ -22,14 +22,17 @@
 
 
 ShumateMarkerLayer *
-create_marker_layer (G_GNUC_UNUSED ShumateView *view, ShumatePathLayer **path)
+create_marker_layer (ShumateView *view, ShumatePathLayer **path)
 {
   ShumateMarker *marker;
   ShumateMarkerLayer *layer;
   GtkWidget *label;
+  ShumateViewport *viewport;
 
-  *path = shumate_path_layer_new ();
-  layer = shumate_marker_layer_new_full (GTK_SELECTION_SINGLE);
+  viewport = shumate_view_get_viewport (view);
+
+  *path = shumate_path_layer_new (viewport);
+  layer = shumate_marker_layer_new_full (viewport, GTK_SELECTION_SINGLE);
 
   marker = shumate_marker_new ();
   label = gtk_label_new ("Montréal\n<span size=\"xx-small\">Québec</span>");

@@ -54,11 +54,6 @@ typedef struct
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER);
 
-static void set_view (ShumateLayer *layer,
-    ShumateView *view);
-
-static ShumateBoundingBox *get_bounding_box (ShumateLayer *layer);
-
 static void
 set_selected_all_but_one (ShumateMarkerLayer *self,
     ShumateMarker *not_selected,
@@ -112,6 +107,126 @@ on_click_gesture_released (ShumateMarkerLayer *self,
 }
 
 static void
+set_marker_position (ShumateMarkerLayer *layer,
+                     ShumateMarker      *marker)
+{
+  ShumateViewport *viewport;
+  ShumateMapSource *map_source;
+  gint x, y;
+  int width, height;
+  gdouble lon, lat;
+  GtkAllocation allocation;
+
+  g_assert (SHUMATE_IS_MARKER_LAYER (layer));
+
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (layer));
+  map_source = shumate_viewport_get_reference_map_source (viewport);
+  if (!map_source)
+    return;
+
+  lon = shumate_location_get_longitude (SHUMATE_LOCATION (marker));
+  lat = shumate_location_get_latitude (SHUMATE_LOCATION (marker));
+
+  x = shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon);
+  y = shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat);
+
+  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &allocation.width, NULL, NULL);
+  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &allocation.height, NULL, NULL);
+  width = gtk_widget_get_width (GTK_WIDGET (layer));
+  height = gtk_widget_get_height (GTK_WIDGET (layer));
+  if (x < 0 && -x < allocation.width/2)
+    {
+      allocation = (GtkAllocation){0, 0, 0, 0};
+      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
+      gtk_widget_hide (GTK_WIDGET (marker));
+      return;
+    }
+  else if (y < 0 && -y < allocation.height/2)
+    {
+      allocation = (GtkAllocation){0, 0, 0, 0};
+      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
+      gtk_widget_hide (GTK_WIDGET (marker));
+      return;
+    }
+  else if (x > width + allocation.width/2)
+    {
+      allocation = (GtkAllocation){0, 0, 0, 0};
+      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
+      gtk_widget_hide (GTK_WIDGET (marker));
+      return;
+    }
+  else if (y > height + allocation.height/2)
+    {
+      allocation = (GtkAllocation){0, 0, 0, 0};
+      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
+      gtk_widget_hide (GTK_WIDGET (marker));
+      return;
+    }
+  else
+    {
+      allocation.x = x - allocation.width/2;
+      allocation.y = y - allocation.height/2;
+
+      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
+      gtk_widget_show (GTK_WIDGET (marker));
+    }
+}
+
+static void
+shumate_marker_layer_reposition_markers (ShumateMarkerLayer *self)
+{
+  GtkWidget *child;
+
+  for (child = gtk_widget_get_first_child (GTK_WIDGET (self));
+       child != NULL;
+       child = gtk_widget_get_next_sibling (child))
+    {
+      set_marker_position (self, SHUMATE_MARKER (child));
+    }
+}
+
+static void
+on_view_longitude_changed (ShumateMarkerLayer *self,
+                           GParamSpec      *pspec,
+                           ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MARKER_LAYER (self));
+
+  shumate_marker_layer_reposition_markers (self);
+}
+
+static void
+on_view_latitude_changed (ShumateMarkerLayer *self,
+                          GParamSpec      *pspec,
+                          ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MARKER_LAYER (self));
+
+  shumate_marker_layer_reposition_markers (self);
+}
+
+static void
+on_view_zoom_level_changed (ShumateMarkerLayer *self,
+                            GParamSpec      *pspec,
+                            ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MARKER_LAYER (self));
+
+  shumate_marker_layer_reposition_markers (self);
+}
+
+static void
+shumate_marker_layer_size_allocate (GtkWidget *widget,
+                                    int        width,
+                                    int        height,
+                                    int        baseline)
+{
+  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (widget);
+
+  shumate_marker_layer_reposition_markers (self);
+}
+
+static void
 shumate_marker_layer_get_property (GObject *object,
     guint property_id,
     G_GNUC_UNUSED GValue *value,
@@ -155,13 +270,25 @@ shumate_marker_layer_set_property (GObject *object,
 static void
 shumate_marker_layer_dispose (GObject *object)
 {
-  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
+  GtkWidget *child;
 
-  if (priv->view != NULL)
-    set_view (SHUMATE_LAYER (self), NULL);
+  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
+    gtk_widget_unparent (child);
 
   G_OBJECT_CLASS (shumate_marker_layer_parent_class)->dispose (object);
+}
+
+static void
+shumate_marker_layer_constructed (GObject *object)
+{
+  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+
+  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
+  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
+  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
+
+  G_OBJECT_CLASS (shumate_marker_layer_parent_class)->constructed (object);
 }
 
 static void
@@ -169,14 +296,13 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
-  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->dispose = shumate_marker_layer_dispose;
   object_class->get_property = shumate_marker_layer_get_property;
   object_class->set_property = shumate_marker_layer_set_property;
+  object_class->constructed = shumate_marker_layer_constructed;
 
-  layer_class->set_view = set_view;
-  layer_class->get_bounding_box = get_bounding_box;
+  widget_class->size_allocate = shumate_marker_layer_size_allocate;
 
   /**
    * ShumateMarkerLayer:selection-mode:
@@ -192,8 +318,6 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
-  
-  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_FIXED_LAYOUT);
 }
 
 
@@ -204,7 +328,6 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
   GtkGesture *click_gesture;
 
   priv->mode = GTK_TYPE_SELECTION_MODE;
-  priv->view = NULL;
 
   click_gesture = gtk_gesture_click_new ();
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
@@ -219,9 +342,11 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
  * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
  */
 ShumateMarkerLayer *
-shumate_marker_layer_new ()
+shumate_marker_layer_new (ShumateViewport *viewport)
 {
-  return g_object_new (SHUMATE_TYPE_MARKER_LAYER, NULL);
+  return g_object_new (SHUMATE_TYPE_MARKER_LAYER,
+                       "viewport", viewport,
+                       NULL);
 }
 
 
@@ -234,70 +359,13 @@ shumate_marker_layer_new ()
  * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
  */
 ShumateMarkerLayer *
-shumate_marker_layer_new_full (GtkSelectionMode mode)
+shumate_marker_layer_new_full (ShumateViewport *viewport,
+                               GtkSelectionMode mode)
 {
-  return g_object_new (SHUMATE_TYPE_MARKER_LAYER, "selection-mode", mode, NULL);
-}
-
-static void
-set_marker_position (ShumateMarkerLayer *layer,
-                     ShumateMarker      *marker)
-{
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
-  gint x, y, origin_x, origin_y;
-  int marker_width, marker_height;
-  int width, height;
-
-  g_assert (SHUMATE_IS_MARKER_LAYER (layer));
-
-  /* layer not yet added to the view */
-  if (priv->view == NULL)
-    return;
-
-  shumate_view_get_viewport_origin (priv->view, &origin_x, &origin_y);
-  x = shumate_view_longitude_to_x (priv->view,
-        shumate_location_get_longitude (SHUMATE_LOCATION (marker))) + origin_x;
-  y = shumate_view_latitude_to_y (priv->view,
-        shumate_location_get_latitude (SHUMATE_LOCATION (marker))) + origin_y;
-
-  x -= origin_x;
-  y -= origin_y;
-  marker_width = gtk_widget_get_width (GTK_WIDGET (marker));
-  marker_height = gtk_widget_get_height (GTK_WIDGET (marker));
-  width = gtk_widget_get_width (GTK_WIDGET (layer));
-  height = gtk_widget_get_height (GTK_WIDGET (layer));
-  if (x < 0 && -x < marker_width/2)
-    {
-      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
-      return;
-    }
-  else if (y < 0 && -y < marker_height/2)
-    {
-      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
-      return;
-    }
-  else if (x > width + marker_width/2)
-    {
-      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
-      return;
-    }
-  else if (y > height + marker_height/2)
-    {
-      gtk_widget_set_visible (GTK_WIDGET (marker), FALSE);
-      return;
-    }
-  else
-    {
-      GtkLayoutManager *layout;
-      GtkLayoutChild *layout_child;
-      GskTransform *transform;
-
-      layout = gtk_widget_get_layout_manager (GTK_WIDGET (layer));
-      layout_child = gtk_layout_manager_get_layout_child (layout, GTK_WIDGET (marker));
-      transform = gsk_transform_translate (NULL, &GRAPHENE_POINT_INIT (x - marker_width/2, y - marker_height/2));
-      gtk_fixed_layout_child_set_transform (GTK_FIXED_LAYOUT_CHILD (layout_child), transform);
-      gtk_widget_set_visible (GTK_WIDGET (marker), TRUE);
-    }
+  return g_object_new (SHUMATE_TYPE_MARKER_LAYER,
+                       "selection-mode", mode,
+                       "viewport", viewport,
+                       NULL);
 }
 
 
@@ -321,14 +389,14 @@ marker_move_by_cb (ShumateMarker *marker,
   ShumateView *view = priv->view;
   gdouble x, y, lat, lon;
 
-  x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (SHUMATE_LOCATION (marker)));
+  /*x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (SHUMATE_LOCATION (marker)));
   y = shumate_view_latitude_to_y (view, shumate_location_get_latitude (SHUMATE_LOCATION (marker)));
 
   x += dx;
   y += dy;
 
   lon = shumate_view_x_to_longitude (view, x);
-  lat = shumate_view_y_to_latitude (view, y);
+  lat = shumate_view_y_to_latitude (view, y);*/
 
   shumate_location_set_location (SHUMATE_LOCATION (marker), lat, lon);
 }
@@ -715,121 +783,4 @@ shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer)
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), GTK_SELECTION_NONE);
 
   return priv->mode;
-}
-
-
-static void
-reposition (ShumateMarkerLayer *layer)
-{
-  /*
-  ClutterActorIter iter;
-  ClutterActor *child;
-
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
-
-  clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateMarker *marker = SHUMATE_MARKER (child);
-
-      set_marker_position (layer, marker);
-    }
-   */
-}
-
-
-static void
-relocate_cb (G_GNUC_UNUSED GObject *gobject,
-    ShumateMarkerLayer *layer)
-{
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
-
-  reposition (layer);
-}
-
-
-static void
-zoom_reposition_cb (G_GNUC_UNUSED GObject *gobject,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateMarkerLayer *layer)
-{
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
-
-  reposition (layer);
-}
-
-
-static void
-set_view (ShumateLayer *layer,
-    ShumateView *view)
-{
-  ShumateMarkerLayer *marker_layer = SHUMATE_MARKER_LAYER (layer);
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (marker_layer);
-
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
-  g_return_if_fail (SHUMATE_IS_VIEW (view) || view == NULL);
-
-
-  if (priv->view != NULL)
-    {
-      g_signal_handlers_disconnect_by_func (priv->view,
-          G_CALLBACK (relocate_cb), marker_layer);
-      g_object_unref (priv->view);
-    }
-
-  priv->view = view;
-
-  if (view != NULL)
-    {
-      g_object_ref (view);
-
-      g_signal_connect (view, "layer-relocated",
-          G_CALLBACK (relocate_cb), layer);
-
-      g_signal_connect (view, "notify::zoom-level",
-          G_CALLBACK (zoom_reposition_cb), layer);
-
-      reposition (marker_layer);
-    }
-}
-
-
-static ShumateBoundingBox *
-get_bounding_box (ShumateLayer *layer)
-{
-  //ClutterActorIter iter;
-  //ClutterActor *child;
-  ShumateBoundingBox *bbox;
-
-  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
-
-  bbox = shumate_bounding_box_new ();
-
-  /*
-  clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateMarker *marker = SHUMATE_MARKER (child);
-      gdouble lat, lon;
-
-      lat = shumate_location_get_latitude (SHUMATE_LOCATION (marker));
-      lon = shumate_location_get_longitude (SHUMATE_LOCATION (marker));
-
-      shumate_bounding_box_extend (bbox, lat, lon);
-    }
-   */
-
-  if (bbox->left == bbox->right)
-    {
-      bbox->left -= 0.0001;
-      bbox->right += 0.0001;
-    }
-
-  if (bbox->bottom == bbox->top)
-    {
-      bbox->bottom -= 0.0001;
-      bbox->top += 0.0001;
-    }
-
-  return bbox;
 }

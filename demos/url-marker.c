@@ -116,14 +116,16 @@ activate (GtkApplication *app,
   ShumateView *view;
   ShumateMarkerLayer *layer;
   SoupSession *session;
+  ShumateViewport *viewport;
 
   /* Create the map view */
   overlay = gtk_overlay_new ();
   view = shumate_view_new ();
+  viewport = shumate_view_get_viewport (view);
   gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
-  layer = shumate_marker_layer_new_full (GTK_SELECTION_SINGLE);
+  layer = shumate_marker_layer_new_full (viewport, GTK_SELECTION_SINGLE);
   shumate_view_add_layer (view, SHUMATE_LAYER (layer));
   session = soup_session_new ();
   create_marker_from_url (layer, session, 48.218611, 17.146397,

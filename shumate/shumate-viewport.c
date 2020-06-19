@@ -1,8 +1,10 @@
-/* shumate-viewport.c: Viewport actor
+/* shumate-viewport.c: Viewport
  *
  * Copyright (C) 2008 OpenedHand
  * Copyright (C) 2011-2013 Jiri Techet <techet@gmail.com>
  * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
+ * Copyright (C) 2020 Collabora, Ltd. (https://www.collabora.com)
+ * Copyright (C) 2020 Corentin Noël <corentin.noel@collabora.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,59 +24,110 @@
  * Written by: Chris Lord <chris@openedhand.com>
  */
 
-#include "config.h"
-
-#include "shumate-view.h"
 #include "shumate-viewport.h"
+#include "shumate-location.h"
+#include "shumate-defines.h"
 
-typedef struct {
-  gdouble x;
-  gdouble y;
+struct _ShumateViewport
+{
+  GObject parent_instance;
 
-  gint anchor_x;
-  gint anchor_y;
+  gdouble lon;
+  gdouble lat;
 
-  ShumateAdjustment *hadjustment;
-  ShumateAdjustment *vadjustment;
-} ShumateViewportPrivate;
+  guint zoom_level;
+  guint min_zoom_level;
+  guint max_zoom_level;
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT)
+  ShumateMapSource *ref_map_source;
+};
+
+static void shumate_viewport_shumate_location_interface_init (ShumateLocationInterface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT,
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, shumate_viewport_shumate_location_interface_init));
 
 enum
 {
-  PROP_0,
+  PROP_ZOOM_LEVEL = 1,
+  PROP_MIN_ZOOM_LEVEL,
+  PROP_MAX_ZOOM_LEVEL,
+  PROP_REFERENCE_MAP_SOURCE,
+  N_PROPERTIES,
 
-  PROP_X_ORIGIN,
-  PROP_Y_ORIGIN,
+  PROP_LONGITUDE,
+  PROP_LATITUDE,
 };
 
-enum
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
+
+static gdouble
+shumate_viewport_get_latitude (ShumateLocation *location)
 {
-  /* normal signals */
-  RELOCATED,
-  LAST_SIGNAL
-};
+  ShumateViewport *self = (ShumateViewport *)location;
 
-static guint signals[LAST_SIGNAL] = { 0, };
+  g_assert (SHUMATE_IS_VIEWPORT (self));
 
+  return self->lat;
+}
+
+static gdouble
+shumate_viewport_get_longitude (ShumateLocation *location)
+{
+  ShumateViewport *self = (ShumateViewport *)location;
+
+  g_assert (SHUMATE_IS_VIEWPORT (self));
+
+  return self->lon;
+}
 
 static void
-shumate_viewport_get_property (GObject *object,
-    guint prop_id,
-    GValue *value,
-    GParamSpec *pspec)
+shumate_viewport_set_location (ShumateLocation *location,
+                               gdouble          latitude,
+                               gdouble          longitude)
 {
-  ShumateViewport *viewport = SHUMATE_VIEWPORT (object);
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+  ShumateViewport *self = (ShumateViewport *)location;
+
+  g_assert (SHUMATE_IS_VIEWPORT (self));
+
+  self->lon = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
+  self->lat = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
+  g_object_notify (G_OBJECT (self), "longitude");
+  g_object_notify (G_OBJECT (self), "latitude");
+}
+
+static void
+shumate_viewport_get_property (GObject    *object,
+                               guint       prop_id,
+                               GValue     *value,
+                               GParamSpec *pspec)
+{
+  ShumateViewport *self = SHUMATE_VIEWPORT (object);
 
   switch (prop_id)
     {
-    case PROP_X_ORIGIN:
-      g_value_set_int (value, priv->x);
+    case PROP_ZOOM_LEVEL:
+      g_value_set_uint (value, self->zoom_level);
       break;
 
-    case PROP_Y_ORIGIN:
-      g_value_set_int (value, priv->y);
+    case PROP_MIN_ZOOM_LEVEL:
+      g_value_set_uint (value, self->min_zoom_level);
+      break;
+
+    case PROP_MAX_ZOOM_LEVEL:
+      g_value_set_uint (value, self->max_zoom_level);
+      break;
+
+    case PROP_REFERENCE_MAP_SOURCE:
+      g_value_set_object (value, self->ref_map_source);
+      break;
+
+    case PROP_LONGITUDE:
+      g_value_set_double (value, self->lon);
+      break;
+
+    case PROP_LATITUDE:
+      g_value_set_double (value, self->lat);
       break;
 
     default:
@@ -83,28 +136,40 @@ shumate_viewport_get_property (GObject *object,
     }
 }
 
-
 static void
-shumate_viewport_set_property (GObject *object,
-    guint prop_id,
-    const GValue *value,
-    GParamSpec *pspec)
+shumate_viewport_set_property (GObject      *object,
+                               guint         prop_id,
+                               const GValue *value,
+                               GParamSpec   *pspec)
 {
-  ShumateViewport *viewport = SHUMATE_VIEWPORT (object);
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+  ShumateViewport *self = SHUMATE_VIEWPORT (object);
 
   switch (prop_id)
     {
-    case PROP_X_ORIGIN:
-      shumate_viewport_set_origin (viewport,
-          g_value_get_int (value),
-          priv->y);
+    case PROP_ZOOM_LEVEL:
+      shumate_viewport_set_zoom_level (self, g_value_get_uint (value));
       break;
 
-    case PROP_Y_ORIGIN:
-      shumate_viewport_set_origin (viewport,
-          priv->x,
-          g_value_get_int (value));
+    case PROP_MIN_ZOOM_LEVEL:
+      shumate_viewport_set_min_zoom_level (self, g_value_get_uint (value));
+      break;
+
+    case PROP_MAX_ZOOM_LEVEL:
+      shumate_viewport_set_max_zoom_level (self, g_value_get_uint (value));
+      break;
+
+    case PROP_REFERENCE_MAP_SOURCE:
+      shumate_viewport_set_reference_map_source (self, g_value_get_object (value));
+      break;
+
+    case PROP_LONGITUDE:
+      self->lon = CLAMP (g_value_get_double (value), SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
+      g_object_notify (object, "longitude");
+      break;
+
+    case PROP_LATITUDE:
+      self->lat = CLAMP (g_value_get_double (value), SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
+      g_object_notify (object, "latitude");
       break;
 
     default:
@@ -113,321 +178,373 @@ shumate_viewport_set_property (GObject *object,
     }
 }
 
-
-void
-shumate_viewport_stop (ShumateViewport *viewport)
-{
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
-
-  if (priv->hadjustment)
-    shumate_adjustment_interpolate_stop (priv->hadjustment);
-
-  if (priv->vadjustment)
-    shumate_adjustment_interpolate_stop (priv->vadjustment);
-}
-
-
 static void
-shumate_viewport_dispose (GObject *gobject)
+shumate_viewport_dispose (GObject *object)
 {
-  ShumateViewport *viewport = SHUMATE_VIEWPORT (gobject);
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+  ShumateViewport *self = SHUMATE_VIEWPORT (object);
 
-  if (priv->hadjustment)
-    {
-      shumate_adjustment_interpolate_stop (priv->hadjustment);
-      g_clear_object (&priv->hadjustment);
-    }
+  g_clear_object (&self->ref_map_source);
 
-  if (priv->vadjustment)
-    {
-      shumate_adjustment_interpolate_stop (priv->vadjustment);
-      g_clear_object (&priv->vadjustment);
-    }
-
-  G_OBJECT_CLASS (shumate_viewport_parent_class)->dispose (gobject);
+  G_OBJECT_CLASS (shumate_viewport_parent_class)->dispose (object);
 }
-
 
 static void
 shumate_viewport_class_init (ShumateViewportClass *klass)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->get_property = shumate_viewport_get_property;
-  gobject_class->set_property = shumate_viewport_set_property;
-  gobject_class->dispose = shumate_viewport_dispose;
+  object_class->get_property = shumate_viewport_get_property;
+  object_class->set_property = shumate_viewport_set_property;
+  object_class->dispose = shumate_viewport_dispose;
 
-  g_object_class_install_property (gobject_class,
-      PROP_X_ORIGIN,
-      g_param_spec_int ("x-origin",
-          "X Origin",
-          "Origin's X coordinate in pixels",
-          -G_MAXINT, G_MAXINT,
-          0,
-          G_PARAM_READWRITE));
+  /**
+   * ShumateViewport:zoom-level:
+   *
+   * The level of zoom of the content.
+   */
+  obj_properties[PROP_ZOOM_LEVEL] =
+    g_param_spec_uint ("zoom-level",
+                       "Zoom level",
+                       "The level of zoom of the map",
+                       0, 20, 3,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  g_object_class_install_property (gobject_class,
-      PROP_Y_ORIGIN,
-      g_param_spec_int ("y-origin",
-          "Y Origin",
-          "Origin's Y coordinate in pixels",
-          -G_MAXINT, G_MAXINT,
-          0,
-          G_PARAM_READWRITE));
+  /**
+   * ShumateViewport:min-zoom-level:
+   *
+   * The lowest allowed level of zoom of the content.
+   */
+  obj_properties[PROP_MIN_ZOOM_LEVEL] =
+    g_param_spec_uint ("min-zoom-level",
+                       "Min zoom level",
+                       "The lowest allowed level of zoom",
+                       0, 20, 0,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  signals[RELOCATED] =
-    g_signal_new ("relocated",
-        G_OBJECT_CLASS_TYPE (gobject_class),
-        G_SIGNAL_RUN_LAST,
-        0, NULL, NULL,
-        g_cclosure_marshal_VOID__VOID,
-        G_TYPE_NONE,
-        0);
+  /**
+   * ShumateViewport:max-zoom-level:
+   *
+   * The highest allowed level of zoom of the content.
+   */
+  obj_properties[PROP_MAX_ZOOM_LEVEL] =
+    g_param_spec_uint ("max-zoom-level",
+                       "Max zoom level",
+                       "The highest allowed level of zoom",
+                       0, 20, 20,
+                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateViewport:reference-map-source:
+   *
+   * The reference #ShumateMapSource being displayed
+   */
+  obj_properties[PROP_REFERENCE_MAP_SOURCE] =
+    g_param_spec_object ("reference-map-source",
+                         "Reference Map Source",
+                         "The reference map source being displayed",
+                         SHUMATE_TYPE_MAP_SOURCE,
+                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  
+  g_object_class_install_properties (object_class,
+                                     N_PROPERTIES,
+                                     obj_properties);
+
+  g_object_class_override_property (object_class,
+      PROP_LONGITUDE,
+      "longitude");
+
+  g_object_class_override_property (object_class,
+      PROP_LATITUDE,
+      "latitude");
 }
-
-
-static void
-hadjustment_value_notify_cb (ShumateAdjustment *adjustment,
-    GParamSpec *pspec,
-    ShumateViewport *viewport)
-{
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-  gdouble value;
-
-  value = shumate_adjustment_get_value (adjustment);
-
-  if (priv->x != value)
-    shumate_viewport_set_origin (viewport, value, priv->y);
-}
-
-
-static void
-vadjustment_value_notify_cb (ShumateAdjustment *adjustment, GParamSpec *arg1,
-    ShumateViewport *viewport)
-{
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-  gdouble value;
-
-  value = shumate_adjustment_get_value (adjustment);
-
-  if (priv->y != value)
-    shumate_viewport_set_origin (viewport, priv->x, value);
-}
-
-
-void
-shumate_viewport_set_adjustments (ShumateViewport *viewport,
-    ShumateAdjustment *hadjustment,
-    ShumateAdjustment *vadjustment)
-{
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-
-  if (hadjustment != priv->hadjustment)
-    {
-      if (priv->hadjustment)
-        {
-          g_signal_handlers_disconnect_by_func (priv->hadjustment,
-              hadjustment_value_notify_cb,
-              viewport);
-          g_object_unref (priv->hadjustment);
-        }
-
-      if (hadjustment)
-        {
-          g_object_ref (hadjustment);
-          g_signal_connect (hadjustment, "notify::value",
-              G_CALLBACK (hadjustment_value_notify_cb),
-              viewport);
-        }
-
-      priv->hadjustment = hadjustment;
-    }
-
-  if (vadjustment != priv->vadjustment)
-    {
-      if (priv->vadjustment)
-        {
-          g_signal_handlers_disconnect_by_func (priv->vadjustment,
-              vadjustment_value_notify_cb,
-              viewport);
-          g_object_unref (priv->vadjustment);
-        }
-
-      if (vadjustment)
-        {
-          g_object_ref (vadjustment);
-          g_signal_connect (vadjustment, "notify::value",
-              G_CALLBACK (vadjustment_value_notify_cb),
-              viewport);
-        }
-
-      priv->vadjustment = vadjustment;
-    }
-}
-
-
-void
-shumate_viewport_get_adjustments (ShumateViewport *viewport,
-    ShumateView *view,
-    ShumateAdjustment **hadjustment,
-    ShumateAdjustment **vadjustment)
-{
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
-
-  if (hadjustment)
-    {
-      if (priv->hadjustment)
-        *hadjustment = priv->hadjustment;
-      else
-        {
-          ShumateAdjustment *adjustment;
-          guint width;
-
-          width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
-
-          adjustment = shumate_adjustment_new (priv->x,
-                0,
-                width,
-                1);
-          shumate_viewport_set_adjustments (viewport,
-              adjustment,
-              priv->vadjustment);
-          *hadjustment = adjustment;
-        }
-    }
-
-  if (vadjustment)
-    {
-      if (priv->vadjustment)
-        *vadjustment = priv->vadjustment;
-      else
-        {
-          ShumateAdjustment *adjustment;
-          guint height;
-
-          height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
-
-          adjustment = shumate_adjustment_new (priv->y,
-                0,
-                height,
-                1);
-          shumate_viewport_set_adjustments (viewport,
-              priv->hadjustment,
-              adjustment);
-          *vadjustment = adjustment;
-        }
-    }
-}
-
 
 static void
 shumate_viewport_init (ShumateViewport *self)
 {
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (self);
-
-  priv->anchor_x = 0;
-  priv->anchor_y = 0;
 }
 
+static void
+shumate_viewport_shumate_location_interface_init (ShumateLocationInterface *iface)
+{
+  iface->get_latitude = shumate_viewport_get_latitude;
+  iface->get_longitude = shumate_viewport_get_longitude;
+  iface->set_location = shumate_viewport_set_location;
+}
 
+/**
+ * shumate_viewport_new:
+ *
+ * Creates a new #ShumateViewport
+ *
+ * Returns: A new #ShumateViewport
+ */
 ShumateViewport *
 shumate_viewport_new (void)
 {
   return g_object_new (SHUMATE_TYPE_VIEWPORT, NULL);
 }
 
-
-#define ANCHOR_LIMIT G_MAXINT16
-
+/**
+ * shumate_viewport_set_zoom_level:
+ * @self: a #ShumateViewport
+ * @zoom_level: the zoom level
+ *
+ * Set the zoom level
+ */
 void
-shumate_viewport_set_origin (ShumateViewport *viewport,
-    gdouble x,
-    gdouble y)
+shumate_viewport_set_zoom_level (ShumateViewport *self,
+                                 guint            zoom_level)
 {
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
-  gboolean relocated;
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
+  self->zoom_level = CLAMP (zoom_level, self->min_zoom_level, self->max_zoom_level);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ZOOM_LEVEL]);
+}
 
-  if (x == priv->x && y == priv->y)
+/**
+ * shumate_viewport_get_zoom_level:
+ * @self: a #ShumateViewport
+ *
+ * Get the current zoom level
+ * 
+ * Returns: the current zoom level
+ */
+guint
+shumate_viewport_get_zoom_level (ShumateViewport *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0U);
+
+  return self->zoom_level;
+}
+
+/**
+ * shumate_viewport_set_max_zoom_level:
+ * @self: a #ShumateViewport
+ * @max_zoom_level: the maximal zoom level
+ *
+ * Set the maximal zoom level
+ */
+void
+shumate_viewport_set_max_zoom_level (ShumateViewport *self,
+                                     guint            max_zoom_level)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->zoom_level > max_zoom_level)
+    shumate_viewport_set_zoom_level (self, max_zoom_level);
+  
+  self->max_zoom_level = max_zoom_level;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MAX_ZOOM_LEVEL]);
+}
+
+/**
+ * shumate_viewport_get_max_zoom_level:
+ * @self: a #ShumateViewport
+ *
+ * Get the maximal zoom level
+ * 
+ * Returns: the maximal zoom level
+ */
+guint
+shumate_viewport_get_max_zoom_level (ShumateViewport *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0U);
+
+  return self->max_zoom_level;
+}
+
+/**
+ * shumate_viewport_set_min_zoom_level:
+ * @self: a #ShumateViewport
+ * @min_zoom_level: the minimal zoom level
+ *
+ * Set the minimal zoom level
+ */
+void
+shumate_viewport_set_min_zoom_level (ShumateViewport *self,
+                                     guint            min_zoom_level)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->zoom_level > min_zoom_level)
+    shumate_viewport_set_zoom_level (self, min_zoom_level);
+
+  self->min_zoom_level = min_zoom_level;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MIN_ZOOM_LEVEL]);
+}
+
+/**
+ * shumate_viewport_get_min_zoom_level:
+ * @self: a #ShumateViewport
+ *
+ * Get the minimal zoom level
+ * 
+ * Returns: the minimal zoom level
+ */
+guint
+shumate_viewport_get_min_zoom_level (ShumateViewport *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0U);
+
+  return self->min_zoom_level;
+}
+
+/**
+ * shumate_viewport_zoom_in:
+ * @self: a #ShumateViewport
+ *
+ * Increments the zoom level
+ */
+void shumate_viewport_zoom_in (ShumateViewport *self)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->zoom_level == 0)
     return;
 
-  relocated = (ABS (priv->anchor_x - x) > ANCHOR_LIMIT || ABS (priv->anchor_y - y) > ANCHOR_LIMIT);
-  if (relocated)
+  shumate_viewport_set_zoom_level (self, self->zoom_level + 1);
+}
+
+/**
+ * shumate_viewport_zoom_out:
+ * @self: a #ShumateViewport
+ *
+ * Decrements the zoom level
+ */
+void shumate_viewport_zoom_out (ShumateViewport *self)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  shumate_viewport_set_zoom_level (self, self->zoom_level - 1);
+}
+
+/**
+ * shumate_viewport_set_reference_map_source:
+ * @self: a #ShumateViewport
+ * @map_source: (nullable): a #ShumateMapSource or %NULL to set none.
+ *
+ * Set the reference map source
+ */
+void
+shumate_viewport_set_reference_map_source (ShumateViewport  *self,
+                                           ShumateMapSource *map_source)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  shumate_viewport_set_max_zoom_level (self, shumate_map_source_get_max_zoom_level (map_source));
+  shumate_viewport_set_min_zoom_level (self, shumate_map_source_get_min_zoom_level (map_source));
+
+  if (g_set_object (&self->ref_map_source, map_source))
+    g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_REFERENCE_MAP_SOURCE]);
+}
+
+/**
+ * shumate_viewport_get_reference_map_source:
+ * @self: a #ShumateViewport
+ *
+ * Get the reference map source
+ * 
+ * Returns: (transfer none) (nullable): the reference #ShumateMapSource or %NULL
+ * when none has been set.
+ */
+ShumateMapSource *
+shumate_viewport_get_reference_map_source (ShumateViewport  *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), NULL);
+
+  return self->ref_map_source;
+}
+
+gdouble
+shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
+                                        GtkWidget       *widget,
+                                        gdouble          x)
+{
+  gdouble center_x;
+  gint width;
+
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
+  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
+
+  if (!self->ref_map_source)
     {
-      priv->anchor_x = x - ANCHOR_LIMIT / 2;
-      priv->anchor_y = y - ANCHOR_LIMIT / 2;
+      g_critical ("A reference map source is required to compute the longitude from X.");
+      return 0.0;
     }
 
-  g_object_freeze_notify (G_OBJECT (viewport));
+  width = gtk_widget_get_width (widget);
+  center_x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, self->lon);
+  return shumate_map_source_get_longitude (self->ref_map_source, self->zoom_level, center_x - width/2 + x);
+}
 
-  if (priv->hadjustment && priv->vadjustment)
+gdouble
+shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
+                                       GtkWidget       *widget,
+                                       gdouble          y)
+{
+  gdouble center_y;
+  gint height;
+
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
+  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
+
+  if (!self->ref_map_source)
     {
-      g_object_freeze_notify (G_OBJECT (priv->hadjustment));
-      g_object_freeze_notify (G_OBJECT (priv->vadjustment));
-
-      if (x != priv->x)
-        {
-          priv->x = x;
-          g_object_notify (G_OBJECT (viewport), "x-origin");
-
-          shumate_adjustment_set_value (priv->hadjustment, x);
-        }
-
-      if (y != priv->y)
-        {
-          priv->y = y;
-          g_object_notify (G_OBJECT (viewport), "y-origin");
-
-          shumate_adjustment_set_value (priv->vadjustment, y);
-        }
-
-      g_object_thaw_notify (G_OBJECT (priv->hadjustment));
-      g_object_thaw_notify (G_OBJECT (priv->vadjustment));
+      g_critical ("A reference map source is required to compute Y from the latitude.");
+      return 0.0;
     }
 
-  g_object_thaw_notify (G_OBJECT (viewport));
-
-  if (relocated)
-    g_signal_emit_by_name (viewport, "relocated", NULL);
+  height = gtk_widget_get_height (widget);
+  center_y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, self->lat);
+  return shumate_map_source_get_latitude (self->ref_map_source, self->zoom_level, center_y - height/2 + y);
 }
 
-
-void
-shumate_viewport_get_origin (ShumateViewport *viewport,
-    gdouble *x,
-    gdouble *y)
+gdouble
+shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
+                                        GtkWidget       *widget,
+                                        gdouble          longitude)
 {
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+  gdouble center_longitude;
+  gdouble left_x, x;
+  gint width;
 
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
+  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
 
-  if (x)
-    *x = priv->x;
+  if (!self->ref_map_source)
+    {
+      g_critical ("A reference map source is required to compute X from the longitude.");
+      return 0.0;
+    }
 
-  if (y)
-    *y = priv->y;
+  width = gtk_widget_get_width (widget);
+  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (self));
+  left_x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, center_longitude) - width/2;
+  x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, longitude);
+  return x - left_x;
 }
 
-
-void
-shumate_viewport_get_anchor (ShumateViewport *viewport,
-    gint *x,
-    gint *y)
+gdouble
+shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
+                                       GtkWidget       *widget,
+                                       gdouble          latitude)
 {
-  ShumateViewportPrivate *priv = shumate_viewport_get_instance_private (viewport);
+  gdouble center_latitude;
+  gdouble top_y, y;
+  gint height;
 
-  g_return_if_fail (SHUMATE_IS_VIEWPORT (viewport));
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
+  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
 
-  if (x)
-    *x = priv->anchor_x;
+  if (!self->ref_map_source)
+    {
+      g_critical ("A reference map source is required to compute the latitude from Y.");
+      return 0.0;
+    }
 
-  if (y)
-    *y = priv->anchor_y;
+  height = gtk_widget_get_height (widget);
+  center_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (self));
+  top_y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, center_latitude) - height/2;
+  y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, latitude);
+  return y - top_y;
 }
-

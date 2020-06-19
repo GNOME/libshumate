@@ -271,12 +271,25 @@ shumate_marker_set_property (GObject *object,
 }
 
 static void
+shumate_marker_dispose (GObject *object)
+{
+  GtkWidget *child;
+
+  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
+    gtk_widget_unparent (child);
+
+  G_OBJECT_CLASS (shumate_marker_parent_class)->dispose (object);
+}
+
+static void
 shumate_marker_class_init (ShumateMarkerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+
   object_class->get_property = shumate_marker_get_property;
   object_class->set_property = shumate_marker_set_property;
+  object_class->dispose = shumate_marker_dispose;
 
   /**
    * ShumateMarker:selectable:

@@ -50,7 +50,7 @@ struct _ShumatePathLayerClass
   ShumateLayerClass parent_class;
 };
 
-ShumatePathLayer *shumate_path_layer_new (void);
+ShumatePathLayer *shumate_path_layer_new (ShumateViewport *viewport);
 
 void shumate_path_layer_add_node (ShumatePathLayer *layer,
     ShumateLocation *location);
@@ -81,10 +81,6 @@ void shumate_path_layer_set_stroke (ShumatePathLayer *layer,
 gdouble shumate_path_layer_get_stroke_width (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
     gdouble value);
-
-gboolean shumate_path_layer_get_visible (ShumatePathLayer *layer);
-void shumate_path_layer_set_visible (ShumatePathLayer *layer,
-    gboolean value);
 
 gboolean shumate_path_layer_get_closed (ShumatePathLayer *layer);
 void shumate_path_layer_set_closed (ShumatePathLayer *layer,

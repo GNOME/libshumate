@@ -26,7 +26,7 @@
 #ifndef SHUMATE_SCALE_H
 #define SHUMATE_SCALE_H
 
-#include <shumate/shumate-defines.h>
+#include <shumate/shumate-viewport.h>
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
@@ -58,7 +58,7 @@ typedef enum
  * and should be accessed using the provided API
  */
 
-ShumateScale *shumate_scale_new (void);
+ShumateScale *shumate_scale_new (ShumateViewport *viewport);
 
 guint shumate_scale_get_max_width (ShumateScale *scale);
 void shumate_scale_set_max_width (ShumateScale *scale,
@@ -67,10 +67,6 @@ void shumate_scale_set_max_width (ShumateScale *scale,
 ShumateUnit shumate_scale_get_unit (ShumateScale *scale);
 void shumate_scale_set_unit (ShumateScale *scale,
                              ShumateUnit   unit);
-
-void shumate_scale_connect_view (ShumateScale *self,
-                                 ShumateView  *view);
-void shumate_scale_disconnect_view (ShumateScale *self);
 
 G_END_DECLS
 

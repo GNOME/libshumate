@@ -27,12 +27,14 @@ callback (GtkWidget *parent)
 {
   if (!view)
     {
+      ShumateViewport *viewport;
       /* Create the map view */
       view = GTK_WIDGET (shumate_view_new ());
       gtk_widget_insert_after (view, parent, NULL);
 
-      shumate_view_set_zoom_level (SHUMATE_VIEW (view), 12);
-      shumate_view_center_on (SHUMATE_VIEW (view), 45.466, -73.75);
+      viewport = shumate_view_get_viewport (SHUMATE_VIEW (view));
+      shumate_viewport_set_zoom_level (viewport, 12);
+      shumate_location_set_location (SHUMATE_LOCATION (viewport), 45.466, -73.75);
     }
   else
     g_clear_pointer (&view, gtk_widget_unparent);

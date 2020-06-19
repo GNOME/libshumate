@@ -39,7 +39,8 @@ G_DECLARE_FINAL_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE, MAP_LAYER, Sh
  * and should be accessed using the provided API
  */
 
-ShumateMapLayer *shumate_map_layer_new (ShumateMapSource *map_source);
+ShumateMapLayer *shumate_map_layer_new (ShumateMapSource *map_source,
+                                        ShumateViewport  *viewport);
 
 G_END_DECLS
 

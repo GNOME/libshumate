@@ -41,7 +41,6 @@
 
 #include "shumate-scale.h"
 #include "shumate-enum-types.h"
-#include "shumate-view.h"
 
 #include <glib-object.h>
 #include <math.h>
@@ -51,6 +50,7 @@ enum
 {
   PROP_UNIT = 1,
   PROP_MAX_SCALE_WIDTH,
+  PROP_VIEWPORT,
   N_PROPERTIES,
 };
 
@@ -63,7 +63,7 @@ struct _ShumateScale
   ShumateUnit unit;
   guint max_scale_width;
 
-  ShumateView *view;
+  ShumateViewport *viewport;
 
   GtkWidget *metric_label;
   GtkWidget *imperial_label;
@@ -110,14 +110,14 @@ shumate_scale_compute_length (ShumateScale *self,
   if (out_is_small_unit)
     *out_is_small_unit = TRUE;
 
-  if (!self->view)
+  scale_width = self->max_scale_width;
+  zoom_level = shumate_viewport_get_zoom_level (self->viewport);
+  map_source = shumate_viewport_get_reference_map_source (self->viewport);
+  if (!map_source)
     return FALSE;
 
-  scale_width = self->max_scale_width;
-  zoom_level = shumate_view_get_zoom_level (self->view);
-  map_source = shumate_view_get_map_source (self->view);
-  lat = shumate_view_get_center_latitude (self->view);
-  lon = shumate_view_get_center_longitude (self->view);
+  lat = shumate_location_get_latitude (SHUMATE_LOCATION (self->viewport));
+  lon = shumate_location_get_longitude (SHUMATE_LOCATION (self->viewport));
   m_per_pixel = shumate_map_source_get_meters_per_pixel (map_source,
                                                          zoom_level,
                                                          lat,
@@ -211,7 +211,7 @@ shumate_scale_on_scale_changed (ShumateScale *self)
 static void
 on_latitude_changed (ShumateScale *self,
                      G_GNUC_UNUSED GParamSpec *pspec,
-                     ShumateView *view)
+                     ShumateViewport *viewport)
 {
   shumate_scale_on_scale_changed (self);
 }
@@ -220,7 +220,7 @@ on_latitude_changed (ShumateScale *self,
 static void
 on_zoom_level_changed (ShumateScale *self,
                        G_GNUC_UNUSED GParamSpec *pspec,
-                       ShumateView *view)
+                       ShumateViewport *viewport)
 {
   shumate_scale_on_scale_changed (self);
 }
@@ -267,24 +267,38 @@ shumate_scale_set_property (GObject *object,
       shumate_scale_set_max_width (scale, g_value_get_uint (value));
       break;
 
+    case PROP_VIEWPORT:
+      scale->viewport = g_value_dup_object (value);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
 }
-
 
 static void
 shumate_scale_dispose (GObject *object)
 {
   ShumateScale *scale = SHUMATE_SCALE (object);
 
-  if (scale->view)
-    shumate_scale_disconnect_view (SHUMATE_SCALE (object));
-
+  g_signal_handlers_disconnect_by_data (scale->viewport, scale);
+  g_clear_object (&scale->viewport);
   g_clear_pointer (&scale->metric_label, gtk_widget_unparent);
   g_clear_pointer (&scale->imperial_label, gtk_widget_unparent);
 
   G_OBJECT_CLASS (shumate_scale_parent_class)->dispose (object);
+}
+
+static void
+shumate_scale_constructed (GObject *object)
+{
+  ShumateScale *scale = SHUMATE_SCALE (object);
+
+  g_signal_connect_swapped (scale->viewport, "notify::latitude", G_CALLBACK (on_latitude_changed), scale);
+  g_signal_connect_swapped (scale->viewport, "notify::zoom-level", G_CALLBACK (on_zoom_level_changed), scale);
+  shumate_scale_on_scale_changed (scale);
+
+  G_OBJECT_CLASS (shumate_scale_parent_class)->constructed (object);
 }
 
 static void
@@ -297,6 +311,7 @@ shumate_scale_class_init (ShumateScaleClass *klass)
   object_class->dispose = shumate_scale_dispose;
   object_class->get_property = shumate_scale_get_property;
   object_class->set_property = shumate_scale_set_property;
+  object_class->constructed = shumate_scale_constructed;
 
   /**
    * ShumateScale:max-width:
@@ -323,6 +338,18 @@ shumate_scale_class_init (ShumateScaleClass *klass)
                        SHUMATE_UNIT_BOTH,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateScale:viewport:
+   *
+   * The viewport to use.
+   */
+  obj_properties[PROP_VIEWPORT] =
+    g_param_spec_object ("viewport",
+                         "The viewport",
+                         "The viewport",
+                         SHUMATE_TYPE_VIEWPORT,
+                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
   gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-scale"));
@@ -347,7 +374,6 @@ shumate_scale_init (ShumateScale *self)
 
   self->unit = SHUMATE_UNIT_BOTH;
   self->max_scale_width = 150;
-  self->view = NULL;
 
   gtk_orientable_set_orientation (GTK_ORIENTABLE (layout), GTK_ORIENTATION_VERTICAL);
   gtk_widget_add_css_class (self_widget, GTK_STYLE_CLASS_VERTICAL);
@@ -374,15 +400,18 @@ shumate_scale_init (ShumateScale *self)
 
 /**
  * shumate_scale_new:
+ * @viewport: a #ShumateViewport
  *
  * Creates an instance of #ShumateScale.
  *
  * Returns: a new #ShumateScale.
  */
 ShumateScale *
-shumate_scale_new (void)
+shumate_scale_new (ShumateViewport *viewport)
 {
-  return SHUMATE_SCALE (g_object_new (SHUMATE_TYPE_SCALE, NULL));
+  return SHUMATE_SCALE (g_object_new (SHUMATE_TYPE_SCALE,
+                                      "viewport", viewport,
+                                      NULL));
 }
 
 
@@ -459,47 +488,4 @@ shumate_scale_get_unit (ShumateScale *scale)
   g_return_val_if_fail (SHUMATE_IS_SCALE (scale), FALSE);
 
   return scale->unit;
-}
-
-/**
- * shumate_scale_connect_view:
- * @self: a #ShumateScale
- * @view: a #ShumateView
- *
- * This method connects to the necessary signals of #ShumateView to make the
- * scale adapt to the current latitude and longitude.
- */
-void
-shumate_scale_connect_view (ShumateScale *self,
-                            ShumateView  *view)
-{
-  g_return_if_fail (SHUMATE_IS_SCALE (self));
-
-  if (self->view == view)
-    return;
-
-  if (self->view)
-    shumate_scale_disconnect_view (self);
-
-  self->view = g_object_ref (view);
-  g_signal_connect_swapped (view, "notify::latitude", G_CALLBACK (on_latitude_changed), self);
-  g_signal_connect_swapped (view, "notify::zoom-level", G_CALLBACK (on_zoom_level_changed), self);
-  shumate_scale_on_scale_changed (self);
-}
-
-
-/**
- * shumate_scale_disconnect_view:
- * @self: a #ShumateScale
- *
- * This method disconnects from the signals previously connected by shumate_scale_connect_view().
- */
-void
-shumate_scale_disconnect_view (ShumateScale *self)
-{
-  g_return_if_fail (SHUMATE_IS_SCALE (self));
-
-  g_signal_handlers_disconnect_by_data (self->view, self);
-
-  g_clear_object (&self->view);
 }

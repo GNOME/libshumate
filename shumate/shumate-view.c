@@ -83,23 +83,13 @@ enum
 
 enum
 {
-  PROP_LONGITUDE = 1,
-  PROP_LATITUDE,
-  PROP_ZOOM_LEVEL,
-  PROP_MIN_ZOOM_LEVEL,
-  PROP_MAX_ZOOM_LEVEL,
-  PROP_MAP_SOURCE,
-  PROP_DECELERATION,
+  PROP_DECELERATION = 1,
   PROP_KINETIC_MODE,
   PROP_KEEP_CENTER_ON_RESIZE,
   PROP_ZOOM_ON_DOUBLE_CLICK,
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
-  //PROP_BACKGROUND_PATTERN,
-  //PROP_GOTO_ANIMATION_MODE,
   PROP_GOTO_ANIMATION_DURATION,
-  PROP_WORLD,
-  PROP_HORIZONTAL_WRAP,
   N_PROPERTIES
 };
 
@@ -108,8 +98,8 @@ static guint signals[LAST_SIGNAL] = { 0, };
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 #define ZOOM_LEVEL_OUT_OF_RANGE(priv, level) \
-  (level < priv->min_zoom_level || \
-           level > priv->max_zoom_level || \
+  (level < shumate_viewport_get_min_zoom_level (priv->viewport) || \
+           level > shumate_viewport_get_max_zoom_level (priv->viewport) || \
    level < shumate_map_source_get_min_zoom_level (priv->map_source) || \
            level > shumate_map_source_get_max_zoom_level (priv->map_source))
 
@@ -138,21 +128,8 @@ typedef struct
 
 typedef struct
 {
-                                /* ShumateView */
-  //ClutterActor *kinetic_scroll;     /* kinetic_scroll */
-  ShumateViewport *viewport;               /* viewport */
-  //ClutterActor *viewport_container;         /* viewport_container */
-  //ClutterActor *background_layer;               /* background_layer */
-  //ClutterActor *zoom_layer;                     /* zoom_layer */
-  //ClutterActor *map_layer;                      /* map_layer */
-                                                /* map_layer clones */
-  //ClutterActor *user_layers;                    /* user_layers and clones */
-  //ClutterActor *zoom_overlay_actor; /* zoom_overlay_actor */
-  //ClutterActor *license_actor;      /* license_actor */
+  ShumateViewport *viewport;
 
-  //ClutterContent *background_content;
-
-  gboolean hwrap;
   /* There are num_right_clones clones on the right, and one extra on the left */
   gint num_right_clones;
   GList *map_clones;
@@ -169,16 +146,8 @@ typedef struct
   gint viewport_width;
   gint viewport_height;
 
-  ShumateMapSource *map_source; /* Current map tile source */
   GList *overlay_sources;
 
-  guint zoom_level; /* Holds the current zoom level number */
-  guint min_zoom_level; /* Lowest allowed zoom level */
-  guint max_zoom_level; /* Highest allowed zoom level */
-
-  /* Represents the (lat, lon) at the center of the viewport */
-  gdouble longitude;
-  gdouble latitude;
   gboolean location_updated;
 
   gint bg_offset_x;
@@ -192,7 +161,7 @@ typedef struct
 
   ShumateState state; /* View's global state */
 
-  /* shumate_view_go_to's context, kept for stop_go_to */
+  // shumate_view_go_to's context, kept for stop_go_to
   GoToContext *goto_context;
 
   gint tiles_loading;
@@ -200,7 +169,6 @@ typedef struct
   guint redraw_timeout;
   guint zoom_timeout;
 
-  //ClutterAnimationMode goto_mode;
   guint goto_duration;
 
   gboolean animating_zoom;
@@ -217,7 +185,6 @@ typedef struct
   gint tile_y_last;
 
   /* Zoom gesture */
-  //ClutterGestureAction *zoom_gesture;
   guint initial_gesture_zoom;
   gdouble focus_lat;
   gdouble focus_lon;
@@ -226,19 +193,11 @@ typedef struct
   gdouble drag_begin_lat;
   gdouble drag_begin_lon;
 
-  ShumateBoundingBox *world_bbox;
-
   GHashTable *visible_tiles;
 } ShumateViewPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
 
-//static void exclusive_destroy_clone (ClutterActor *clone);
-//static void update_clones (ShumateView *view);
-/*static gboolean scroll_event (ClutterActor *actor,
-    ClutterScrollEvent *event,
-    ShumateView *view);*/
-static void resize_viewport (ShumateView *view);
 static void shumate_view_get_property (GObject *object,
     guint prop_id,
     GValue *value,
@@ -248,174 +207,11 @@ static void shumate_view_set_property (GObject *object,
     const GValue *value,
     GParamSpec *pspec);
 static void shumate_view_dispose (GObject *object);
-static void shumate_view_class_init (ShumateViewClass *shumateViewClass);
-static void shumate_view_init (ShumateView *view);
-static void viewport_pos_changed_cb (GObject *gobject,
-    GParamSpec *arg1,
-    ShumateView *view);
-/*static gboolean kinetic_scroll_button_press_cb (ClutterActor *actor,
-    ClutterButtonEvent *event,
-    ShumateView *view);
-static ClutterActor *sample_user_layer_at_pos (ShumateView *view,
-    gfloat x,
-    gfloat y);*/
-/*static void swap_user_layer_slots (ShumateView *view,
-    gint original_index,
-    gint clone_index);*/
-/*static gboolean viewport_motion_cb (ClutterActor *actor,
-    ClutterMotionEvent *event,
-    ShumateView *view);
-static gboolean viewport_press_cb (ClutterActor *actor,
-    ClutterButtonEvent *event,
-    ShumateView *view);*/
-static gboolean view_set_zoom_level_at (ShumateView *view,
-    guint zoom_level,
-    gboolean use_event_coord,
-    gint x,
-    gint y);
-/*static gboolean kinetic_scroll_key_press_cb (ShumateView *view,
-    ClutterKeyEvent *event);*/
 static void shumate_view_go_to_with_duration (ShumateView *view,
     gdouble latitude,
     gdouble longitude,
     guint duration);
-static gboolean redraw_timeout_cb(gpointer view);
 static void remove_all_tiles (ShumateView *view);
-static void get_x_y_for_zoom_level (ShumateView *view,
-    guint zoom_level,
-    gint offset_x,
-    gint offset_y,
-    gdouble *new_x,
-    gdouble *new_y);
-static ShumateBoundingBox *get_bounding_box (ShumateView *view,
-    guint zoom_level,
-    gdouble x,
-    gdouble y);
-static void get_tile_bounds (ShumateView *view,
-    guint *min_x,
-    guint *min_y,
-    guint *max_x,
-    guint *max_y);
-
-static gdouble
-x_to_wrap_x (gdouble x, gdouble width)
-{
-  if (x < 0)
-    x += ((gint)-x / (gint)width + 1) * width;
-
-  return fmod (x, width);
-}
-
-
-static gint
-get_map_width (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint size, cols;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  size = shumate_map_source_get_tile_size (priv->map_source);
-  cols = shumate_map_source_get_column_count (priv->map_source,
-                                                priv->zoom_level);
-  return size * cols;
-}
-
-
-static gdouble
-get_longitude (ShumateView *view,
-    guint zoom_level,
-    gdouble x)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  if (priv->hwrap)
-    x = x_to_wrap_x (x, get_map_width (view));
-
-  return shumate_map_source_get_longitude (priv->map_source,
-        zoom_level,
-        x);
-}
-
-
-static void
-update_coords (ShumateView *view,
-    gdouble x,
-    gdouble y,
-    gboolean notify)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  priv->viewport_x = x;
-  priv->viewport_y = y;
-  priv->longitude = get_longitude (view,
-        priv->zoom_level,
-        x + priv->viewport_width / 2.0);
-  priv->latitude = shumate_map_source_get_latitude (priv->map_source,
-        priv->zoom_level,
-        y + priv->viewport_height / 2.0);
-
-  if (notify)
-    {
-      g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_LONGITUDE]);
-      g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_LATITUDE]);
-    }
-}
-
-
-static void
-position_viewport (ShumateView *view,
-    gdouble x,
-    gdouble y)
-{
-  /* ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint old_bg_offset_x = 0, old_bg_offset_y = 0;
-  gfloat bg_width, bg_height;*/
-
-  /* remember the relative offset of the background tile */
-  /*
-  if (priv->background_content)
-    {
-      clutter_content_get_preferred_size (priv->background_content, &bg_width, &bg_height);
-      old_bg_offset_x = ((gint)priv->viewport_x + priv->bg_offset_x) % (gint)bg_width;
-      old_bg_offset_y = ((gint)priv->viewport_y + priv->bg_offset_y) % (gint)bg_height;
-    }
-   */
-
-  /* notify about latitude and longitude change only after the viewport position is set */
-  g_object_freeze_notify (G_OBJECT (view));
-
-  update_coords (view, x, y, TRUE);
-
-  /* compute the new relative offset of the background tile */
-  /*
-  if (priv->background_content)
-    {
-      gint new_bg_offset_x = (gint)priv->viewport_x % (gint)bg_width;
-      gint new_bg_offset_y = (gint)priv->viewport_y % (gint)bg_height;
-      priv->bg_offset_x = (old_bg_offset_x - new_bg_offset_x) % (gint)bg_width;
-      priv->bg_offset_y = (old_bg_offset_y - new_bg_offset_y) % (gint)bg_height;
-      if (priv->bg_offset_x < 0)
-        priv->bg_offset_x += bg_width;
-      if (priv->bg_offset_y < 0)
-        priv->bg_offset_y += bg_height;
-    }
-   */
-
-  /* we know about the change already - don't send the notifications again */
-  /*
-  g_signal_handlers_block_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
-  shumate_viewport_set_origin (SHUMATE_VIEWPORT (priv->viewport),
-      (gint)priv->viewport_x,
-      (gint)priv->viewport_y);
-  g_signal_handlers_unblock_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
-   */
-
-  g_object_thaw_notify (G_OBJECT (view));
-}
-
 
 /* static void */
 /* view_relocated_cb (G_GNUC_UNUSED ShumateViewport *viewport, */
@@ -521,58 +317,6 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
 */
 
 static void
-resize_viewport (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble lower_x = 0;
-  gdouble lower_y = 0;
-  gdouble upper_x = G_MAXINT16;
-  gdouble upper_y = G_MAXINT16;
-  ShumateAdjustment *hadjust, *vadjust;
-  guint min_x, min_y, max_x, max_y;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  shumate_viewport_get_adjustments (priv->viewport, view,
-                                    &hadjust, &vadjust);
-
-  get_tile_bounds (view, &min_x, &min_y, &max_x, &max_y);
-  gint x_last = max_x * shumate_map_source_get_tile_size (priv->map_source);
-  gint y_last = max_y * shumate_map_source_get_tile_size (priv->map_source);
-  gint x_first = min_x * shumate_map_source_get_tile_size (priv->map_source);
-  gint y_first = min_y * shumate_map_source_get_tile_size (priv->map_source);
-
-  /* Location of viewport with respect to the first tile:
-   *
-   * - for large maps (higher zoom levels) we allow the map to end in the middle
-   *   of the viewport; that is, one half of the viewport is positioned before
-   *   the first tile
-   * - for small maps (e.g. zoom level 0) we allow half of the map to go outside
-   *   the viewport; that is, whole viewport except one half of the map is
-   *   positioned before the first tile
-   *
-   * The first and the second element of the MIN() below corresponds to the
-   * first and the second case above. */
-  lower_x = MIN (x_first - priv->viewport_width / 2,
-                 (x_first - priv->viewport_width) + (x_last - x_first) / 2);
-
-  lower_y = MIN (y_first - priv->viewport_height / 2,
-                 (y_first - priv->viewport_height) + (y_last - y_first) / 2);
-
-  if (priv->hwrap)
-    upper_x = MAX (x_last - x_first + priv->viewport_width / 2, priv->viewport_width + (x_last - x_first) / 2);
-  else
-    upper_x = MAX (x_last - priv->viewport_width / 2, (x_last - x_first) / 2);
-  upper_y = MAX (y_last - priv->viewport_height / 2, (y_last - y_first)/ 2);
-
-  /* we don't want to get notified about the position change now */
-  g_signal_handlers_block_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
-  shumate_adjustment_set_values (hadjust, shumate_adjustment_get_value (hadjust), lower_x, upper_x, 1.0);
-  shumate_adjustment_set_values (vadjust, shumate_adjustment_get_value (vadjust), lower_y, upper_y, 1.0);
-  g_signal_handlers_unblock_by_func (priv->viewport, G_CALLBACK (viewport_pos_changed_cb), view);
-}
-
-static void
 on_drag_gesture_drag_begin (ShumateView    *self,
                             gdouble         start_x,
                             gdouble         start_y,
@@ -582,8 +326,8 @@ on_drag_gesture_drag_begin (ShumateView    *self,
 
   g_assert (SHUMATE_IS_VIEW (self));
 
-  priv->drag_begin_lon = priv->longitude;
-  priv->drag_begin_lat = priv->latitude;
+  priv->drag_begin_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  priv->drag_begin_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grabbing");
 }
@@ -595,18 +339,35 @@ on_drag_gesture_drag_update (ShumateView    *self,
                              GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapSource *map_source;
   double x, y;
+  double lat, lon;
+  guint zoom_level;
+  guint tile_size, max_x, max_y;
 
   g_assert (SHUMATE_IS_VIEW (self));
 
-  x = shumate_view_longitude_to_x (self, priv->drag_begin_lon) - offset_x;
-  y = shumate_view_latitude_to_y (self, priv->drag_begin_lat) - offset_y;
+  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
+  y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
 
-  priv->longitude = shumate_view_x_to_longitude (self, x);
-  priv->latitude = shumate_view_y_to_latitude (self, y);
+  tile_size = shumate_map_source_get_tile_size (map_source);
+  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
+  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
 
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LATITUDE]);
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LONGITUDE]);
+  x = fmod (x, max_x);
+  if (x < 0)
+    x += max_x;
+
+  y = fmod (y, max_y);
+  if (y < 0)
+    y += max_y;
+
+  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
+  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
+
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
 }
 
 static void
@@ -616,21 +377,39 @@ on_drag_gesture_drag_end (ShumateView    *self,
                           GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapSource *map_source;
   double x, y;
+  double lat, lon;
+  guint zoom_level;
+  guint tile_size, max_x, max_y;
 
   g_assert (SHUMATE_IS_VIEW (self));
 
-  x = shumate_view_longitude_to_x (self, priv->drag_begin_lon) - offset_x;
-  y = shumate_view_latitude_to_y (self, priv->drag_begin_lat) - offset_y;
+  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
+  y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
 
-  priv->longitude = shumate_view_x_to_longitude (self, x);
-  priv->latitude = shumate_view_y_to_latitude (self, y);
+  tile_size = shumate_map_source_get_tile_size (map_source);
+  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
+  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
+
+  x = fmod (x, max_x);
+  if (x < 0)
+    x += max_x;
+
+  y = fmod (y, max_y);
+  if (y < 0)
+    y += max_y;
+
+  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
+  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
+
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
   priv->drag_begin_lon = 0;
   priv->drag_begin_lat = 0;
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LATITUDE]);
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_LONGITUDE]);
 }
 
 static gboolean
@@ -639,10 +418,12 @@ on_scroll_controller_scroll (ShumateView              *self,
                              gdouble                   dy,
                              GtkEventControllerScroll *controller)
 {
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
   if (dy > 0)
-    shumate_view_zoom_in (self);
+    shumate_viewport_zoom_in (priv->viewport);
   else
-    shumate_view_zoom_out (self);
+    shumate_viewport_zoom_out (priv->viewport);
 
   return TRUE;
 }
@@ -658,32 +439,6 @@ shumate_view_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_LONGITUDE:
-      g_value_set_double (value,
-          CLAMP (priv->longitude, priv->world_bbox->left, priv->world_bbox->right));
-      break;
-
-    case PROP_LATITUDE:
-      g_value_set_double (value,
-          CLAMP (priv->latitude, priv->world_bbox->bottom, priv->world_bbox->top));
-      break;
-
-    case PROP_ZOOM_LEVEL:
-      g_value_set_uint (value, priv->zoom_level);
-      break;
-
-    case PROP_MIN_ZOOM_LEVEL:
-      g_value_set_uint (value, priv->min_zoom_level);
-      break;
-
-    case PROP_MAX_ZOOM_LEVEL:
-      g_value_set_uint (value, priv->max_zoom_level);
-      break;
-
-    case PROP_MAP_SOURCE:
-      g_value_set_object (value, priv->map_source);
-      break;
-
     case PROP_KINETIC_MODE:
       g_value_set_boolean (value, priv->kinetic_mode);
       break;
@@ -712,28 +467,8 @@ shumate_view_get_property (GObject *object,
       g_value_set_enum (value, priv->state);
       break;
 
-    /*
-    case PROP_BACKGROUND_PATTERN:
-      g_value_set_object (value, priv->background_content);
-      break;
-     */
-
-    /*
-    case PROP_GOTO_ANIMATION_MODE:
-      g_value_set_enum (value, priv->goto_mode);
-      break;
-     */
-
     case PROP_GOTO_ANIMATION_DURATION:
       g_value_set_uint (value, priv->goto_duration);
-      break;
-
-    case PROP_WORLD:
-      g_value_set_boxed (value, priv->world_bbox);
-      break;
-
-    case PROP_HORIZONTAL_WRAP:
-      g_value_set_boolean (value, shumate_view_get_horizontal_wrap (view));
       break;
 
     default:
@@ -753,32 +488,6 @@ shumate_view_set_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_LONGITUDE:
-      shumate_view_center_on (view, priv->latitude,
-          g_value_get_double (value));
-      break;
-
-    case PROP_LATITUDE:
-      shumate_view_center_on (view, g_value_get_double (value),
-          priv->longitude);
-      break;
-
-    case PROP_ZOOM_LEVEL:
-      shumate_view_set_zoom_level (view, g_value_get_uint (value));
-      break;
-
-    case PROP_MIN_ZOOM_LEVEL:
-      shumate_view_set_min_zoom_level (view, g_value_get_uint (value));
-      break;
-
-    case PROP_MAX_ZOOM_LEVEL:
-      shumate_view_set_max_zoom_level (view, g_value_get_uint (value));
-      break;
-
-    case PROP_MAP_SOURCE:
-      shumate_view_set_map_source (view, g_value_get_object (value));
-      break;
-
     case PROP_KINETIC_MODE:
       shumate_view_set_kinetic_mode (view, g_value_get_boolean (value));
       break;
@@ -799,28 +508,8 @@ shumate_view_set_property (GObject *object,
       shumate_view_set_animate_zoom (view, g_value_get_boolean (value));
       break;
 
-    /*
-    case PROP_BACKGROUND_PATTERN:
-      shumate_view_set_background_pattern (view, g_value_get_object (value));
-      break;
-     */
-
-    /*
-    case PROP_GOTO_ANIMATION_MODE:
-      priv->goto_mode = g_value_get_enum (value);
-      break;
-     */
-
     case PROP_GOTO_ANIMATION_DURATION:
       priv->goto_duration = g_value_get_uint (value);
-      break;
-
-    case PROP_WORLD:
-      shumate_view_set_world (view, g_value_get_boxed (value));
-      break;
-
-    case PROP_HORIZONTAL_WRAP:
-      shumate_view_set_horizontal_wrap (view, g_value_get_boolean (value));
       break;
 
     default:
@@ -842,9 +531,7 @@ shumate_view_dispose (GObject *object)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
 
-  g_clear_pointer (&priv->viewport, shumate_viewport_stop);
-
-  g_clear_object (&priv->map_source);
+  g_clear_object (&priv->viewport);
 
   g_list_free_full (priv->overlay_sources, g_object_unref);
   priv->overlay_sources = NULL;
@@ -874,8 +561,6 @@ shumate_view_dispose (GObject *object)
   //priv->user_layers = NULL;
   //priv->zoom_layer = NULL;
 
-  g_clear_pointer (&priv->world_bbox, shumate_bounding_box_free);
-
   G_OBJECT_CLASS (shumate_view_parent_class)->dispose (object);
 }
 
@@ -897,78 +582,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
   object_class->finalize = shumate_view_finalize;
   object_class->get_property = shumate_view_get_property;
   object_class->set_property = shumate_view_set_property;
-
-  /**
-   * ShumateView:longitude:
-   *
-   * The longitude coordonate of the map
-   */
-  obj_properties[PROP_LONGITUDE] =
-    g_param_spec_double ("longitude",
-                         "Longitude",
-                         "The longitude coordonate of the map",
-                         -180.0f, 180.0f, 0.0f,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:latitude:
-   *
-   * The latitude coordonate of the map
-   */
-  obj_properties[PROP_LATITUDE] =
-    g_param_spec_double ("latitude",
-                         "Latitude",
-                         "The latitude coordonate of the map",
-                         -90.0f, 90.0f, 0.0f,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:zoom-level:
-   *
-   * The level of zoom of the content.
-   */
-  obj_properties[PROP_ZOOM_LEVEL] =
-    g_param_spec_uint ("zoom-level",
-                       "Zoom level",
-                       "The level of zoom of the map",
-                       0, 20, 3,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:min-zoom-level:
-   *
-   * The lowest allowed level of zoom of the content.
-   */
-  obj_properties[PROP_MIN_ZOOM_LEVEL] =
-    g_param_spec_uint ("min-zoom-level",
-                       "Min zoom level",
-                       "The lowest allowed level of zoom",
-                       0, 20, 0,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:max-zoom-level:
-   *
-   * The highest allowed level of zoom of the content.
-   */
-  obj_properties[PROP_MAX_ZOOM_LEVEL] =
-    g_param_spec_uint ("max-zoom-level",
-                       "Max zoom level",
-                       "The highest allowed level of zoom",
-                       0, 20, 20,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:map-source:
-   *
-   * The #ShumateMapSource being displayed
-   */
-  obj_properties[PROP_MAP_SOURCE] =
-    g_param_spec_object ("map-source",
-                         "Map source",
-                         "The map source being displayed",
-                         SHUMATE_TYPE_MAP_SOURCE,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateView:kinetic-mode:
@@ -1096,35 +709,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                        0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * ShumateView:world:
-   *
-   * Set a bounding box to limit the world to. No tiles will be loaded
-   * outside of this bounding box. It will not be possible to scroll outside
-   * of this bounding box.
-   *
-   * Default world is the actual world.
-   */
-  obj_properties[PROP_WORLD] =
-    g_param_spec_boxed ("world",
-                        "The world",
-                        "The bounding box to limit the #ShumateView to",
-                        SHUMATE_TYPE_BOUNDING_BOX,
-                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:horizontal-wrap:
-   *
-   * Determines whether the view should wrap horizontally.
-   *
-   */
-  obj_properties[PROP_HORIZONTAL_WRAP] =
-    g_param_spec_boolean ("horizontal-wrap",
-                          "Horizontal wrap",
-                          "Determines whether the view should wrap horizontally.",
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
@@ -1169,269 +753,15 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
 
 
 static void
-shumate_view_realized_cb (ShumateView *view,
-    G_GNUC_UNUSED GParamSpec *pspec)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  if (!gtk_widget_get_realized (GTK_WIDGET (view)))
-    return;
-
-  //clutter_actor_grab_key_focus (priv->kinetic_scroll);
-
-  resize_viewport (view);
-  shumate_view_center_on (view, priv->latitude, priv->longitude);
-
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MAP_SOURCE]);
-  g_signal_emit_by_name (view, "layer-relocated", NULL);
-}
-
-
-static gboolean
-_update_idle_cb (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_assert (SHUMATE_IS_VIEW (view));
-  //if (!priv->kinetic_scroll)
-  //  return FALSE;
-
-  //clutter_actor_set_size (priv->kinetic_scroll,
-  //    priv->viewport_width,
-  //    priv->viewport_height);
-
-  resize_viewport (view);
-
-  if (priv->keep_center_on_resize)
-    shumate_view_center_on (view, priv->latitude, priv->longitude);
-
-  if (priv->hwrap)
-    {
-      //update_clones (view);
-      position_viewport (view, x_to_wrap_x (priv->viewport_x, get_map_width (view)), priv->viewport_y);
-    }
-
-  return FALSE;
-}
-
-
-static void
-view_size_changed_cb (ShumateView *view,
-    G_GNUC_UNUSED GParamSpec *pspec)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint width, height;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  width = gtk_widget_get_allocated_width (GTK_WIDGET (view));
-  height = gtk_widget_get_allocated_height (GTK_WIDGET (view));
-
-  if (priv->viewport_width != width || priv->viewport_height != height)
-    {
-      g_idle_add_full (G_PRIORITY_HIGH_IDLE + 50,
-          (GSourceFunc) _update_idle_cb,
-          g_object_ref (view),
-          (GDestroyNotify) g_object_unref);
-    }
-
-  priv->viewport_width = width;
-  priv->viewport_height = height;
-}
-
-/*
-static void
-exclusive_destroy_clone (ClutterActor *clone)
-{
-  if (!CLUTTER_IS_CLONE (clone))
-    return;
-
-  clutter_actor_destroy (clone);
-}
- */
-
-/*static void
-add_clone (ShumateView *view,
-    gint x)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  //ClutterActor *map_clone, *user_clone;*/
-
-  /* Map layer clones */
-  //map_clone = clutter_clone_new (priv->map_layer);
-  //clutter_actor_set_x (map_clone, x);
-  //clutter_actor_insert_child_below (priv->viewport_container, map_clone,
-  //                                  NULL);
-
-  //priv->map_clones = g_list_prepend (priv->map_clones, map_clone);
-
-  /* User layer clones */
-  //user_clone = clutter_clone_new (priv->user_layers);
-  //clutter_actor_set_x (user_clone, x);
-  //clutter_actor_insert_child_below (priv->viewport_container, user_clone,
-  //                                  priv->user_layers);
-
-  /* Inserting clones in the slots following the real user layer (order must be kept)*/
-  //priv->user_layer_slots = g_list_append (priv->user_layer_slots, user_clone);
-//}
-
-
-/* static void */
-/* update_clones (ShumateView *view) */
-/* { */
-/*   ShumateViewPrivate *priv = view->priv; */
-/*   gint map_size; */
-/*   gfloat view_width; */
-/*   gint i; */
-
-/*   map_size = get_map_width (view); */
-/*   clutter_actor_get_size (CLUTTER_ACTOR (view), &view_width, NULL); */
-
-/*   priv->num_right_clones = ceil (view_width / map_size) + 1; */
-
-/*   if (priv->map_clones != NULL) */
-/*     { */
-      /* Only destroy clones, skip the real user_layers actor */
-/*       g_list_free_full (priv->user_layer_slots, (GDestroyNotify) exclusive_destroy_clone); */
-/*       g_list_free_full (priv->map_clones, (GDestroyNotify) clutter_actor_destroy); */
-
-/*       priv->map_clones = NULL; */
-/*       priv->user_layer_slots = NULL; */
-/*     } */
-
-  /* An extra clone is added to the left for smoother panning */
-/*   add_clone (view, -map_size); */
-
-  /* Inserting the real user layer in the second slot (after the left clone) */
-/*   priv->user_layer_slots = g_list_append (priv->user_layer_slots, priv->user_layers); */
-/*   clutter_actor_set_x (priv->user_layers, 0); */
-
-/*   for (i = 0; i < priv->num_right_clones; i++) */
-/*     add_clone (view, (i + 1) * map_size); */
-/* } */
-
-
-static void
 slice_free_gint64 (gpointer data)
 {
   g_slice_free (gint64, data);
 }
 
-
-/*static guint
-view_find_suitable_zoom (ShumateView *view,
-    gdouble factor)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  guint zoom_level = priv->initial_gesture_zoom;
-
-  while (factor > 2 && zoom_level <= priv->max_zoom_level)
-    {
-      factor /= 2;
-      zoom_level++;
-    }
-
-  while (factor < 0.5 && zoom_level >= priv->min_zoom_level)
-    {
-      factor *= 2;
-      zoom_level--;
-    }
-
-  return zoom_level;
-}*/
-
-/*
-static gboolean
-zoom_gesture_zoom_cb (ClutterZoomAction *gesture,
-    G_GNUC_UNUSED ClutterActor *actor,
-    ClutterPoint *focal_point,
-    gdouble factor,
-    gpointer user_data)
-{
-  ShumateView *view = user_data;
-  ShumateViewPrivate *priv = GET_PRIVATE (view);
-  gdouble dx, dy, lat, lon;
-  ClutterPoint focus;
-
-  if (!priv->zoom_started)
-    {
-      priv->zoom_started = TRUE;
-      priv->focus_lat = shumate_view_y_to_latitude (user_data, focal_point->y);
-      priv->focus_lon = shumate_view_x_to_longitude (user_data, focal_point->x);
-      priv->initial_gesture_zoom = priv->zoom_level;
-    }
-  else
-    {
-      guint zoom_level;
-
-      zoom_level = view_find_suitable_zoom (view, factor);
-
-      focus.x = shumate_map_source_get_x (priv->map_source,
-                                            zoom_level, priv->focus_lon);
-      focus.y = shumate_map_source_get_y (priv->map_source,
-                                            zoom_level, priv->focus_lat);
-
-      dx = (priv->viewport_width / 2.0) - focal_point->x;
-      dy = (priv->viewport_height / 2.0) - focal_point->y;
-
-      lon = get_longitude (view, zoom_level, focus.x + dx);
-      lat = shumate_map_source_get_latitude (priv->map_source, zoom_level, focus.y + dy);
-
-      shumate_view_center_on (view, lat, lon);
-      shumate_view_set_zoom_level (view, zoom_level);
-    }
-
-  return FALSE;
-}
- */
-
-/* static gboolean */
-/* zoom_gesture_begin_cb (ClutterGestureAction *gesture, */
-/*     G_GNUC_UNUSED ClutterActor *actor, */
-/*     G_GNUC_UNUSED gpointer user_data) */
-/* { */
-/*   ClutterEvent *event = clutter_gesture_action_get_last_event (gesture, 0); */
-/*   ClutterInputDevice *device = clutter_event_get_source_device (event); */
-
-  /* Give up on >2 finger input and when using mouse */
-/*   return clutter_gesture_action_get_n_current_points (gesture) == 2 && */
-/*     clutter_input_device_get_device_type (device) != CLUTTER_POINTER_DEVICE; */
-/* } */
-
-
-/*
-static void
-zoom_gesture_finish_cb (ClutterGestureAction *gesture,
-    G_GNUC_UNUSED ClutterActor *actor,
-    gpointer user_data)
-{
-  ShumateViewPrivate *priv = GET_PRIVATE (user_data);
-
-  priv->zoom_started = FALSE;
-}
- */
-
-/*
-static void
-zoom_gesture_cancel_cb (ClutterGestureAction *gesture,
-    G_GNUC_UNUSED ClutterActor *actor,
-    gpointer user_data)
-{
-  ShumateViewPrivate *priv = GET_PRIVATE (user_data);
-
-  priv->zoom_started = FALSE;
-  g_signal_stop_emission_by_name (gesture, "gesture-cancel");
-}
-*/
-
 static void
 shumate_view_init (ShumateView *view)
 {
-  ShumateMapSourceFactory *factory;
-  ShumateMapSource *source;
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  ShumateMapLayer *layer;
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
 
@@ -1439,14 +769,7 @@ shumate_view_init (ShumateView *view)
 
   /* gtk_widget_set_has_surface (GTK_WIDGET (view), FALSE); */
 
-  factory = shumate_map_source_factory_dup_default ();
-  source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
-
-  priv->map_source = SHUMATE_MAP_SOURCE (g_object_ref_sink (source));
-
-  priv->zoom_level = 0;
-  priv->min_zoom_level = shumate_map_source_get_min_zoom_level (priv->map_source);
-  priv->max_zoom_level = shumate_map_source_get_max_zoom_level (priv->map_source);
+  priv->viewport = shumate_viewport_new ();
   priv->keep_center_on_resize = TRUE;
   priv->zoom_on_double_click = TRUE;
   priv->animate_zoom = TRUE;
@@ -1457,8 +780,6 @@ shumate_view_init (ShumateView *view)
   priv->viewport_width = 0;
   priv->viewport_height = 0;
   priv->state = SHUMATE_STATE_NONE;
-  priv->latitude = 0.0;
-  priv->longitude = 0.0;
   priv->goto_context = NULL;
   priv->tiles_loading = 0;
   priv->animating_zoom = FALSE;
@@ -1472,24 +793,13 @@ shumate_view_init (ShumateView *view)
   priv->visible_tiles = g_hash_table_new_full (g_int64_hash, g_int64_equal, slice_free_gint64, NULL);
   priv->goto_duration = 0;
   //priv->goto_mode = CLUTTER_EASE_IN_OUT_CIRC;
-  priv->world_bbox = shumate_bounding_box_new ();
-  priv->world_bbox->left = SHUMATE_MIN_LONGITUDE;
-  priv->world_bbox->bottom = SHUMATE_MIN_LATITUDE;
-  priv->world_bbox->right = SHUMATE_MAX_LONGITUDE;
-  priv->world_bbox->top = SHUMATE_MAX_LATITUDE;
   priv->num_right_clones = 0;
   priv->map_clones = NULL;
   priv->user_layer_slots = NULL;
-  priv->hwrap = FALSE;
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (view), "grab");
 
   //clutter_actor_set_background_color (CLUTTER_ACTOR (view), &color);
-
-  g_signal_connect (view, "notify::width", G_CALLBACK (view_size_changed_cb), NULL);
-  g_signal_connect (view, "notify::height", G_CALLBACK (view_size_changed_cb), NULL);
-
-  g_signal_connect (view, "notify::realized", G_CALLBACK (shumate_view_realized_cb), NULL);
 
   //layout = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_FIXED,
   //                                 CLUTTER_BIN_ALIGNMENT_FIXED);
@@ -1512,17 +822,10 @@ shumate_view_init (ShumateView *view)
   //shumate_viewport_set_child (SHUMATE_VIEWPORT (priv->viewport), priv->viewport_container);
   //g_signal_connect (priv->viewport, "relocated", G_CALLBACK (view_relocated_cb), view);
 
-  g_signal_connect (priv->viewport, "notify::x-origin",
-      G_CALLBACK (viewport_pos_changed_cb), view);
-  g_signal_connect (priv->viewport, "notify::y-origin",
-      G_CALLBACK (viewport_pos_changed_cb), view);
-
   //g_signal_connect (view, "key-press-event",
   //                  G_CALLBACK (kinetic_scroll_key_press_cb), NULL);
 
   /* Setup license */
-  layer = shumate_map_layer_new (priv->map_source);
-  shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 
   drag_gesture = gtk_gesture_drag_new ();
   g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), view);
@@ -1534,199 +837,6 @@ shumate_view_init (ShumateView *view)
   g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), view);
   gtk_widget_add_controller (GTK_WIDGET (view), scroll_controller);
 }
-
-
-static gboolean
-redraw_timeout_cb (gpointer data)
-{
-  ShumateView *view = data;
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble x, y;
-
-  shumate_viewport_get_origin (SHUMATE_VIEWPORT (priv->viewport), &x, &y);
-
-  if (priv->location_updated || (gint)ABS (x - priv->viewport_x) > 0 || (gint)ABS (y - priv->viewport_y) > 0)
-    {
-      update_coords (view, x, y, TRUE);
-      priv->location_updated = FALSE;
-    }
-
-  return TRUE;
-}
-
-
-static void
-viewport_pos_changed_cb (G_GNUC_UNUSED GObject *gobject,
-    G_GNUC_UNUSED GParamSpec *arg1,
-    ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble x, y;
-
-  if (priv->redraw_timeout == 0)
-    priv->redraw_timeout = g_timeout_add (350, redraw_timeout_cb, view);
-
-  shumate_viewport_get_origin (SHUMATE_VIEWPORT (priv->viewport), &x, &y);
-
-  if (priv->hwrap)
-    {
-      gint map_width;
-      map_width = get_map_width (view);
-
-      /* Faux wrapping, by positioning viewport to correct wrap point
-       * so the master map view is on the left edge of ShumateView
-       * (possibly partially invisible) */
-      if (x < 0 || x >= map_width)
-        position_viewport (view, x_to_wrap_x (x, map_width), y);
-    }
-
-  if (ABS (x - priv->viewport_x) > 100 || ABS (y - priv->viewport_y) > 100)
-    {
-      update_coords (view, x, y, FALSE);
-      priv->location_updated = TRUE;
-    }
-}
-
-/*
-static void
-swap_user_layer_slots (ShumateView *view,
-    gint original_index,
-    gint clone_index)
-{
-  ShumateViewPrivate *priv = view->priv;
-  gint map_width = get_map_width (view);
-
-  GList *original_slot = g_list_nth (priv->user_layer_slots, original_index);
-  GList *clone_slot = g_list_nth (priv->user_layer_slots, clone_index);
-
-  ClutterActor *clone = clone_slot->data;
-
-  original_slot->data = clone;
-  clone_slot->data = priv->user_layers;
-
-  clutter_actor_set_x (clone, (original_index - 1) * map_width);
-  clutter_actor_set_x (priv->user_layers, (clone_index - 1) * map_width);
-}
-*/
-
-/*
-static gboolean
-viewport_motion_cb (G_GNUC_UNUSED ClutterActor *actor,
-    ClutterMotionEvent *event,
-    ShumateView *view)
-{
-   ShumateViewPrivate *priv = view->priv;
-
-   gint map_width = get_map_width (view);
-
-   gint original_index = g_list_index (priv->user_layer_slots, priv->user_layers);
-   gint clone_index = (event->x + priv->viewport_x) / map_width + 1;
-
-   if (clone_index != original_index && clone_index < priv->num_right_clones + 2)
-     swap_user_layer_slots (view, original_index, clone_index);
-
-   return TRUE;
- }
-*/
-/*
-static ClutterActor *
-sample_user_layer_at_pos (ShumateView *view,
-    gfloat x,
-    gfloat y)
-{
-    ShumateViewPrivate *priv = view->priv;
-
-    ClutterStage *stage = CLUTTER_STAGE (clutter_actor_get_stage (CLUTTER_ACTOR (view)));
-    ClutterActor *retval = clutter_stage_get_actor_at_pos (stage,
-        CLUTTER_PICK_REACTIVE, x, y);
-
-    if (!clutter_actor_contains (priv->user_layers, retval))
-      return NULL;
-
-    return retval;
-}
-*/
-
-//static gboolean
-//viewport_press_cb (G_GNUC_UNUSED ClutterActor *actor,
-//    ClutterButtonEvent *event,
-//    ShumateView *view)
-//{
-//  ShumateViewPrivate *priv = view->priv;
-//
-//  if (!priv->hwrap)
-//    return FALSE;
-//
-//  gint original_index = g_list_index (priv->user_layer_slots, priv->user_layers);
-//  gint initial_original_index = original_index;
-//  ClutterActor *sampled_actor = NULL;
-//
-//  /* Sampling neighbouring slots for children that are split by the slot border.
-//   * (e.g. a marker that has one half in a slot #n and the other half in #n-1)
-//   * Whenever a user clicks on the real user layer, it is swapped succesively with
-//   * the right and left neighbors (if they exist) and the area at the event
-//   * coordinates is inspected for a reactive child actor. If a child is found,
-//   * a button press is synthesized over it.
-//   */
-//  gint right_neighbor_index = original_index + 1;
-//  gint left_neighbor_index = original_index - 1;
-//
-//  /* Swapping and testing right neighbor */
-//  if (right_neighbor_index < priv->num_right_clones + 2)
-//    {
-//      swap_user_layer_slots (view, original_index, right_neighbor_index);
-//      original_index = right_neighbor_index;
-//      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
-//    }
-//
-//  /* Swapping and testing left neighbor */
-//  if (left_neighbor_index >= 0 && sampled_actor == NULL)
-//    {
-//      swap_user_layer_slots (view, original_index, left_neighbor_index);
-//      original_index = left_neighbor_index;
-//      sampled_actor = sample_user_layer_at_pos (view, event->x, event->y);
-//    }
-//
-//  /* If found, redirecting event to the sampled actor */
-//  if (sampled_actor != NULL)
-//    {
-//      ClutterEvent *cloned_event = (ClutterEvent *)event;
-//      clutter_event_set_source (cloned_event, sampled_actor);
-//      clutter_event_put (cloned_event);
-//    }
-//  else
-//    {
-//      /* Swapping the real layer back to its initial slot */
-//      if (original_index != initial_original_index)
-//        swap_user_layer_slots (view, original_index, initial_original_index);
-//
-//      return FALSE;
-//    }
-//
-//  return TRUE;
-//}
-
-
-/*static void
-shumate_view_scroll (ShumateView *view,
-    gint deltax,
-    gint deltay)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble lat, lon;
-  gint x, y;
-
-  x = priv->viewport_x + priv->viewport_width / 2.0 + deltax;
-  y = priv->viewport_y + priv->viewport_height / 2.0 + deltay;
-
-  lat = shumate_map_source_get_latitude (priv->map_source, priv->zoom_level, y);
-  lon = get_longitude (view, priv->zoom_level, x);
-
-  if (priv->kinetic_mode)
-    shumate_view_go_to_with_duration (view, lat, lon, 300);
-  else
-    shumate_view_center_on (view, lat, lon);
-}*/
 
 /**
  * shumate_view_new:
@@ -1742,6 +852,43 @@ shumate_view_new (void)
 }
 
 
+ShumateView *
+shumate_view_new_simple (void)
+{
+  ShumateView *view = g_object_new (SHUMATE_TYPE_VIEW, NULL);
+  ShumateMapSourceFactory *factory;
+  ShumateMapSource *source;
+  ShumateMapLayer *map_layer;
+  ShumateViewport *viewport;
+  
+  viewport = shumate_view_get_viewport (view);
+  factory = shumate_map_source_factory_dup_default ();
+  source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  shumate_viewport_set_reference_map_source (viewport, source);
+  map_layer = shumate_map_layer_new (source, viewport);
+  shumate_view_add_layer (view, SHUMATE_LAYER (map_layer));
+
+  return view;
+}
+
+/**
+ * shumate_view_get_viewport:
+ * @self: a #ShumateView
+ *
+ * Get the #ShumateViewport used by this view.
+ * 
+ * Returns: (transfer none): the #ShumateViewport
+ */
+ShumateViewport *
+shumate_view_get_viewport (ShumateView *self)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  g_return_val_if_fail (SHUMATE_IS_VIEW (self), NULL);
+
+  return priv->viewport;
+}
+
 /**
  * shumate_view_center_on:
  * @view: a #ShumateView
@@ -1756,51 +903,11 @@ shumate_view_center_on (ShumateView *view,
     gdouble longitude)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble x, y;
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
 
-  longitude = CLAMP (longitude, priv->world_bbox->left, priv->world_bbox->right);
-  latitude = CLAMP (latitude, priv->world_bbox->bottom, priv->world_bbox->top);
-
-  x = shumate_map_source_get_x (priv->map_source, priv->zoom_level, longitude) - priv->viewport_width / 2.0;
-  y = shumate_map_source_get_y (priv->map_source, priv->zoom_level, latitude) - priv->viewport_height / 2.0;
-
-  DEBUG ("Centering on %f, %f (%g, %g)", latitude, longitude, x, y);
-
-  if (priv->hwrap)
-    position_viewport (view, x_to_wrap_x (x, get_map_width (view)), y);
-  else
-    position_viewport (view, x, y);
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), latitude, longitude);
 }
-
-/*
-static void
-timeline_new_frame (G_GNUC_UNUSED ClutterTimeline *timeline,
-    G_GNUC_UNUSED gint frame_num,
-    GoToContext *ctx)
-{
-  gdouble alpha;
-  gdouble lat;
-  gdouble lon;
-
-  alpha = clutter_timeline_get_progress (timeline);
-  lat = ctx->to_latitude - ctx->from_latitude;
-  lon = ctx->to_longitude - ctx->from_longitude;
-
-  shumate_view_center_on (ctx->view,
-      ctx->from_latitude + alpha * lat,
-      ctx->from_longitude + alpha * lon);
-}
-*/
-/*
-static void
-timeline_completed (G_GNUC_UNUSED ClutterTimeline *timeline,
-    ShumateView *view)
-{
-  shumate_view_stop_go_to (view);
-}
-*/
 
 /**
  * shumate_view_stop_go_to:
@@ -1851,7 +958,7 @@ shumate_view_go_to (ShumateView *view,
 
   duration = priv->goto_duration;
   if (duration == 0) /* calculate duration from zoom level */
-      duration = 500 * priv->zoom_level / 2.0;
+      duration = 500 * shumate_viewport_get_zoom_level (priv->viewport) / 2.0;
 
   shumate_view_go_to_with_duration (view, latitude, longitude, duration);
 }
@@ -1877,10 +984,10 @@ shumate_view_go_to_with_duration (ShumateView *view,
   shumate_view_stop_go_to (view);
 
   ctx = g_slice_new (GoToContext);
-  ctx->from_latitude = priv->latitude;
+  /*ctx->from_latitude = priv->latitude;
   ctx->from_longitude = priv->longitude;
   ctx->to_latitude = CLAMP (latitude, priv->world_bbox->bottom, priv->world_bbox->top);
-  ctx->to_longitude = CLAMP (longitude, priv->world_bbox->left, priv->world_bbox->right);
+  ctx->to_longitude = CLAMP (longitude, priv->world_bbox->left, priv->world_bbox->right);*/
 
   ctx->view = view;
 
@@ -1906,169 +1013,6 @@ shumate_view_go_to_with_duration (ShumateView *view,
   //clutter_timeline_start (ctx->timeline);
 }
 
-
-/**
- * shumate_view_zoom_in:
- * @view: a #ShumateView
- *
- * Zoom in the map by one level.
- */
-void
-shumate_view_zoom_in (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  shumate_view_set_zoom_level (view, priv->zoom_level + 1);
-}
-
-
-/**
- * shumate_view_zoom_out:
- * @view: a #ShumateView
- *
- * Zoom out the map by one level.
- */
-void
-shumate_view_zoom_out (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  shumate_view_set_zoom_level (view, priv->zoom_level - 1);
-}
-
-/**
- * shumate_view_set_zoom_level:
- * @view: a #ShumateView
- * @zoom_level: the level of zoom, a guint between 1 and 20
- *
- * Changes the current level of zoom
- */
-void
-shumate_view_set_zoom_level (ShumateView *view,
-                             guint        zoom_level)
-{
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  view_set_zoom_level_at (view, zoom_level, FALSE, 0, 0);
-}
-
-
-/**
- * shumate_view_set_min_zoom_level:
- * @view: a #ShumateView
- * @zoom_level: the level of zoom
- *
- * Changes the lowest allowed level of zoom
- */
-void
-shumate_view_set_min_zoom_level (ShumateView *view,
-                                 guint        min_zoom_level)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  if (priv->min_zoom_level == min_zoom_level ||
-      min_zoom_level > priv->max_zoom_level ||
-      min_zoom_level < shumate_map_source_get_min_zoom_level (priv->map_source))
-    return;
-
-  priv->min_zoom_level = min_zoom_level;
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MIN_ZOOM_LEVEL]);
-
-  if (priv->zoom_level < min_zoom_level)
-    shumate_view_set_zoom_level (view, min_zoom_level);
-}
-
-
-/**
- * shumate_view_set_max_zoom_level:
- * @view: a #ShumateView
- * @zoom_level: the level of zoom
- *
- * Changes the highest allowed level of zoom
- */
-void
-shumate_view_set_max_zoom_level (ShumateView *view,
-                                 guint        max_zoom_level)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  if (priv->max_zoom_level == max_zoom_level ||
-      max_zoom_level < priv->min_zoom_level ||
-      max_zoom_level > shumate_map_source_get_max_zoom_level (priv->map_source))
-    return;
-
-  priv->max_zoom_level = max_zoom_level;
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MAX_ZOOM_LEVEL]);
-
-  if (priv->zoom_level > max_zoom_level)
-    shumate_view_set_zoom_level (view, max_zoom_level);
-}
-
-/**
- * shumate_view_get_world:
- * @view: a #ShumateView
- *
- * Get the bounding box that represents the extent of the world.
- *
- * Returns: (transfer none): a #ShumateBoundingBox that represents the current world
- */
-ShumateBoundingBox *
-shumate_view_get_world (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  return priv->world_bbox;
-}
-
-
-/**
- * shumate_view_set_world:
- * @view: a #ShumateView
- * @bbox: (transfer none): the #ShumateBoundingBox of the world
- *
- * Set a bounding box to limit the world to. No tiles will be loaded
- * outside of this bounding box. It will not be possible to scroll outside
- * of this bounding box.
- */
-void
-shumate_view_set_world (ShumateView        *view,
-                        ShumateBoundingBox *bbox)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-  g_return_if_fail (bbox != NULL);
-
-  if (!shumate_bounding_box_is_valid (bbox))
-    return;
-
-  gdouble latitude, longitude;
-
-  bbox->left = CLAMP (bbox->left, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
-  bbox->bottom = CLAMP (bbox->bottom, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
-  bbox->right = CLAMP (bbox->right, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
-  bbox->top = CLAMP (bbox->top, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
-
-  g_clear_pointer (&priv->world_bbox, shumate_bounding_box_free);
-  priv->world_bbox = shumate_bounding_box_copy (bbox);
-
-  if (!shumate_bounding_box_covers (priv->world_bbox, priv->latitude, priv->longitude))
-    {
-      shumate_bounding_box_get_center (priv->world_bbox, &latitude, &longitude);
-      shumate_view_center_on (view, latitude, longitude);
-    }
-}
-
 /**
  * shumate_view_add_layer:
  * @view: a #ShumateView
@@ -2083,7 +1027,6 @@ shumate_view_add_layer (ShumateView  *view,
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  shumate_layer_set_view (layer, view);
   gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (view), NULL);
 }
 
@@ -2102,199 +1045,16 @@ shumate_view_remove_layer (ShumateView  *view,
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  shumate_layer_set_view (layer, NULL);
+  if (gtk_widget_get_parent (GTK_WIDGET (layer)) != GTK_WIDGET (view))
+    {
+      g_critical ("The given ShumateLayer isn't a child of the view");
+      return;
+    }
+
+  gtk_widget_unparent (GTK_WIDGET (layer));
 
   //clutter_actor_remove_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
 }
-
-
-/**
- * shumate_view_x_to_longitude:
- * @view: a #ShumateView
- * @x: x coordinate of the view
- *
- * Converts the view's x coordinate to longitude.
- *
- * Returns: the longitude
- */
-gdouble
-shumate_view_x_to_longitude (ShumateView *view,
-                             gdouble      x)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  return get_longitude (view, priv->zoom_level, x + priv->viewport_x);
-}
-
-
-/**
- * shumate_view_y_to_latitude:
- * @view: a #ShumateView
- * @y: y coordinate of the view
- *
- * Converts the view's y coordinate to latitude.
- *
- * Returns: the latitude
- */
-gdouble
-shumate_view_y_to_latitude (ShumateView *view,
-                            gdouble      y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  return shumate_map_source_get_latitude (priv->map_source,
-                                          priv->zoom_level,
-                                          y + priv->viewport_y);
-}
-
-
-/**
- * shumate_view_longitude_to_x:
- * @view: a #ShumateView
- * @longitude: the longitude
- *
- * Converts the longitude to view's x coordinate.
- *
- * Returns: the x coordinate
- */
-gdouble
-shumate_view_longitude_to_x (ShumateView *view,
-                             gdouble      longitude)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble x;
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
-
-  x = shumate_map_source_get_x (priv->map_source, priv->zoom_level, longitude);
-
-  return x - priv->viewport_x;
-}
-
-
-/**
- * shumate_view_latitude_to_y:
- * @view: a #ShumateView
- * @latitude: the latitude
- *
- * Converts the latitude to view's y coordinate.
- *
- * Returns: the y coordinate
- */
-gdouble
-shumate_view_latitude_to_y (ShumateView *view,
-                            gdouble      latitude)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble y;
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
-
-  y = shumate_map_source_get_y (priv->map_source, priv->zoom_level, latitude);
-
-  return y - priv->viewport_y;
-}
-
-/**
- * shumate_view_get_viewport_anchor:
- * @view: a #ShumateView
- * @anchor_x: (out): the x coordinate of the viewport anchor
- * @anchor_y: (out): the y coordinate of the viewport anchor
- *
- * Gets the x and y coordinate of the viewport anchor in respect to the layer origin.
- */
-void
-shumate_view_get_viewport_anchor (ShumateView *view,
-                                  gint        *anchor_x,
-                                  gint        *anchor_y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  shumate_viewport_get_anchor (SHUMATE_VIEWPORT (priv->viewport), anchor_x, anchor_y);
-}
-
-/**
- * shumate_view_get_viewport_origin:
- * @view: a #ShumateView
- * @x: (out) (optional): the x coordinate of the viewport
- * @y: (out) (optional): the y coordinate of the viewport
- *
- * Gets the x and y coordinate of the viewport in respect to the layer origin.
- */
-void
-shumate_view_get_viewport_origin (ShumateView *view,
-                                  gint        *x,
-                                  gint        *y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gint anchor_x, anchor_y;
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  shumate_viewport_get_anchor (SHUMATE_VIEWPORT (priv->viewport), &anchor_x, &anchor_y);
-
-  if (x)
-    *x = priv->viewport_x - anchor_x;
-
-  if (y)
-    *y = priv->viewport_y - anchor_y;
-}
-
-/*
-static void
-fill_background_tiles (ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-  ClutterActorIter iter;
-  ClutterActor *child;
-  gint x_count, y_count, x_first, y_first;
-  gint x, y;
-  gfloat width, height;
-  gboolean have_children = TRUE;
-
-  clutter_content_get_preferred_size (priv->background_content, &width, &height);
-
-  x_count = ceil ((gfloat) priv->viewport_width / width) + 3;
-  y_count = ceil ((gfloat) priv->viewport_height / height) + 3;
-
-  x_first = (gint)priv->viewport_x / width - 1;
-  y_first = (gint)priv->viewport_y / height - 1;
-
-  clutter_actor_iter_init (&iter, priv->background_layer);
-
-  for (x = x_first; x < x_first + x_count; ++x)
-    {
-      for (y = y_first; y < y_first + y_count; ++y)
-        {
-          if (!have_children || !clutter_actor_iter_next (&iter, &child))
-            {
-              have_children = FALSE;
-              child = clutter_actor_new ();
-              clutter_actor_set_size (child, width, height);
-              clutter_actor_set_content (child, priv->background_content);
-              clutter_actor_add_child (priv->background_layer, child);
-            }
-          shumate_viewport_set_actor_position (SHUMATE_VIEWPORT (priv->viewport),
-              child,
-              (x * width) - priv->bg_offset_x,
-              (y * height) - priv->bg_offset_y);
-          child = clutter_actor_get_next_sibling (child);
-        }
-    }
-
-  if (have_children)
-    {
-      while (clutter_actor_iter_next (&iter, &child))
-          clutter_actor_iter_destroy (&iter);
-    }
-}
- */
 
 static void
 remove_all_tiles (ShumateView *view)
@@ -2344,41 +1104,44 @@ shumate_view_set_map_source (ShumateView      *view,
                              ShumateMapSource *source)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  guint source_min_zoom;
-  guint source_max_zoom;
+  ShumateMapSource *ref_map_source;
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (source));
 
-  if (priv->map_source == source)
+  ref_map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  if (ref_map_source == source)
     return;
 
-  g_object_unref (priv->map_source);
-  priv->map_source = g_object_ref_sink (source);
-
-  g_list_free_full (priv->overlay_sources, g_object_unref);
-  priv->overlay_sources = NULL;
-
-  source_min_zoom = shumate_map_source_get_min_zoom_level (priv->map_source);
-  shumate_view_set_min_zoom_level (view, source_min_zoom);
-  source_max_zoom = shumate_map_source_get_max_zoom_level (priv->map_source);
-  shumate_view_set_max_zoom_level (view, source_max_zoom);
-
-  /* Keep same zoom level if the new map supports it */
-  if (priv->zoom_level > priv->max_zoom_level)
+  if (!ref_map_source)
     {
-      priv->zoom_level = priv->max_zoom_level;
-      g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-    }
-  else if (priv->zoom_level < priv->min_zoom_level)
-    {
-      priv->zoom_level = priv->min_zoom_level;
-      g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-    }
+      guint source_min_zoom;
+      guint source_max_zoom;
+      guint min_zoom;
+      guint max_zoom;
 
-  shumate_view_reload_tiles (view);
+      shumate_viewport_set_reference_map_source (priv->viewport, source);
+      source_min_zoom = shumate_map_source_get_min_zoom_level (source);
+      shumate_viewport_set_min_zoom_level (priv->viewport, source_min_zoom);
+      source_max_zoom = shumate_map_source_get_max_zoom_level (source);
+      shumate_viewport_set_max_zoom_level (priv->viewport, source_max_zoom);
 
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MAP_SOURCE]);
+      min_zoom = shumate_viewport_get_min_zoom_level (priv->viewport);
+      max_zoom = shumate_viewport_get_max_zoom_level (priv->viewport);
+
+
+      /* Keep same zoom level if the new map supports it */
+      /*if (priv->zoom_level > max_zoom)
+        {
+          priv->zoom_level = max_zoom;
+          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
+        }
+      else if (priv->zoom_level < min_zoom)
+        {
+          priv->zoom_level = min_zoom;
+          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
+        }*/
+    }
 }
 
 
@@ -2481,383 +1244,6 @@ shumate_view_set_animate_zoom (ShumateView *view,
   g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ANIMATE_ZOOM]);
 }
 
-
-/**
- * shumate_view_ensure_visible:
- * @view: a #ShumateView
- * @bbox: bounding box of the area that should be visible
- * @animate: TRUE to perform animation, FALSE otherwise
- *
- * Changes the map's zoom level and center to make sure the given area
- * is visible
- */
-void
-shumate_view_ensure_visible (ShumateView        *view,
-                             ShumateBoundingBox *bbox,
-                             gboolean            animate)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  guint zoom_level = priv->zoom_level;
-  gboolean good_size = FALSE;
-  gdouble lat, lon;
-
-  if (!shumate_bounding_box_is_valid (bbox))
-    return;
-
-  shumate_bounding_box_get_center (bbox, &lat, &lon);
-
-  DEBUG ("Zone to expose (%f, %f) to (%f, %f)", bbox->bottom, bbox->left, bbox->top, bbox->right);
-  do
-    {
-      gint min_x, min_y, max_x, max_y;
-
-      min_x = shumate_map_source_get_x (priv->map_source, zoom_level, bbox->left);
-      min_y = shumate_map_source_get_y (priv->map_source, zoom_level, bbox->bottom);
-      max_x = shumate_map_source_get_x (priv->map_source, zoom_level, bbox->right);
-      max_y = shumate_map_source_get_y (priv->map_source, zoom_level, bbox->top);
-
-      if (min_y - max_y <= priv->viewport_height &&
-          max_x - min_x <= priv->viewport_width)
-        good_size = TRUE;
-      else
-        zoom_level--;
-
-      if (zoom_level <= priv->min_zoom_level)
-        {
-          zoom_level = priv->min_zoom_level;
-          good_size = TRUE;
-        }
-    } while (!good_size);
-
-  DEBUG ("Ideal zoom level is %d", zoom_level);
-  shumate_view_set_zoom_level (view, zoom_level);
-  if (animate)
-    shumate_view_go_to (view, lat, lon);
-  else
-    shumate_view_center_on (view, lat, lon);
-}
-
-
-/**
- * shumate_view_ensure_layers_visible:
- * @view: a #ShumateView
- * @animate: TRUE to perform animation, FALSE otherwise
- *
- * Changes the map's zoom level and center to make sure that the bounding
- * boxes of all inserted layers are visible.
- */
-void
-shumate_view_ensure_layers_visible (ShumateView *view,
-                                    gboolean     animate)
-{
-  //ClutterActorIter iter;
-  //ClutterActor *child;
-  ShumateBoundingBox *bbox;
-
-  bbox = shumate_bounding_box_new ();
-
-  /*
-  clutter_actor_iter_init (&iter, view->priv->user_layers);
-  while (clutter_actor_iter_next (&iter, &child))
-    {
-      ShumateLayer *layer = SHUMATE_LAYER (child);
-      ShumateBoundingBox *other;
-
-      other = shumate_layer_get_bounding_box (layer);
-      shumate_bounding_box_compose (bbox, other);
-      shumate_bounding_box_free (other);
-    }
-   */
-
-  shumate_view_ensure_visible (view, bbox, animate);
-
-  shumate_bounding_box_free (bbox);
-}
-
-
-/**
- * shumate_view_set_background_pattern:
- * @view: a #ShumateView
- * @background: The background texture
- *
- * Sets the background texture displayed behind the map. Setting the background
- * pattern affects performence slightly - use reasonably large patterns for
- * better performance.
- */
-/*
-void
-shumate_view_set_background_pattern (ShumateView *view,
-    ClutterContent *background)
-{
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  ShumateViewPrivate *priv = view->priv;
-
-  if (priv->background_content)
-    g_object_unref (priv->background_content);
-
-  priv->background_content = g_object_ref_sink (background);
-  clutter_actor_destroy_all_children (priv->background_layer);
-}
-*/
-
-/**
- * shumate_view_get_background_pattern:
- * @view: a #ShumateView
- *
- * Gets the current background texture displayed behind the map.
- *
- * Returns: (transfer none): The texture.
- */
-/*
-ClutterContent *
-shumate_view_get_background_pattern (ShumateView *view)
-{
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  ShumateViewPrivate *priv = view->priv;
-
-  return priv->background_content;
-}
- */
-
-
-/**
- * shumate_view_set_horizontal_wrap:
- * @view: a #ShumateView
- * @wrap: %TRUE to enable horizontal wrapping
- *
- * Sets the value of the #ShumateView:horizontal-wrap property.
- */
-void
-shumate_view_set_horizontal_wrap (ShumateView *view,
-                                  gboolean     wrap)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  if (priv->hwrap == wrap)
-    return;
-
-  priv->hwrap = wrap;
-
-  /*
-  if (priv->hwrap)
-    {
-      g_signal_connect (priv->viewport, "motion-event",
-        G_CALLBACK (viewport_motion_cb), view);
-      g_signal_connect (priv->viewport, "button-press-event",
-        G_CALLBACK (viewport_press_cb), view);
-      update_clones (view);
-    }
-  else
-    {
-      g_list_free_full (priv->map_clones, (GDestroyNotify) clutter_actor_destroy);
-      g_list_free_full (priv->user_layer_slots, (GDestroyNotify) exclusive_destroy_clone);
-      priv->map_clones = NULL;
-      priv->user_layer_slots = NULL;
-      g_signal_handlers_disconnect_by_func (priv->viewport, viewport_motion_cb, view);
-      g_signal_handlers_disconnect_by_func (priv->viewport, viewport_press_cb, view);
-      clutter_actor_set_x (priv->user_layers, 0);
-    }
-   */
-  resize_viewport (view);
-
-  gint map_width = get_map_width (view);
-  if (priv->hwrap)
-    position_viewport (view, x_to_wrap_x (priv->viewport_x, map_width), priv->viewport_y);
-  else
-    position_viewport (view, priv->viewport_x - ((gint)priv->viewport_width / map_width / 2) * map_width, priv->viewport_y);
-}
-
-
-/**
- * shumate_view_get_horizontal_wrap:
- * @view: a #ShumateView
- *
- * Returns the value of the #ShumateView:horizontal-wrap property.
- *
- * Returns: %TRUE if #ShumateView:horizontal-wrap is set.
- *
- */
-gboolean
-shumate_view_get_horizontal_wrap (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
-
-  return priv->hwrap;
-}
-
-/*
-static void
-zoom_animation_completed (ClutterActor *actor,
-    const gchar *transition_name,
-    gboolean is_finished,
-    ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-
-  priv->animating_zoom = FALSE;
-  position_zoom_actor (view);
-  clutter_actor_show (priv->user_layers);
-  if (priv->hwrap)
-    update_clones (view);
-
-  if (priv->tiles_loading == 0)
-    clutter_actor_destroy_all_children (priv->zoom_layer);
-
-  g_signal_handlers_disconnect_by_func (actor, zoom_animation_completed, view);
-  g_signal_emit_by_name (view, "animation-completed::zoom", NULL);
-}
-*/
-
-
-static void
-get_x_y_for_zoom_level (ShumateView *view,
-                        guint        zoom_level,
-                        gint         offset_x,
-                        gint         offset_y,
-                        gdouble     *new_x,
-                        gdouble     *new_y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble deltazoom;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  deltazoom = pow (2, (gdouble) zoom_level - (gdouble) priv->zoom_level);
-
-  *new_x = (priv->viewport_x + offset_x) * deltazoom - offset_x;
-  *new_y = (priv->viewport_y + offset_y) * deltazoom - offset_y;
-}
-
-/* Sets the zoom level, leaving the (x, y) at the exact same point in the view */
-static gboolean
-view_set_zoom_level_at (ShumateView *view,
-                        guint        zoom_level,
-                        gboolean     use_event_coord,
-                        gint         x,
-                        gint         y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble new_x, new_y;
-  gdouble offset_x = x;
-  gdouble offset_y = y;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  if (zoom_level == priv->zoom_level || ZOOM_LEVEL_OUT_OF_RANGE (priv, zoom_level))
-    return FALSE;
-
-  shumate_view_stop_go_to (view);
-
-  if (!use_event_coord)
-    {
-      offset_x = priv->viewport_width / 2.0;
-      offset_y = priv->viewport_height / 2.0;
-    }
-
-  get_x_y_for_zoom_level (view, zoom_level, offset_x, offset_y, &new_x, &new_y);
-
-  priv->zoom_level = zoom_level;
-
-  if (gtk_widget_get_realized (GTK_WIDGET (view)))
-    {
-      resize_viewport (view);
-      remove_all_tiles (view);
-      if (priv->hwrap)
-        position_viewport (view, x_to_wrap_x (new_x, get_map_width (view)), new_y);
-      else
-        position_viewport (view, new_x, new_y);
-
-      /* TODO: animate zoom */
-    }
-
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-  return TRUE;
-}
-
-
-/**
- * shumate_view_get_zoom_level:
- * @view: a #ShumateView
- *
- * Gets the view's current zoom level.
- *
- * Returns: the view's current zoom level.
- */
-guint
-shumate_view_get_zoom_level (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
-
-  return priv->zoom_level;
-}
-
-
-/**
- * shumate_view_get_min_zoom_level:
- * @view: a #ShumateView
- *
- * Gets the view's minimal allowed zoom level.
- *
- * Returns: the view's minimal allowed zoom level.
- */
-guint
-shumate_view_get_min_zoom_level (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
-
-  return priv->min_zoom_level;
-}
-
-
-/**
- * shumate_view_get_max_zoom_level:
- * @view: a #ShumateView
- *
- * Gets the view's maximum allowed zoom level.
- *
- * Returns: the view's maximum allowed zoom level.
- */
-guint
-shumate_view_get_max_zoom_level (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0);
-
-  return priv->max_zoom_level;
-}
-
-
-/**
- * shumate_view_get_map_source:
- * @view: a #ShumateView
- *
- * Gets the view's current map source.
- *
- * Returns: (transfer none): the view's current map source. If you need to keep a reference to the
- * map source then you have to call #g_object_ref().
- */
-ShumateMapSource *
-shumate_view_get_map_source (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  return priv->map_source;
-}
-
-
 /**
  * shumate_view_get_deceleration:
  * @view: a #ShumateView
@@ -2953,44 +1339,6 @@ shumate_view_get_animate_zoom (ShumateView *view)
 }
 
 /**
- * shumate_view_get_center_latitude:
- * @view: a #ShumateView
- *
- * Gets the latitude of the view's center.
- *
- * Returns: the latitude.
- */
-gdouble
-shumate_view_get_center_latitude (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  return priv->latitude;
-}
-
-
-/**
- * shumate_view_get_center_longitude:
- * @view: a #ShumateView
- *
- * Gets the longitude of the view's center.
- *
- * Returns: the longitude.
- */
-gdouble
-shumate_view_get_center_longitude (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  return priv->longitude;
-}
-
-
-/**
  * shumate_view_get_state:
  * @view: a #ShumateView
  *
@@ -3007,115 +1355,6 @@ shumate_view_get_state (ShumateView *view)
 
   return priv->state;
 }
-
-static void
-get_tile_bounds (ShumateView *view,
-                 guint       *min_x,
-                 guint       *min_y,
-                 guint       *max_x,
-                 guint       *max_y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  guint size;
-  gint coord;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  size = shumate_map_source_get_tile_size (priv->map_source);
-  coord = shumate_map_source_get_x (priv->map_source,
-                                    priv->zoom_level,
-                                    priv->world_bbox->left);
-  *min_x = coord / size;
-
-  coord = shumate_map_source_get_y (priv->map_source,
-                                    priv->zoom_level,
-                                    priv->world_bbox->top);
-  *min_y = coord/size;
-
-  coord = shumate_map_source_get_x (priv->map_source,
-                                    priv->zoom_level,
-                                    priv->world_bbox->right);
-  *max_x = ceil ((double) coord / (double) size);
-
-  coord  = shumate_map_source_get_y (priv->map_source,
-                                     priv->zoom_level,
-                                     priv->world_bbox->bottom);
-  *max_y = ceil ((double) coord / (double) size);
-}
-
-static ShumateBoundingBox *
-get_bounding_box (ShumateView *view,
-                  guint        zoom_level,
-                  gdouble      x,
-                  gdouble      y)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  ShumateBoundingBox *bbox;
-
-  g_assert (SHUMATE_IS_VIEW (view));
-
-  bbox = shumate_bounding_box_new ();
-
-  bbox->top = shumate_map_source_get_latitude (priv->map_source,
-                                               zoom_level,
-                                               y);
-  bbox->bottom = shumate_map_source_get_latitude (priv->map_source,
-                                                  zoom_level,
-                                                  y + priv->viewport_height);
-  bbox->left = get_longitude (view,
-                              zoom_level,
-                              x);
-  bbox->right = get_longitude (view,
-                               zoom_level,
-                               x + priv->viewport_width);
-  return bbox;
-}
-
-/**
- * shumate_view_get_bounding_box_for_zoom_level:
- * @view: a #ShumateView
- * @zoom_level: the level of zoom, a guint between 1 and 20
- *
- * Gets the bounding box for view @view at @zoom_level.
- *
- * Returns: (transfer full): the bounding box for the view at @zoom_level.
- */
-ShumateBoundingBox *
-shumate_view_get_bounding_box_for_zoom_level (ShumateView *view,
-                                              guint        zoom_level)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  gdouble x, y;
-  gdouble offset_x, offset_y;
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  offset_x = priv->viewport_width / 2.0;
-  offset_y = priv->viewport_height / 2.0;
-
-  get_x_y_for_zoom_level (view, zoom_level, offset_x, offset_y, &x, &y);
-
-  return get_bounding_box (view, zoom_level, x, y);
-}
-
-/**
- * shumate_view_get_bounding_box:
- * @view: a #ShumateView
- *
- * Gets the bounding box for view @view at current zoom-level.
- *
- * Returns: (transfer full): the bounding box
- */
-ShumateBoundingBox *
-shumate_view_get_bounding_box (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  return get_bounding_box (view, priv->zoom_level, priv->viewport_x, priv->viewport_y);
-}
-
 
 /**
  * shumate_view_add_overlay_source:
@@ -3138,7 +1377,6 @@ shumate_view_add_overlay_source (ShumateView      *view,
 
   priv->overlay_sources = g_list_append (priv->overlay_sources, g_object_ref (map_source));
   g_object_set_data (G_OBJECT (map_source), "opacity", GINT_TO_POINTER (opacity));
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MAP_SOURCE]);
 
   shumate_view_reload_tiles (view);
 }
@@ -3162,7 +1400,6 @@ shumate_view_remove_overlay_source (ShumateView      *view,
 
   priv->overlay_sources = g_list_remove (priv->overlay_sources, map_source);
   g_object_unref (map_source);
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_MAP_SOURCE]);
 
   shumate_view_reload_tiles (view);
 }

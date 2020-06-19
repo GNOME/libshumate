@@ -24,8 +24,7 @@
 #ifndef __SHUMATE_LAYER_H__
 #define __SHUMATE_LAYER_H__
 
-#include <shumate/shumate-defines.h>
-#include <shumate/shumate-bounding-box.h>
+#include <shumate/shumate-viewport.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
@@ -43,16 +42,9 @@ G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GtkWidget
 struct _ShumateLayerClass
 {
   GtkWidgetClass parent_class;
-
-  void (*set_view)(ShumateLayer *layer,
-      ShumateView *view);
-  ShumateBoundingBox * (*get_bounding_box)(ShumateLayer * layer);
 };
 
-void shumate_layer_set_view (ShumateLayer *layer,
-    ShumateView *view);
-
-ShumateBoundingBox *shumate_layer_get_bounding_box (ShumateLayer *layer);
+ShumateViewport *shumate_layer_get_viewport (ShumateLayer *self);
 
 G_END_DECLS
 

@@ -27,20 +27,32 @@ activate (GtkApplication* app,
   GtkWindow *window;
   GtkWidget *overlay;
   ShumateView *view;
+  ShumateViewport *viewport;
   ShumateScale *scale;
   ShumateLicense *license;
   ShumatePathLayer *path_layer;
+  ShumateMapSourceFactory *factory;
+  ShumateMapSource *source;
+  ShumateMapLayer *layer;
 
   /* Create the map view */
   overlay = gtk_overlay_new ();
   view = shumate_view_new ();
+
+  viewport = shumate_view_get_viewport (view);
+  factory = shumate_map_source_factory_dup_default ();
+  source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  shumate_viewport_set_reference_map_source (viewport, source);
+
+  layer = shumate_map_layer_new (source, viewport);
+  shumate_view_add_layer (view, SHUMATE_LAYER (layer));
+  
   gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
-  scale = shumate_scale_new ();
+  scale = shumate_scale_new (shumate_view_get_viewport (view));
   g_object_set (G_OBJECT (scale),
                 "valign", GTK_ALIGN_END,
                 "halign", GTK_ALIGN_START,
                 NULL);
-  shumate_scale_connect_view (scale, view);
   gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (scale));
 
   license = shumate_license_new ();
@@ -48,10 +60,10 @@ activate (GtkApplication* app,
                 "valign", GTK_ALIGN_END,
                 "halign", GTK_ALIGN_END,
                 NULL);
-  shumate_license_connect_view (license, view);
+  shumate_license_append_map_source (license, source);
   gtk_overlay_add_overlay (GTK_OVERLAY (overlay), GTK_WIDGET (license));
 
-  path_layer = shumate_path_layer_new ();
+  path_layer = shumate_path_layer_new (viewport);
   shumate_view_add_layer (view, SHUMATE_LAYER (path_layer));
 
   window = GTK_WINDOW (gtk_application_window_new (app));

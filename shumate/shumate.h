@@ -31,6 +31,7 @@
 #include "shumate/shumate-version.h"
 
 #include "shumate/shumate-layer.h"
+#include "shumate/shumate-map-layer.h"
 #include "shumate/shumate-marker-layer.h"
 #include "shumate/shumate-path-layer.h"
 #include "shumate/shumate-point.h"
@@ -38,6 +39,7 @@
 #include "shumate/shumate-coordinate.h"
 #include "shumate/shumate-marker.h"
 #include "shumate/shumate-view.h"
+#include "shumate/shumate-viewport.h"
 #include "shumate/shumate-bounding-box.h"
 #include "shumate/shumate-scale.h"
 

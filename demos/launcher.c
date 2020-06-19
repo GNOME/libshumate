@@ -32,11 +32,13 @@ map_view_button_release_cb (GtkGestureClick *gesture,
                             ShumateView     *view)
 {
   gdouble lat, lon;
+  ShumateViewport *viewport;
 
-  lon = shumate_view_x_to_longitude (view, x);
-  lat = shumate_view_y_to_latitude (view, y);
+  viewport = shumate_view_get_viewport (view);
+  lon = shumate_viewport_widget_x_to_longitude (viewport, GTK_WIDGET (view), x);
+  lat = shumate_viewport_widget_y_to_latitude (viewport, GTK_WIDGET (view), y);
 
-  g_print ("Map clicked at %f, %f \n", lat, lon);
+  g_print ("Map clicked at %f, %f\n", lon, lat);
 }
 
 static void
@@ -49,14 +51,18 @@ activate (GtkApplication* app,
   ShumateView *view;
   ShumateMarkerLayer *layer;
   ShumatePathLayer *path;
+  ShumateViewport *viewport;
 
   /* Create the map view */
   overlay = gtk_overlay_new ();
-  view = shumate_view_new ();
+  view = shumate_view_new_simple ();
+  viewport = shumate_view_get_viewport (view);
+
   gtk_overlay_set_child (GTK_OVERLAY (overlay), GTK_WIDGET (view));
 
   /* Create the markers and marker layer */
   layer = create_marker_layer (view, &path);
+  shumate_view_add_layer (view, SHUMATE_LAYER (path));
   shumate_view_add_layer (view, SHUMATE_LAYER (layer));
 
   click_gesture = gtk_gesture_click_new ();
@@ -65,9 +71,9 @@ activate (GtkApplication* app,
 
   /* Finish initialising the map view */
   g_object_set (view,
-                "zoom-level", 12,
                 "kinetic-mode", TRUE,
                 NULL);
+  shumate_viewport_set_zoom_level (viewport, 12);
   shumate_view_center_on (view, 45.466, -73.75);
 
   window = GTK_WINDOW (gtk_application_window_new (app));
