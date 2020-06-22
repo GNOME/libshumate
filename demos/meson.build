@@ -20,8 +20,6 @@ foreach demo: libshumate_demos
 endforeach
 
 subdir('icons')
-# Disable everything untilthe port to Gtk4 is finished
-subdir_done()
 
 if generate_vapi == true
   libshumate_vala_demos = [
