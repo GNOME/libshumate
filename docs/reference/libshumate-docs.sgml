@@ -43,6 +43,7 @@
   <part>
     <title>Basic API</title>
     <xi:include href="xml/shumate-view.xml"/>
+    <xi:include href="xml/shumate-viewport.xml"/>
   </part>
   <part>
     <title>Layers, Markers and Locations</title>

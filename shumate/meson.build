@@ -1,11 +1,9 @@
 libshumate_public_h = [
-  'shumate-adjustment.h',
   'shumate-bounding-box.h',
   'shumate-coordinate.h',
   'shumate-defines.h',
   'shumate-error-tile-source.h',
   'shumate-file-cache.h',
-  #'shumate-kinetic-scroll-view.h',
   'shumate-layer.h',
   'shumate-license.h',
   'shumate-location.h',
@@ -35,13 +33,11 @@ libshumate_private_h = [
 ]
 
 libshumate_sources = [
-  'shumate-adjustment.c',
   'shumate-bounding-box.c',
   'shumate-coordinate.c',
   'shumate-debug.c',
   'shumate-error-tile-source.c',
   'shumate-file-cache.c',
-  #'shumate-kinetic-scroll-view.c',
   'shumate-layer.c',
   'shumate-license.c',
   'shumate-location.c',

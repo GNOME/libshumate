@@ -8,14 +8,11 @@ gtk_prefix = gtk_dep.get_pkgconfig_variable('prefix')
 gtk_docpath = join_paths(gtk_prefix, 'share', 'gtk-doc', 'html', 'gtk4')
 
 libshumate_reference_ignored_h = [
-  'shumate-adjustment.h',
   'shumate-debug.h',
   'shumate-defines.h',
   'shumate-enum-types.h',
   'shumate-features.h',
-  'shumate-kinetic-scroll-view.h',
   'shumate-marshal.h',
-  'shumate-viewport.h',
   'shumate.h',
 ]
 

@@ -70,8 +70,7 @@ void shumate_view_stop_go_to (ShumateView *view);
 void shumate_view_set_map_source (ShumateView *view,
     ShumateMapSource *map_source);
 void shumate_view_add_overlay_source (ShumateView *view,
-    ShumateMapSource *map_source,
-    guint8 opacity);
+    ShumateMapSource *map_source);
 void shumate_view_remove_overlay_source (ShumateView *view,
     ShumateMapSource *map_source);
 GList *shumate_view_get_overlay_sources (ShumateView *view);
@@ -80,8 +79,6 @@ void shumate_view_set_deceleration (ShumateView *view,
     gdouble rate);
 void shumate_view_set_kinetic_mode (ShumateView *view,
     gboolean kinetic);
-void shumate_view_set_keep_center_on_resize (ShumateView *view,
-    gboolean value);
 void shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value);
 void shumate_view_set_animate_zoom (ShumateView *view,
@@ -95,13 +92,10 @@ void shumate_view_remove_layer (ShumateView *view,
 
 gdouble shumate_view_get_deceleration (ShumateView *view);
 gboolean shumate_view_get_kinetic_mode (ShumateView *view);
-gboolean shumate_view_get_keep_center_on_resize (ShumateView *view);
 gboolean shumate_view_get_zoom_on_double_click (ShumateView *view);
 gboolean shumate_view_get_animate_zoom (ShumateView *view);
 ShumateState shumate_view_get_state (ShumateView *view);
 ShumateBoundingBox *shumate_view_get_world (ShumateView *view);
-
-void shumate_view_reload_tiles (ShumateView *view);
 
 G_END_DECLS
 

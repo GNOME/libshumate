@@ -66,7 +66,6 @@
 #include "shumate-tile.h"
 #include "shumate-license.h"
 #include "shumate-viewport.h"
-#include "shumate-adjustment.h"
 
 #include <glib.h>
 #include <glib-object.h>
@@ -85,7 +84,6 @@ enum
 {
   PROP_DECELERATION = 1,
   PROP_KINETIC_MODE,
-  PROP_KEEP_CENTER_ON_RESIZE,
   PROP_ZOOM_ON_DOUBLE_CLICK,
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
@@ -153,7 +151,6 @@ typedef struct
   gint bg_offset_x;
   gint bg_offset_y;
 
-  gboolean keep_center_on_resize;
   gboolean zoom_on_double_click;
   gboolean animate_zoom;
 
@@ -177,13 +174,6 @@ typedef struct
   gdouble zoom_actor_viewport_y;
   guint zoom_actor_timeout;
 
-  GHashTable *tile_map;
-
-  gint tile_x_first;
-  gint tile_y_first;
-  gint tile_x_last;
-  gint tile_y_last;
-
   /* Zoom gesture */
   guint initial_gesture_zoom;
   gdouble focus_lat;
@@ -192,8 +182,6 @@ typedef struct
   gdouble accumulated_scroll_dy;
   gdouble drag_begin_lat;
   gdouble drag_begin_lon;
-
-  GHashTable *visible_tiles;
 } ShumateViewPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
@@ -211,7 +199,6 @@ static void shumate_view_go_to_with_duration (ShumateView *view,
     gdouble latitude,
     gdouble longitude,
     guint duration);
-static void remove_all_tiles (ShumateView *view);
 
 /* static void */
 /* view_relocated_cb (G_GNUC_UNUSED ShumateViewport *viewport, */
@@ -348,6 +335,9 @@ on_drag_gesture_drag_update (ShumateView    *self,
   g_assert (SHUMATE_IS_VIEW (self));
 
   map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  if (!map_source)
+    return;
+
   zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
   x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
   y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
@@ -385,7 +375,12 @@ on_drag_gesture_drag_end (ShumateView    *self,
 
   g_assert (SHUMATE_IS_VIEW (self));
 
+  gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
+
   map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  if (!map_source)
+    return;
+
   zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
   x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
   y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
@@ -408,8 +403,6 @@ on_drag_gesture_drag_end (ShumateView    *self,
   shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
   priv->drag_begin_lon = 0;
   priv->drag_begin_lat = 0;
-
-  gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 }
 
 static gboolean
@@ -450,10 +443,6 @@ shumate_view_get_property (GObject *object,
         g_value_set_double (value, decel);
         break;
       }
-
-    case PROP_KEEP_CENTER_ON_RESIZE:
-      g_value_set_boolean (value, priv->keep_center_on_resize);
-      break;
 
     case PROP_ZOOM_ON_DOUBLE_CLICK:
       g_value_set_boolean (value, priv->zoom_on_double_click);
@@ -496,10 +485,6 @@ shumate_view_set_property (GObject *object,
       shumate_view_set_deceleration (view, g_value_get_double (value));
       break;
 
-    case PROP_KEEP_CENTER_ON_RESIZE:
-      shumate_view_set_keep_center_on_resize (view, g_value_get_boolean (value));
-      break;
-
     case PROP_ZOOM_ON_DOUBLE_CLICK:
       shumate_view_set_zoom_on_double_click (view, g_value_get_boolean (value));
       break;
@@ -540,7 +525,6 @@ shumate_view_dispose (GObject *object)
   g_clear_handle_id (&priv->redraw_timeout, g_source_remove);
   //g_clear_handle_id (&priv->zoom_actor_timeout, g_source_remove);
   g_clear_handle_id (&priv->zoom_timeout, g_source_remove);
-  g_clear_pointer (&priv->tile_map, g_hash_table_unref);
 
   /* if (priv->zoom_gesture)
    *   {
@@ -549,8 +533,6 @@ shumate_view_dispose (GObject *object)
    *     priv->zoom_gesture = NULL;
    *   }
    */
-
-  g_clear_pointer (&priv->visible_tiles, g_hash_table_unref);
 
   //priv->map_layer = NULL;
   //priv->license_actor = NULL;
@@ -606,18 +588,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                          "Rate at which the view will decelerate in kinetic mode.",
                          1.0001, 2.0, 1.1,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:keep-center-on-resize:
-   *
-   * Keep the current centered position when resizing the view.
-   */
-  obj_properties[PROP_KEEP_CENTER_ON_RESIZE] =
-    g_param_spec_boolean ("keep-center-on-resize",
-                          "Keep center on resize",
-                          "Keep the current centered position upon resizing",
-                          TRUE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateView:zoom-on-double-click:
@@ -751,13 +721,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
   gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-view"));
 }
 
-
-static void
-slice_free_gint64 (gpointer data)
-{
-  g_slice_free (gint64, data);
-}
-
 static void
 shumate_view_init (ShumateView *view)
 {
@@ -767,13 +730,9 @@ shumate_view_init (ShumateView *view)
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
-  /* gtk_widget_set_has_surface (GTK_WIDGET (view), FALSE); */
-
   priv->viewport = shumate_viewport_new ();
-  priv->keep_center_on_resize = TRUE;
   priv->zoom_on_double_click = TRUE;
   priv->animate_zoom = TRUE;
-  //priv->license_actor = NULL;
   priv->kinetic_mode = FALSE;
   priv->viewport_x = 0;
   priv->viewport_y = 0;
@@ -783,50 +742,22 @@ shumate_view_init (ShumateView *view)
   priv->goto_context = NULL;
   priv->tiles_loading = 0;
   priv->animating_zoom = FALSE;
-  //priv->background_content = NULL;
   priv->bg_offset_x = 0;
   priv->bg_offset_y = 0;
   priv->location_updated = FALSE;
   priv->redraw_timeout = 0;
   priv->zoom_actor_timeout = 0;
-  priv->tile_map = g_hash_table_new_full (g_int64_hash, g_int64_equal, slice_free_gint64, NULL);
-  priv->visible_tiles = g_hash_table_new_full (g_int64_hash, g_int64_equal, slice_free_gint64, NULL);
   priv->goto_duration = 0;
-  //priv->goto_mode = CLUTTER_EASE_IN_OUT_CIRC;
   priv->num_right_clones = 0;
   priv->map_clones = NULL;
   priv->user_layer_slots = NULL;
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (view), "grab");
 
-  //clutter_actor_set_background_color (CLUTTER_ACTOR (view), &color);
-
-  //layout = clutter_bin_layout_new (CLUTTER_BIN_ALIGNMENT_FIXED,
-  //                                 CLUTTER_BIN_ALIGNMENT_FIXED);
-  //clutter_actor_set_layout_manager (CLUTTER_ACTOR (view), layout);
-
-  /* Setup viewport layers*/
-  //priv->background_layer = clutter_actor_new ();
-  //priv->zoom_layer = clutter_actor_new ();
-  //priv->map_layer = clutter_actor_new ();
-  //priv->user_layers = clutter_actor_new ();
-
-  //priv->viewport_container = clutter_actor_new ();
-  //clutter_actor_add_child (priv->viewport_container, priv->background_layer);
-  //clutter_actor_add_child (priv->viewport_container, priv->zoom_layer);
-  //clutter_actor_add_child (priv->viewport_container, priv->map_layer);
-  //clutter_actor_add_child (priv->viewport_container, priv->user_layers);
-
   /* Setup viewport */
   priv->viewport = shumate_viewport_new ();
-  //shumate_viewport_set_child (SHUMATE_VIEWPORT (priv->viewport), priv->viewport_container);
-  //g_signal_connect (priv->viewport, "relocated", G_CALLBACK (view_relocated_cb), view);
-
-  //g_signal_connect (view, "key-press-event",
-  //                  G_CALLBACK (kinetic_scroll_key_press_cb), NULL);
 
   /* Setup license */
-
   drag_gesture = gtk_gesture_drag_new ();
   g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), view);
   g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), view);
@@ -1052,40 +983,6 @@ shumate_view_remove_layer (ShumateView  *view,
     }
 
   gtk_widget_unparent (GTK_WIDGET (layer));
-
-  //clutter_actor_remove_child (view->priv->user_layers, CLUTTER_ACTOR (layer));
-}
-
-static void
-remove_all_tiles (ShumateView *view)
-{
-  /*ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  ClutterActorIter iter;
-  ClutterActor *child;
-
-  clutter_actor_destroy_all_children (priv->zoom_layer);
-
-  clutter_actor_iter_init (&iter, priv->map_layer);
-  while (clutter_actor_iter_next (&iter, &child))
-    shumate_tile_set_state (SHUMATE_TILE (child), SHUMATE_STATE_DONE);
-
-  g_hash_table_remove_all (priv->tile_map);
-
-  clutter_actor_destroy_all_children (priv->map_layer);
-   */
-}
-
-
-/**
- * shumate_view_reload_tiles:
- * @view: a #ShumateView
- *
- * Reloads all visible tiles.
- */
-void
-shumate_view_reload_tiles (ShumateView *view)
-{
-  remove_all_tiles (view);
 }
 
 /**
@@ -1113,35 +1010,7 @@ shumate_view_set_map_source (ShumateView      *view,
   if (ref_map_source == source)
     return;
 
-  if (!ref_map_source)
-    {
-      guint source_min_zoom;
-      guint source_max_zoom;
-      guint min_zoom;
-      guint max_zoom;
-
-      shumate_viewport_set_reference_map_source (priv->viewport, source);
-      source_min_zoom = shumate_map_source_get_min_zoom_level (source);
-      shumate_viewport_set_min_zoom_level (priv->viewport, source_min_zoom);
-      source_max_zoom = shumate_map_source_get_max_zoom_level (source);
-      shumate_viewport_set_max_zoom_level (priv->viewport, source_max_zoom);
-
-      min_zoom = shumate_viewport_get_min_zoom_level (priv->viewport);
-      max_zoom = shumate_viewport_get_max_zoom_level (priv->viewport);
-
-
-      /* Keep same zoom level if the new map supports it */
-      /*if (priv->zoom_level > max_zoom)
-        {
-          priv->zoom_level = max_zoom;
-          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-        }
-      else if (priv->zoom_level < min_zoom)
-        {
-          priv->zoom_level = min_zoom;
-          g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_LEVEL]);
-        }*/
-    }
+  shumate_viewport_set_reference_map_source (priv->viewport, source);
 }
 
 
@@ -1183,27 +1052,6 @@ shumate_view_set_kinetic_mode (ShumateView *view,
   //g_object_set (view->priv->kinetic_scroll, "mode", kinetic, NULL);
   g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_KINETIC_MODE]);
 }
-
-
-/**
- * shumate_view_set_keep_center_on_resize:
- * @view: a #ShumateView
- * @value: a #gboolean
- *
- * Keep the current centered position when resizing the view.
- */
-void
-shumate_view_set_keep_center_on_resize (ShumateView *view,
-                                        gboolean     value)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  priv->keep_center_on_resize = value;
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_KEEP_CENTER_ON_RESIZE]);
-}
-
 
 /**
  * shumate_view_set_zoom_on_double_click:
@@ -1281,26 +1129,6 @@ shumate_view_get_kinetic_mode (ShumateView *view)
   return priv->kinetic_mode;
 }
 
-
-/**
- * shumate_view_get_keep_center_on_resize:
- * @view: a #ShumateView
- *
- * Checks whether to keep the center on resize
- *
- * Returns: TRUE if the view keeps the center on resize, FALSE otherwise.
- */
-gboolean
-shumate_view_get_keep_center_on_resize (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
-
-  return priv->keep_center_on_resize;
-}
-
-
 /**
  * shumate_view_get_zoom_on_double_click:
  * @view: a #ShumateView
@@ -1360,15 +1188,13 @@ shumate_view_get_state (ShumateView *view)
  * shumate_view_add_overlay_source:
  * @view: a #ShumateView
  * @map_source: a #ShumateMapSource
- * @opacity: opacity to use
  *
- * Adds a new overlay map source to render tiles with the supplied opacity on top
- * of the ordinary map source. Multiple overlay sources can be added.
+ * Adds a new overlay map source to render tiles on top of the ordinary map
+ * source. Multiple overlay sources can be added.
  */
 void
 shumate_view_add_overlay_source (ShumateView      *view,
-                                 ShumateMapSource *map_source,
-                                 guint8            opacity)
+                                 ShumateMapSource *map_source)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -1376,9 +1202,6 @@ shumate_view_add_overlay_source (ShumateView      *view,
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
 
   priv->overlay_sources = g_list_append (priv->overlay_sources, g_object_ref (map_source));
-  g_object_set_data (G_OBJECT (map_source), "opacity", GINT_TO_POINTER (opacity));
-
-  shumate_view_reload_tiles (view);
 }
 
 
@@ -1400,8 +1223,6 @@ shumate_view_remove_overlay_source (ShumateView      *view,
 
   priv->overlay_sources = g_list_remove (priv->overlay_sources, map_source);
   g_object_unref (map_source);
-
-  shumate_view_reload_tiles (view);
 }
 
 

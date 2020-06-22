@@ -94,6 +94,17 @@ shumate_layer_dispose (GObject *object)
 }
 
 static void
+shumate_layer_constructed (GObject *object)
+{
+  ShumateLayerPrivate *priv = shumate_layer_get_instance_private (SHUMATE_LAYER (object));
+
+  if (!priv->viewport)
+    priv->viewport = shumate_viewport_new ();
+
+  G_OBJECT_CLASS (shumate_layer_parent_class)->constructed (object);
+}
+
+static void
 shumate_layer_class_init (ShumateLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -102,6 +113,7 @@ shumate_layer_class_init (ShumateLayerClass *klass)
   object_class->set_property = shumate_layer_set_property;
   object_class->get_property = shumate_layer_get_property;
   object_class->dispose = shumate_layer_dispose;
+  object_class->constructed = shumate_layer_constructed;
 
   obj_properties[PROP_VIEWPORT] =
     g_param_spec_object ("viewport",

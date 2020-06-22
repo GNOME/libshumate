@@ -273,13 +273,15 @@ static void
 shumate_map_layer_constructed (GObject *object)
 {
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
-  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  ShumateViewport *viewport;
 
+  G_OBJECT_CLASS (shumate_map_layer_parent_class)->constructed (object);
+
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
 
-  G_OBJECT_CLASS (shumate_map_layer_parent_class)->constructed (object);
 }
 
 static void

@@ -20,10 +20,6 @@
 /**
  * SECTION:shumate-error-tile-source
  * @short_description: A tile source that doesn't load map data from anywhere
- *
- * This map source does not provide any input data to the associated renderer.
- * This can be useful in situations when the tile can be rendered independently
- * of any input such as in the case of the #ShumateErrorTileRenderer.
  */
 
 #include "shumate-error-tile-source.h"

@@ -282,13 +282,15 @@ static void
 shumate_marker_layer_constructed (GObject *object)
 {
   ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
-  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  ShumateViewport *viewport;
 
+  G_OBJECT_CLASS (shumate_marker_layer_parent_class)->constructed (object);
+
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
 
-  G_OBJECT_CLASS (shumate_marker_layer_parent_class)->constructed (object);
 }
 
 static void
@@ -336,6 +338,7 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
 
 /**
  * shumate_marker_layer_new:
+ * @viewport: the @ShumateViewport
  *
  * Creates a new instance of #ShumateMarkerLayer.
  *
@@ -352,6 +355,7 @@ shumate_marker_layer_new (ShumateViewport *viewport)
 
 /**
  * shumate_marker_layer_new_full:
+ * @viewport: the @ShumateViewport
  * @mode: Selection mode
  *
  * Creates a new instance of #ShumateMarkerLayer with the specified selection mode.

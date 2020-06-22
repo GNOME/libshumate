@@ -21,3 +21,4 @@ shumate_tile_cache_get_type
 shumate_tile_get_type
 shumate_tile_source_get_type
 shumate_view_get_type
+shumate_viewport_get_type

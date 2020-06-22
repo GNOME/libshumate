@@ -136,6 +136,37 @@ ShumateViewClass
 </SECTION>
 
 <SECTION>
+<FILE>shumate-viewport</FILE>
+<TITLE>ShumateViewport</TITLE>
+ShumateViewport
+shumate_viewport_new
+shumate_viewport_set_zoom_level
+shumate_viewport_get_zoom_level
+shumate_viewport_set_max_zoom_level
+shumate_viewport_get_max_zoom_level
+shumate_viewport_set_min_zoom_level
+shumate_viewport_get_min_zoom_level
+shumate_viewport_zoom_in
+shumate_viewport_zoom_out
+shumate_viewport_set_reference_map_source
+shumate_viewport_get_reference_map_source
+shumate_viewport_widget_x_to_longitude
+shumate_viewport_widget_y_to_latitude
+shumate_viewport_longitude_to_widget_x
+shumate_viewport_latitude_to_widget_y
+<SUBSECTION Standard>
+SHUMATE_VIEWPORT
+SHUMATE_IS_VIEWPORT
+SHUMATE_TYPE_VIEWPORT
+shumate_viewport_get_type
+SHUMATE_VIEWPORT_CLASS
+SHUMATE_IS_VIEWPORT_CLASS
+SHUMATE_VIEWPORT_GET_CLASS
+<SUBSECTION Private>
+ShumateViewportClass
+</SECTION>
+
+<SECTION>
 <FILE>shumate-network-tile-source</FILE>
 <TITLE>ShumateNetworkTileSource</TITLE>
 ShumateNetworkTileSource
@@ -431,8 +462,9 @@ shumate_license_set_extra_text
 shumate_license_get_extra_text
 shumate_license_set_alignment
 shumate_license_get_alignment
-shumate_license_connect_view
-shumate_license_disconnect_view
+shumate_license_append_map_source
+shumate_license_prepend_map_source
+shumate_license_remove_map_source
 <SUBSECTION Standard>
 SHUMATE_LICENSE
 SHUMATE_IS_LICENSE

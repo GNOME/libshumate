@@ -28,6 +28,12 @@
 #include "shumate-location.h"
 #include "shumate-defines.h"
 
+/**
+ * SECTION:shumate-viewport
+ * @short_description: The Object holding the coordinate and zoom-level state of
+ * the current view.
+ */
+
 struct _ShumateViewport
 {
   GObject parent_instance;
@@ -455,6 +461,17 @@ shumate_viewport_get_reference_map_source (ShumateViewport  *self)
   return self->ref_map_source;
 }
 
+/**
+ * shumate_viewport_widget_x_to_longitude:
+ * @self: a #ShumateViewport
+ * @widget: a #GtkWidget that uses @self as viewport
+ * @x: the x coordinate
+ *
+ * Get the longitude from an x coordinate of a widget.
+ * The widget is assumed to be using the viewport.
+ * 
+ * Returns: the longitude
+ */
 gdouble
 shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
                                         GtkWidget       *widget,
@@ -477,6 +494,17 @@ shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
   return shumate_map_source_get_longitude (self->ref_map_source, self->zoom_level, center_x - width/2 + x);
 }
 
+/**
+ * shumate_viewport_widget_y_to_latitude:
+ * @self: a #ShumateViewport
+ * @widget: a #GtkWidget that uses @self as viewport
+ * @y: the y coordinate
+ *
+ * Get the latitude from an y coordinate of a widget.
+ * The widget is assumed to be using the viewport.
+ * 
+ * Returns: the latitude
+ */
 gdouble
 shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
                                        GtkWidget       *widget,
@@ -499,6 +527,17 @@ shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
   return shumate_map_source_get_latitude (self->ref_map_source, self->zoom_level, center_y - height/2 + y);
 }
 
+/**
+ * shumate_viewport_longitude_to_widget_x:
+ * @self: a #ShumateViewport
+ * @widget: a #GtkWidget that uses @self as viewport
+ * @longitude: the longitude
+ *
+ * Get an x coordinate of a widget from the longitude.
+ * The widget is assumed to be using the viewport.
+ * 
+ * Returns: the x coordinate
+ */
 gdouble
 shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
                                         GtkWidget       *widget,
@@ -524,6 +563,17 @@ shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
   return x - left_x;
 }
 
+/**
+ * shumate_viewport_latitude_to_widget_y:
+ * @self: a #ShumateViewport
+ * @widget: a #GtkWidget that uses @self as viewport
+ * @latitude: the latitude
+ *
+ * Get an y coordinate of a widget from the latitude.
+ * The widget is assumed to be using the viewport.
+ * 
+ * Returns: the y coordinate
+ */
 gdouble
 shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
                                        GtkWidget       *widget,

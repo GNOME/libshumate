@@ -20,19 +20,18 @@
 
 /**
  * SECTION:shumate-marker
- * @short_description: Base class of libshumate markers
+ * @short_description: Base widget representing a marker
  *
  * Markers represent points of interest on a map. Markers need to be
  * placed on a layer (a #ShumateMarkerLayer). Layers have to be added to a
- * #shumateview for the markers to show on the map.
+ * #ShumateView for the markers to show on the map.
  *
- * A marker is nothing more than a regular #clutteractor. You can draw on
- * it what ever you want.  Set the marker's position
- * on the map using #shumate_location_set_location. Don't forget to set the
- * marker's pointer position using #clutter_actor_set_translation.
+ * A marker is nothing more than a regular #GtkWidget. You can draw on it what
+ * ever you want. Set the marker's position on the map using
+ * shumate_location_set_location().
  *
  * This is a base class of all markers. libshumate has a more evoluted
- * type of markers with text and image support. See #ShumateLabel for more details.
+ * type of markers with text and image support.
  */
 
 #include "config.h"
