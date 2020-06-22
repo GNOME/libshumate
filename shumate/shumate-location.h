@@ -28,6 +28,11 @@
 
 G_BEGIN_DECLS
 
+#define SHUMATE_MIN_LATITUDE   -85.0511287798
+#define SHUMATE_MAX_LATITUDE    85.0511287798
+#define SHUMATE_MIN_LONGITUDE -180.0
+#define SHUMATE_MAX_LONGITUDE  180.0
+
 #define SHUMATE_TYPE_LOCATION (shumate_location_get_type ())
 G_DECLARE_INTERFACE (ShumateLocation, shumate_location, SHUMATE, LOCATION, GObject)
 

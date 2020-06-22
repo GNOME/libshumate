@@ -21,8 +21,6 @@
 #ifndef SHUMATE_MAP_TILE_H
 #define SHUMATE_MAP_TILE_H
 
-#include <shumate/shumate-defines.h>
-
 #include <glib.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>

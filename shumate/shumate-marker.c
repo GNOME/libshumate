@@ -40,7 +40,6 @@
 #include "shumate-marker-private.h"
 
 #include "shumate.h"
-#include "shumate-defines.h"
 #include "shumate-marshal.h"
 #include "shumate-tile.h"
 

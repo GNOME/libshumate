@@ -25,7 +25,6 @@
 #ifndef SHUMATE_MARKER_H
 #define SHUMATE_MARKER_H
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-location.h>
 
 #include <gdk/gdk.h>

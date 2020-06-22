@@ -25,7 +25,6 @@
 #ifndef SHUMATE_MARKER_LAYER_H
 #define SHUMATE_MARKER_LAYER_H
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-marker.h>
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-viewport.h>

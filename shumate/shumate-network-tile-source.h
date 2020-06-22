@@ -25,7 +25,6 @@
 #ifndef _SHUMATE_NETWORK_TILE_SOURCE_H_
 #define _SHUMATE_NETWORK_TILE_SOURCE_H_
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-tile-source.h>
 
 G_BEGIN_DECLS

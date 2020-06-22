@@ -25,7 +25,6 @@
 #ifndef SHUMATE_PATH_LAYER_H
 #define SHUMATE_PATH_LAYER_H
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-location.h>
 #include <shumate/shumate-bounding-box.h>

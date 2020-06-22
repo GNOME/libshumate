@@ -53,6 +53,7 @@
  */
 
 #include "shumate-map-source.h"
+#include "shumate-location.h"
 
 #include <math.h>
 

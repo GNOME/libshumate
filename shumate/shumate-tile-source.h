@@ -25,7 +25,6 @@
 #ifndef _SHUMATE_TILE_SOURCE_H_
 #define _SHUMATE_TILE_SOURCE_H_
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-tile-cache.h>
 

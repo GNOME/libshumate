@@ -23,15 +23,15 @@
 
 /**
  * SECTION:shumate-view
- * @short_description: A #ClutterActor to display maps
+ * @short_description: A #GtkWidget to display maps
  *
- * The #ShumateView is a ClutterActor to display maps.  It supports two modes
+ * The #ShumateView is a #GtkWidget to display maps.  It supports two modes
  * of scrolling:
  * <itemizedlist>
  *   <listitem><para>Push: the normal behavior where the maps don't move
  *   after the user stopped scrolling;</para></listitem>
- *   <listitem><para>Kinetic: the iPhone-like behavior where the maps
- *   decelerate after the user stopped scrolling.</para></listitem>
+ *   <listitem><para>Kinetic: the behavior where the maps decelerate after
+ *   the user stopped scrolling.</para></listitem>
  * </itemizedlist>
  *
  * You can use the same #ShumateView to display many types of maps.  In
@@ -44,9 +44,6 @@
  * in tiles for each zoom level.  When a tile is requested, #ShumateView will
  * first check if it is in cache (in the user's cache dir under shumate). If
  * an error occurs during download, an error tile will be displayed.
- *
- * The button-press-event and button-release-event signals are emitted each
- * time a mouse button is pressed and released on the @view.
  */
 
 #include "config.h"
@@ -57,7 +54,6 @@
 #include "shumate-debug.h"
 
 #include "shumate.h"
-#include "shumate-defines.h"
 #include "shumate-enum-types.h"
 #include "shumate-marshal.h"
 #include "shumate-map-layer.h"
@@ -76,7 +72,6 @@ enum
 {
   /* normal signals */
   ANIMATION_COMPLETED,
-  LAYER_RELOCATED,
   LAST_SIGNAL
 };
 
@@ -199,33 +194,6 @@ static void shumate_view_go_to_with_duration (ShumateView *view,
     gdouble latitude,
     gdouble longitude,
     guint duration);
-
-/* static void */
-/* view_relocated_cb (G_GNUC_UNUSED ShumateViewport *viewport, */
-/*     ShumateView *view) */
-/* { */
-/*   ShumateViewPrivate *priv = view->priv; */
-/*   gint anchor_x, anchor_y, new_width, new_height; */
-/*   gint tile_size, column_count, row_count; */
-
-/*   clutter_actor_destroy_all_children (priv->zoom_layer); */
-/*   g_signal_emit_by_name (view, "layer-relocated", NULL); */
-
-  /* Clutter clones need their source actor to have an explicitly set size to display properly */
-/*   tile_size = shumate_map_source_get_tile_size (priv->map_source); */
-/*   column_count = shumate_map_source_get_column_count (priv->map_source, priv->zoom_level); */
-/*   row_count = shumate_map_source_get_row_count (priv->map_source, priv->zoom_level); */
-/*   shumate_viewport_get_anchor (SHUMATE_VIEWPORT (priv->viewport), &anchor_x, &anchor_y); */
-
-  /* The area containing tiles in the map layer is actually column_count * tile_size wide (same */
-/*    * for height), but the viewport anchor acts as an offset for the tile actors, causing the map */
-/*    * layer to contain some empty space as well. */
-/*    */
-/*   new_width = column_count * tile_size + anchor_x; */
-/*   new_height = row_count * tile_size + anchor_y; */
-
-/*   clutter_actor_set_size (priv->map_layer, new_width, new_height); */
-/* } */
 
 /*
 static void
@@ -697,23 +665,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                   G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
                   0, NULL, NULL,
                   g_cclosure_marshal_VOID__OBJECT,
-                  G_TYPE_NONE,
-                  0);
-
-  /**
-   * ShumateView::layer-relocated:
-   *
-   * Indicates that the layers have been "relocated". In practice this means that
-   * every layer should connect to this signal and redraw itself when the signal is
-   * emitted. Layer relocation happens when zooming in/out and when panning for more
-   * than MAX_INT pixels.
-   */
-  signals[LAYER_RELOCATED] =
-    g_signal_new ("layer-relocated",
-                  G_OBJECT_CLASS_TYPE (object_class),
-                  G_SIGNAL_RUN_LAST,
-                  0, NULL, NULL,
-                  g_cclosure_marshal_VOID__VOID,
                   G_TYPE_NONE,
                   0);
 

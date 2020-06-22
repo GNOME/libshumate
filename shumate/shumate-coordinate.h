@@ -24,7 +24,6 @@
 #ifndef SHUMATE_COORDINATE_H
 #define SHUMATE_COORDINATE_H
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-location.h>
 
 #include <glib-object.h>

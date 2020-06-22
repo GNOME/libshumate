@@ -25,7 +25,6 @@
 #ifndef SHUMATE_VIEW_H
 #define SHUMATE_VIEW_H
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-license.h>

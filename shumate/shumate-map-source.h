@@ -24,7 +24,6 @@
 #ifndef _SHUMATE_MAP_SOURCE_H_
 #define _SHUMATE_MAP_SOURCE_H_
 
-#include <shumate/shumate-defines.h>
 #include <shumate/shumate-tile.h>
 
 G_BEGIN_DECLS

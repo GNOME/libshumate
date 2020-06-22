@@ -1,7 +1,6 @@
 libshumate_public_h = [
   'shumate-bounding-box.h',
   'shumate-coordinate.h',
-  'shumate-defines.h',
   'shumate-error-tile-source.h',
   'shumate-file-cache.h',
   'shumate-layer.h',

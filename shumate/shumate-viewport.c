@@ -26,7 +26,6 @@
 
 #include "shumate-viewport.h"
 #include "shumate-location.h"
-#include "shumate-defines.h"
 
 /**
  * SECTION:shumate-viewport

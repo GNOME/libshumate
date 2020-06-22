@@ -29,7 +29,7 @@
  */
 
 #include "shumate-bounding-box.h"
-#include "shumate-defines.h"
+#include "shumate-location.h"
 
 G_DEFINE_BOXED_TYPE (ShumateBoundingBox, shumate_bounding_box, shumate_bounding_box_copy, shumate_bounding_box_free)
 
