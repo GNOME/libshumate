@@ -368,12 +368,12 @@ shumate_map_source_get_x (ShumateMapSource *map_source,
     guint zoom_level,
     gdouble longitude)
 {
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0);
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
 
   longitude = CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
 
   /* FIXME: support other projections */
-  return ((longitude + 180.0) / 360.0 * pow (2.0, zoom_level)) * shumate_map_source_get_tile_size (map_source);
+  return ((longitude + 180.0) / 360.0) * shumate_map_source_get_tile_size (map_source) * pow (2.0, zoom_level);
 }
 
 
@@ -393,13 +393,14 @@ shumate_map_source_get_y (ShumateMapSource *map_source,
     guint zoom_level,
     gdouble latitude)
 {
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0);
+  double sin_latitude;
+
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
 
   latitude = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
-
   /* FIXME: support other projections */
-  return ((1.0 - log (tan (latitude * M_PI / 180.0) + 1.0 / cos (latitude * M_PI / 180.0)) / M_PI) /
-          2.0 * pow (2.0, zoom_level)) * shumate_map_source_get_tile_size (map_source);
+  sin_latitude = sin (latitude * G_PI / 180.0);
+  return (0.5 - log ((1.0 + sin_latitude) / (1.0 - sin_latitude)) / (4.0 * G_PI)) * shumate_map_source_get_tile_size (map_source) * pow (2.0, zoom_level);
 }
 
 
@@ -423,7 +424,7 @@ shumate_map_source_get_longitude (ShumateMapSource *map_source,
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
   /* FIXME: support other projections */
-  gdouble dx = (gdouble) x / shumate_map_source_get_tile_size (map_source);
+  gdouble dx = x / (gdouble) shumate_map_source_get_tile_size (map_source);
   longitude = dx / pow (2.0, zoom_level) * 360.0 - 180.0;
 
   return CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
@@ -446,14 +447,14 @@ shumate_map_source_get_latitude (ShumateMapSource *map_source,
     guint zoom_level,
     gdouble y)
 {
-  gdouble latitude;
+  gdouble latitude, map_size, dy;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
   /* FIXME: support other projections */
-  gdouble dy = (gdouble) y / shumate_map_source_get_tile_size (map_source);
-  gdouble n = M_PI - 2.0 * M_PI * dy / pow (2.0, zoom_level);
-  latitude = 180.0 / M_PI *atan (0.5 * (exp (n) - exp (-n)));
-
+  map_size = shumate_map_source_get_tile_size (map_source) * shumate_map_source_get_row_count (map_source, zoom_level);
+  dy = 0.5 - y / map_size;
+  latitude = 90.0 - 360.0 / G_PI * atan (exp (-dy * 2.0 * G_PI));
+  
   return CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
 }
 
@@ -525,10 +526,9 @@ shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
    * radius_at_latitude = 2pi * k * sin (pi/2-theta)
    */
 
-  gdouble tile_size = shumate_map_source_get_tile_size (map_source);
+  gdouble map_size = shumate_map_source_get_tile_size (map_source) * shumate_map_source_get_row_count (map_source, zoom_level);
   /* FIXME: support other projections */
-  return 2.0 *M_PI *EARTH_RADIUS *sin (M_PI / 2.0 - M_PI / 180.0 *latitude) /
-         (tile_size * shumate_map_source_get_row_count (map_source, zoom_level));
+  return 2.0 * G_PI * EARTH_RADIUS * sin (G_PI / 2.0 - G_PI / 180.0 * latitude) / map_size;
 }
 
 
