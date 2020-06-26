@@ -134,17 +134,7 @@ typedef struct
    */
   GList *user_layer_slots;
 
-  gdouble viewport_x;
-  gdouble viewport_y;
-  gint viewport_width;
-  gint viewport_height;
-
   GList *overlay_sources;
-
-  gboolean location_updated;
-
-  gint bg_offset_x;
-  gint bg_offset_y;
 
   gboolean zoom_on_double_click;
   gboolean animate_zoom;
@@ -158,7 +148,6 @@ typedef struct
 
   gint tiles_loading;
 
-  guint redraw_timeout;
   guint zoom_timeout;
 
   guint goto_duration;
@@ -168,6 +157,9 @@ typedef struct
   gdouble zoom_actor_viewport_x;
   gdouble zoom_actor_viewport_y;
   guint zoom_actor_timeout;
+
+  gdouble current_x;
+  gdouble current_y;
 
   /* Zoom gesture */
   guint initial_gesture_zoom;
@@ -194,26 +186,6 @@ static void shumate_view_go_to_with_duration (ShumateView *view,
     gdouble latitude,
     gdouble longitude,
     guint duration);
-
-/*
-static void
-panning_completed (G_GNUC_UNUSED ShumateKineticScrollView *scroll,
-    ShumateView *view)
-{
-  ShumateViewPrivate *priv = view->priv;
-  gdouble x, y;
-
-  if (priv->redraw_timeout != 0)
-    {
-      g_source_remove (priv->redraw_timeout);
-      priv->redraw_timeout = 0;
-    }
-
-  shumate_viewport_get_origin (SHUMATE_VIEWPORT (priv->viewport), &x, &y);
-
-  update_coords (view, x, y, TRUE);
-}
-*/
 
 /*static gboolean
 zoom_timeout_cb (gpointer data)
@@ -380,13 +352,60 @@ on_scroll_controller_scroll (ShumateView              *self,
                              GtkEventControllerScroll *controller)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapSource *map_source;
+  gdouble scroll_latitude, scroll_longitude;
+  gdouble view_lon, view_lat;
+
+  g_object_freeze_notify (G_OBJECT (priv->viewport));
+  view_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  view_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+
+  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  if (map_source)
+    {
+      scroll_longitude = shumate_viewport_widget_x_to_longitude (priv->viewport, GTK_WIDGET (self), priv->current_x);
+      scroll_latitude = shumate_viewport_widget_y_to_latitude (priv->viewport, GTK_WIDGET (self), priv->current_y);
+    }
 
   if (dy > 0)
     shumate_viewport_zoom_in (priv->viewport);
   else
     shumate_viewport_zoom_out (priv->viewport);
 
+  if (map_source)
+    {
+      gdouble scroll_map_x, scroll_map_y;
+      gdouble view_center_x, view_center_y;
+      gdouble x_offset, y_offset;
+      guint zoom_level;
+
+      scroll_map_x = shumate_viewport_longitude_to_widget_x (priv->viewport, GTK_WIDGET (self), scroll_longitude);
+      scroll_map_y = shumate_viewport_latitude_to_widget_y (priv->viewport, GTK_WIDGET (self), scroll_latitude);
+
+      zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+      view_center_x = shumate_map_source_get_x (map_source, zoom_level, view_lon);
+      view_center_y = shumate_map_source_get_y (map_source, zoom_level, view_lat);
+      x_offset = scroll_map_x - priv->current_x;
+      y_offset = scroll_map_y - priv->current_y;
+      shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
+                                     shumate_map_source_get_latitude (map_source, zoom_level, view_center_y + y_offset),
+                                     shumate_map_source_get_longitude (map_source, zoom_level, view_center_x + x_offset));
+    }
+  g_object_thaw_notify (G_OBJECT (priv->viewport));
+
   return TRUE;
+}
+
+static void
+on_motion_controller_motion (ShumateView              *self,
+                             gdouble                   x,
+                             gdouble                   y,
+                             GtkEventControllerMotion *controller)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  priv->current_x = x;
+  priv->current_y = y;
 }
 
 static void
@@ -490,7 +509,6 @@ shumate_view_dispose (GObject *object)
   priv->overlay_sources = NULL;
 
   //g_clear_object (&priv->background_content);
-  g_clear_handle_id (&priv->redraw_timeout, g_source_remove);
   //g_clear_handle_id (&priv->zoom_actor_timeout, g_source_remove);
   g_clear_handle_id (&priv->zoom_timeout, g_source_remove);
 
@@ -678,6 +696,7 @@ shumate_view_init (ShumateView *view)
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
+  GtkEventController *motion_controller;
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
@@ -685,18 +704,10 @@ shumate_view_init (ShumateView *view)
   priv->zoom_on_double_click = TRUE;
   priv->animate_zoom = TRUE;
   priv->kinetic_mode = FALSE;
-  priv->viewport_x = 0;
-  priv->viewport_y = 0;
-  priv->viewport_width = 0;
-  priv->viewport_height = 0;
   priv->state = SHUMATE_STATE_NONE;
   priv->goto_context = NULL;
   priv->tiles_loading = 0;
   priv->animating_zoom = FALSE;
-  priv->bg_offset_x = 0;
-  priv->bg_offset_y = 0;
-  priv->location_updated = FALSE;
-  priv->redraw_timeout = 0;
   priv->zoom_actor_timeout = 0;
   priv->goto_duration = 0;
   priv->num_right_clones = 0;
@@ -718,6 +729,10 @@ shumate_view_init (ShumateView *view)
   scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
   g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), view);
   gtk_widget_add_controller (GTK_WIDGET (view), scroll_controller);
+
+  motion_controller = gtk_event_controller_motion_new ();
+  g_signal_connect_swapped (motion_controller, "motion", G_CALLBACK (on_motion_controller_motion), view);
+  gtk_widget_add_controller (GTK_WIDGET (view), motion_controller);
 }
 
 /**
