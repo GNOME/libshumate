@@ -110,6 +110,8 @@ if build_demos == true
   subdir('demos')
 endif
 
+subdir('tests')
+
 summary = [
   '',
   '------',
