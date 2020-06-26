@@ -35,12 +35,12 @@ shumate_location_default_init (ShumateLocationInterface *iface)
   /**
    * ShumateLocation:longitude:
    *
-   * The longitude coordonate
+   * The longitude coordonate in degrees
    */
   g_object_interface_install_property (iface,
       g_param_spec_double ("longitude",
           "Longitude",
-          "The longitude coordonate",
+          "The longitude coordonate in degrees",
           -180.0f,
           180.0f,
           0.0f,
@@ -49,12 +49,12 @@ shumate_location_default_init (ShumateLocationInterface *iface)
   /**
    * ShumateLocation:latitude:
    *
-   * The latitude coordonate
+   * The latitude coordonate in degrees
    */
   g_object_interface_install_property (iface,
       g_param_spec_double ("latitude",
           "Latitude",
-          "The latitude coordonate",
+          "The latitude coordonate in degrees",
           -90.0f,
           90.0f,
           0.0f,
@@ -65,8 +65,8 @@ shumate_location_default_init (ShumateLocationInterface *iface)
 /**
  * shumate_location_set_location:
  * @location: a #ShumateLocation
- * @latitude: the latitude
- * @longitude: the longitude
+ * @latitude: the latitude in degrees
+ * @longitude: the longitude in degrees
  *
  * Sets the coordinates of the location
  */
@@ -85,9 +85,9 @@ shumate_location_set_location (ShumateLocation *location,
  * shumate_location_get_latitude:
  * @location: a #ShumateLocation
  *
- * Gets the latitude coordinate.
+ * Gets the latitude coordinate in degrees.
  *
- * Returns: the latitude coordinate.
+ * Returns: the latitude coordinate in degrees.
  */
 gdouble
 shumate_location_get_latitude (ShumateLocation *location)
@@ -100,9 +100,9 @@ shumate_location_get_latitude (ShumateLocation *location)
  * shumate_location_get_longitude:
  * @location: a #ShumateLocation
  *
- * Gets the longitude coordinate.
+ * Gets the longitude coordinate in degrees.
  *
- * Returns: the longitude coordinate.
+ * Returns: the longitude coordinate in degrees.
  */
 gdouble
 shumate_location_get_longitude (ShumateLocation *location)
