@@ -1,0 +1,26 @@
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/"
+         xmlns:gnome="http://api.gnome.org/doap-extensions#"
+         xmlns="http://usefulinc.com/ns/doap#">
+
+  <name xml:lang="en">libshumate</name>
+  <shortdesc xml:lang="en">A map widget</shortdesc>
+  <description>libshumate is a GTK widget displaying
+interactive maps. Various map sources can be used together with the possibility
+to draw custom overlays, markers and lines on top of the maps. Bindings to other
+languages are provided using GObject Introspection.</description>
+  <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
+  <programming-language>C</programming-language>
+  <homepage rdf:resource="https://wiki.gnome.org/Projects/libshumate" />
+  <download-page rdf:resource="http://download.gnome.org/sources/libshumate/" />
+  <bug-database rdf:resource="https://gitlab.gnome.org/GNOME/libshumate/issues/" />
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Marcus Lundblad</foaf:name>
+      <foaf:mbox rdf:resource="mailto:ml@update.uu.se" />
+      <gnome:userid>mlundblad</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+</Project>
