@@ -1,0 +1,24 @@
+libshumate
+==========
+
+libshumate is a GTK4 widget to display maps.
+
+libshumate requires:
+
+   * glib >= 2.16
+   * gio >= 2.16
+   * gobject >= 2.16
+   * gobject-introspection >= 0.6.3
+   * cairo >= 1.4
+   * sqlite3 >= 1.12.0
+   * libsoup > 2.42
+   * gtk4
+
+Building is done with meson.
+
+The official website is:
+   https://wiki.gnome.org/Projects/libshumate
+
+Bugtracker:
+   https://gitlab.gnome.org/GNOME/libshumate/-/issues
+
