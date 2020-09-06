@@ -12,7 +12,7 @@ foreach demo: libshumate_demos
   executable(
     demo_name,
     demo_sources,
-    install: false,
+    install: true,
     dependencies: [
       libshumate_dep,
     ]

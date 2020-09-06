@@ -78,7 +78,7 @@ main (int argc, char *argv[])
 {
   g_autoptr(GtkApplication) app = NULL;
 
-  app = gtk_application_new ("org.shumate.example", G_APPLICATION_FLAGS_NONE);
+  app = gtk_application_new ("org.gnome.Shumate.Demo", G_APPLICATION_FLAGS_NONE);
   g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
 
   return g_application_run (G_APPLICATION (app), argc, argv);
