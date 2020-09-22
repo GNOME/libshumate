@@ -404,9 +404,6 @@ void shumate_viewport_zoom_in (ShumateViewport *self)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
-  if (self->zoom_level == 0)
-    return;
-
   shumate_viewport_set_zoom_level (self, self->zoom_level + 1);
 }
 
@@ -419,6 +416,9 @@ void shumate_viewport_zoom_in (ShumateViewport *self)
 void shumate_viewport_zoom_out (ShumateViewport *self)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->zoom_level == 0)
+    return;
 
   shumate_viewport_set_zoom_level (self, self->zoom_level - 1);
 }
