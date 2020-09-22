@@ -95,13 +95,13 @@ shumate_map_layer_compute_grid (ShumateMapLayer *self)
 {
   guint tile_size;
   guint zoom_level;
-  gdouble center_latitude, center_longitude;
+  double center_latitude, center_longitude;
   guint center_x, center_y;
-  gint x_offset, y_offset;
+  int x_offset, y_offset;
   guint tile_x, tile_y;
   guint tile_initial_x, tile_initial_y;
   guint source_rows, source_columns;
-  gint width, height;
+  int width, height;
   GtkAllocation child_allocation;
   ShumateViewport *viewport;
 
@@ -130,11 +130,11 @@ shumate_map_layer_compute_grid (ShumateMapLayer *self)
   child_allocation.height = tile_size;
 
   tile_x = tile_initial_x;
-  for (gint x = 0; x < self->required_tiles_x; x++)
+  for (int x = 0; x < self->required_tiles_x; x++)
     {
       child_allocation.y = -y_offset;
       tile_y = tile_initial_y;
-      for (gint y = 0; y < self->required_tiles_y; y++)
+      for (int y = 0; y < self->required_tiles_y; y++)
         {
           TileGridPosition *tile_child;
           ShumateTile *child;

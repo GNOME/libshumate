@@ -26,8 +26,8 @@ typedef struct
 {
   SoupMessage *message;
   ShumateMarkerLayer *layer;
-  gdouble latitude;
-  gdouble longitude;
+  double latitude;
+  double longitude;
 } MarkerData;
 
 
@@ -50,7 +50,7 @@ image_downloaded_cb (GObject      *source_object,
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(ShumateMarkerLayer) layer = g_steal_pointer (&marker_data->layer);
   g_autoptr(SoupMessage) message = g_steal_pointer (&marker_data->message);
-  g_autofree gchar *url = soup_uri_to_string (soup_message_get_uri (message), FALSE);
+  g_autofree char *url = soup_uri_to_string (soup_message_get_uri (message), FALSE);
   ShumateMarker *marker = NULL;
   guint status_code = 0;
 
@@ -92,9 +92,9 @@ image_downloaded_cb (GObject      *source_object,
 static void
 create_marker_from_url (ShumateMarkerLayer *layer,
     SoupSession *session,
-    gdouble latitude,
-    gdouble longitude,
-    const gchar *url)
+    double latitude,
+    double longitude,
+    const char *url)
 {
   MarkerData *data;
 

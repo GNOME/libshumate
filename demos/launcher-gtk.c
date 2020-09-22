@@ -65,7 +65,7 @@ toggle_layer (GtkToggleButton *widget,
 static gboolean
 mouse_click_cb (ClutterActor *actor, ClutterButtonEvent *event, ChamplainView *view)
 {
-  gdouble lat, lon;
+  double lat, lon;
 
   lon = champlain_view_x_to_longitude (view, event->x);
   lat = champlain_view_y_to_latitude (view, event->y);
@@ -79,7 +79,7 @@ static void
 map_source_changed (GtkWidget *widget,
     ChamplainView *view)
 {
-  gchar *id;
+  char *id;
   ChamplainMapSource *source;
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -103,7 +103,7 @@ static void
 zoom_changed (GtkSpinButton *spinbutton,
     ChamplainView *view)
 {
-  gint zoom = gtk_spin_button_get_value_as_int (spinbutton);
+  int zoom = gtk_spin_button_get_value_as_int (spinbutton);
 
   g_object_set (G_OBJECT (view), "zoom-level", zoom, NULL);
 }
@@ -114,7 +114,7 @@ map_zoom_changed (ChamplainView *view,
     GParamSpec *gobject,
     GtkSpinButton *spinbutton)
 {
-  gint zoom;
+  int zoom;
 
   g_object_get (G_OBJECT (view), "zoom-level", &zoom, NULL);
   gtk_spin_button_set_value (spinbutton, zoom);
@@ -190,8 +190,8 @@ build_combo_box (GtkComboBox *box)
   while (iter != NULL)
     {
       ChamplainMapSourceDesc *desc = CHAMPLAIN_MAP_SOURCE_DESC (iter->data);
-      const gchar *id = champlain_map_source_desc_get_id (desc);
-      const gchar *name = champlain_map_source_desc_get_name (desc);
+      const char *id = champlain_map_source_desc_get_id (desc);
+      const char *name = champlain_map_source_desc_get_name (desc);
 
       gtk_tree_store_append (store, &parent, NULL);
       gtk_tree_store_set (store, &parent, COL_ID, id,
@@ -213,7 +213,7 @@ build_combo_box (GtkComboBox *box)
 
 
 static void
-append_point (ChamplainPathLayer *layer, gdouble lon, gdouble lat)
+append_point (ChamplainPathLayer *layer, double lon, double lat)
 {
   ChamplainCoordinate *coord;  
   
@@ -230,7 +230,7 @@ export_png (GtkButton     *button,
   GdkPixbuf *pixbuf;
   GFileOutputStream *os;
   GFile *file;
-  gint width, height;
+  int width, height;
 
   if (champlain_view_get_state (view) != CHAMPLAIN_STATE_DONE)
     return;

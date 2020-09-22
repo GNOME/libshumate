@@ -65,8 +65,8 @@ typedef struct
   gboolean fill;
   GdkRGBA *fill_color;
   gboolean stroke;
-  gdouble stroke_width;
-  GArray *dashes; /* gdouble */
+  double stroke_width;
+  GArray *dashes; /* double */
 
   GList *nodes; /* ShumateLocation */
 } ShumatePathLayerPrivate;
@@ -237,7 +237,7 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   ShumatePathLayer *self = (ShumatePathLayer *)widget;
   ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
   ShumateViewport *viewport;
-  gint width, height;
+  int width, height;
   cairo_t *cr;
   GList *elem;
 
@@ -255,7 +255,7 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   for (elem = priv->nodes; elem != NULL; elem = elem->next)
     {
       ShumateLocation *location = SHUMATE_LOCATION (elem->data);
-      gdouble x, y;
+      double x, y;
 
       x = shumate_viewport_longitude_to_widget_x (viewport, widget, shumate_location_get_longitude (location));
       y = shumate_viewport_latitude_to_widget_y (viewport, widget, shumate_location_get_latitude (location));
@@ -385,7 +385,7 @@ shumate_path_layer_init (ShumatePathLayer *self)
   priv->stroke = TRUE;
   priv->stroke_width = 2.0;
   priv->nodes = NULL;
-  priv->dashes = g_array_new (FALSE, TRUE, sizeof(gdouble));
+  priv->dashes = g_array_new (FALSE, TRUE, sizeof(double));
 
   priv->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
   priv->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
@@ -732,7 +732,7 @@ shumate_path_layer_get_fill (ShumatePathLayer *layer)
  */
 void
 shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
-    gdouble value)
+    double value)
 {
   ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
 
@@ -753,7 +753,7 @@ shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
  *
  * Returns: the width of the stroke
  */
-gdouble
+double
 shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
 {
   ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
@@ -831,7 +831,7 @@ shumate_path_layer_set_dash (ShumatePathLayer *layer,
 
   for (iter = dash_pattern; iter != NULL; iter = iter->next)
     {
-      gdouble val = (gdouble) GPOINTER_TO_UINT (iter->data);
+      double val = (double) GPOINTER_TO_UINT (iter->data);
       g_array_append_val (priv->dashes, val);
     }
 }
@@ -855,7 +855,7 @@ shumate_path_layer_get_dash (ShumatePathLayer *layer)
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
 
   for (i = 0; i < priv->dashes->len; i++)
-    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (priv->dashes, gdouble, i)));
+    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (priv->dashes, double, i)));
 
   return list;
 }

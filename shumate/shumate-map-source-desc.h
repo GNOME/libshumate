@@ -59,23 +59,23 @@ typedef ShumateMapSource* (*ShumateMapSourceConstructor) (ShumateMapSourceDesc *
 #define SHUMATE_MAP_SOURCE_CONSTRUCTOR (f) ((ShumateMapSourceConstructor) (f))
 
 ShumateMapSourceDesc *shumate_map_source_desc_new_full (
-    gchar *id,
-    gchar *name,
-    gchar *license,
-    gchar *license_uri,
+    char *id,
+    char *name,
+    char *license,
+    char *license_uri,
     guint min_zoom,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    gchar *uri_format,
+    char *uri_format,
     ShumateMapSourceConstructor constructor,
     gpointer data);
 
-const gchar *shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc);
-const gchar *shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc);
-const gchar *shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc);
-const gchar *shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc);
-const gchar *shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc);
+const char *shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc);
+const char *shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc);
+const char *shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc);
+const char *shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc);
+const char *shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc);
 guint shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc);
 guint shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc);
 guint shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc);

@@ -72,8 +72,8 @@ shumate_location_default_init (ShumateLocationInterface *iface)
  */
 void
 shumate_location_set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude)
+    double latitude,
+    double longitude)
 {
   SHUMATE_LOCATION_GET_IFACE (location)->set_location (location,
       latitude,
@@ -89,7 +89,7 @@ shumate_location_set_location (ShumateLocation *location,
  *
  * Returns: the latitude coordinate in degrees.
  */
-gdouble
+double
 shumate_location_get_latitude (ShumateLocation *location)
 {
   return SHUMATE_LOCATION_GET_IFACE (location)->get_latitude (location);
@@ -104,7 +104,7 @@ shumate_location_get_latitude (ShumateLocation *location)
  *
  * Returns: the longitude coordinate in degrees.
  */
-gdouble
+double
 shumate_location_get_longitude (ShumateLocation *location)
 {
   return SHUMATE_LOCATION_GET_IFACE (location)->get_longitude (location);

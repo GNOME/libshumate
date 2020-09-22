@@ -44,12 +44,12 @@ G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GtkWidg
 ShumateLicense *shumate_license_new (void);
 
 void shumate_license_set_extra_text (ShumateLicense *license,
-                                     const gchar    *text);
-const gchar *shumate_license_get_extra_text (ShumateLicense *license);
+                                     const char     *text);
+const char *shumate_license_get_extra_text (ShumateLicense *license);
 
 void shumate_license_set_xalign (ShumateLicense *license,
-                                 gfloat          xalign);
-gfloat shumate_license_get_xalign (ShumateLicense *license);
+                                 float           xalign);
+float shumate_license_get_xalign (ShumateLicense *license);
 
 void shumate_license_append_map_source (ShumateLicense   *license,
                                         ShumateMapSource *map_source);

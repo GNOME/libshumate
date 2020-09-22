@@ -47,7 +47,7 @@ make_button (char *text)
   ClutterActor *button, *button_bg, *button_text;
   ClutterColor white = { 0xff, 0xff, 0xff, 0xff };
   ClutterColor black = { 0x00, 0x00, 0x00, 0xff };
-  gfloat width, height;
+  float width, height;
 
   button = clutter_actor_new ();
 
@@ -69,7 +69,7 @@ make_button (char *text)
 
 
 static void
-append_point (ShumatePathLayer *layer, gdouble lon, gdouble lat)
+append_point (ShumatePathLayer *layer, double lon, double lat)
 {
   ShumateCoordinate *coord;
   
@@ -84,7 +84,7 @@ main (int argc,
 {
   ClutterActor *actor, *stage, *buttons, *button;
   ShumatePathLayer *layer;
-  gfloat width, total_width = 0;;
+  float width, total_width = 0;;
   GList *dash = NULL;
 
   if (clutter_init (&argc, &argv) != CLUTTER_INIT_SUCCESS)

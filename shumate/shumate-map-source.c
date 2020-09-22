@@ -224,7 +224,7 @@ shumate_map_source_set_next_source (ShumateMapSource *map_source,
  *
  * Returns: the map source's id.
  */
-const gchar *
+const char *
 shumate_map_source_get_id (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
@@ -241,7 +241,7 @@ shumate_map_source_get_id (ShumateMapSource *map_source)
  *
  * Returns: the map source's name.
  */
-const gchar *
+const char *
 shumate_map_source_get_name (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
@@ -258,7 +258,7 @@ shumate_map_source_get_name (ShumateMapSource *map_source)
  *
  * Returns: the map source's license.
  */
-const gchar *
+const char *
 shumate_map_source_get_license (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
@@ -275,7 +275,7 @@ shumate_map_source_get_license (ShumateMapSource *map_source)
  *
  * Returns: the map source's license URI.
  */
-const gchar *
+const char *
 shumate_map_source_get_license_uri (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
@@ -363,10 +363,10 @@ shumate_map_source_get_projection (ShumateMapSource *map_source)
  *
  * Returns: the x position
  */
-gdouble
+double
 shumate_map_source_get_x (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble longitude)
+    double longitude)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
 
@@ -388,10 +388,10 @@ shumate_map_source_get_x (ShumateMapSource *map_source,
  *
  * Returns: the y position
  */
-gdouble
+double
 shumate_map_source_get_y (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble latitude)
+    double latitude)
 {
   double sin_latitude;
 
@@ -415,16 +415,16 @@ shumate_map_source_get_y (ShumateMapSource *map_source,
  *
  * Returns: the longitude
  */
-gdouble
+double
 shumate_map_source_get_longitude (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble x)
+    double x)
 {
-  gdouble longitude;
+  double longitude;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
   /* FIXME: support other projections */
-  gdouble dx = x / (gdouble) shumate_map_source_get_tile_size (map_source);
+  double dx = x / (double) shumate_map_source_get_tile_size (map_source);
   longitude = dx / pow (2.0, zoom_level) * 360.0 - 180.0;
 
   return CLAMP (longitude, SHUMATE_MIN_LONGITUDE, SHUMATE_MAX_LONGITUDE);
@@ -442,12 +442,12 @@ shumate_map_source_get_longitude (ShumateMapSource *map_source,
  *
  * Returns: the latitude
  */
-gdouble
+double
 shumate_map_source_get_latitude (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble y)
+    double y)
 {
-  gdouble latitude, map_size, dy;
+  double latitude, map_size, dy;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
   /* FIXME: support other projections */
@@ -511,11 +511,11 @@ shumate_map_source_get_column_count (ShumateMapSource *map_source,
  *
  * Returns: the meters per pixel
  */
-gdouble
+double
 shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble latitude,
-    G_GNUC_UNUSED gdouble longitude)
+    double latitude,
+    G_GNUC_UNUSED double longitude)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
 
@@ -526,7 +526,7 @@ shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
    * radius_at_latitude = 2pi * k * sin (pi/2-theta)
    */
 
-  gdouble map_size = shumate_map_source_get_tile_size (map_source) * shumate_map_source_get_row_count (map_source, zoom_level);
+  double map_size = shumate_map_source_get_tile_size (map_source) * shumate_map_source_get_row_count (map_source, zoom_level);
   /* FIXME: support other projections */
   return 2.0 * G_PI * EARTH_RADIUS * sin (G_PI / 2.0 - G_PI / 180.0 * latitude) / map_size;
 }

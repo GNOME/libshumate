@@ -49,11 +49,11 @@ struct _ShumateMapSourceDesc
 {
   GObject parent_instance;
 
-  gchar *id;
-  gchar *name;
-  gchar *license;
-  gchar *license_uri;
-  gchar *uri_format;
+  char *id;
+  char *name;
+  char *license;
+  char *license_uri;
+  char *uri_format;
   guint min_zoom_level;
   guint max_zoom_level;
   guint tile_size;
@@ -65,15 +65,15 @@ struct _ShumateMapSourceDesc
 G_DEFINE_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, G_TYPE_OBJECT);
 
 static void set_id (ShumateMapSourceDesc *desc,
-    const gchar *id);
+    const char *id);
 static void set_name (ShumateMapSourceDesc *desc,
-    const gchar *name);
+    const char *name);
 static void set_license (ShumateMapSourceDesc *desc,
-    const gchar *license);
+    const char *license);
 static void set_license_uri (ShumateMapSourceDesc *desc,
-    const gchar *license_uri);
+    const char *license_uri);
 static void set_uri_format (ShumateMapSourceDesc *desc,
-    const gchar *uri_format);
+    const char *uri_format);
 static void set_min_zoom_level (ShumateMapSourceDesc *desc,
     guint zoom_level);
 static void set_max_zoom_level (ShumateMapSourceDesc *desc,
@@ -418,15 +418,15 @@ shumate_map_source_desc_init (ShumateMapSourceDesc *desc)
  */
 ShumateMapSourceDesc *
 shumate_map_source_desc_new_full (
-    gchar *id,
-    gchar *name,
-    gchar *license,
-    gchar *license_uri,
+    char *id,
+    char *name,
+    char *license,
+    char *license_uri,
     guint min_zoom,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    gchar *uri_format,
+    char *uri_format,
     ShumateMapSourceConstructor constructor,
     gpointer data)
 {
@@ -454,7 +454,7 @@ shumate_map_source_desc_new_full (
  *
  * Returns: the map source's id.
  */
-const gchar *
+const char *
 shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
@@ -471,7 +471,7 @@ shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
  *
  * Returns: the map source's name.
  */
-const gchar *
+const char *
 shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
@@ -488,7 +488,7 @@ shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
  *
  * Returns: the map source's license.
  */
-const gchar *
+const char *
 shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
@@ -505,7 +505,7 @@ shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
  *
  * Returns: the map source's license URI.
  */
-const gchar *
+const char *
 shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
@@ -522,7 +522,7 @@ shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
  *
  * Returns: the URI format.
  */
-const gchar *
+const char *
 shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
@@ -635,7 +635,7 @@ shumate_map_source_desc_get_constructor (ShumateMapSourceDesc *desc)
 
 static void
 set_id (ShumateMapSourceDesc *desc,
-    const gchar *id)
+    const char *id)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
@@ -648,7 +648,7 @@ set_id (ShumateMapSourceDesc *desc,
 
 static void
 set_name (ShumateMapSourceDesc *desc,
-    const gchar *name)
+    const char *name)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
@@ -661,7 +661,7 @@ set_name (ShumateMapSourceDesc *desc,
 
 static void
 set_license (ShumateMapSourceDesc *desc,
-    const gchar *license)
+    const char *license)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
@@ -674,7 +674,7 @@ set_license (ShumateMapSourceDesc *desc,
 
 static void
 set_license_uri (ShumateMapSourceDesc *desc,
-    const gchar *license_uri)
+    const char *license_uri)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 
@@ -687,7 +687,7 @@ set_license_uri (ShumateMapSourceDesc *desc,
 
 static void
 set_uri_format (ShumateMapSourceDesc *desc,
-    const gchar *uri_format)
+    const char *uri_format)
 {
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
 

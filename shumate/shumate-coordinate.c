@@ -32,29 +32,28 @@
 
 enum
 {
-  PROP_0,
-  PROP_LONGITUDE,
+  PROP_LONGITUDE = 1,
   PROP_LATITUDE,
 };
 
 
 static void set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude);
-static gdouble get_latitude (ShumateLocation *location);
-static gdouble get_longitude (ShumateLocation *location);
+    double latitude,
+    double longitude);
+static double get_latitude (ShumateLocation *location);
+static double get_longitude (ShumateLocation *location);
 
 static void location_interface_init (ShumateLocationInterface *iface);
 
 typedef struct
 {
-  gdouble longitude;
-  gdouble latitude;
+  double longitude;
+  double latitude;
 } ShumateCoordinatePrivate;
 
 G_DEFINE_TYPE_WITH_CODE (ShumateCoordinate, shumate_coordinate, G_TYPE_INITIALLY_UNOWNED,
-    G_ADD_PRIVATE (ShumateCoordinate)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
+                         G_ADD_PRIVATE (ShumateCoordinate)
+                         G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
 
 static void
 shumate_coordinate_get_property (GObject *object,
@@ -94,14 +93,14 @@ shumate_coordinate_set_property (GObject *object,
     {
     case PROP_LONGITUDE:
       {
-        gdouble longitude = g_value_get_double (value);
+        double longitude = g_value_get_double (value);
         set_location (SHUMATE_LOCATION (coordinate), priv->latitude, longitude);
         break;
       }
 
     case PROP_LATITUDE:
       {
-        gdouble latitude = g_value_get_double (value);
+        double latitude = g_value_get_double (value);
         set_location (SHUMATE_LOCATION (coordinate), latitude, priv->longitude);
         break;
       }
@@ -114,8 +113,8 @@ shumate_coordinate_set_property (GObject *object,
 
 static void
 set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude)
+    double latitude,
+    double longitude)
 {
   ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
   ShumateCoordinatePrivate *priv = shumate_coordinate_get_instance_private (coordinate);
@@ -130,7 +129,7 @@ set_location (ShumateLocation *location,
 }
 
 
-static gdouble
+static double
 get_latitude (ShumateLocation *location)
 {
   ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
@@ -142,7 +141,7 @@ get_latitude (ShumateLocation *location)
 }
 
 
-static gdouble
+static double
 get_longitude (ShumateLocation *location)
 {
   ShumateCoordinate *coordinate = SHUMATE_COORDINATE (location);
@@ -214,8 +213,8 @@ shumate_coordinate_new ()
  * Returns: the created instance.
  */
 ShumateCoordinate *
-shumate_coordinate_new_full (gdouble latitude,
-    gdouble longitude)
+shumate_coordinate_new_full (double latitude,
+    double longitude)
 {
   return SHUMATE_COORDINATE (g_object_new (SHUMATE_TYPE_COORDINATE,
           "latitude", latitude,

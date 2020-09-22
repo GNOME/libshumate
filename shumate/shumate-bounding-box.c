@@ -103,8 +103,8 @@ shumate_bounding_box_free (ShumateBoundingBox *bbox)
  */
 void
 shumate_bounding_box_get_center (ShumateBoundingBox *bbox,
-    gdouble *latitude,
-    gdouble *longitude)
+                                 double             *latitude,
+                                 double             *longitude)
 {
   g_return_if_fail (SHUMATE_BOUNDING_BOX (bbox));
 
@@ -122,7 +122,7 @@ shumate_bounding_box_get_center (ShumateBoundingBox *bbox,
  */
 void
 shumate_bounding_box_compose (ShumateBoundingBox *bbox,
-    ShumateBoundingBox *other)
+                              ShumateBoundingBox *other)
 {
   g_return_if_fail (SHUMATE_BOUNDING_BOX (bbox));
 
@@ -151,7 +151,8 @@ shumate_bounding_box_compose (ShumateBoundingBox *bbox,
  */
 void
 shumate_bounding_box_extend (ShumateBoundingBox *bbox,
-    gdouble latitude, gdouble longitude)
+                             double              latitude,
+                             double              longitude)
 {
   g_return_if_fail (SHUMATE_BOUNDING_BOX (bbox));
 
@@ -201,8 +202,8 @@ shumate_bounding_box_is_valid (ShumateBoundingBox *bbox)
  */
 gboolean
 shumate_bounding_box_covers(ShumateBoundingBox *bbox,
-    gdouble latitude,
-    gdouble longitude)
+                            double              latitude,
+                            double              longitude)
 {
   g_return_val_if_fail (SHUMATE_BOUNDING_BOX (bbox), FALSE);
 

@@ -46,7 +46,7 @@ typedef struct
   gboolean fade_in;
 
   GDateTime *modified_time; /* The last modified time of the cache */
-  gchar *etag; /* The HTTP ETag sent by the server */
+  char *etag; /* The HTTP ETag sent by the server */
   GdkTexture *texture;
 } ShumateTilePrivate;
 
@@ -696,7 +696,7 @@ shumate_tile_set_modified_time (ShumateTile *self,
  *
  * Returns: the tile's ETag
  */
-const gchar *
+const char *
 shumate_tile_get_etag (ShumateTile *self)
 {
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
@@ -716,7 +716,7 @@ shumate_tile_get_etag (ShumateTile *self)
  */
 void
 shumate_tile_set_etag (ShumateTile *self,
-                       const gchar *etag)
+                       const char  *etag)
 {
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 

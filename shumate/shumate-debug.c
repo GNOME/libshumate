@@ -54,7 +54,7 @@ debug_set_flags (ShumateDebugFlags new_flags)
 
 
 void
-shumate_debug_set_flags (const gchar *flags_string)
+shumate_debug_set_flags (const char *flags_string)
 {
   guint nkeys;
 
@@ -75,7 +75,7 @@ shumate_debug_flag_is_set (ShumateDebugFlags flag)
 
 void
 shumate_debug (ShumateDebugFlags flag,
-    const gchar *format,
+    const char *format,
     ...)
 {
   if (flag & flags)
@@ -98,13 +98,13 @@ shumate_debug_flag_is_set (ShumateDebugFlags flag)
 
 
 void
-shumate_debug (ShumateDebugFlags flag, const gchar *format, ...)
+shumate_debug (ShumateDebugFlags flag, const char *format, ...)
 {
 }
 
 
 void
-shumate_debug_set_flags (const gchar *flags_string)
+shumate_debug_set_flags (const char *flags_string)
 {
 }
 

@@ -42,9 +42,9 @@ typedef enum
 
 gboolean shumate_debug_flag_is_set (ShumateDebugFlags flag);
 void shumate_debug (ShumateDebugFlags flag,
-    const gchar *format,
+    const char *format,
     ...) G_GNUC_PRINTF (2, 3);
-void shumate_debug_set_flags (const gchar *flags_string);
+void shumate_debug_set_flags (const char *flags_string);
 G_END_DECLS
 
 #endif /* __SHUMATE_DEBUG_H__ */

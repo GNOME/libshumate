@@ -77,9 +77,9 @@ set_selected_all_but_one (ShumateMarkerLayer *self,
 
 static void
 on_click_gesture_released (ShumateMarkerLayer *self,
-                           gint                n_press,
-                           gdouble             x,
-                           gdouble             y,
+                           int                 n_press,
+                           double              x,
+                           double              y,
                            GtkGestureClick    *gesture)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
@@ -111,9 +111,9 @@ set_marker_position (ShumateMarkerLayer *layer,
 {
   ShumateViewport *viewport;
   ShumateMapSource *map_source;
-  gint x, y;
+  int x, y;
   int width, height;
-  gdouble lon, lat;
+  double lon, lat;
   GtkAllocation allocation;
 
   g_assert (SHUMATE_IS_MARKER_LAYER (layer));
@@ -383,14 +383,14 @@ marker_position_notify (ShumateMarker *marker,
 
 static void
 marker_move_by_cb (ShumateMarker *marker,
-    gdouble dx,
-    gdouble dy,
+    double dx,
+    double dy,
     GdkEvent *event,
     ShumateMarkerLayer *layer)
 {
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   ShumateView *view = priv->view;
-  gdouble x, y, lat, lon;
+  double x, y, lat, lon;
 
   /*x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (SHUMATE_LOCATION (marker)));
   y = shumate_view_latitude_to_y (view, shumate_location_get_latitude (SHUMATE_LOCATION (marker)));

@@ -68,10 +68,10 @@ enum
 typedef struct
 {
   gboolean offline;
-  gchar *uri_format;
-  gchar *proxy_uri;
+  char *uri_format;
+  char *proxy_uri;
   SoupSession *soup_session;
-  gint max_conns;
+  int max_conns;
 } ShumateNetworkTileSourcePrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_TILE_SOURCE);
@@ -94,7 +94,7 @@ typedef struct
   ShumateNetworkTileSource *self;
   GCancellable *cancellable;
   ShumateTile *tile;
-  gchar *etag;
+  char *etag;
 } TileRenderedData;
 
 
@@ -105,10 +105,10 @@ static void tile_state_notify (ShumateTile *tile,
     G_GNUC_UNUSED GParamSpec *pspec,
     GCancellable *cancellable);
 
-static gchar *get_tile_uri (ShumateNetworkTileSource *source,
-    gint x,
-    gint y,
-    gint z);
+static char *get_tile_uri (ShumateNetworkTileSource *source,
+    int x,
+    int y,
+    int z);
 
 static void
 shumate_network_tile_source_get_property (GObject *object,
@@ -336,15 +336,15 @@ shumate_network_tile_source_init (ShumateNetworkTileSource *tile_source)
  * Returns: a constructed #ShumateNetworkTileSource object
  */
 ShumateNetworkTileSource *
-shumate_network_tile_source_new_full (const gchar *id,
-    const gchar *name,
-    const gchar *license,
-    const gchar *license_uri,
+shumate_network_tile_source_new_full (const char *id,
+    const char *name,
+    const char *license,
+    const char *license_uri,
     guint min_zoom,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    const gchar *uri_format)
+    const char *uri_format)
 {
   ShumateNetworkTileSource *source;
 
@@ -372,7 +372,7 @@ shumate_network_tile_source_new_full (const gchar *id,
  * Returns: A URI format used for URI creation when downloading tiles. See
  * shumate_network_tile_source_set_uri_format() for more information.
  */
-const gchar *
+const char *
 shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
@@ -399,7 +399,7 @@ shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_sourc
  */
 void
 shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
-    const gchar *uri_format)
+    const char *uri_format)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
@@ -420,7 +420,7 @@ shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_sourc
  *
  * Returns: the proxy uri
  */
-const gchar *
+const char *
 shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
@@ -440,7 +440,7 @@ shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source
  */
 void
 shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source,
-    const gchar *proxy_uri)
+    const char *proxy_uri)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
@@ -516,7 +516,7 @@ shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
  * Returns: the max number of allowed simultaneous connections for this tile
  * source.
  */
-gint
+int
 shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
@@ -539,7 +539,7 @@ shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source
  */
 void
 shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source,
-    gint max_conns)
+    int max_conns)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
@@ -566,7 +566,7 @@ shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source
 void
 shumate_network_tile_source_set_user_agent (
     ShumateNetworkTileSource *tile_source,
-    const gchar *user_agent)
+    const char *user_agent)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
@@ -580,18 +580,18 @@ shumate_network_tile_source_set_user_agent (
 
 
 #define SIZE 8
-static gchar *
+static char *
 get_tile_uri (ShumateNetworkTileSource *tile_source,
-    gint x,
-    gint y,
-    gint z)
+    int x,
+    int y,
+    int z)
 {
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
-  gchar **tokens;
-  gchar *token;
+  char **tokens;
+  char *token;
   GString *ret;
-  gint i = 0;
+  int i = 0;
 
   tokens = g_strsplit (priv->uri_format, "#", 20);
   token = tokens[i];
@@ -599,8 +599,8 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
 
   while (token != NULL)
     {
-      gint number = G_MAXINT;
-      gchar value[SIZE];
+      int number = G_MAXINT;
+      char value[SIZE];
 
       if (strcmp (token, "X") == 0)
         number = x;
@@ -644,7 +644,7 @@ on_pixbuf_created (GObject      *source_object,
   g_autoptr(GError) error = NULL;
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GdkTexture) texture = NULL;
-  g_autofree gchar *etag = g_steal_pointer (&rendered_data->etag);
+  g_autofree char *etag = g_steal_pointer (&rendered_data->etag);
   ShumateTileCache *tile_cache = shumate_tile_source_get_cache (SHUMATE_TILE_SOURCE (self));
 
   g_slice_free (TileRenderedData, rendered_data);
@@ -674,7 +674,7 @@ on_pixbuf_created (GObject      *source_object,
   if (tile_cache)
     {
       g_autoptr(GError) error = NULL;
-      g_autofree gchar *buffer = NULL;
+      g_autofree char *buffer = NULL;
       gsize buffer_size;
       if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
         g_warning ("Unable to export tile: %s", error->message);
@@ -704,7 +704,7 @@ on_message_sent (GObject *source_object,
   ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (self);
   ShumateTileCache *tile_cache = shumate_tile_source_get_cache (tile_source);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
-  const gchar *etag;
+  const char *etag;
   TileRenderedData *data;
 
   g_slice_free (TileLoadedData, callback_data);
@@ -776,7 +776,7 @@ tile_state_notify (ShumateTile *tile,
 }
 
 
-static gchar *
+static char *
 get_modified_time_string (ShumateTile *tile)
 {
   GDateTime *modified_time;
@@ -808,7 +808,7 @@ fill_tile (ShumateMapSource *map_source,
   if (!priv->offline)
     {
       TileLoadedData *callback_data = g_slice_new0 (TileLoadedData);
-      g_autofree gchar *uri = NULL;
+      g_autofree char *uri = NULL;
 
       uri = get_tile_uri (tile_source,
             shumate_tile_get_x (tile),
@@ -825,8 +825,8 @@ fill_tile (ShumateMapSource *map_source,
         {
           /* validate tile */
 
-          const gchar *etag = shumate_tile_get_etag (tile);
-          gchar *date = get_modified_time_string (tile);
+          const char *etag = shumate_tile_get_etag (tile);
+          char *date = get_modified_time_string (tile);
 
           /* If an etag is available, only use it.
            * OSM servers seems to send now as the modified time for all tiles

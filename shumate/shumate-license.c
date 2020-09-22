@@ -229,7 +229,7 @@ shumate_license_new (void)
  */
 void
 shumate_license_set_extra_text (ShumateLicense *license,
-                                const gchar    *text)
+                                const char    *text)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
@@ -248,7 +248,7 @@ shumate_license_set_extra_text (ShumateLicense *license,
  *
  * Returns: the additional license text
  */
-const gchar *
+const char *
 shumate_license_get_extra_text (ShumateLicense *license)
 {
   g_return_val_if_fail (SHUMATE_IS_LICENSE (license), NULL);
@@ -266,7 +266,7 @@ shumate_license_get_extra_text (ShumateLicense *license)
  */
 void
 shumate_license_set_xalign (ShumateLicense *license,
-                            gfloat          xalign)
+                            float           xalign)
 {
   g_return_if_fail (SHUMATE_IS_LICENSE (license));
 
@@ -285,7 +285,7 @@ shumate_license_set_xalign (ShumateLicense *license,
  *
  * Returns: the license's text horizontal alignment.
  */
-gfloat
+float
 shumate_license_get_xalign (ShumateLicense *license)
 {
   g_return_val_if_fail (SHUMATE_IS_LICENSE (license), 1.0f);

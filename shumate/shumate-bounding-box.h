@@ -44,10 +44,10 @@ typedef struct _ShumateBoundingBox ShumateBoundingBox;
 struct _ShumateBoundingBox
 {
   /*< public >*/
-  gdouble left;
-  gdouble top;
-  gdouble right;
-  gdouble bottom;
+  double left;
+  double top;
+  double right;
+  double bottom;
 };
 
 GType shumate_bounding_box_get_type (void) G_GNUC_CONST;
@@ -60,21 +60,21 @@ ShumateBoundingBox *shumate_bounding_box_copy (const ShumateBoundingBox *bbox);
 void shumate_bounding_box_free (ShumateBoundingBox *bbox);
 
 void shumate_bounding_box_get_center (ShumateBoundingBox *bbox,
-    gdouble *latitude,
-    gdouble *longitude);
+                                      double             *latitude,
+                                      double             *longitude);
 
 void shumate_bounding_box_compose (ShumateBoundingBox *bbox,
-    ShumateBoundingBox *other);
+                                   ShumateBoundingBox *other);
 
 void shumate_bounding_box_extend (ShumateBoundingBox *bbox,
-    gdouble latitude,
-    gdouble longitude);
+                                  double              latitude,
+                                  double              longitude);
 
 gboolean shumate_bounding_box_is_valid (ShumateBoundingBox *bbox);
 
 gboolean shumate_bounding_box_covers(ShumateBoundingBox *bbox,
-    gdouble latitude,
-    gdouble longitude);
+                                     double              latitude,
+                                     double              longitude);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateBoundingBox, shumate_bounding_box_free)
 

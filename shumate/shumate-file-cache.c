@@ -49,7 +49,7 @@ enum
 typedef struct
 {
   guint size_limit;
-  gchar *cache_dir;
+  char *cache_dir;
 
   sqlite3 *db;
   sqlite3_stmt *stmt_select;
@@ -60,13 +60,13 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, SHUMATE_TYPE_T
 
 static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
-static gchar *get_filename (ShumateFileCache *file_cache,
+static char *get_filename (ShumateFileCache *file_cache,
     ShumateTile *tile);
 static gboolean tile_is_expired (ShumateFileCache *file_cache,
     ShumateTile *tile);
 static void delete_tile (ShumateFileCache *file_cache,
-    const gchar *filename);
-static gboolean create_cache_dir (const gchar *dir_name);
+    const char *filename);
+static gboolean create_cache_dir (const char *dir_name);
 
 static void fill_tile (ShumateMapSource *map_source,
                        ShumateTile      *tile,
@@ -74,7 +74,7 @@ static void fill_tile (ShumateMapSource *map_source,
 
 static void store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size);
 static void refresh_tile_time (ShumateTileCache *tile_cache,
     ShumateTile *tile);
@@ -141,7 +141,7 @@ finalize_sql (ShumateFileCache *file_cache)
 
   if (priv->db)
     {
-      gint error = sqlite3_close (priv->db);
+      int error = sqlite3_close (priv->db);
       if (error != SQLITE_OK)
         DEBUG ("Sqlite returned error %d when closing cache.db", error);
       priv->db = NULL;
@@ -164,7 +164,7 @@ shumate_file_cache_finalize (GObject *object)
 
 
 static gboolean
-create_cache_dir (const gchar *dir_name)
+create_cache_dir (const char *dir_name)
 {
   /* If needed, create the cache's dirs */
   if (dir_name)
@@ -184,8 +184,8 @@ static void
 init_cache (ShumateFileCache *file_cache)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
-  gchar *filename = NULL;
-  gchar *error_msg = NULL;
+  char *filename = NULL;
+  char *error_msg = NULL;
   gint error;
 
   g_return_if_fail (create_cache_dir (priv->cache_dir));
@@ -347,7 +347,7 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  */
 ShumateFileCache *
 shumate_file_cache_new_full (guint size_limit,
-    const gchar *cache_dir)
+    const char *cache_dir)
 {
   ShumateFileCache *cache;
 
@@ -386,7 +386,7 @@ shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
  *
  * Returns: the directory
  */
-const gchar *
+const char *
 shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
@@ -417,7 +417,7 @@ shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
 }
 
 
-static gchar *
+static char *
 get_filename (ShumateFileCache *file_cache,
     ShumateTile *tile)
 {
@@ -429,7 +429,7 @@ get_filename (ShumateFileCache *file_cache,
 
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (file_cache);
 
-  gchar *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
+  char *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
         "%s" G_DIR_SEPARATOR_S
         "%d" G_DIR_SEPARATOR_S
         "%d" G_DIR_SEPARATOR_S "%d.png",
@@ -499,7 +499,7 @@ on_pixbuf_created (GObject *source_object,
   g_autoptr(GdkTexture) texture = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GFile) file = NULL;
-  g_autofree gchar *filename = NULL;
+  g_autofree char *filename = NULL;
   g_autoptr(GFileInfo) info = NULL;
 
   pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
@@ -547,7 +547,7 @@ on_pixbuf_created (GObject *source_object,
       sql_rc = sqlite3_step (priv->stmt_select);
       if (sql_rc == SQLITE_ROW)
         {
-          const gchar *etag = (const gchar *) sqlite3_column_text (priv->stmt_select, 0);
+          const char *etag = (const char *) sqlite3_column_text (priv->stmt_select, 0);
           shumate_tile_set_etag (SHUMATE_TILE (tile), etag);
         }
       else if (sql_rc == SQLITE_DONE)
@@ -599,7 +599,7 @@ on_file_loaded (GObject      *source_object,
   input_stream = G_INPUT_STREAM (g_file_read_finish (G_FILE (source_object), res, &error));
   if (!input_stream)
     {
-      g_autofree gchar *path = g_file_get_path (G_FILE (source_object));
+      g_autofree char *path = g_file_get_path (G_FILE (source_object));
       ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
 
       DEBUG ("Failed to load tile %s, error: %s", path, error->message);
@@ -633,7 +633,7 @@ fill_tile (ShumateMapSource *map_source,
     {
       FileLoadedData *user_data;
       g_autoptr(GFile) file = NULL;
-      g_autofree gchar *filename = NULL;
+      g_autofree char *filename = NULL;
 
       filename = get_filename (self, tile);
       file = g_file_new_for_path (filename);
@@ -667,7 +667,7 @@ refresh_tile_time (ShumateTileCache *tile_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  gchar *filename = NULL;
+  char *filename = NULL;
   GFile *file;
   GFileInfo *info;
 
@@ -699,7 +699,7 @@ refresh_tile_time (ShumateTileCache *tile_cache,
 static void
 store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size)
 {
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (tile_cache));
@@ -708,10 +708,10 @@ store_tile (ShumateTileCache *tile_cache,
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
-  gchar *query = NULL;
-  gchar *error = NULL;
-  gchar *path = NULL;
-  gchar *filename = NULL;
+  char *query = NULL;
+  char *error = NULL;
+  char *path = NULL;
+  char *filename = NULL;
   GError *gerror = NULL;
   GFile *file;
   GFileOutputStream *ostream;
@@ -790,7 +790,7 @@ on_tile_filled (ShumateTileCache *tile_cache,
   ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   int sql_rc = SQLITE_OK;
-  gchar *filename = NULL;
+  char *filename = NULL;
 
   filename = get_filename (file_cache, tile);
 
@@ -820,12 +820,12 @@ call_next:
 
 
 static void
-delete_tile (ShumateFileCache *file_cache, const gchar *filename)
+delete_tile (ShumateFileCache *file_cache, const char *filename)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
-  gchar *query, *error = NULL;
+  char *query, *error = NULL;
   GError *gerror = NULL;
   GFile *file;
 
@@ -887,12 +887,12 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
 
-  gchar *query;
+  char *query;
   sqlite3_stmt *stmt;
   int rc = 0;
   guint current_size = 0;
   guint highest_popularity = 0;
-  gchar *error;
+  char *error;
 
   query = "SELECT SUM (size) FROM tiles";
   rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);

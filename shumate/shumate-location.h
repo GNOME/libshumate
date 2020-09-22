@@ -56,18 +56,18 @@ struct _ShumateLocationInterface
   GTypeInterface g_iface;
 
   /*< public >*/
-  gdouble (*get_latitude)(ShumateLocation *location);
-  gdouble (*get_longitude)(ShumateLocation *location);
+  double (*get_latitude)(ShumateLocation *location);
+  double (*get_longitude)(ShumateLocation *location);
   void (*set_location)(ShumateLocation *location,
-      gdouble latitude,
-      gdouble longitude);
+      double latitude,
+      double longitude);
 };
 
 void shumate_location_set_location (ShumateLocation *location,
-    gdouble latitude,
-    gdouble longitude);
-gdouble shumate_location_get_latitude (ShumateLocation *location);
-gdouble shumate_location_get_longitude (ShumateLocation *location);
+    double latitude,
+    double longitude);
+double shumate_location_get_latitude (ShumateLocation *location);
+double shumate_location_get_longitude (ShumateLocation *location);
 
 G_END_DECLS
 

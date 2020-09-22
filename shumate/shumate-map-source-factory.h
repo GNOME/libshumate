@@ -46,11 +46,11 @@ G_DECLARE_FINAL_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, SHUMA
 ShumateMapSourceFactory *shumate_map_source_factory_dup_default (void);
 
 ShumateMapSource *shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
-    const gchar *id);
+    const char *id);
 ShumateMapSource *shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
-    const gchar *id);
+    const char *id);
 ShumateMapSource *shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *factory,
-    const gchar *id);
+    const char *id);
 ShumateMapSource *shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
     guint tile_size);
 

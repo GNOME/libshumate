@@ -37,8 +37,8 @@ struct _ShumateViewport
 {
   GObject parent_instance;
 
-  gdouble lon;
-  gdouble lat;
+  double lon;
+  double lat;
 
   guint zoom_level;
   guint min_zoom_level;
@@ -66,7 +66,7 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
-static gdouble
+static double
 shumate_viewport_get_latitude (ShumateLocation *location)
 {
   ShumateViewport *self = (ShumateViewport *)location;
@@ -76,7 +76,7 @@ shumate_viewport_get_latitude (ShumateLocation *location)
   return self->lat;
 }
 
-static gdouble
+static double
 shumate_viewport_get_longitude (ShumateLocation *location)
 {
   ShumateViewport *self = (ShumateViewport *)location;
@@ -88,8 +88,8 @@ shumate_viewport_get_longitude (ShumateLocation *location)
 
 static void
 shumate_viewport_set_location (ShumateLocation *location,
-                               gdouble          latitude,
-                               gdouble          longitude)
+                               double           latitude,
+                               double           longitude)
 {
   ShumateViewport *self = (ShumateViewport *)location;
 
@@ -453,7 +453,7 @@ shumate_viewport_set_reference_map_source (ShumateViewport  *self,
  * when none has been set.
  */
 ShumateMapSource *
-shumate_viewport_get_reference_map_source (ShumateViewport  *self)
+shumate_viewport_get_reference_map_source (ShumateViewport *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), NULL);
 
@@ -471,13 +471,13 @@ shumate_viewport_get_reference_map_source (ShumateViewport  *self)
  * 
  * Returns: the longitude
  */
-gdouble
+double
 shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
                                         GtkWidget       *widget,
-                                        gdouble          x)
+                                        double           x)
 {
-  gdouble center_x;
-  gint width;
+  double center_x;
+  int width;
 
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
   g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
@@ -504,13 +504,13 @@ shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
  * 
  * Returns: the latitude
  */
-gdouble
+double
 shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
                                        GtkWidget       *widget,
-                                       gdouble          y)
+                                       double           y)
 {
-  gdouble center_y;
-  gint height;
+  double center_y;
+  int height;
 
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
   g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
@@ -537,14 +537,14 @@ shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
  * 
  * Returns: the x coordinate
  */
-gdouble
+double
 shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
                                         GtkWidget       *widget,
-                                        gdouble          longitude)
+                                        double           longitude)
 {
-  gdouble center_longitude;
-  gdouble left_x, x;
-  gint width;
+  double center_longitude;
+  double left_x, x;
+  int width;
 
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
   g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
@@ -573,14 +573,14 @@ shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
  * 
  * Returns: the y coordinate
  */
-gdouble
+double
 shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
                                        GtkWidget       *widget,
-                                       gdouble          latitude)
+                                       double           latitude)
 {
-  gdouble center_latitude;
-  gdouble top_y, y;
-  gint height;
+  double center_latitude;
+  double top_y, y;
+  int height;
 
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
   g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);

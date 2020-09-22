@@ -77,9 +77,9 @@ gboolean shumate_path_layer_get_stroke (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke (ShumatePathLayer *layer,
     gboolean value);
 
-gdouble shumate_path_layer_get_stroke_width (ShumatePathLayer *layer);
+double shumate_path_layer_get_stroke_width (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
-    gdouble value);
+    double value);
 
 gboolean shumate_path_layer_get_closed (ShumatePathLayer *layer);
 void shumate_path_layer_set_closed (ShumatePathLayer *layer,

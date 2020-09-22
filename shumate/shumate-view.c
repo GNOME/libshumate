@@ -101,10 +101,10 @@ typedef struct
 {
   ShumateView *view;
   //ClutterTimeline *timeline;
-  gdouble to_latitude;
-  gdouble to_longitude;
-  gdouble from_latitude;
-  gdouble from_longitude;
+  double to_latitude;
+  double to_longitude;
+  double from_latitude;
+  double from_longitude;
 } GoToContext;
 
 
@@ -112,10 +112,10 @@ typedef struct
 {
   ShumateView *view;
   ShumateMapSource *map_source;
-  gint x;
-  gint y;
-  gint zoom_level;
-  gint size;
+  int x;
+  int y;
+  int zoom_level;
+  int size;
 } FillTileCallbackData;
 
 
@@ -124,7 +124,7 @@ typedef struct
   ShumateViewport *viewport;
 
   /* There are num_right_clones clones on the right, and one extra on the left */
-  gint num_right_clones;
+  int num_right_clones;
   GList *map_clones;
   /* There are num_right_clones + 2 user layer slots, overlayed on the map clones.
    * Initially, the first slot contains the left clone, the second slot
@@ -146,7 +146,7 @@ typedef struct
   // shumate_view_go_to's context, kept for stop_go_to
   GoToContext *goto_context;
 
-  gint tiles_loading;
+  int tiles_loading;
 
   guint zoom_timeout;
 
@@ -154,21 +154,21 @@ typedef struct
 
   gboolean animating_zoom;
   guint anim_start_zoom_level;
-  gdouble zoom_actor_viewport_x;
-  gdouble zoom_actor_viewport_y;
+  double zoom_actor_viewport_x;
+  double zoom_actor_viewport_y;
   guint zoom_actor_timeout;
 
-  gdouble current_x;
-  gdouble current_y;
+  double current_x;
+  double current_y;
 
   /* Zoom gesture */
   guint initial_gesture_zoom;
-  gdouble focus_lat;
-  gdouble focus_lon;
+  double focus_lat;
+  double focus_lon;
   gboolean zoom_started;
-  gdouble accumulated_scroll_dy;
-  gdouble drag_begin_lat;
-  gdouble drag_begin_lon;
+  double accumulated_scroll_dy;
+  double drag_begin_lat;
+  double drag_begin_lon;
 } ShumateViewPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
@@ -183,8 +183,8 @@ static void shumate_view_set_property (GObject *object,
     GParamSpec *pspec);
 static void shumate_view_dispose (GObject *object);
 static void shumate_view_go_to_with_duration (ShumateView *view,
-    gdouble latitude,
-    gdouble longitude,
+    double latitude,
+    double longitude,
     guint duration);
 
 /*static gboolean
@@ -207,7 +207,7 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
 {
   GdkScrollDirection direction;
   gdk_event_get_scroll_direction(event, &direction);
-  gdouble x, y;
+  double x, y;
   gdk_event_get_coords(event, &x, &y);
 
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
@@ -220,8 +220,8 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
     zoom_level = priv->zoom_level - 1;
   else if (direction == GDK_SCROLL_SMOOTH)
     {
-      gdouble dx, dy;
-      gint steps;
+      double dx, dy;
+      int steps;
 
       gdk_event_get_scroll_deltas (event, &dx, &dy);
 
@@ -245,8 +245,8 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
 
 static void
 on_drag_gesture_drag_begin (ShumateView    *self,
-                            gdouble         start_x,
-                            gdouble         start_y,
+                            double         start_x,
+                            double         start_y,
                             GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
@@ -261,8 +261,8 @@ on_drag_gesture_drag_begin (ShumateView    *self,
 
 static void
 on_drag_gesture_drag_update (ShumateView    *self,
-                             gdouble         offset_x,
-                             gdouble         offset_y,
+                             double         offset_x,
+                             double         offset_y,
                              GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
@@ -302,8 +302,8 @@ on_drag_gesture_drag_update (ShumateView    *self,
 
 static void
 on_drag_gesture_drag_end (ShumateView    *self,
-                          gdouble         offset_x,
-                          gdouble         offset_y,
+                          double         offset_x,
+                          double         offset_y,
                           GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
@@ -347,14 +347,14 @@ on_drag_gesture_drag_end (ShumateView    *self,
 
 static gboolean
 on_scroll_controller_scroll (ShumateView              *self,
-                             gdouble                   dx,
-                             gdouble                   dy,
+                             double                   dx,
+                             double                   dy,
                              GtkEventControllerScroll *controller)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
   ShumateMapSource *map_source;
-  gdouble scroll_latitude, scroll_longitude;
-  gdouble view_lon, view_lat;
+  double scroll_latitude, scroll_longitude;
+  double view_lon, view_lat;
 
   g_object_freeze_notify (G_OBJECT (priv->viewport));
   view_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
@@ -374,9 +374,9 @@ on_scroll_controller_scroll (ShumateView              *self,
 
   if (map_source)
     {
-      gdouble scroll_map_x, scroll_map_y;
-      gdouble view_center_x, view_center_y;
-      gdouble x_offset, y_offset;
+      double scroll_map_x, scroll_map_y;
+      double view_center_x, view_center_y;
+      double x_offset, y_offset;
       guint zoom_level;
 
       scroll_map_x = shumate_viewport_longitude_to_widget_x (priv->viewport, GTK_WIDGET (self), scroll_longitude);
@@ -398,8 +398,8 @@ on_scroll_controller_scroll (ShumateView              *self,
 
 static void
 on_motion_controller_motion (ShumateView              *self,
-                             gdouble                   x,
-                             gdouble                   y,
+                             double                   x,
+                             double                   y,
                              GtkEventControllerMotion *controller)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
@@ -425,7 +425,7 @@ shumate_view_get_property (GObject *object,
 
     case PROP_DECELERATION:
       {
-        gdouble decel = 0.0;
+        double decel = 0.0;
         //g_object_get (priv->kinetic_scroll, "deceleration", &decel, NULL);
         g_value_set_double (value, decel);
         break;
@@ -796,8 +796,8 @@ shumate_view_get_viewport (ShumateView *self)
  */
 void
 shumate_view_center_on (ShumateView *view,
-    gdouble latitude,
-    gdouble longitude)
+    double latitude,
+    double longitude)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
@@ -845,8 +845,8 @@ shumate_view_stop_go_to (ShumateView *view)
  */
 void
 shumate_view_go_to (ShumateView *view,
-                    gdouble      latitude,
-                    gdouble      longitude)
+                    double      latitude,
+                    double      longitude)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   guint duration;
@@ -863,8 +863,8 @@ shumate_view_go_to (ShumateView *view,
 
 static void
 shumate_view_go_to_with_duration (ShumateView *view,
-                                  gdouble      latitude,
-                                  gdouble      longitude,
+                                  double      latitude,
+                                  double      longitude,
                                   guint        duration) /* In ms */
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
@@ -983,13 +983,13 @@ shumate_view_set_map_source (ShumateView      *view,
 /**
  * shumate_view_set_deceleration:
  * @view: a #ShumateView
- * @rate: a #gdouble between 1.001 and 2.0
+ * @rate: a #double between 1.001 and 2.0
  *
  * The deceleration rate for the kinetic mode.
  */
 void
 shumate_view_set_deceleration (ShumateView *view,
-                               gdouble      rate)
+                               double      rate)
 {
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (rate < 2.0 && rate > 1.0001);
@@ -1066,12 +1066,12 @@ shumate_view_set_animate_zoom (ShumateView *view,
  *
  * Returns: the view's deceleration rate.
  */
-gdouble
+double
 shumate_view_get_deceleration (ShumateView *view)
 {
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
 
-  gdouble decel = 0.0;
+  double decel = 0.0;
   //g_object_get (view->priv->kinetic_scroll, "decel-rate", &decel, NULL);
   return decel;
 }

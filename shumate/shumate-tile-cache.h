@@ -44,7 +44,7 @@ struct _ShumateTileCacheClass
 
   void (*store_tile)(ShumateTileCache *tile_cache,
       ShumateTile *tile,
-      const gchar *contents,
+      const char *contents,
       gsize size);
   void (*refresh_tile_time)(ShumateTileCache *tile_cache,
       ShumateTile *tile);
@@ -54,7 +54,7 @@ struct _ShumateTileCacheClass
 
 void shumate_tile_cache_store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size);
 void shumate_tile_cache_refresh_tile_time (ShumateTileCache *tile_cache,
     ShumateTile *tile);

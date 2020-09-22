@@ -67,16 +67,16 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 typedef struct
 {
-  gdouble lon;
-  gdouble lat;
+  double lon;
+  double lat;
 
   guint selected    :1;
 
   gboolean selectable;
   gboolean draggable;
 
-  gfloat click_x;
-  gfloat click_y;
+  float click_x;
+  float click_y;
   gboolean moved;
 } ShumateMarkerPrivate;
 
@@ -152,8 +152,8 @@ shumate_marker_get_selection_text_color ()
 
 static void
 shumate_marker_set_location (ShumateLocation *location,
-                             gdouble          latitude,
-                             gdouble          longitude)
+                             double           latitude,
+                             double           longitude)
 {
   ShumateMarker *marker = (ShumateMarker *) location;
   ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
@@ -168,7 +168,7 @@ shumate_marker_set_location (ShumateLocation *location,
 }
 
 
-static gdouble
+static double
 shumate_marker_get_latitude (ShumateLocation *location)
 {
   ShumateMarker *marker = (ShumateMarker *) location;
@@ -180,7 +180,7 @@ shumate_marker_get_latitude (ShumateLocation *location)
 }
 
 
-static gdouble
+static double
 shumate_marker_get_longitude (ShumateLocation *location)
 {
   ShumateMarker *marker = (ShumateMarker *) location;
@@ -237,14 +237,14 @@ shumate_marker_set_property (GObject *object,
     {
     case PROP_LONGITUDE:
       {
-        gdouble lon = g_value_get_double (value);
+        double lon = g_value_get_double (value);
         shumate_marker_set_location (SHUMATE_LOCATION (marker), priv->lat, lon);
         break;
       }
 
     case PROP_LATITUDE:
       {
-        gdouble lat = g_value_get_double (value);
+        double lat = g_value_get_double (value);
         shumate_marker_set_location (SHUMATE_LOCATION (marker), lat, priv->lon);
         break;
       }

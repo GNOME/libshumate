@@ -292,7 +292,7 @@ shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
  */
 ShumateMapSource *
 shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
-    const gchar *id)
+    const char *id)
 {
   GSList *item;
 
@@ -331,7 +331,7 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
  */
 ShumateMapSource *
 shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
-    const gchar *id)
+    const char *id)
 {
   ShumateMapSourceChain *source_chain;
   ShumateMapSource *tile_source;
@@ -376,7 +376,7 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
  */
 ShumateMapSource *
 shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *factory,
-    const gchar *id)
+    const char *id)
 {
   ShumateMapSourceChain *source_chain;
   ShumateMapSource *tile_source;
@@ -421,10 +421,10 @@ shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory
 }
 
 
-static gint
+static int
 compare_id (ShumateMapSourceDesc *a, ShumateMapSourceDesc *b)
 {
-  const gchar *id_a, *id_b;
+  const char *id_a, *id_b;
 
   id_a = shumate_map_source_desc_get_id (a);
   id_b = shumate_map_source_desc_get_id (b);
@@ -464,7 +464,7 @@ static ShumateMapSource *
 shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
 {
   ShumateMapSource *map_source;
-  const gchar *id, *name, *license, *license_uri, *uri_format;
+  const char *id, *name, *license, *license_uri, *uri_format;
   guint min_zoom, max_zoom, tile_size;
   ShumateMapProjection projection;
 

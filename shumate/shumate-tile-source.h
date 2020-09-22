@@ -50,13 +50,13 @@ void shumate_tile_source_set_cache (ShumateTileSource *tile_source,
     ShumateTileCache *cache);
 
 void shumate_tile_source_set_id (ShumateTileSource *tile_source,
-    const gchar *id);
+    const char *id);
 void shumate_tile_source_set_name (ShumateTileSource *tile_source,
-    const gchar *name);
+    const char *name);
 void shumate_tile_source_set_license (ShumateTileSource *tile_source,
-    const gchar *license);
+    const char *license);
 void shumate_tile_source_set_license_uri (ShumateTileSource *tile_source,
-    const gchar *license_uri);
+    const char *license_uri);
 
 void shumate_tile_source_set_min_zoom_level (ShumateTileSource *tile_source,
     guint zoom_level);

@@ -86,18 +86,18 @@ G_DEFINE_TYPE (ShumateScale, shumate_scale, GTK_TYPE_WIDGET);
 static gboolean
 shumate_scale_compute_length (ShumateScale *self,
                               ShumateUnit   unit,
-                              gfloat       *out_scale_width,
-                              gfloat       *out_base,
+                              float        *out_scale_width,
+                              float        *out_base,
                               gboolean     *out_is_small_unit)
 {
   ShumateMapSource *map_source;
-  gint zoom_level;
-  gdouble lat, lon;
-  gfloat scale_width;
-  gfloat base;
-  gfloat factor;
+  int zoom_level;
+  double lat, lon;
+  float scale_width;
+  float base;
+  float factor;
   gboolean is_small_unit = TRUE;
-  gfloat m_per_pixel;
+  float m_per_pixel;
 
   g_assert (SHUMATE_IS_SCALE (self));
 
@@ -180,11 +180,11 @@ shumate_scale_compute_length (ShumateScale *self,
 static void
 shumate_scale_on_scale_changed (ShumateScale *self)
 {
-  gfloat metric_scale_width, metric_base;
-  gfloat imperial_scale_width, imperial_base;
+  float metric_scale_width, metric_base;
+  float imperial_scale_width, imperial_base;
   gboolean metric_is_small_unit, imperial_is_small_unit;
-  g_autofree gchar *metric_label = NULL;
-  g_autofree gchar *imperial_label = NULL;
+  g_autofree char *metric_label = NULL;
+  g_autofree char *imperial_label = NULL;
 
   shumate_scale_compute_length (self, SHUMATE_UNIT_METRIC, &metric_scale_width, &metric_base, &metric_is_small_unit);
   shumate_scale_compute_length (self, SHUMATE_UNIT_IMPERIAL, &imperial_scale_width, &imperial_base, &imperial_is_small_unit);

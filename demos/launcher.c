@@ -26,12 +26,12 @@
 
 static void
 map_view_button_release_cb (GtkGestureClick *gesture,
-                            gint             n_press,
-                            gdouble          x,
-                            gdouble          y,
+                            int              n_press,
+                            double           x,
+                            double           y,
                             ShumateView     *view)
 {
-  gdouble lat, lon;
+  double lat, lon;
   ShumateViewport *viewport;
 
   viewport = shumate_view_get_viewport (view);

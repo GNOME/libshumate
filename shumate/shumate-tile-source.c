@@ -45,10 +45,10 @@ enum
 
 typedef struct
 {
-  gchar *id;
-  gchar *name;
-  gchar *license;
-  gchar *license_uri;
+  char *id;
+  char *name;
+  char *license;
+  char *license_uri;
   guint min_zoom_level;
   guint max_zoom_level;
   guint tile_size;
@@ -58,10 +58,10 @@ typedef struct
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateTileSource, shumate_tile_source, SHUMATE_TYPE_MAP_SOURCE);
 
-static const gchar *get_id (ShumateMapSource *map_source);
-static const gchar *get_name (ShumateMapSource *map_source);
-static const gchar *get_license (ShumateMapSource *map_source);
-static const gchar *get_license_uri (ShumateMapSource *map_source);
+static const char *get_id (ShumateMapSource *map_source);
+static const char *get_name (ShumateMapSource *map_source);
+static const char *get_license (ShumateMapSource *map_source);
+static const char *get_license_uri (ShumateMapSource *map_source);
 static guint get_min_zoom_level (ShumateMapSource *map_source);
 static guint get_max_zoom_level (ShumateMapSource *map_source);
 static guint get_tile_size (ShumateMapSource *map_source);
@@ -413,7 +413,7 @@ shumate_tile_source_set_cache (ShumateTileSource *tile_source,
 }
 
 
-static const gchar *
+static const char *
 get_id (ShumateMapSource *map_source)
 {
   ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
@@ -425,7 +425,7 @@ get_id (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_name (ShumateMapSource *map_source)
 {
   ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
@@ -437,7 +437,7 @@ get_name (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license (ShumateMapSource *map_source)
 {
   ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
@@ -449,7 +449,7 @@ get_license (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license_uri (ShumateMapSource *map_source)
 {
   ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (map_source);
@@ -518,7 +518,7 @@ get_projection (ShumateMapSource *map_source)
  */
 void
 shumate_tile_source_set_id (ShumateTileSource *tile_source,
-    const gchar *id)
+    const char *id)
 {
   ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
@@ -540,7 +540,7 @@ shumate_tile_source_set_id (ShumateTileSource *tile_source,
  */
 void
 shumate_tile_source_set_name (ShumateTileSource *tile_source,
-    const gchar *name)
+    const char *name)
 {
   ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
@@ -562,7 +562,7 @@ shumate_tile_source_set_name (ShumateTileSource *tile_source,
  */
 void
 shumate_tile_source_set_license (ShumateTileSource *tile_source,
-    const gchar *license)
+    const char *license)
 {
   ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
@@ -584,7 +584,7 @@ shumate_tile_source_set_license (ShumateTileSource *tile_source,
  */
 void
 shumate_tile_source_set_license_uri (ShumateTileSource *tile_source,
-    const gchar *license_uri)
+    const char *license_uri)
 {
   ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 

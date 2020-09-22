@@ -53,10 +53,10 @@ struct _ShumateMapSourceClass
 {
   GInitiallyUnownedClass parent_class;
 
-  const gchar * (*get_id)(ShumateMapSource *map_source);
-  const gchar * (*get_name)(ShumateMapSource *map_source);
-  const gchar * (*get_license)(ShumateMapSource *map_source);
-  const gchar * (*get_license_uri)(ShumateMapSource *map_source);
+  const char * (*get_id)(ShumateMapSource *map_source);
+  const char * (*get_name)(ShumateMapSource *map_source);
+  const char * (*get_license)(ShumateMapSource *map_source);
+  const char * (*get_license_uri)(ShumateMapSource *map_source);
   guint (*get_min_zoom_level)(ShumateMapSource *map_source);
   guint (*get_max_zoom_level)(ShumateMapSource *map_source);
   guint (*get_tile_size)(ShumateMapSource *map_source);
@@ -71,35 +71,35 @@ ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_sour
 void shumate_map_source_set_next_source (ShumateMapSource *map_source,
     ShumateMapSource *next_source);
 
-const gchar *shumate_map_source_get_id (ShumateMapSource *map_source);
-const gchar *shumate_map_source_get_name (ShumateMapSource *map_source);
-const gchar *shumate_map_source_get_license (ShumateMapSource *map_source);
-const gchar *shumate_map_source_get_license_uri (ShumateMapSource *map_source);
+const char *shumate_map_source_get_id (ShumateMapSource *map_source);
+const char *shumate_map_source_get_name (ShumateMapSource *map_source);
+const char *shumate_map_source_get_license (ShumateMapSource *map_source);
+const char *shumate_map_source_get_license_uri (ShumateMapSource *map_source);
 guint shumate_map_source_get_min_zoom_level (ShumateMapSource *map_source);
 guint shumate_map_source_get_max_zoom_level (ShumateMapSource *map_source);
 guint shumate_map_source_get_tile_size (ShumateMapSource *map_source);
 ShumateMapProjection shumate_map_source_get_projection (ShumateMapSource *map_source);
 
-gdouble shumate_map_source_get_x (ShumateMapSource *map_source,
+double shumate_map_source_get_x (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble longitude);
-gdouble shumate_map_source_get_y (ShumateMapSource *map_source,
+    double longitude);
+double shumate_map_source_get_y (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble latitude);
-gdouble shumate_map_source_get_longitude (ShumateMapSource *map_source,
+    double latitude);
+double shumate_map_source_get_longitude (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble x);
-gdouble shumate_map_source_get_latitude (ShumateMapSource *map_source,
+    double x);
+double shumate_map_source_get_latitude (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble y);
+    double y);
 guint shumate_map_source_get_row_count (ShumateMapSource *map_source,
     guint zoom_level);
 guint shumate_map_source_get_column_count (ShumateMapSource *map_source,
     guint zoom_level);
-gdouble shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
+double shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
     guint zoom_level,
-    gdouble latitude,
-    gdouble longitude);
+    double latitude,
+    double longitude);
 
 void shumate_map_source_fill_tile (ShumateMapSource *map_source,
                                    ShumateTile      *tile,

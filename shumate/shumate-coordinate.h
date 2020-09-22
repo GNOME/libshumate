@@ -47,8 +47,8 @@ struct _ShumateCoordinateClass
 
 ShumateCoordinate *shumate_coordinate_new (void);
 
-ShumateCoordinate *shumate_coordinate_new_full (gdouble latitude,
-    gdouble longitude);
+ShumateCoordinate *shumate_coordinate_new_full (double latitude,
+    double longitude);
 
 G_END_DECLS
 

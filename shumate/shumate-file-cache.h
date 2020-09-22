@@ -46,13 +46,13 @@ struct _ShumateFileCacheClass
 };
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
-    const gchar *cache_dir);
+    const char *cache_dir);
 
 guint shumate_file_cache_get_size_limit (ShumateFileCache *file_cache);
 void shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
     guint size_limit);
 
-const gchar *shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache);
+const char *shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache);
 
 void shumate_file_cache_purge (ShumateFileCache *file_cache);
 void shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache);

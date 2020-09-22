@@ -52,8 +52,8 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateMemoryCache, shumate_memory_cache, SHUMATE_TY
 
 typedef struct
 {
-  gchar *key;
-  gchar *data;
+  char *key;
+  char *data;
   guint size;
 } QueueMember;
 
@@ -64,7 +64,7 @@ static void fill_tile (ShumateMapSource *map_source,
 
 static void store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size);
 static void refresh_tile_time (ShumateTileCache *tile_cache,
     ShumateTile *tile);
@@ -229,7 +229,7 @@ shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,
 }
 
 
-static gchar *
+static char *
 generate_queue_key (ShumateMemoryCache *memory_cache,
     ShumateTile *tile)
 {
@@ -237,7 +237,7 @@ generate_queue_key (ShumateMemoryCache *memory_cache,
   g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
 
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (memory_cache);
-  gchar *key;
+  char *key;
 
   key = g_strdup_printf ("%d/%d/%d/%s",
         shumate_tile_get_zoom_level (tile),
@@ -285,7 +285,7 @@ fill_tile (ShumateMapSource *map_source,
       ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (map_source);
       ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
       GList *link;
-      g_autofree gchar *key = generate_queue_key (memory_cache, tile);
+      g_autofree char *key = generate_queue_key (memory_cache, tile);
 
       link = g_hash_table_lookup (priv->hash_table, key);
       if (link)
@@ -332,7 +332,7 @@ fill_tile (ShumateMapSource *map_source,
 static void
 store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size)
 {
   g_return_if_fail (SHUMATE_IS_MEMORY_CACHE (tile_cache));
@@ -342,7 +342,7 @@ store_tile (ShumateTileCache *tile_cache,
   ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (tile_cache);
   ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
   GList *link;
-  gchar *key;
+  char *key;
 
   key = generate_queue_key (memory_cache, tile);
   link = g_hash_table_lookup (priv->hash_table, key);
@@ -420,7 +420,7 @@ on_tile_filled (ShumateTileCache *tile_cache,
   ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (tile_cache);
   ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
   GList *link;
-  gchar *key;
+  char *key;
 
   key = generate_queue_key (memory_cache, tile);
   link = g_hash_table_lookup (priv->hash_table, key);

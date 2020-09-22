@@ -43,10 +43,10 @@ typedef struct
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateMapSourceChain, shumate_map_source_chain, SHUMATE_TYPE_MAP_SOURCE);
 
-static const gchar *get_id (ShumateMapSource *map_source);
-static const gchar *get_name (ShumateMapSource *map_source);
-static const gchar *get_license (ShumateMapSource *map_source);
-static const gchar *get_license_uri (ShumateMapSource *map_source);
+static const char *get_id (ShumateMapSource *map_source);
+static const char *get_name (ShumateMapSource *map_source);
+static const char *get_license (ShumateMapSource *map_source);
+static const char *get_license_uri (ShumateMapSource *map_source);
 static guint get_min_zoom_level (ShumateMapSource *map_source);
 static guint get_max_zoom_level (ShumateMapSource *map_source);
 static guint get_tile_size (ShumateMapSource *map_source);
@@ -112,7 +112,7 @@ shumate_map_source_chain_new (void)
 }
 
 
-static const gchar *
+static const char *
 get_id (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
@@ -125,7 +125,7 @@ get_id (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_name (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
@@ -138,7 +138,7 @@ get_name (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
@@ -151,7 +151,7 @@ get_license (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license_uri (ShumateMapSource *map_source)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);

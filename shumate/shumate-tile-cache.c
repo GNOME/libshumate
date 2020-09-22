@@ -30,10 +30,10 @@
 
 G_DEFINE_ABSTRACT_TYPE (ShumateTileCache, shumate_tile_cache, SHUMATE_TYPE_MAP_SOURCE)
 
-static const gchar *get_id (ShumateMapSource * map_source);
-static const gchar *get_name (ShumateMapSource *map_source);
-static const gchar *get_license (ShumateMapSource *map_source);
-static const gchar *get_license_uri (ShumateMapSource *map_source);
+static const char *get_id (ShumateMapSource * map_source);
+static const char *get_name (ShumateMapSource *map_source);
+static const char *get_license (ShumateMapSource *map_source);
+static const char *get_license_uri (ShumateMapSource *map_source);
 static guint get_min_zoom_level (ShumateMapSource *map_source);
 static guint get_max_zoom_level (ShumateMapSource *map_source);
 static guint get_tile_size (ShumateMapSource *map_source);
@@ -80,7 +80,7 @@ shumate_tile_cache_init (ShumateTileCache *tile_cache)
 void
 shumate_tile_cache_store_tile (ShumateTileCache *tile_cache,
     ShumateTile *tile,
-    const gchar *contents,
+    const char *contents,
     gsize size)
 {
   g_return_if_fail (SHUMATE_IS_TILE_CACHE (tile_cache));
@@ -129,7 +129,7 @@ shumate_tile_cache_on_tile_filled (ShumateTileCache *tile_cache,
 }
 
 
-static const gchar *
+static const char *
 get_id (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_TILE_CACHE (map_source), NULL);
@@ -142,7 +142,7 @@ get_id (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_name (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_TILE_CACHE (map_source), NULL);
@@ -155,7 +155,7 @@ get_name (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_TILE_CACHE (map_source), NULL);
@@ -168,7 +168,7 @@ get_license (ShumateMapSource *map_source)
 }
 
 
-static const gchar *
+static const char *
 get_license_uri (ShumateMapSource *map_source)
 {
   g_return_val_if_fail (SHUMATE_IS_TILE_CACHE (map_source), NULL);

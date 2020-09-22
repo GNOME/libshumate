@@ -56,18 +56,18 @@ void shumate_viewport_set_reference_map_source (ShumateViewport  *self,
                                                 ShumateMapSource *map_source);
 ShumateMapSource *shumate_viewport_get_reference_map_source (ShumateViewport  *self);
 
-gdouble shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
-                                                GtkWidget       *widget,
-                                                gdouble          x);
-gdouble shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
+double shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
                                                GtkWidget       *widget,
-                                               gdouble          y);
-gdouble shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
-                                                GtkWidget       *widget,
-                                                gdouble          longitude);
-gdouble shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
+                                               double           x);
+double shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
+                                              GtkWidget       *widget,
+                                              double           y);
+double shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
                                                GtkWidget       *widget,
-                                               gdouble          latitude);
+                                               double           longitude);
+double shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
+                                              GtkWidget       *widget,
+                                              double           latitude);
 
 G_END_DECLS
 

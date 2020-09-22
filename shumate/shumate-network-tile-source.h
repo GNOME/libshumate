@@ -44,34 +44,34 @@ struct _ShumateNetworkTileSourceClass
   ShumateTileSourceClass parent_class;
 };
 
-ShumateNetworkTileSource *shumate_network_tile_source_new_full (const gchar *id,
-    const gchar *name,
-    const gchar *license,
-    const gchar *license_uri,
+ShumateNetworkTileSource *shumate_network_tile_source_new_full (const char *id,
+    const char *name,
+    const char *license,
+    const char *license_uri,
     guint min_zoom,
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    const gchar *uri_format);
+    const char *uri_format);
 
-const gchar *shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source);
+const char *shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
-    const gchar *uri_format);
+    const char *uri_format);
 
 gboolean shumate_network_tile_source_get_offline (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
     gboolean offline);
 
-const gchar *shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source);
+const char *shumate_network_tile_source_get_proxy_uri (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source,
-    const gchar *proxy_uri);
+    const char *proxy_uri);
 
-gint shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source);
+int shumate_network_tile_source_get_max_conns (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source,
-    gint max_conns);
+    int max_conns);
 
 void shumate_network_tile_source_set_user_agent (ShumateNetworkTileSource *tile_source,
-    const gchar *user_agent);
+    const char *user_agent);
 
 G_END_DECLS
 

@@ -91,9 +91,9 @@ GDateTime *shumate_tile_get_modified_time (ShumateTile *self);
 void shumate_tile_set_modified_time (ShumateTile *self,
                                      GDateTime   *modified_time);
 
-const gchar *shumate_tile_get_etag (ShumateTile *self);
+const char *shumate_tile_get_etag (ShumateTile *self);
 void shumate_tile_set_etag (ShumateTile *self,
-                            const gchar *etag);
+                            const char  *etag);
 
 gboolean shumate_tile_get_fade_in (ShumateTile *self);
 void shumate_tile_set_fade_in (ShumateTile *self,
