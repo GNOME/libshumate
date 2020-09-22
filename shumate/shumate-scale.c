@@ -376,7 +376,7 @@ shumate_scale_init (ShumateScale *self)
   self->max_scale_width = 150;
 
   gtk_orientable_set_orientation (GTK_ORIENTABLE (layout), GTK_ORIENTATION_VERTICAL);
-  gtk_widget_add_css_class (self_widget, GTK_STYLE_CLASS_VERTICAL);
+  gtk_widget_add_css_class (self_widget, "vertical");
 
   self->metric_label = gtk_label_new (NULL);
   g_object_set (G_OBJECT (self->metric_label),
