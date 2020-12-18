@@ -27,7 +27,6 @@
 
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-location.h>
-#include <shumate/shumate-bounding-box.h>
 
 #include <gdk/gdk.h>
 #include <glib-object.h>

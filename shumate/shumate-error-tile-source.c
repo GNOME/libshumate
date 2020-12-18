@@ -25,7 +25,6 @@
 #include "shumate-error-tile-source.h"
 
 #include "shumate-debug.h"
-#include "shumate-bounding-box.h"
 #include "shumate-enum-types.h"
 #include "shumate-tile.h"
 

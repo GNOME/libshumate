@@ -28,7 +28,6 @@
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-license.h>
-#include <shumate/shumate-bounding-box.h>
 #include <shumate/shumate-viewport.h>
 
 #include <glib.h>
@@ -82,8 +81,6 @@ void shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value);
 void shumate_view_set_animate_zoom (ShumateView *view,
     gboolean value);
-void shumate_view_set_world (ShumateView *view,
-    ShumateBoundingBox *bbox);
 void shumate_view_add_layer (ShumateView *view,
     ShumateLayer *layer);
 void shumate_view_remove_layer (ShumateView *view,
@@ -94,7 +91,6 @@ gboolean shumate_view_get_kinetic_mode (ShumateView *view);
 gboolean shumate_view_get_zoom_on_double_click (ShumateView *view);
 gboolean shumate_view_get_animate_zoom (ShumateView *view);
 ShumateState shumate_view_get_state (ShumateView *view);
-ShumateBoundingBox *shumate_view_get_world (ShumateView *view);
 
 G_END_DECLS
 

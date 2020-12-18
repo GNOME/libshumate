@@ -39,7 +39,6 @@
 #include "shumate/shumate-marker.h"
 #include "shumate/shumate-view.h"
 #include "shumate/shumate-viewport.h"
-#include "shumate/shumate-bounding-box.h"
 #include "shumate/shumate-scale.h"
 
 #include "shumate/shumate-map-source.h"

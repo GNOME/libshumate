@@ -79,8 +79,6 @@ shumate_view_zoom_out
 shumate_view_set_zoom_level
 shumate_view_set_min_zoom_level
 shumate_view_set_max_zoom_level
-shumate_view_set_world
-shumate_view_get_world
 shumate_view_ensure_visible
 shumate_view_ensure_layers_visible
 shumate_view_set_map_source
@@ -413,24 +411,6 @@ SHUMATE_MAP_SOURCE_FACTORY_GET_CLASS
 <SUBSECTION Private>
 ShumateMapSourceFactoryClass
 ShumateMapSourceFactoryPrivate
-</SECTION>
-
-<SECTION>
-<FILE>shumate-bounding-box</FILE>
-<TITLE>ShumateBoundingBox</TITLE>
-ShumateBoundingBox
-shumate_bounding_box_new
-shumate_bounding_box_copy
-shumate_bounding_box_free
-shumate_bounding_box_get_center
-shumate_bounding_box_compose
-shumate_bounding_box_extend
-shumate_bounding_box_is_valid
-shumate_bounding_box_covers
-<SUBSECTION Standard>
-SHUMATE_BOUNDING_BOX
-SHUMATE_TYPE_BOUNDING_BOX
-shumate_bounding_box_get_type
 </SECTION>
 
 <SECTION>
