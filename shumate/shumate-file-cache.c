@@ -519,7 +519,7 @@ on_pixbuf_created (GObject *source_object,
   /* Retrieve modification time */
   info = g_file_query_info (file,
                             G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                            G_FILE_QUERY_INFO_NONE, NULL, NULL);
+                            G_FILE_QUERY_INFO_NONE, loaded_data->cancellable, NULL);
   if (info)
     {
       g_autoptr(GDateTime) modified_time = g_file_info_get_modification_date_time (info);
@@ -595,6 +595,7 @@ on_file_loaded (GObject      *source_object,
   ShumateTile *tile = loaded_data->tile;
   g_autoptr(GError) error = NULL;
   g_autoptr(GInputStream) input_stream = NULL;
+  GCancellable *cancellable = loaded_data->cancellable;
 
   input_stream = G_INPUT_STREAM (g_file_read_finish (G_FILE (source_object), res, &error));
   if (!input_stream)
@@ -610,7 +611,7 @@ on_file_loaded (GObject      *source_object,
       return;
     }
 
-  gdk_pixbuf_new_from_stream_async (input_stream, NULL, on_pixbuf_created, g_steal_pointer (&loaded_data));
+  gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_steal_pointer (&loaded_data));
 }
 
 
@@ -646,7 +647,7 @@ fill_tile (ShumateMapSource *map_source,
 
       DEBUG ("fill of %s", filename);
 
-      g_file_read_async (file, G_PRIORITY_DEFAULT, NULL, on_file_loaded, user_data);
+      g_file_read_async (file, G_PRIORITY_DEFAULT, cancellable, on_file_loaded, user_data);
     }
   else if (SHUMATE_IS_MAP_SOURCE (next_source))
     shumate_map_source_fill_tile (next_source, tile, cancellable);
