@@ -97,38 +97,37 @@ test_marker_layer_selection (void)
   shumate_marker_layer_add_marker (layer, marker1);
   shumate_marker_layer_add_marker (layer, marker2);
 
-  /* Test that no marker is selected */
+  g_assert_true (shumate_marker_get_selectable (marker1));
+
+  /* Test that no marker is selected initially */
   g_assert_null (shumate_marker_layer_get_selected (layer));
 
-  shumate_marker_set_selected (marker1, TRUE);
-
-  /* Default selection mode is NONE, so make sure nothing is selected */
+  /* Default selection mode is NONE, so make sure nothing can be  selected */
   g_assert_cmpint (shumate_marker_layer_get_selection_mode (layer), ==, GTK_SELECTION_NONE);
+  g_assert_false (shumate_marker_layer_select_marker (layer, marker1));
   g_assert_null (shumate_marker_layer_get_selected (layer));
 
   /* Now test selection mode GTK_SELECTION_SINGLE */
   shumate_marker_layer_set_selection_mode (layer, GTK_SELECTION_SINGLE);
 
   /* Test that selecting a marker works */
-  shumate_marker_set_selected (marker1, TRUE);
+  g_assert_true (shumate_marker_layer_select_marker (layer, marker1));
   g_assert_true (shumate_marker_is_selected (marker1));
 
   /* Test that selecting a marker deselects other markers */
-  shumate_marker_set_selected (marker2, TRUE);
-  /* TODO: Fix */
-  //g_assert_false (shumate_marker_is_selected (marker1));
+  g_assert_true (shumate_marker_layer_select_marker (layer, marker2));
+  g_assert_false (shumate_marker_is_selected (marker1));
   g_assert_true (shumate_marker_is_selected (marker2));
 
   /* Now test selection mode GTK_SELECTION_MULTIPLE */
   shumate_marker_layer_set_selection_mode (layer, GTK_SELECTION_MULTIPLE);
 
   /* Test that marker2 is still selected */
-  /* TODO: Fix */
-  //g_assert_false (shumate_marker_is_selected (marker1));
+  g_assert_false (shumate_marker_is_selected (marker1));
   g_assert_true (shumate_marker_is_selected (marker2));
 
   /* Test that selecting marker1 doesn't deselect marker2 */
-  shumate_marker_set_selected (marker1, TRUE);
+  g_assert_true (shumate_marker_layer_select_marker (layer, marker1));
   g_assert_true (shumate_marker_is_selected (marker1));
   g_assert_true (shumate_marker_is_selected (marker2));
 
@@ -137,16 +136,15 @@ test_marker_layer_selection (void)
   g_assert_null (shumate_marker_layer_get_selected (layer));
 
   /* Test that you can't select anything in GTK_SELECTION_NONE mode */
-  shumate_marker_set_selected (marker1, TRUE);
+  g_assert_false (shumate_marker_layer_select_marker (layer, marker1));
   g_assert_false (shumate_marker_is_selected (marker1));
 
   /* Test select_all and unselect_all */
   shumate_marker_layer_set_selection_mode (layer, GTK_SELECTION_MULTIPLE);
 
   shumate_marker_layer_select_all_markers (layer);
-  /* TODO: Fix */
-  // g_assert_true (shumate_marker_is_selected (marker1));
-  // g_assert_true (shumate_marker_is_selected (marker2));
+  g_assert_true (shumate_marker_is_selected (marker1));
+  g_assert_true (shumate_marker_is_selected (marker2));
 
   shumate_marker_layer_unselect_all_markers (layer);
   g_assert_false (shumate_marker_is_selected (marker1));

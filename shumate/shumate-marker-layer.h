@@ -70,6 +70,8 @@ void shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer);
 void shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer);
 void shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer);
 
+gboolean shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
+void shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
 void shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer);
 void shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer);
 

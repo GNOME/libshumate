@@ -71,7 +71,7 @@ typedef struct
   double lon;
   double lat;
 
-  guint selected    :1;
+  gboolean selected;
 
   gboolean selectable;
   gboolean draggable;
@@ -385,46 +385,13 @@ shumate_marker_new (void)
   return SHUMATE_MARKER (g_object_new (SHUMATE_TYPE_MARKER, NULL));
 }
 
-
-/*
- * shumate_marker_set_selected:
- * @marker: a #ShumateMarker
- * @value: the selected state
- *
- * Sets the marker as selected or not. This will affect the "Selected" look
- * of the marker.
- */
-void
-shumate_marker_set_selected (ShumateMarker *marker,
-                             gboolean       value)
-{
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  if (!priv->selectable)
-    return;
-
-  if (priv->selected != value)
-    {
-      priv->selected = value;
-      if (value)
-        gtk_widget_set_state_flags (GTK_WIDGET (marker),
-                                    GTK_STATE_FLAG_SELECTED, FALSE);
-      else
-        gtk_widget_unset_state_flags (GTK_WIDGET (marker),
-                                      GTK_STATE_FLAG_SELECTED);
-    }
-}
-
-
 /**
  * shumate_marker_is_selected:
  * @marker: a #ShumateMarker
  *
  * Checks whether the marker is selected.
  *
- * Returns: the selected or not state of the marker.
+ * Returns: %TRUE if the marker is selected, otherwise %FALSE
  */
 gboolean
 shumate_marker_is_selected (ShumateMarker *marker)
@@ -560,4 +527,30 @@ shumate_marker_set_child (ShumateMarker *marker,
     gtk_widget_set_parent (priv->child, GTK_WIDGET (marker));
 
   g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_CHILD]);
+}
+
+/**
+ * PRIVATE:shumate_marker_set_selected:
+ * @marker: a #ShumateMarker
+ * @value: %TRUE to select the marker, %FALSE to unselect it
+ *
+ * Sets the selected state flag of the marker widget.
+ */
+void
+shumate_marker_set_selected (ShumateMarker *marker, gboolean value)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  if (priv->selected == value)
+    return;
+
+  priv->selected = value;
+
+  if (value) {
+    gtk_widget_set_state_flags (GTK_WIDGET (marker),
+                                GTK_STATE_FLAG_SELECTED, FALSE);
+  } else {
+    gtk_widget_unset_state_flags (GTK_WIDGET (marker),
+                                  GTK_STATE_FLAG_SELECTED);
+  }
 }

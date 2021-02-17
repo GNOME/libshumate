@@ -45,35 +45,24 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+enum
+{
+  MARKER_SELECTED,
+  MARKER_UNSELECTED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL];
+
+
 typedef struct
 {
   GtkSelectionMode mode;
   ShumateView *view;
+  GList *selected;
 } ShumateMarkerLayerPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER);
-
-static void
-set_selected_all_but_one (ShumateMarkerLayer *self,
-    ShumateMarker *not_selected,
-    gboolean select)
-{
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
-  GtkWidget *child;
-
-  for (child = gtk_widget_get_first_child (GTK_WIDGET (self));
-       child != NULL;
-       child = gtk_widget_get_next_sibling (child))
-    {
-      ShumateMarker *marker = SHUMATE_MARKER (child);
-
-      if (marker != not_selected)
-        {
-          shumate_marker_set_selected (marker, select);
-          shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
-        }
-    }
-}
 
 static void
 on_click_gesture_released (ShumateMarkerLayer *self,
@@ -98,11 +87,14 @@ on_click_gesture_released (ShumateMarkerLayer *self,
   if (!marker)
     return;
 
-  if (priv->mode != GTK_SELECTION_BROWSE || !shumate_marker_is_selected (marker))
-    shumate_marker_set_selected (marker, !shumate_marker_is_selected (marker));
-
-  if ((priv->mode == GTK_SELECTION_SINGLE || priv->mode == GTK_SELECTION_BROWSE) && shumate_marker_is_selected (marker))
-    set_selected_all_but_one (self, marker, FALSE);
+  if (shumate_marker_is_selected (marker)) {
+    if (priv->mode != GTK_SELECTION_BROWSE) {
+      shumate_marker_layer_unselect_marker (self, marker);
+    }
+  }
+  else {
+    shumate_marker_layer_select_marker (self, marker);
+  }
 }
 
 static void
@@ -298,6 +290,18 @@ shumate_marker_layer_dispose (GObject *object)
   G_OBJECT_CLASS (shumate_marker_layer_parent_class)->dispose (object);
 }
 
+
+static void
+shumate_marker_layer_finalize (GObject *object)
+{
+  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
+  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
+
+  g_list_free (priv->selected);
+
+  G_OBJECT_CLASS (shumate_marker_layer_parent_class)->finalize (object);
+}
+
 static void
 shumate_marker_layer_constructed (GObject *object)
 {
@@ -320,6 +324,7 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->dispose = shumate_marker_layer_dispose;
+  object_class->finalize = shumate_marker_layer_finalize;
   object_class->get_property = shumate_marker_layer_get_property;
   object_class->set_property = shumate_marker_layer_set_property;
   object_class->constructed = shumate_marker_layer_constructed;
@@ -340,6 +345,36 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
+
+  /**
+   * ShumateMarkerLayer::marker-selected:
+   * @self: The marker layer emitting the signal
+   * @marker: The marker that was selected
+   *
+   * Emitted when a marker in the layer is selected.
+   */
+  signals[MARKER_SELECTED] =
+    g_signal_new ("marker-selected",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL,
+                  G_TYPE_NONE,
+                  1, SHUMATE_TYPE_MARKER);
+
+  /**
+   * ShumateMarkerLayer::marker-unselected:
+   * @self: The marker layer emitting the signal
+   * @marker: The marker that was unselected
+   *
+   * Emitted when a marker in the layer is unselected.
+   */
+  signals[MARKER_UNSELECTED] =
+    g_signal_new ("marker-unselected",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL, NULL,
+                  G_TYPE_NONE,
+                  1, SHUMATE_TYPE_MARKER);
 }
 
 
@@ -437,12 +472,8 @@ void
 shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
     ShumateMarker *marker)
 {
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
-
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
 
   g_signal_connect_object (G_OBJECT (marker), "notify::latitude",
       G_CALLBACK (marker_position_notify), layer, 0);
@@ -451,6 +482,8 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 
   /*g_signal_connect (G_OBJECT (marker), "drag-motion",
       G_CALLBACK (marker_move_by_cb), layer);*/
+
+  shumate_marker_set_selected (marker, FALSE);
 
   gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (layer), NULL);
   update_marker_visibility (layer, marker);
@@ -521,24 +554,97 @@ shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
  * Returns: (transfer container) (element-type ShumateMarker): the list
  */
 GList *
-shumate_marker_layer_get_selected (ShumateMarkerLayer *layer)
+shumate_marker_layer_get_selected (ShumateMarkerLayer *self)
 {
-  GList *selected = NULL;
-  GtkWidget *child;
+  ShumateMarkerLayerPrivate *priv;
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), FALSE);
+  priv = shumate_marker_layer_get_instance_private (self);
+  return g_list_copy (priv->selected);
+}
 
-  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
 
-  for (child = gtk_widget_get_last_child (GTK_WIDGET (layer));
-       child != NULL;
-       child = gtk_widget_get_prev_sibling (child))
-    {
-      ShumateMarker *marker = SHUMATE_MARKER (child);
+/**
+ * shumate_marker_layer_select_marker:
+ * @self: a #ShumateMarkerLayer
+ * @marker: a #ShumateMarker that is a child of @self
+ *
+ * Selects a marker in this layer.
+ *
+ * If #ShumateMarkerLayer:selection-mode is %GTK_SELECTION_SINGLE or
+ * %GTK_SELECTION_BROWSE, all other markers will be unselected. If the mode is
+ * %GTK_SELECTION_NONE or @marker is not selectable, nothing will happen.
+ *
+ * Returns: %TRUE if the marker is now selected, otherwise %FALSE
+ */
+gboolean
+shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *marker)
+{
+  ShumateMarkerLayerPrivate *priv;
 
-      if (shumate_marker_is_selected (marker))
-        selected = g_list_prepend (selected, marker);
-    }
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
+  g_return_val_if_fail (gtk_widget_get_parent (GTK_WIDGET (marker)) == GTK_WIDGET (self), FALSE);
 
-  return selected;
+  priv = shumate_marker_layer_get_instance_private (self);
+
+  if (!shumate_marker_get_selectable (marker)) {
+    return FALSE;
+  }
+
+  if (shumate_marker_is_selected (marker)) {
+    return TRUE;
+  }
+
+  switch (priv->mode) {
+    case GTK_SELECTION_NONE:
+      return FALSE;
+
+    case GTK_SELECTION_BROWSE:
+    case GTK_SELECTION_SINGLE:
+      shumate_marker_layer_unselect_all_markers (self);
+
+      /* fall through */
+    case GTK_SELECTION_MULTIPLE:
+      priv->selected = g_list_prepend (priv->selected, marker);
+      shumate_marker_set_selected (marker, TRUE);
+      g_signal_emit (self, signals[MARKER_SELECTED], 0, marker);
+      return TRUE;
+
+    default:
+      g_assert_not_reached ();
+  }
+}
+
+
+/**
+ * shumate_marker_layer_unselect_marker:
+ * @self: a #ShumateMarkerLayer
+ * @marker: a #ShumateMarker that is a child of @self
+ *
+ * Unselects a marker in this layer.
+ *
+ * This works even if #ShumateMarkerLayer:selection-mode is
+ * %GTK_SELECTION_BROWSE. Browse mode only prevents user interaction, not the
+ * program, from unselecting a marker.
+ */
+void
+shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self, ShumateMarker *marker)
+{
+  ShumateMarkerLayerPrivate *priv;
+
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
+  g_return_if_fail (SHUMATE_IS_MARKER (marker));
+  g_return_if_fail (gtk_widget_get_parent (GTK_WIDGET (marker)) == GTK_WIDGET (self));
+
+  priv = shumate_marker_layer_get_instance_private (self);
+
+  if (!shumate_marker_is_selected (marker)) {
+    return;
+  }
+
+  priv->selected = g_list_remove (priv->selected, marker);
+  shumate_marker_set_selected (marker, FALSE);
+  g_signal_emit (self, signals[MARKER_UNSELECTED], 0, marker);
 }
 
 
@@ -562,6 +668,10 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
 
   g_signal_handlers_disconnect_by_func (marker,
       G_CALLBACK (marker_move_by_cb), layer);
+
+  if (shumate_marker_is_selected (marker)) {
+    shumate_marker_layer_unselect_marker (layer, marker);
+  }
 
   gtk_widget_unparent (GTK_WIDGET (marker));
 }
@@ -734,11 +844,19 @@ shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer)
  * Unselects all markers in the layer.
  */
 void
-shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer)
+shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *self)
 {
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
+  ShumateMarkerLayerPrivate *priv;
+  g_autoptr(GList) prev_selected = NULL;
 
-  set_selected_all_but_one (layer, NULL, FALSE);
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
+
+  priv = shumate_marker_layer_get_instance_private (self);
+  prev_selected = g_list_copy (priv->selected);
+
+  for (GList *l = prev_selected; l != NULL; l = l->next) {
+    shumate_marker_layer_unselect_marker (self, SHUMATE_MARKER (l->data));
+  }
 }
 
 
@@ -746,14 +864,22 @@ shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer)
  * shumate_marker_layer_select_all_markers:
  * @layer: a #ShumateMarkerLayer
  *
- * Selects all markers in the layer.
+ * Selects all selectable markers in the layer.
  */
 void
-shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer)
+shumate_marker_layer_select_all_markers (ShumateMarkerLayer *self)
 {
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
+  ShumateMarkerLayerPrivate *priv;
+  g_autoptr(GList) children = NULL;
 
-  set_selected_all_but_one (layer, NULL, TRUE);
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
+
+  priv = shumate_marker_layer_get_instance_private (self);
+  children = shumate_marker_layer_get_markers (self);
+
+  for (GList *l = children; l != NULL; l = l->next) {
+    shumate_marker_layer_select_marker (self, SHUMATE_MARKER (l->data));
+  }
 }
 
 
@@ -781,7 +907,7 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
   priv->mode = mode;
 
   if (mode != GTK_SELECTION_MULTIPLE)
-    set_selected_all_but_one (layer, NULL, FALSE);
+    shumate_marker_layer_unselect_all_markers (layer);
 
   g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_SELECTION_MODE]);
 }
