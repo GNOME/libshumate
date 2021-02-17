@@ -328,7 +328,7 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
   ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (self);
   GtkGesture *click_gesture;
 
-  priv->mode = GTK_TYPE_SELECTION_MODE;
+  priv->mode = GTK_SELECTION_NONE;
 
   click_gesture = gtk_gesture_click_new ();
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
