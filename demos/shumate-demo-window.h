@@ -1,6 +1,4 @@
 /*
- * Copyright (C) 2010-2013 Jiri Techet <techet@gmail.com>
- * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
  * Copyright (C) 2021 James Westman <james@jwestman.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -18,29 +16,16 @@
  */
 
 
+#pragma once
+
 #include <shumate/shumate.h>
 
-#include "shumate-demo-window.h"
+G_BEGIN_DECLS
 
+#define SHUMATE_TYPE_DEMO_WINDOW (shumate_demo_window_get_type())
 
-static void
-activate (GtkApplication* app,
-          gpointer        user_data)
-{
-  ShumateDemoWindow *window;
+G_DECLARE_FINAL_TYPE (ShumateDemoWindow, shumate_demo_window, SHUMATE, DEMO_WINDOW, GtkApplicationWindow)
 
-  window = shumate_demo_window_new (app);
-  gtk_widget_show (GTK_WIDGET (window));
-}
+ShumateDemoWindow *shumate_demo_window_new (GtkApplication *app);
 
-
-int
-main (int argc, char *argv[])
-{
-  g_autoptr(GtkApplication) app = NULL;
-
-  app = gtk_application_new ("org.gnome.Shumate.Demo", G_APPLICATION_FLAGS_NONE);
-  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
-
-  return g_application_run (G_APPLICATION (app), argc, argv);
-}
+G_END_DECLS
