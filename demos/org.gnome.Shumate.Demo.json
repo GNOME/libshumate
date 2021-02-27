@@ -3,7 +3,7 @@
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
-    "command" : "minimal",
+    "command" : "shumate-demo",
     "tags" : [
         "devel"
     ],
