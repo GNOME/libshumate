@@ -25,6 +25,9 @@ struct _ShumateDemoWindow
   ShumateView *view;
   GtkOverlay *overlay;
   ShumateLicense *license;
+
+  ShumateMarkerLayer *marker_layer;
+  ShumatePathLayer *path_layer;
 };
 
 G_DEFINE_TYPE (ShumateDemoWindow, shumate_demo_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -36,6 +39,20 @@ shumate_demo_window_new (GtkApplication *app)
   return g_object_new (SHUMATE_TYPE_DEMO_WINDOW,
                        "application", app,
                        NULL);
+}
+
+
+static void
+create_marker (ShumateDemoWindow *self, double lat, double lng)
+{
+  GtkWidget *image = gtk_image_new_from_icon_name ("map-marker-symbolic");
+  ShumateMarker *marker = shumate_marker_new ();
+
+  shumate_location_set_location (SHUMATE_LOCATION (marker), lat, lng);
+  shumate_marker_set_child (marker, image);
+
+  shumate_marker_layer_add_marker (self->marker_layer, marker);
+  shumate_path_layer_add_node (self->path_layer, SHUMATE_LOCATION (marker));
 }
 
 
@@ -80,4 +97,13 @@ shumate_demo_window_init (ShumateDemoWindow *self)
                 "valign", GTK_ALIGN_END,
                 NULL);
   gtk_overlay_add_overlay (self->overlay, GTK_WIDGET (scale));
+
+  self->marker_layer = shumate_marker_layer_new (viewport);
+  shumate_view_add_layer (self->view, SHUMATE_LAYER (self->marker_layer));
+  self->path_layer = shumate_path_layer_new (viewport);
+  shumate_view_add_layer (self->view, SHUMATE_LAYER (self->path_layer));
+
+  create_marker (self, 35.426667, -116.89);
+  create_marker (self, 40.431389, -4.248056);
+  create_marker (self, -35.401389, 148.981667);
 }

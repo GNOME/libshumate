@@ -3,4 +3,7 @@
   <gresource prefix="/org/gnome/Shumate/Demo/ui">
     <file preprocess="xml-stripblanks">shumate-demo-window.ui</file>
   </gresource>
+  <gresource prefix="/org/gnome/Shumate/Demo/icons">
+    <file preprocess="xml-stripblanks">map-marker-symbolic.svg</file>
+  </gresource>
 </gresources>
