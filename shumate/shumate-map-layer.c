@@ -150,8 +150,8 @@ shumate_map_layer_compute_grid (ShumateMapLayer *self)
               gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
               gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, -1);
               if (shumate_tile_get_zoom_level (child) != zoom_level ||
-                  shumate_tile_get_x (child) != x ||
-                  shumate_tile_get_y (child) != y ||
+                  shumate_tile_get_x (child) != (tile_x % source_columns) ||
+                  shumate_tile_get_y (child) != (tile_y % source_rows) ||
                   shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
                 {
                   GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
