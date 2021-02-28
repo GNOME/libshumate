@@ -9,6 +9,7 @@ shumate_demo_sources = [
 
   'shumate-demo.c',
   'shumate-demo-window.c',
+  'shumate-test-tile-source.c',
 ]
 
 shumate_demo = executable(

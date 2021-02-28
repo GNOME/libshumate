@@ -6,8 +6,19 @@
     <property name="title" translatable="yes">Shumate Demo</property>
     <property name="default_width">800</property>
     <property name="default_height">600</property>
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <child>
+          <object class="GtkDropDown" id="layers_dropdown">
+            <property name="model">layers</property>
+            <signal name="notify::selected" handler="on_layers_dropdown_notify_selected" swapped="true" />
+          </object>
+        </child>
+      </object>
+    </child>
     <child>
       <object class="GtkOverlay" id="overlay">
+        <property name="vexpand">True</property>
         <child>
           <object class="ShumateView" id="view">
           </object>
@@ -21,4 +32,10 @@
       </object>
     </child>
   </template>
+  <object class="GtkStringList" id="layers">
+    <items>
+      <item translatable="yes">Mapnik (OSM)</item>
+      <item translatable="yes">Test Pattern</item>
+    </items>
+  </object>
 </interface>
