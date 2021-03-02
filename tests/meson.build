@@ -6,15 +6,16 @@ test_env = [
   'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
 ]
 
-coordinate = executable(
+tests = [
   'coordinate',
-  'coordinate.c',
-  dependencies: libshumate_dep,
-)
+]
 
-test(
-  'coordinate',
-  coordinate,
-  env: test_env
-)
+foreach test : tests
+  executable = executable(
+    test,
+    '@0@.c'.format(test),
+    dependencies: libshumate_dep,
+  )
 
+  test(test, executable, env: test_env)
+endforeach
