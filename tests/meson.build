@@ -8,6 +8,7 @@ test_env = [
 
 tests = [
   'coordinate',
+  'marker',
 ]
 
 foreach test : tests
