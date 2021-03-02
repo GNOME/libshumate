@@ -106,8 +106,8 @@ on_click_gesture_released (ShumateMarkerLayer *self,
 }
 
 static void
-set_marker_position (ShumateMarkerLayer *layer,
-                     ShumateMarker      *marker)
+update_marker_visibility (ShumateMarkerLayer *layer,
+                          ShumateMarker      *marker)
 {
   ShumateViewport *viewport;
   ShumateMapSource *map_source;
@@ -161,7 +161,7 @@ shumate_marker_layer_reposition_markers (ShumateMarkerLayer *self)
        child != NULL;
        child = gtk_widget_get_next_sibling (child))
     {
-      set_marker_position (self, SHUMATE_MARKER (child));
+      update_marker_visibility (self, SHUMATE_MARKER (child));
     }
 }
 
@@ -394,7 +394,7 @@ marker_position_notify (ShumateMarker *marker,
     G_GNUC_UNUSED GParamSpec *pspec,
     ShumateMarkerLayer *layer)
 {
-  set_marker_position (layer, marker);
+  update_marker_visibility (layer, marker);
 }
 
 
@@ -447,7 +447,7 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
       G_CALLBACK (marker_move_by_cb), layer);*/
 
   gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (layer), NULL);
-  set_marker_position (layer, marker);
+  update_marker_visibility (layer, marker);
 }
 
 
