@@ -444,9 +444,6 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
 static void
 shumate_map_layer_init (ShumateMapLayer *self)
 {
-  g_object_set (G_OBJECT (self),
-                "overflow", GTK_OVERFLOW_HIDDEN,
-                NULL);
   self->tiles_positions = g_ptr_array_new_with_free_func ((GDestroyNotify) tile_grid_position_free);
   self->tile_fill = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, g_object_unref);
 }

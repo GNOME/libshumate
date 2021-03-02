@@ -733,6 +733,8 @@ shumate_view_init (ShumateView *view)
   motion_controller = gtk_event_controller_motion_new ();
   g_signal_connect_swapped (motion_controller, "motion", G_CALLBACK (on_motion_controller_motion), view);
   gtk_widget_add_controller (GTK_WIDGET (view), motion_controller);
+
+  gtk_widget_set_overflow (GTK_WIDGET (view), GTK_OVERFLOW_HIDDEN);
 }
 
 /**
