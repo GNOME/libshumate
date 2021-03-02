@@ -57,6 +57,7 @@ enum
 {
   PROP_SELECTABLE = 1,
   PROP_DRAGGABLE,
+  PROP_CHILD,
   N_PROPERTIES,
 
   PROP_LONGITUDE,
@@ -78,6 +79,8 @@ typedef struct
   float click_x;
   float click_y;
   gboolean moved;
+
+  GtkWidget *child;
 } ShumateMarkerPrivate;
 
 static void location_interface_init (ShumateLocationInterface *iface);
@@ -218,6 +221,10 @@ shumate_marker_get_property (GObject *object,
       g_value_set_boolean (value, priv->draggable);
       break;
 
+    case PROP_CHILD:
+      g_value_set_object (value, priv->child);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -263,6 +270,13 @@ shumate_marker_set_property (GObject *object,
         break;
       }
 
+    case PROP_CHILD:
+      {
+        GtkWidget *child = g_value_get_object (value);
+        shumate_marker_set_child (marker, child);
+        break;
+      }
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -271,10 +285,9 @@ shumate_marker_set_property (GObject *object,
 static void
 shumate_marker_dispose (GObject *object)
 {
-  GtkWidget *child;
+  ShumateMarker *marker = SHUMATE_MARKER (object);
 
-  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
-    gtk_widget_unparent (child);
+  shumate_marker_set_child (marker, NULL);
 
   G_OBJECT_CLASS (shumate_marker_parent_class)->dispose (object);
 }
@@ -288,6 +301,18 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
   object_class->get_property = shumate_marker_get_property;
   object_class->set_property = shumate_marker_set_property;
   object_class->dispose = shumate_marker_dispose;
+
+  /**
+   * ShumateMarker:child:
+   *
+   * The child widget of the marker
+   */
+  obj_properties[PROP_CHILD] =
+    g_param_spec_object ("child",
+                         "Child",
+                          "The child widget of the marker",
+                          GTK_TYPE_WIDGET,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMarker:selectable:
@@ -491,3 +516,48 @@ shumate_marker_get_draggable (ShumateMarker *marker)
   return priv->draggable;
 }
 
+/**
+ * shumate_marker_get_child:
+ * @marker: a #ShumateMarker
+ *
+ * Retrieves the current child of @marker.
+ *
+ * Returns: (transfer none) (nullable): a #GtkWidget.
+ */
+GtkWidget *
+shumate_marker_get_child (ShumateMarker *marker)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_return_val_if_fail (SHUMATE_IS_MARKER (marker), NULL);
+
+  return priv->child;
+}
+
+/**
+ * shumate_marker_set_child:
+ * @marker: a #ShumateMarker
+ * @child: (nullable): a #GtkWidget
+ *
+ * Sets the child widget of @marker.
+ */
+void
+shumate_marker_set_child (ShumateMarker *marker,
+                          GtkWidget     *child)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_return_if_fail (SHUMATE_IS_MARKER (marker));
+
+  if (priv->child == child)
+    return;
+
+  g_clear_pointer (&priv->child, gtk_widget_unparent);
+
+  priv->child = child;
+
+  if (priv->child)
+    gtk_widget_set_parent (priv->child, GTK_WIDGET (marker));
+
+  g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_CHILD]);
+}

@@ -45,6 +45,8 @@ shumate_marker_set_draggable
 shumate_marker_get_draggable
 shumate_marker_set_selected
 shumate_marker_get_selected
+shumate_marker_set_child
+shumate_marker_get_child
 shumate_marker_animate_in
 shumate_marker_animate_in_with_delay
 shumate_marker_animate_out
