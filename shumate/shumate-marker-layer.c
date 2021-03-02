@@ -111,10 +111,11 @@ set_marker_position (ShumateMarkerLayer *layer,
 {
   ShumateViewport *viewport;
   ShumateMapSource *map_source;
-  int x, y;
-  int width, height;
+  gboolean within_viewport;
   double lon, lat;
-  GtkAllocation allocation;
+  double x, y;
+  int marker_width, marker_height;
+  int width, height;
 
   g_assert (SHUMATE_IS_MARKER_LAYER (layer));
 
@@ -126,48 +127,28 @@ set_marker_position (ShumateMarkerLayer *layer,
   lon = shumate_location_get_longitude (SHUMATE_LOCATION (marker));
   lat = shumate_location_get_latitude (SHUMATE_LOCATION (marker));
 
-  x = shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon);
-  y = shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat);
-
-  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &allocation.width, NULL, NULL);
-  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &allocation.height, NULL, NULL);
   width = gtk_widget_get_width (GTK_WIDGET (layer));
   height = gtk_widget_get_height (GTK_WIDGET (layer));
-  if (x < 0 && -x < allocation.width/2)
-    {
-      allocation = (GtkAllocation){0, 0, 0, 0};
-      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
-      gtk_widget_hide (GTK_WIDGET (marker));
-      return;
-    }
-  else if (y < 0 && -y < allocation.height/2)
-    {
-      allocation = (GtkAllocation){0, 0, 0, 0};
-      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
-      gtk_widget_hide (GTK_WIDGET (marker));
-      return;
-    }
-  else if (x > width + allocation.width/2)
-    {
-      allocation = (GtkAllocation){0, 0, 0, 0};
-      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
-      gtk_widget_hide (GTK_WIDGET (marker));
-      return;
-    }
-  else if (y > height + allocation.height/2)
-    {
-      allocation = (GtkAllocation){0, 0, 0, 0};
-      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
-      gtk_widget_hide (GTK_WIDGET (marker));
-      return;
-    }
-  else
-    {
-      allocation.x = x - allocation.width/2;
-      allocation.y = y - allocation.height/2;
 
-      gtk_widget_size_allocate (GTK_WIDGET (marker), &allocation, -1);
-      gtk_widget_show (GTK_WIDGET (marker));
+  x = roundf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (marker), lon) + width/2.f);
+  y = roundf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (marker), lat) + height/2.f);
+
+  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
+  gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
+  within_viewport = x > -marker_width && x <= width &&
+                    y > -marker_height && y <= height &&
+                    marker_width < width && marker_height < height;
+
+  gtk_widget_set_child_visible (GTK_WIDGET (marker), within_viewport);
+
+  if (within_viewport)
+    {
+      GtkAllocation marker_allocation;
+
+      gtk_widget_get_allocation (GTK_WIDGET (marker), &marker_allocation);
+
+      if (marker_allocation.x != (int)x || marker_allocation.y != (int)y)
+        gtk_widget_queue_allocate (GTK_WIDGET (layer));
     }
 }
 
@@ -221,8 +202,44 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
                                     int        baseline)
 {
   ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (widget);
+  ShumateViewport *viewport;
+  GtkAllocation allocation;
+  GtkWidget *child;
 
-  shumate_marker_layer_reposition_markers (self);
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+
+  for (child = gtk_widget_get_first_child (GTK_WIDGET (self));
+       child != NULL;
+       child = gtk_widget_get_next_sibling (child))
+    {
+      gboolean within_viewport;
+      double lon, lat;
+      double x, y;
+
+      if (!gtk_widget_should_layout (child))
+        continue;
+
+      lon = shumate_location_get_longitude (SHUMATE_LOCATION (child));
+      lat = shumate_location_get_latitude (SHUMATE_LOCATION (child));
+
+      x = roundf (shumate_viewport_longitude_to_widget_x (viewport, child, lon) + width/2.f);
+      y = roundf (shumate_viewport_latitude_to_widget_y (viewport, child, lat) + height/2.f);
+
+      allocation.x = x;
+      allocation.y = y;
+
+      gtk_widget_measure (child, GTK_ORIENTATION_HORIZONTAL, -1, 0, &allocation.width, NULL, NULL);
+      gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &allocation.height, NULL, NULL);
+
+      within_viewport = x > -allocation.width && x <= width &&
+                        y > -allocation.height && y <= height &&
+                        allocation.width < width && allocation.height < height;
+
+      gtk_widget_set_child_visible (child, within_viewport);
+
+      if (within_viewport)
+        gtk_widget_size_allocate (child, &allocation, -1);
+    }
 }
 
 static void
