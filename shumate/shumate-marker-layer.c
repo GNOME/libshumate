@@ -130,11 +130,12 @@ update_marker_visibility (ShumateMarkerLayer *layer,
   width = gtk_widget_get_width (GTK_WIDGET (layer));
   height = gtk_widget_get_height (GTK_WIDGET (layer));
 
-  x = roundf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (marker), lon) + width/2.f);
-  y = roundf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (marker), lat) + height/2.f);
-
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
+
+  x = roundf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon) - marker_width/2.f);
+  y = roundf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat) - marker_height/2.f);
+
   within_viewport = x > -marker_width && x <= width &&
                     y > -marker_height && y <= height &&
                     marker_width < width && marker_height < height;
@@ -215,6 +216,7 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
       gboolean within_viewport;
       double lon, lat;
       double x, y;
+      int marker_width, marker_height;
 
       if (!gtk_widget_should_layout (child))
         continue;
@@ -222,14 +224,16 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
       lon = shumate_location_get_longitude (SHUMATE_LOCATION (child));
       lat = shumate_location_get_latitude (SHUMATE_LOCATION (child));
 
-      x = roundf (shumate_viewport_longitude_to_widget_x (viewport, child, lon) + width/2.f);
-      y = roundf (shumate_viewport_latitude_to_widget_y (viewport, child, lat) + height/2.f);
+      gtk_widget_measure (child, GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
+      gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
+
+      x = roundf (shumate_viewport_longitude_to_widget_x (viewport, widget, lon) - marker_width/2.f);
+      y = roundf (shumate_viewport_latitude_to_widget_y (viewport, widget, lat) - marker_height/2.f);
 
       allocation.x = x;
       allocation.y = y;
-
-      gtk_widget_measure (child, GTK_ORIENTATION_HORIZONTAL, -1, 0, &allocation.width, NULL, NULL);
-      gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &allocation.height, NULL, NULL);
+      allocation.width = marker_width;
+      allocation.height = marker_height;
 
       within_viewport = x > -allocation.width && x <= width &&
                         y > -allocation.height && y <= height &&
