@@ -9,6 +9,7 @@ test_env = [
 tests = [
   'coordinate',
   'marker',
+  'viewport',
 ]
 
 foreach test : tests
