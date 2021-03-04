@@ -212,7 +212,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                        "Zoom level",
                        "The level of zoom of the map",
                        0, 20, 3,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateViewport:min-zoom-level:
@@ -224,7 +224,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                        "Min zoom level",
                        "The lowest allowed level of zoom",
                        0, 20, 0,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateViewport:max-zoom-level:
@@ -236,7 +236,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                        "Max zoom level",
                        "The highest allowed level of zoom",
                        0, 20, 20,
-                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateViewport:reference-map-source:
@@ -248,7 +248,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                          "Reference Map Source",
                          "The reference map source being displayed",
                          SHUMATE_TYPE_MAP_SOURCE,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
   
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
