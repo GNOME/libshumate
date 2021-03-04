@@ -343,11 +343,11 @@ shumate_viewport_set_max_zoom_level (ShumateViewport *self,
   if (self->max_zoom_level == max_zoom_level)
     return;
 
-  if (self->zoom_level > max_zoom_level)
-    shumate_viewport_set_zoom_level (self, max_zoom_level);
-  
   self->max_zoom_level = max_zoom_level;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MAX_ZOOM_LEVEL]);
+
+  if (self->zoom_level > max_zoom_level)
+    shumate_viewport_set_zoom_level (self, max_zoom_level);
 }
 
 /**
@@ -382,11 +382,11 @@ shumate_viewport_set_min_zoom_level (ShumateViewport *self,
   if (self->min_zoom_level == min_zoom_level)
     return;
 
-  if (self->zoom_level < min_zoom_level)
-    shumate_viewport_set_zoom_level (self, min_zoom_level);
-
   self->min_zoom_level = min_zoom_level;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MIN_ZOOM_LEVEL]);
+
+  if (self->zoom_level < min_zoom_level)
+    shumate_viewport_set_zoom_level (self, min_zoom_level);
 }
 
 /**
