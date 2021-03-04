@@ -339,6 +339,7 @@ shumate_viewport_set_max_zoom_level (ShumateViewport *self,
                                      guint            max_zoom_level)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+  g_return_if_fail (max_zoom_level >= self->min_zoom_level);
 
   if (self->max_zoom_level == max_zoom_level)
     return;
@@ -378,6 +379,7 @@ shumate_viewport_set_min_zoom_level (ShumateViewport *self,
                                      guint            min_zoom_level)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+  g_return_if_fail (min_zoom_level <= self->max_zoom_level);
 
   if (self->min_zoom_level == min_zoom_level)
     return;
