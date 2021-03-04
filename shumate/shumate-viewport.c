@@ -382,7 +382,7 @@ shumate_viewport_set_min_zoom_level (ShumateViewport *self,
   if (self->min_zoom_level == min_zoom_level)
     return;
 
-  if (self->zoom_level > min_zoom_level)
+  if (self->zoom_level < min_zoom_level)
     shumate_viewport_set_zoom_level (self, min_zoom_level);
 
   self->min_zoom_level = min_zoom_level;
