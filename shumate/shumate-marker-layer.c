@@ -133,8 +133,8 @@ update_marker_visibility (ShumateMarkerLayer *layer,
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
-  x = roundf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon) - marker_width/2.f);
-  y = roundf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat) - marker_height/2.f);
+  x = floorf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon) - marker_width/2.f);
+  y = floorf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat) - marker_height/2.f);
 
   within_viewport = x > -marker_width && x <= width &&
                     y > -marker_height && y <= height &&
@@ -227,8 +227,8 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
       gtk_widget_measure (child, GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
       gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
-      x = roundf (shumate_viewport_longitude_to_widget_x (viewport, widget, lon) - marker_width/2.f);
-      y = roundf (shumate_viewport_latitude_to_widget_y (viewport, widget, lat) - marker_height/2.f);
+      x = floorf (shumate_viewport_longitude_to_widget_x (viewport, widget, lon) - marker_width/2.f);
+      y = floorf (shumate_viewport_latitude_to_widget_y (viewport, widget, lat) - marker_height/2.f);
 
       allocation.x = x;
       allocation.y = y;
