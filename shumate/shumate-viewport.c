@@ -302,7 +302,12 @@ shumate_viewport_set_zoom_level (ShumateViewport *self,
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
-  self->zoom_level = CLAMP (zoom_level, self->min_zoom_level, self->max_zoom_level);
+  zoom_level = CLAMP (zoom_level, self->min_zoom_level, self->max_zoom_level);
+
+  if (self->zoom_level == zoom_level)
+    return;
+
+  self->zoom_level = zoom_level;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ZOOM_LEVEL]);
 }
 
@@ -334,6 +339,9 @@ shumate_viewport_set_max_zoom_level (ShumateViewport *self,
                                      guint            max_zoom_level)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->max_zoom_level == max_zoom_level)
+    return;
 
   if (self->zoom_level > max_zoom_level)
     shumate_viewport_set_zoom_level (self, max_zoom_level);
@@ -370,6 +378,9 @@ shumate_viewport_set_min_zoom_level (ShumateViewport *self,
                                      guint            min_zoom_level)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  if (self->min_zoom_level == min_zoom_level)
+    return;
 
   if (self->zoom_level > min_zoom_level)
     shumate_viewport_set_zoom_level (self, min_zoom_level);
