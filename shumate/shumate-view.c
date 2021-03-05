@@ -90,12 +90,6 @@ static guint signals[LAST_SIGNAL] = { 0, };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
-#define ZOOM_LEVEL_OUT_OF_RANGE(priv, level) \
-  (level < shumate_viewport_get_min_zoom_level (priv->viewport) || \
-           level > shumate_viewport_get_max_zoom_level (priv->viewport) || \
-   level < shumate_map_source_get_min_zoom_level (priv->map_source) || \
-           level > shumate_map_source_get_max_zoom_level (priv->map_source))
-
 /* Between state values for go_to */
 typedef struct
 {
