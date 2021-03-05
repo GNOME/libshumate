@@ -90,6 +90,7 @@ enum
 static guint signals[LAST_SIGNAL] = { 0, };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
+static GQuark go_to_quark;
 
 /* Between state values for go_to */
 typedef struct
@@ -744,6 +745,8 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-view"));
+
+  go_to_quark = g_quark_from_static_string ("go-to");
 }
 
 static void
@@ -885,7 +888,7 @@ shumate_view_stop_go_to (ShumateView *view)
   g_slice_free (GoToContext, priv->goto_context);
   priv->goto_context = NULL;
 
-  g_signal_emit_by_name (view, "animation-completed::go-to", NULL);
+  g_signal_emit (view, signals[ANIMATION_COMPLETED], go_to_quark, NULL);
 }
 
 
