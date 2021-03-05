@@ -227,6 +227,48 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
 }
 */
 
+static void
+move_viewport_from_pixel_offset (ShumateView *self,
+                                 double       latitude,
+                                 double       longitude,
+                                 double       offset_x,
+                                 double       offset_y)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapSource *map_source;
+  double x, y;
+  double lat, lon;
+  guint zoom_level;
+  guint tile_size, max_x, max_y;
+
+  g_assert (SHUMATE_IS_VIEW (self));
+
+  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  if (!map_source)
+    return;
+
+  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  x = shumate_map_source_get_x (map_source, zoom_level, longitude) - offset_x;
+  y = shumate_map_source_get_y (map_source, zoom_level, latitude) - offset_y;
+
+  tile_size = shumate_map_source_get_tile_size (map_source);
+  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
+  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
+
+  x = fmod (x, max_x);
+  if (x < 0)
+    x += max_x;
+
+  y = fmod (y, max_y);
+  if (y < 0)
+    y += max_y;
+
+  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
+  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
+
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
+}
+
 static inline double
 ease_in_out_quad (double p)
 {
@@ -310,38 +352,12 @@ on_drag_gesture_drag_update (ShumateView    *self,
                              GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
-  ShumateMapSource *map_source;
-  double x, y;
-  double lat, lon;
-  guint zoom_level;
-  guint tile_size, max_x, max_y;
 
-  g_assert (SHUMATE_IS_VIEW (self));
-
-  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
-  if (!map_source)
-    return;
-
-  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
-  x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
-  y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
-
-  tile_size = shumate_map_source_get_tile_size (map_source);
-  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
-  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
-
-  x = fmod (x, max_x);
-  if (x < 0)
-    x += max_x;
-
-  y = fmod (y, max_y);
-  if (y < 0)
-    y += max_y;
-
-  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
-  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
-
-  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
+  move_viewport_from_pixel_offset (self,
+                                   priv->drag_begin_lat,
+                                   priv->drag_begin_lon,
+                                   offset_x,
+                                   offset_y);
 }
 
 static void
@@ -351,40 +367,17 @@ on_drag_gesture_drag_end (ShumateView    *self,
                           GtkGestureDrag *gesture)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
-  ShumateMapSource *map_source;
-  double x, y;
-  double lat, lon;
-  guint zoom_level;
-  guint tile_size, max_x, max_y;
 
   g_assert (SHUMATE_IS_VIEW (self));
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
-  map_source = shumate_viewport_get_reference_map_source (priv->viewport);
-  if (!map_source)
-    return;
+  move_viewport_from_pixel_offset (self,
+                                   priv->drag_begin_lat,
+                                   priv->drag_begin_lon,
+                                   offset_x,
+                                   offset_y);
 
-  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
-  x = shumate_map_source_get_x (map_source, zoom_level, priv->drag_begin_lon) - offset_x;
-  y = shumate_map_source_get_y (map_source, zoom_level, priv->drag_begin_lat) - offset_y;
-
-  tile_size = shumate_map_source_get_tile_size (map_source);
-  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
-  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
-
-  x = fmod (x, max_x);
-  if (x < 0)
-    x += max_x;
-
-  y = fmod (y, max_y);
-  if (y < 0)
-    y += max_y;
-
-  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
-  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
-
-  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
   priv->drag_begin_lon = 0;
   priv->drag_begin_lat = 0;
 }
