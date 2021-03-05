@@ -41,20 +41,6 @@ test_viewport_zoom_level_max (void)
   g_assert_cmpuint (shumate_viewport_get_zoom_level (viewport), ==, 10);
 }
 
-static gboolean
-fatal_handler_func (const gchar    *log_domain,
-                    GLogLevelFlags  log_level,
-                    const gchar    *message,
-                    gpointer        user_data)
-{
-  printf ("New fatal log: %s  -  %d  -  %s (%d %d %d)\n",
-          log_domain, log_level, message,
-          G_LOG_LEVEL_ERROR,
-          G_LOG_LEVEL_CRITICAL,
-          G_LOG_LEVEL_WARNING);
-  return TRUE;
-}
-
 static void
 test_viewport_zoom_level_clamp (void)
 {
