@@ -171,20 +171,6 @@ typedef struct
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
 
-static void shumate_view_get_property (GObject *object,
-    guint prop_id,
-    GValue *value,
-    GParamSpec *pspec);
-static void shumate_view_set_property (GObject *object,
-    guint prop_id,
-    const GValue *value,
-    GParamSpec *pspec);
-static void shumate_view_dispose (GObject *object);
-static void shumate_view_go_to_with_duration (ShumateView *view,
-    double latitude,
-    double longitude,
-    guint duration);
-
 /*static gboolean
 zoom_timeout_cb (gpointer data)
 {
