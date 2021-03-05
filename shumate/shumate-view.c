@@ -469,7 +469,7 @@ shumate_view_go_to_with_duration (ShumateView *view,
 
   shumate_view_stop_go_to (view);
 
-  ctx = g_slice_new (GoToContext);
+  ctx = g_new (GoToContext, 1);
   ctx->start_us = g_get_monotonic_time ();
   ctx->duration_us = ms_to_us (duration_ms);
   ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
@@ -903,8 +903,7 @@ shumate_view_stop_go_to (ShumateView *view)
     return;
 
   gtk_widget_remove_tick_callback (GTK_WIDGET (view), priv->goto_context->tick_id);
-  g_slice_free (GoToContext, priv->goto_context);
-  priv->goto_context = NULL;
+  g_clear_pointer (&priv->goto_context, g_free);
 
   g_signal_emit (view, signals[ANIMATION_COMPLETED], go_to_quark, NULL);
 }
