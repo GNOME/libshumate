@@ -65,6 +65,10 @@ void shumate_view_go_to (ShumateView *view,
     double longitude);
 void shumate_view_stop_go_to (ShumateView *view);
 
+guint shumate_view_get_go_to_duration (ShumateView *self);
+void shumate_view_set_go_to_duration (ShumateView *self,
+                                      guint        duration);
+
 void shumate_view_set_map_source (ShumateView *view,
     ShumateMapSource *map_source);
 void shumate_view_add_overlay_source (ShumateView *view,

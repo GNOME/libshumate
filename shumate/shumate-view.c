@@ -454,7 +454,6 @@ shumate_view_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateView *view = SHUMATE_VIEW (object);
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
 
   switch (prop_id)
     {
@@ -475,7 +474,7 @@ shumate_view_set_property (GObject *object,
       break;
 
     case PROP_GOTO_ANIMATION_DURATION:
-      priv->goto_duration = g_value_get_uint (value);
+      shumate_view_set_go_to_duration (view, g_value_get_uint (value));
       break;
 
     default:
@@ -904,6 +903,47 @@ shumate_view_go_to_with_duration (ShumateView *view,
   //    view);
 
   //clutter_timeline_start (ctx->timeline);
+}
+
+/**
+ * shumate_view_get_go_to_duration:
+ * @self: a #ShumateView
+ *
+ * Get the 'goto-animation-duration' property.
+ *
+ * Returns: the animation duration when calling shumate_view_go_to(),
+ *   in milliseconds.
+ */
+guint
+shumate_view_get_go_to_duration (ShumateView *self)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  g_return_val_if_fail (SHUMATE_IS_VIEW (self), 0);
+
+  return priv->goto_duration;
+}
+
+/**
+ * shumate_view_set_go_to_duration:
+ * @self: a #ShumateView
+ * @duration: the animation duration, in milliseconds
+ *
+ * Set the duration of the transition of shumate_view_go_to().
+ */
+void
+shumate_view_set_go_to_duration (ShumateView *self,
+                                 guint        duration)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  g_return_if_fail (SHUMATE_IS_VIEW (self));
+
+  if (priv->goto_duration == duration)
+    return;
+
+  priv->goto_duration = duration;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_GOTO_ANIMATION_DURATION]);
 }
 
 /**
