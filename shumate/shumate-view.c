@@ -928,7 +928,7 @@ shumate_view_go_to (ShumateView *view,
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
   g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
-  g_return_if_fail (longitude >= SHUMATE_MAX_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
+  g_return_if_fail (longitude >= SHUMATE_MIN_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
 
   duration = priv->go_to_duration;
   if (duration == 0) /* calculate duration from zoom level */
