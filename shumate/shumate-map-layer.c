@@ -91,208 +91,13 @@ shumate_map_layer_get_tile_child (ShumateMapLayer *self,
 }
 
 static void
-shumate_map_layer_compute_grid (ShumateMapLayer *self)
+recompute_grid (ShumateMapLayer *self,
+                int              width,
+                int              height)
 {
-  guint tile_size;
-  guint zoom_level;
-  double center_latitude, center_longitude;
-  guint center_x, center_y;
-  int x_offset, y_offset;
-  guint tile_x, tile_y;
-  guint tile_initial_x, tile_initial_y;
-  guint source_rows, source_columns;
-  int width, height;
-  GtkAllocation child_allocation;
-  ShumateViewport *viewport;
-
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
-  zoom_level = shumate_viewport_get_zoom_level (viewport);
-  center_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
-  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
-  center_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, center_longitude);
-  center_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, center_latitude);
-  source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
-  source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
-  width = gtk_widget_get_width (GTK_WIDGET (self));
-  height = gtk_widget_get_height (GTK_WIDGET (self));
-
-  // This is the (x,y) of the top left ShumateTile
-  tile_initial_x = (center_x - width/2)/tile_size;
-  tile_initial_y = (center_y - height/2)/tile_size;
-
-  x_offset = (center_x - tile_initial_x * tile_size) - width/2;
-  y_offset = (center_y - tile_initial_y * tile_size) - height/2;
-  child_allocation.x = -x_offset;
-  child_allocation.width = tile_size;
-  child_allocation.height = tile_size;
-
-  tile_x = tile_initial_x;
-  for (int x = 0; x < self->required_tiles_x; x++)
-    {
-      child_allocation.y = -y_offset;
-      tile_y = tile_initial_y;
-      for (int y = 0; y < self->required_tiles_y; y++)
-        {
-          TileGridPosition *tile_child;
-          ShumateTile *child;
-
-          tile_child = shumate_map_layer_get_tile_child (self, x, y);
-          if (!tile_child)
-            {
-              g_critical ("Unable to find tile at (%u;%u)", x, y);
-            }
-          else
-            {
-              child = tile_child->tile;
-              gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
-              gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, -1);
-              if (shumate_tile_get_zoom_level (child) != zoom_level ||
-                  shumate_tile_get_x (child) != (tile_x % source_columns) ||
-                  shumate_tile_get_y (child) != (tile_y % source_rows) ||
-                  shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
-                {
-                  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
-                  if (cancellable)
-                    g_cancellable_cancel (cancellable);
-
-                  shumate_tile_set_zoom_level (child, zoom_level);
-                  shumate_tile_set_x (child, tile_x % source_columns);
-                  shumate_tile_set_y (child, tile_y % source_rows);
-
-                  cancellable = g_cancellable_new ();
-                  shumate_tile_set_texture (child, NULL);
-                  shumate_map_source_fill_tile (self->map_source, child, cancellable);
-                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
-                }
-            }
-
-          child_allocation.y += tile_size;
-          tile_y++;
-        }
-
-      child_allocation.x += tile_size;
-      tile_x++;
-    }
-}
-
-static void
-on_view_longitude_changed (ShumateMapLayer *self,
-                           GParamSpec      *pspec,
-                           ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  shumate_map_layer_compute_grid (self);
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-on_view_latitude_changed (ShumateMapLayer *self,
-                          GParamSpec      *pspec,
-                          ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  shumate_map_layer_compute_grid (self);
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-on_view_zoom_level_changed (ShumateMapLayer *self,
-                            GParamSpec      *pspec,
-                            ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  shumate_map_layer_compute_grid (self);
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-shumate_map_layer_set_property (GObject      *object,
-                                guint         property_id,
-                                const GValue *value,
-                                GParamSpec   *pspec)
-{
-  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
-
-  switch (property_id)
-    {
-    case PROP_MAP_SOURCE:
-      g_set_object (&self->map_source, g_value_get_object (value));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
-
-static void
-shumate_map_layer_get_property (GObject    *object,
-                                guint       property_id,
-                                GValue     *value,
-                                GParamSpec *pspec)
-{
-  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
-
-  switch (property_id)
-    {
-    case PROP_MAP_SOURCE:
-      g_value_set_object (value, self->map_source);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
-      break;
-    }
-}
-
-static void
-shumate_map_layer_dispose (GObject *object)
-{
-  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
-  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  GtkWidget *child;
-
-  g_signal_handlers_disconnect_by_data (viewport, self);
-  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
-    gtk_widget_unparent (child);
-
-  g_clear_pointer (&self->tile_fill, g_hash_table_unref);
-  g_clear_pointer (&self->tiles_positions, g_ptr_array_unref);
-  g_clear_object (&self->map_source);
-
-  G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
-}
-
-static void
-shumate_map_layer_constructed (GObject *object)
-{
-  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
-  ShumateViewport *viewport;
-
-  G_OBJECT_CLASS (shumate_map_layer_parent_class)->constructed (object);
-
-  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-
-}
-
-static void
-shumate_map_layer_size_allocate (GtkWidget *widget,
-                                 int        width,
-                                 int        height,
-                                 int        baseline)
-{
-  ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
-  guint tile_size;
+  GtkWidget *widget = GTK_WIDGET (self);
   guint required_tiles_x, required_tiles_y;
+  guint tile_size;
 
   tile_size = shumate_map_source_get_tile_size (self->map_source);
   required_tiles_x = (width / tile_size) + 2;
@@ -378,8 +183,229 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
 
       self->required_tiles_y = required_tiles_y;
     }
+}
 
-  shumate_map_layer_compute_grid (self);
+static gboolean
+grid_needs_recompute (ShumateMapLayer *self,
+                      int              width,
+                      int              height)
+{
+  guint required_tiles_x, required_tiles_y;
+  guint tile_size;
+
+  tile_size = shumate_map_source_get_tile_size (self->map_source);
+  required_tiles_x = (width / tile_size) + 2;
+  required_tiles_y = (height / tile_size) + 2;
+
+  return self->required_tiles_x != required_tiles_x ||
+         self->required_tiles_y != required_tiles_y;
+}
+
+static void
+maybe_recompute_grid (ShumateMapLayer *self)
+{
+  int width, height;
+
+  width = gtk_widget_get_width (GTK_WIDGET (self));
+  height = gtk_widget_get_height (GTK_WIDGET (self));
+
+  if (grid_needs_recompute (self, width, height))
+    recompute_grid (self, width, height);
+}
+
+static void
+on_view_longitude_changed (ShumateMapLayer *self,
+                           GParamSpec      *pspec,
+                           ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  maybe_recompute_grid (self);
+  gtk_widget_queue_allocate (GTK_WIDGET (self));
+}
+
+static void
+on_view_latitude_changed (ShumateMapLayer *self,
+                          GParamSpec      *pspec,
+                          ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  maybe_recompute_grid (self);
+  gtk_widget_queue_allocate (GTK_WIDGET (self));
+}
+
+static void
+on_view_zoom_level_changed (ShumateMapLayer *self,
+                            GParamSpec      *pspec,
+                            ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  maybe_recompute_grid (self);
+  gtk_widget_queue_allocate (GTK_WIDGET (self));
+}
+
+static void
+shumate_map_layer_set_property (GObject      *object,
+                                guint         property_id,
+                                const GValue *value,
+                                GParamSpec   *pspec)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
+
+  switch (property_id)
+    {
+    case PROP_MAP_SOURCE:
+      g_set_object (&self->map_source, g_value_get_object (value));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+shumate_map_layer_get_property (GObject    *object,
+                                guint       property_id,
+                                GValue     *value,
+                                GParamSpec *pspec)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
+
+  switch (property_id)
+    {
+    case PROP_MAP_SOURCE:
+      g_value_set_object (value, self->map_source);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
+      break;
+    }
+}
+
+static void
+shumate_map_layer_dispose (GObject *object)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  GtkWidget *child;
+
+  g_signal_handlers_disconnect_by_data (viewport, self);
+  while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
+    gtk_widget_unparent (child);
+
+  g_clear_pointer (&self->tile_fill, g_hash_table_unref);
+  g_clear_pointer (&self->tiles_positions, g_ptr_array_unref);
+  g_clear_object (&self->map_source);
+
+  G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
+}
+
+static void
+shumate_map_layer_constructed (GObject *object)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
+  ShumateViewport *viewport;
+
+  G_OBJECT_CLASS (shumate_map_layer_parent_class)->constructed (object);
+
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
+  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
+  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
+
+}
+
+static void
+shumate_map_layer_size_allocate (GtkWidget *widget,
+                                 int        width,
+                                 int        height,
+                                 int        baseline)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
+  ShumateViewport *viewport;
+  GtkAllocation child_allocation;
+  guint tile_size;
+  guint zoom_level;
+  double center_latitude, center_longitude;
+  guint center_x, center_y;
+  int x_offset, y_offset;
+  guint tile_x, tile_y;
+  guint tile_initial_x, tile_initial_y;
+  guint source_rows, source_columns;
+
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  tile_size = shumate_map_source_get_tile_size (self->map_source);
+  zoom_level = shumate_viewport_get_zoom_level (viewport);
+  center_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
+  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
+  center_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, center_longitude);
+  center_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, center_latitude);
+  source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
+  source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
+
+  // This is the (x,y) of the top left ShumateTile
+  tile_initial_x = (center_x - width/2)/tile_size;
+  tile_initial_y = (center_y - height/2)/tile_size;
+
+  x_offset = (center_x - tile_initial_x * tile_size) - width/2;
+  y_offset = (center_y - tile_initial_y * tile_size) - height/2;
+  child_allocation.x = -x_offset;
+  child_allocation.width = tile_size;
+  child_allocation.height = tile_size;
+
+  tile_x = tile_initial_x;
+  for (int x = 0; x < self->required_tiles_x; x++)
+    {
+      child_allocation.y = -y_offset;
+      tile_y = tile_initial_y;
+      for (int y = 0; y < self->required_tiles_y; y++)
+        {
+          TileGridPosition *tile_child;
+          ShumateTile *child;
+
+          tile_child = shumate_map_layer_get_tile_child (self, x, y);
+          if (!tile_child)
+            {
+              g_critical ("Unable to find tile at (%u;%u)", x, y);
+            }
+          else
+            {
+              child = tile_child->tile;
+
+              gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
+              gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, baseline);
+
+              if (shumate_tile_get_zoom_level (child) != zoom_level ||
+                  shumate_tile_get_x (child) != (tile_x % source_columns) ||
+                  shumate_tile_get_y (child) != (tile_y % source_rows) ||
+                  shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
+                {
+                  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
+                  if (cancellable)
+                    g_cancellable_cancel (cancellable);
+
+                  shumate_tile_set_zoom_level (child, zoom_level);
+                  shumate_tile_set_x (child, tile_x % source_columns);
+                  shumate_tile_set_y (child, tile_y % source_rows);
+
+                  cancellable = g_cancellable_new ();
+                  shumate_tile_set_texture (child, NULL);
+                  shumate_map_source_fill_tile (self->map_source, child, cancellable);
+                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
+                }
+            }
+
+          child_allocation.y += tile_size;
+          tile_y++;
+        }
+
+      child_allocation.x += tile_size;
+      tile_x++;
+    }
 }
 
 static void
