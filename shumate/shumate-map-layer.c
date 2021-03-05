@@ -404,32 +404,31 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
           if (!tile_child)
             {
               g_critical ("Unable to find tile at (%u;%u)", x, y);
+              continue;
             }
-          else
+
+          child = tile_child->tile;
+
+          gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
+          gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, baseline);
+
+          if (shumate_tile_get_zoom_level (child) != zoom_level ||
+              shumate_tile_get_x (child) != (tile_x % source_columns) ||
+              shumate_tile_get_y (child) != (tile_y % source_rows) ||
+              shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
             {
-              child = tile_child->tile;
+              GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
+              if (cancellable)
+                g_cancellable_cancel (cancellable);
 
-              gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
-              gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, baseline);
+              shumate_tile_set_zoom_level (child, zoom_level);
+              shumate_tile_set_x (child, tile_x % source_columns);
+              shumate_tile_set_y (child, tile_y % source_rows);
 
-              if (shumate_tile_get_zoom_level (child) != zoom_level ||
-                  shumate_tile_get_x (child) != (tile_x % source_columns) ||
-                  shumate_tile_get_y (child) != (tile_y % source_rows) ||
-                  shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
-                {
-                  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
-                  if (cancellable)
-                    g_cancellable_cancel (cancellable);
-
-                  shumate_tile_set_zoom_level (child, zoom_level);
-                  shumate_tile_set_x (child, tile_x % source_columns);
-                  shumate_tile_set_y (child, tile_y % source_rows);
-
-                  cancellable = g_cancellable_new ();
-                  shumate_tile_set_texture (child, NULL);
-                  shumate_map_source_fill_tile (self->map_source, child, cancellable);
-                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
-                }
+              cancellable = g_cancellable_new ();
+              shumate_tile_set_texture (child, NULL);
+              shumate_map_source_fill_tile (self->map_source, child, cancellable);
+              g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
             }
 
           child_allocation.y += tile_size;
