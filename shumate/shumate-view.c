@@ -55,6 +55,7 @@
 
 #include "shumate.h"
 #include "shumate-enum-types.h"
+#include "shumate-kinetic-scrolling-private.h"
 #include "shumate-marshal.h"
 #include "shumate-map-layer.h"
 #include "shumate-map-source.h"
@@ -68,6 +69,8 @@
 #include <glib-object.h>
 #include <gtk/gtk.h>
 #include <math.h>
+
+#define DECELERATION_FRICTION 4.0
 
 enum
 {
@@ -116,6 +119,15 @@ typedef struct
   int size;
 } FillTileCallbackData;
 
+typedef struct
+{
+  ShumateKineticScrolling *kinetic_scrolling;
+  ShumateView *view;
+  double start_lat;
+  double start_lon;
+  int64_t last_deceleration_time_us;
+  graphene_vec2_t direction;
+} KineticScrollData;
 
 typedef struct
 {
@@ -143,6 +155,8 @@ typedef struct
 
   // shumate_view_go_to's context, kept for stop_go_to
   GoToContext *goto_context;
+
+  guint deceleration_tick_id;
 
   int tiles_loading;
 
@@ -269,6 +283,115 @@ move_viewport_from_pixel_offset (ShumateView *self,
   shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
 }
 
+static void
+cancel_deceleration (ShumateView *self)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+
+  if (priv->deceleration_tick_id > 0)
+    {
+      gtk_widget_remove_tick_callback (GTK_WIDGET (self), priv->deceleration_tick_id);
+      priv->deceleration_tick_id = 0;
+    }
+}
+
+static gboolean
+view_deceleration_tick_cb (GtkWidget     *widget,
+                           GdkFrameClock *frame_clock,
+                           gpointer       user_data)
+{
+  KineticScrollData *data = user_data;
+  ShumateView *view = data->view;
+  int64_t current_time_us;
+  double elapsed_us;
+  double position;
+
+  g_assert (SHUMATE_IS_VIEW (view));
+
+  current_time_us = gdk_frame_clock_get_frame_time (frame_clock);
+  elapsed_us = current_time_us - data->last_deceleration_time_us;
+
+  /* The frame clock can sometimes fire immediately after adding a tick callback,
+   * in which case no time has passed, making it impossible to calculate the
+   * kinetic factor. If this is the case, wait for the next tick.
+   */
+  if (G_APPROX_VALUE (elapsed_us, 0.0, FLT_EPSILON))
+    return G_SOURCE_CONTINUE;
+
+  data->last_deceleration_time_us = current_time_us;
+
+  if (data->kinetic_scrolling &&
+      shumate_kinetic_scrolling_tick (data->kinetic_scrolling, elapsed_us, &position))
+    {
+      graphene_vec2_t new_positions;
+
+      graphene_vec2_init (&new_positions, position, position);
+      graphene_vec2_multiply (&new_positions, &data->direction, &new_positions);
+
+      move_viewport_from_pixel_offset (view,
+                                       data->start_lat,
+                                       data->start_lon,
+                                       graphene_vec2_get_x (&new_positions),
+                                       graphene_vec2_get_y (&new_positions));
+    }
+  else
+    {
+      g_clear_pointer (&data->kinetic_scrolling, shumate_kinetic_scrolling_free);
+    }
+
+  if (!data->kinetic_scrolling)
+    {
+      cancel_deceleration (view);
+      return G_SOURCE_REMOVE;
+    }
+
+  return G_SOURCE_CONTINUE;
+}
+
+
+static void
+kinetic_scroll_data_free (KineticScrollData *data)
+{
+  if (data == NULL)
+    return;
+
+  g_clear_pointer (&data->kinetic_scrolling, shumate_kinetic_scrolling_free);
+  g_free (data);
+}
+
+static void
+start_deceleration (ShumateView *self,
+                    double       h_velocity,
+                    double       v_velocity)
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  GdkFrameClock *frame_clock;
+  KineticScrollData *data;
+  graphene_vec2_t velocity;
+
+  g_assert (priv->deceleration_tick_id == 0);
+
+  frame_clock = gtk_widget_get_frame_clock (GTK_WIDGET (self));
+
+  graphene_vec2_init (&velocity, h_velocity, v_velocity);
+
+  data = g_new0 (KineticScrollData, 1);
+  data->view = self;
+  data->last_deceleration_time_us = gdk_frame_clock_get_frame_time (frame_clock);
+  data->start_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  data->start_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  graphene_vec2_normalize (&velocity, &data->direction);
+  data->kinetic_scrolling =
+    shumate_kinetic_scrolling_new (DECELERATION_FRICTION,
+                                   graphene_vec2_length (&velocity));
+
+  priv->deceleration_tick_id =
+    gtk_widget_add_tick_callback (GTK_WIDGET (self),
+                                  view_deceleration_tick_cb,
+                                  data,
+                                  (GDestroyNotify) kinetic_scroll_data_free);
+}
+
 static inline double
 ease_in_out_quad (double p)
 {
@@ -339,6 +462,8 @@ on_drag_gesture_drag_begin (ShumateView    *self,
 
   g_assert (SHUMATE_IS_VIEW (self));
 
+  cancel_deceleration (self);
+
   priv->drag_begin_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
   priv->drag_begin_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
 
@@ -380,6 +505,15 @@ on_drag_gesture_drag_end (ShumateView    *self,
 
   priv->drag_begin_lon = 0;
   priv->drag_begin_lat = 0;
+}
+
+static void
+view_swipe_cb (GtkGestureSwipe *swipe_gesture,
+               double           velocity_x,
+               double           velocity_y,
+               ShumateView     *self)
+{
+  start_deceleration (self, velocity_x, velocity_y);
 }
 
 static gboolean
@@ -767,6 +901,7 @@ shumate_view_init (ShumateView *view)
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
   GtkEventController *motion_controller;
+  GtkGesture *swipe_gesture;
 
   shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
@@ -795,6 +930,10 @@ shumate_view_init (ShumateView *view)
   g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), view);
   g_signal_connect_swapped (drag_gesture, "drag-end", G_CALLBACK (on_drag_gesture_drag_end), view);
   gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (drag_gesture));
+
+  swipe_gesture = gtk_gesture_swipe_new ();
+  g_signal_connect (swipe_gesture, "swipe", G_CALLBACK (view_swipe_cb), view);
+  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (swipe_gesture));
 
   scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
   g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), view);
