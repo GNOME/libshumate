@@ -467,6 +467,40 @@ on_motion_controller_motion (ShumateView              *self,
 }
 
 static void
+shumate_view_go_to_with_duration (ShumateView *view,
+                                  double       latitude,
+                                  double       longitude,
+                                  guint        duration) /* In ms */
+{
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  GoToContext *ctx;
+
+  g_return_if_fail (SHUMATE_IS_VIEW (view));
+
+  if (duration == 0)
+    {
+      shumate_view_center_on (view, latitude, longitude);
+      return;
+    }
+
+  shumate_view_stop_go_to (view);
+
+  ctx = g_slice_new (GoToContext);
+  ctx->start_us = g_get_monotonic_time ();
+  ctx->duration_us = ms_to_us (duration);
+  ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->to_latitude = latitude;
+  ctx->to_longitude = longitude;
+  ctx->view = view;
+
+  /* We keep a reference for stop */
+  priv->goto_context = ctx;
+
+  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (view), go_to_tick_cb, ctx, NULL);
+}
+
+static void
 shumate_view_get_property (GObject *object,
     guint prop_id,
     GValue *value,
@@ -916,41 +950,6 @@ shumate_view_go_to (ShumateView *view,
       duration = 500 * shumate_viewport_get_zoom_level (priv->viewport) / 2.0;
 
   shumate_view_go_to_with_duration (view, latitude, longitude, duration);
-}
-
-
-static void
-shumate_view_go_to_with_duration (ShumateView *view,
-                                  double      latitude,
-                                  double      longitude,
-                                  guint        duration) /* In ms */
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-  GoToContext *ctx;
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  if (duration == 0)
-    {
-      shumate_view_center_on (view, latitude, longitude);
-      return;
-    }
-
-  shumate_view_stop_go_to (view);
-
-  ctx = g_slice_new (GoToContext);
-  ctx->start_us = g_get_monotonic_time ();
-  ctx->duration_us = ms_to_us (duration);
-  ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
-  ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  ctx->to_latitude = latitude;
-  ctx->to_longitude = longitude;
-  ctx->view = view;
-
-  /* We keep a reference for stop */
-  priv->goto_context = ctx;
-
-  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (view), go_to_tick_cb, ctx, NULL);
 }
 
 /**
