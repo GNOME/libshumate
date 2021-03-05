@@ -475,8 +475,6 @@ shumate_view_go_to_with_duration (ShumateView *view,
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   GoToContext *ctx;
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
   if (duration_ms == 0)
     {
       shumate_view_center_on (view, latitude, longitude);
@@ -944,6 +942,8 @@ shumate_view_go_to (ShumateView *view,
   guint duration;
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
+  g_return_if_fail (longitude >= SHUMATE_MAX_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
 
   duration = priv->go_to_duration;
   if (duration == 0) /* calculate duration from zoom level */
