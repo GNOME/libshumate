@@ -61,6 +61,7 @@
 #include "shumate-map-source-factory.h"
 #include "shumate-tile.h"
 #include "shumate-license.h"
+#include "shumate-location.h"
 #include "shumate-viewport.h"
 
 #include <glib.h>
@@ -94,11 +95,13 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 typedef struct
 {
   ShumateView *view;
-  //ClutterTimeline *timeline;
+  int64_t duration_us;
+  int64_t start_us;
   double to_latitude;
   double to_longitude;
   double from_latitude;
   double from_longitude;
+  guint tick_id;
 } GoToContext;
 
 
@@ -236,6 +239,66 @@ scroll_event (G_GNUC_UNUSED ShumateView *this,
   return view_set_zoom_level_at (view, zoom_level, TRUE, x, y);
 }
 */
+
+static inline double
+ease_in_out_quad (double p)
+{
+  p = 2.0 * p;
+  if (p < 1.0)
+    return 0.5 * p * p;
+
+  p -= 1.0;
+  return -0.5 * (p * (p - 2) - 1);
+}
+
+static inline int64_t
+ms_to_us (int64_t ms)
+{
+  return ms * 1000;
+}
+
+static gboolean
+go_to_tick_cb (GtkWidget     *widget,
+               GdkFrameClock *frame_clock,
+               gpointer       user_data)
+{
+  GoToContext *ctx = user_data;
+  ShumateViewPrivate *priv = shumate_view_get_instance_private (ctx->view);
+  int64_t now_us;
+  double latitude, longitude;
+  double progress;
+
+  g_assert (SHUMATE_IS_VIEW (ctx->view));
+  g_assert (ctx->duration_us >= 0);
+
+  now_us = g_get_monotonic_time ();
+  gtk_widget_queue_allocate (widget);
+
+  if (now_us >= ctx->start_us + ctx->duration_us)
+    {
+      shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
+                                     ctx->to_latitude,
+                                     ctx->to_longitude);
+      shumate_view_stop_go_to (ctx->view);
+      return G_SOURCE_REMOVE;
+    }
+
+  progress = (now_us - ctx->start_us) / (double) ctx->duration_us;
+  g_assert (progress >= 0.0 && progress <= 1.0);
+
+  /* Apply the ease function to the progress itself */
+  progress = ease_in_out_quad (progress);
+
+  /* Since progress already follows the easing curve, a simple LERP is guaranteed
+   * to follow it too.
+   */
+  latitude = ctx->from_latitude + (ctx->to_latitude - ctx->from_latitude) * progress;
+  longitude = ctx->from_longitude + (ctx->to_longitude - ctx->from_longitude) * progress;
+
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), latitude, longitude);
+
+  return G_SOURCE_CONTINUE;
+}
 
 static void
 on_drag_gesture_drag_begin (ShumateView    *self,
@@ -818,10 +881,7 @@ shumate_view_stop_go_to (ShumateView *view)
   if (priv->goto_context == NULL)
     return;
 
-  //clutter_timeline_stop (priv->goto_context->timeline);
-
-  //g_object_unref (priv->goto_context->timeline);
-
+  gtk_widget_remove_tick_callback (GTK_WIDGET (view), priv->goto_context->tick_id);
   g_slice_free (GoToContext, priv->goto_context);
   priv->goto_context = NULL;
 
@@ -876,33 +936,18 @@ shumate_view_go_to_with_duration (ShumateView *view,
   shumate_view_stop_go_to (view);
 
   ctx = g_slice_new (GoToContext);
-  /*ctx->from_latitude = priv->latitude;
-  ctx->from_longitude = priv->longitude;
-  ctx->to_latitude = CLAMP (latitude, priv->world_bbox->bottom, priv->world_bbox->top);
-  ctx->to_longitude = CLAMP (longitude, priv->world_bbox->left, priv->world_bbox->right);*/
-
+  ctx->start_us = g_get_monotonic_time ();
+  ctx->duration_us = ms_to_us (duration);
+  ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->to_latitude = latitude;
+  ctx->to_longitude = longitude;
   ctx->view = view;
 
   /* We keep a reference for stop */
   priv->goto_context = ctx;
 
-  /* A ClutterTimeline will be responsible for the animation,
-   * at each frame, the current position will be computer and set
-   * using shumate_view_center_on.  Timelines skip frames if the
-   * computer is not fast enough, so we just need to set the duration.
-   *
-   * To have a nice animation, the duration should be longer if the zoom level
-   * is higher and if the points are far away
-   */
-  //ctx->timeline = clutter_timeline_new (duration);
-  //clutter_timeline_set_progress_mode (ctx->timeline, priv->goto_mode);
-
-  //g_signal_connect (ctx->timeline, "new-frame", G_CALLBACK (timeline_new_frame),
-  //    ctx);
-  //g_signal_connect (ctx->timeline, "completed", G_CALLBACK (timeline_completed),
-  //    view);
-
-  //clutter_timeline_start (ctx->timeline);
+  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (view), go_to_tick_cb, ctx, NULL);
 }
 
 /**
