@@ -30,6 +30,8 @@ struct _ShumateMapLayer
   guint required_tiles_x;
   guint required_tiles_y;
   GHashTable *tile_fill;
+
+  guint recompute_grid_idle_id;
 };
 
 G_DEFINE_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE_TYPE_LAYER)
@@ -193,6 +195,8 @@ grid_needs_recompute (ShumateMapLayer *self,
   guint required_tiles_x, required_tiles_y;
   guint tile_size;
 
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
   tile_size = shumate_map_source_get_tile_size (self->map_source);
   required_tiles_x = (width / tile_size) + 2;
   required_tiles_y = (height / tile_size) + 2;
@@ -206,11 +210,39 @@ maybe_recompute_grid (ShumateMapLayer *self)
 {
   int width, height;
 
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
   width = gtk_widget_get_width (GTK_WIDGET (self));
   height = gtk_widget_get_height (GTK_WIDGET (self));
 
   if (grid_needs_recompute (self, width, height))
     recompute_grid (self, width, height);
+}
+
+static gboolean
+recompute_grid_in_idle_cb (gpointer user_data)
+{
+  ShumateMapLayer *self = user_data;
+
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  maybe_recompute_grid (self);
+
+  self->recompute_grid_idle_id = 0;
+  return G_SOURCE_REMOVE;
+}
+
+static void
+queue_recompute_grid_in_idle (ShumateMapLayer *self)
+{
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  if (self->recompute_grid_idle_id > 0)
+    return;
+
+  self->recompute_grid_idle_id = g_idle_add (recompute_grid_in_idle_cb, self);
+  g_source_set_name_by_id (self->recompute_grid_idle_id,
+                           "[shumate] recompute_grid_in_idle_cb");
 }
 
 static void
@@ -297,6 +329,7 @@ shumate_map_layer_dispose (GObject *object)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
 
+  g_clear_handle_id (&self->recompute_grid_idle_id, g_source_remove);
   g_clear_pointer (&self->tile_fill, g_hash_table_unref);
   g_clear_pointer (&self->tiles_positions, g_ptr_array_unref);
   g_clear_object (&self->map_source);
@@ -406,6 +439,12 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
       child_allocation.x += tile_size;
       tile_x++;
     }
+
+  /* We can't recompute while allocating, so queue an idle callback to run
+   * the recomputation outside the allocation cycle.
+   */
+  if (grid_needs_recompute (self, width, height))
+    queue_recompute_grid_in_idle (self);
 }
 
 static void
