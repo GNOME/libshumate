@@ -470,14 +470,14 @@ static void
 shumate_view_go_to_with_duration (ShumateView *view,
                                   double       latitude,
                                   double       longitude,
-                                  guint        duration) /* In ms */
+                                  guint        duration_ms)
 {
   ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
   GoToContext *ctx;
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
 
-  if (duration == 0)
+  if (duration_ms == 0)
     {
       shumate_view_center_on (view, latitude, longitude);
       return;
@@ -487,7 +487,7 @@ shumate_view_go_to_with_duration (ShumateView *view,
 
   ctx = g_slice_new (GoToContext);
   ctx->start_us = g_get_monotonic_time ();
-  ctx->duration_us = ms_to_us (duration);
+  ctx->duration_us = ms_to_us (duration_ms);
   ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
   ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
   ctx->to_latitude = latitude;
