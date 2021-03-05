@@ -82,7 +82,7 @@ enum
   PROP_ZOOM_ON_DOUBLE_CLICK,
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
-  PROP_GOTO_ANIMATION_DURATION,
+  PROP_GO_TO_DURATION,
   N_PROPERTIES
 };
 
@@ -144,7 +144,7 @@ typedef struct
 
   guint zoom_timeout;
 
-  guint goto_duration;
+  guint go_to_duration;
 
   gboolean animating_zoom;
   guint anim_start_zoom_level;
@@ -437,8 +437,8 @@ shumate_view_get_property (GObject *object,
       g_value_set_enum (value, priv->state);
       break;
 
-    case PROP_GOTO_ANIMATION_DURATION:
-      g_value_set_uint (value, priv->goto_duration);
+    case PROP_GO_TO_DURATION:
+      g_value_set_uint (value, priv->go_to_duration);
       break;
 
     default:
@@ -473,7 +473,7 @@ shumate_view_set_property (GObject *object,
       shumate_view_set_animate_zoom (view, g_value_get_boolean (value));
       break;
 
-    case PROP_GOTO_ANIMATION_DURATION:
+    case PROP_GO_TO_DURATION:
       shumate_view_set_go_to_duration (view, g_value_get_uint (value));
       break;
 
@@ -642,17 +642,17 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
    */
 
   /**
-   * ShumateView:goto-animation-duration:
+   * ShumateView:go-to-duration:
    *
-   * The duration of an animation when going to a location.
+   * The duration of an animation when going to a location, in milliseconds.
    * A value of 0 means that the duration is calculated automatically for you.
    *
    * Please note that animation of #shumate_view_ensure_visible also
-   * involves a 'goto' animation.
+   * involves a 'go-to' animation.
    *
    */
-  obj_properties[PROP_GOTO_ANIMATION_DURATION] =
-    g_param_spec_uint ("goto-animation-duration",
+  obj_properties[PROP_GO_TO_DURATION] =
+    g_param_spec_uint ("go-to-duration",
                        "Go to animation duration",
                        "The duration of an animation when going to a location",
                        0, G_MAXUINT, 0,
@@ -702,7 +702,7 @@ shumate_view_init (ShumateView *view)
   priv->tiles_loading = 0;
   priv->animating_zoom = FALSE;
   priv->zoom_actor_timeout = 0;
-  priv->goto_duration = 0;
+  priv->go_to_duration = 0;
   priv->num_right_clones = 0;
   priv->map_clones = NULL;
   priv->user_layer_slots = NULL;
@@ -848,7 +848,7 @@ shumate_view_go_to (ShumateView *view,
 
   g_return_if_fail (SHUMATE_IS_VIEW (view));
 
-  duration = priv->goto_duration;
+  duration = priv->go_to_duration;
   if (duration == 0) /* calculate duration from zoom level */
       duration = 500 * shumate_viewport_get_zoom_level (priv->viewport) / 2.0;
 
@@ -909,7 +909,7 @@ shumate_view_go_to_with_duration (ShumateView *view,
  * shumate_view_get_go_to_duration:
  * @self: a #ShumateView
  *
- * Get the 'goto-animation-duration' property.
+ * Get the 'go-to-duration' property.
  *
  * Returns: the animation duration when calling shumate_view_go_to(),
  *   in milliseconds.
@@ -921,7 +921,7 @@ shumate_view_get_go_to_duration (ShumateView *self)
 
   g_return_val_if_fail (SHUMATE_IS_VIEW (self), 0);
 
-  return priv->goto_duration;
+  return priv->go_to_duration;
 }
 
 /**
@@ -939,11 +939,11 @@ shumate_view_set_go_to_duration (ShumateView *self,
 
   g_return_if_fail (SHUMATE_IS_VIEW (self));
 
-  if (priv->goto_duration == duration)
+  if (priv->go_to_duration == duration)
     return;
 
-  priv->goto_duration = duration;
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_GOTO_ANIMATION_DURATION]);
+  priv->go_to_duration = duration;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_GO_TO_DURATION]);
 }
 
 /**
