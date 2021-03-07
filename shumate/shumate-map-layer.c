@@ -390,16 +390,16 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
 
   x_offset = (center_x - tile_initial_column * tile_size) - width/2;
   y_offset = (center_y - tile_initial_row * tile_size) - height/2;
-  child_allocation.x = -x_offset;
+  child_allocation.y = -y_offset;
   child_allocation.width = tile_size;
   child_allocation.height = tile_size;
 
-  tile_column = tile_initial_column;
-  for (int column = 0; column < self->required_tiles_columns; column++)
+  tile_row = tile_initial_row;
+  for (int row = 0; row < self->required_tiles_rows; row++)
     {
-      child_allocation.y = -y_offset;
-      tile_row = tile_initial_row;
-      for (int row = 0; row < self->required_tiles_rows; row++)
+      child_allocation.x = -x_offset;
+      tile_column = tile_initial_column;
+      for (int column = 0; column < self->required_tiles_columns; column++)
         {
           TileGridPosition *tile_child;
           ShumateTile *child;
@@ -435,12 +435,12 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
               g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
             }
 
-          child_allocation.y += tile_size;
-          tile_row++;
+          child_allocation.x += tile_size;
+          tile_column++;
         }
 
-      child_allocation.x += tile_size;
-      tile_column++;
+      child_allocation.y += tile_size;
+      tile_row++;
     }
 
   /* We can't recompute while allocating, so queue an idle callback to run
