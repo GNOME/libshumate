@@ -85,6 +85,12 @@ void shumate_view_add_layer (ShumateView *view,
     ShumateLayer *layer);
 void shumate_view_remove_layer (ShumateView *view,
     ShumateLayer *layer);
+void shumate_view_insert_layer_behind (ShumateView  *view,
+    ShumateLayer *layer,
+    ShumateLayer *next_sibling);
+void shumate_view_insert_layer_above (ShumateView  *view,
+    ShumateLayer *layer,
+    ShumateLayer *next_sibling);
 
 gboolean shumate_view_get_zoom_on_double_click (ShumateView *view);
 gboolean shumate_view_get_animate_zoom (ShumateView *view);

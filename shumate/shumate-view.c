@@ -1080,6 +1080,52 @@ shumate_view_add_layer (ShumateView  *view,
 
 
 /**
+ * shumate_view_insert_layer_behind:
+ * @view: a #ShumateView
+ * @layer: a #ShumateLayer
+ * @next_sibling: (nullable): a #ShumateLayer that is a child of @view, or %NULL
+ *
+ * Adds @layer to @view behind @next_sibling or, if @next_sibling is %NULL, at
+ * the top of the layer list.
+ */
+void
+shumate_view_insert_layer_behind (ShumateView  *view,
+                                  ShumateLayer *layer,
+                                  ShumateLayer *next_sibling)
+{
+  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_LAYER (layer));
+  g_return_if_fail (next_sibling == NULL || SHUMATE_IS_LAYER (next_sibling));
+  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (view));
+
+  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (view), GTK_WIDGET (next_sibling));
+}
+
+
+/**
+ * shumate_view_insert_layer_above:
+ * @view: a #ShumateView
+ * @layer: a #ShumateLayer
+ * @next_sibling: (nullable): a #ShumateLayer that is a child of @view, or %NULL
+ *
+ * Adds @layer to @view above @next_sibling or, if @next_sibling is %NULL, at
+ * the bottom of the layer list.
+ */
+void
+shumate_view_insert_layer_above (ShumateView  *view,
+                                 ShumateLayer *layer,
+                                 ShumateLayer *next_sibling)
+{
+  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_LAYER (layer));
+  g_return_if_fail (next_sibling == NULL || SHUMATE_IS_LAYER (next_sibling));
+  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (view));
+
+  gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (view), GTK_WIDGET (next_sibling));
+}
+
+
+/**
  * shumate_view_remove_layer:
  * @view: a #ShumateView
  * @layer: a #ShumateLayer
