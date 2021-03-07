@@ -367,8 +367,8 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   GtkAllocation child_allocation;
   guint tile_size;
   guint zoom_level;
-  double center_latitude, center_longitude;
-  guint center_x, center_y;
+  double latitude, longitude;
+  guint longitude_x, latitude_y;
   int x_offset, y_offset;
   guint tile_column, tile_row;
   guint tile_initial_column, tile_initial_row;
@@ -377,19 +377,19 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   tile_size = shumate_map_source_get_tile_size (self->map_source);
   zoom_level = shumate_viewport_get_zoom_level (viewport);
-  center_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
-  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
-  center_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, center_longitude);
-  center_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, center_latitude);
+  latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
+  longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
+  latitude_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, latitude);
+  longitude_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, longitude);
   source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
   source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
   // This is the (column,row) of the top left ShumateTile
-  tile_initial_row = (center_y - height/2)/tile_size;
-  tile_initial_column = (center_x - width/2)/tile_size;
+  tile_initial_row = (latitude_y - height/2)/tile_size;
+  tile_initial_column = (longitude_x - width/2)/tile_size;
 
-  x_offset = (center_x - tile_initial_column * tile_size) - width/2;
-  y_offset = (center_y - tile_initial_row * tile_size) - height/2;
+  x_offset = (longitude_x - tile_initial_column * tile_size) - width/2;
+  y_offset = (latitude_y - tile_initial_row * tile_size) - height/2;
   child_allocation.y = -y_offset;
   child_allocation.width = tile_size;
   child_allocation.height = tile_size;
