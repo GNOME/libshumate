@@ -92,6 +92,91 @@ shumate_map_layer_get_tile_child (ShumateMapLayer *self,
   return NULL;
 }
 
+static inline int
+modadd (int current,
+        int shift,
+        int size)
+{
+  /* This is scary, but the idea behind it is simple: the regular modulo operator
+   * does *not* wrap around when giving it negative numbers. For example, -1 % 8
+   * yields -1 instead of 7.
+   *
+   * The following pair of lines do exactly that, on top of adding a number. This
+   * is so that we can do e.g. (0 + -1) % 8 = 7.
+   */
+  current = current % size;
+  return (size + current + shift) % size;
+}
+
+static void
+maybe_shift_grid (ShumateMapLayer *self,
+                  guint            n_columns,
+                  guint            n_rows,
+                  int              new_first_tile_column,
+                  int              new_first_tile_row)
+{
+  TileGridPosition *first_tile;
+  int first_tile_column;
+  int first_tile_row;
+  int column_backward_diff;
+  int column_forward_diff;
+  int row_backward_diff;
+  int row_forward_diff;
+  int column_diff;
+  int row_diff;
+
+  first_tile = shumate_map_layer_get_tile_child (self, 0, 0);
+  if (!first_tile)
+    return;
+
+  first_tile_column = shumate_tile_get_x (first_tile->tile);
+  first_tile_row = shumate_tile_get_y (first_tile->tile);
+
+  /* The allocation function uses unsigned ints everywhere, and they do wrap
+   * around, so we can often receive super large values here.
+   */
+  new_first_tile_column = new_first_tile_column % n_columns;
+  new_first_tile_row = new_first_tile_row % n_rows;
+
+  if (new_first_tile_column == first_tile_column && new_first_tile_row == first_tile_row)
+    return;
+
+  /* This too looks more complicated than it is. Because all the calculations
+   * are modular, we check which is closest: moving forward or backward.
+   *
+   * For example, in a 8x8 grid, if the first tile is going from 7x0 to 0x0,
+   * the forward diff is 7x0, and the backward diff is 1x0. We want to pick
+   * the backward diff in this case.
+   */
+  column_backward_diff = (new_first_tile_column - first_tile_column) % n_columns;
+  column_forward_diff = (first_tile_column - new_first_tile_column) % n_columns;
+
+  row_backward_diff = (new_first_tile_row - first_tile_row) % n_rows;
+  row_forward_diff = (first_tile_row - new_first_tile_row) % n_rows;
+
+  column_diff = ABS (column_backward_diff) < ABS (column_forward_diff) ? column_backward_diff : -column_forward_diff;
+  row_diff = ABS (row_backward_diff) < ABS (row_forward_diff) ? row_backward_diff : -row_forward_diff;
+
+  /* If the diff is bigger than the number of tiles being displayed in any axis,
+   * there's no point shifting them; they all will need to reload.
+   */
+  if (ABS (column_diff) >= self->required_tiles_columns || ABS (row_diff) >= self->required_tiles_rows)
+    return;
+
+  for (gsize i = 0; i < self->tiles_positions->len; i++)
+    {
+      TileGridPosition *tile_child = g_ptr_array_index (self->tiles_positions, i);
+
+      tile_child->left_attach = modadd (tile_child->left_attach,
+                                        -column_diff,
+                                        self->required_tiles_columns);
+
+      tile_child->top_attach = modadd (tile_child->top_attach,
+                                       -row_diff,
+                                       self->required_tiles_rows);
+    }
+}
+
 static void
 recompute_grid (ShumateMapLayer *self,
                 int              width,
@@ -393,6 +478,10 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   child_allocation.y = -y_offset;
   child_allocation.width = tile_size;
   child_allocation.height = tile_size;
+
+  maybe_shift_grid (self,
+                    source_columns, source_rows,
+                    tile_initial_column, tile_initial_row);
 
   tile_row = tile_initial_row;
   for (int row = 0; row < self->required_tiles_rows; row++)
