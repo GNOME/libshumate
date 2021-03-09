@@ -534,9 +534,9 @@ on_scroll_controller_scroll (ShumateView              *self,
       scroll_latitude = shumate_viewport_widget_y_to_latitude (priv->viewport, GTK_WIDGET (self), priv->current_y);
     }
 
-  if (dy > 0)
+  if (dy < 0)
     shumate_viewport_zoom_in (priv->viewport);
-  else
+  else if (dy > 0)
     shumate_viewport_zoom_out (priv->viewport);
 
   if (map_source)
