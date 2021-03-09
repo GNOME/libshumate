@@ -77,8 +77,6 @@ void shumate_view_remove_overlay_source (ShumateView *view,
     ShumateMapSource *map_source);
 GList *shumate_view_get_overlay_sources (ShumateView *view);
 
-void shumate_view_set_kinetic_mode (ShumateView *view,
-    gboolean kinetic);
 void shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value);
 void shumate_view_set_animate_zoom (ShumateView *view,
@@ -88,7 +86,6 @@ void shumate_view_add_layer (ShumateView *view,
 void shumate_view_remove_layer (ShumateView *view,
     ShumateLayer *layer);
 
-gboolean shumate_view_get_kinetic_mode (ShumateView *view);
 gboolean shumate_view_get_zoom_on_double_click (ShumateView *view);
 gboolean shumate_view_get_animate_zoom (ShumateView *view);
 ShumateState shumate_view_get_state (ShumateView *view);

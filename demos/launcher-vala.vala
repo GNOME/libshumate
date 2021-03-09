@@ -43,7 +43,6 @@ public class Launcher : Gtk.Application {
 
         /* Finish initialising the map view */
         view.get_viewport ().zoom_level = 7;
-        view.kinetic_mode = true;
         view.center_on (45.466, -73.75);
 
         window.present ();

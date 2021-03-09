@@ -81,8 +81,7 @@ enum
 
 enum
 {
-  PROP_KINETIC_MODE = 1,
-  PROP_ZOOM_ON_DOUBLE_CLICK,
+  PROP_ZOOM_ON_DOUBLE_CLICK = 1,
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
   PROP_GO_TO_DURATION,
@@ -147,8 +146,6 @@ typedef struct
 
   gboolean zoom_on_double_click;
   gboolean animate_zoom;
-
-  gboolean kinetic_mode;
 
   ShumateState state; /* View's global state */
 
@@ -621,10 +618,6 @@ shumate_view_get_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_KINETIC_MODE:
-      g_value_set_boolean (value, priv->kinetic_mode);
-      break;
-
     case PROP_ZOOM_ON_DOUBLE_CLICK:
       g_value_set_boolean (value, priv->zoom_on_double_click);
       break;
@@ -657,10 +650,6 @@ shumate_view_set_property (GObject *object,
 
   switch (prop_id)
     {
-    case PROP_KINETIC_MODE:
-      shumate_view_set_kinetic_mode (view, g_value_get_boolean (value));
-      break;
-
     case PROP_ZOOM_ON_DOUBLE_CLICK:
       shumate_view_set_zoom_on_double_click (view, g_value_get_boolean (value));
       break;
@@ -739,18 +728,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
   object_class->finalize = shumate_view_finalize;
   object_class->get_property = shumate_view_get_property;
   object_class->set_property = shumate_view_set_property;
-
-  /**
-   * ShumateView:kinetic-mode:
-   *
-   * Determines whether the view should use kinetic mode.
-   */
-  obj_properties[PROP_KINETIC_MODE] =
-    g_param_spec_boolean ("kinetic-mode",
-                          "Kinetic Mode",
-                          "Determines whether the view should use kinetic mode.",
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateView:zoom-on-double-click:
@@ -883,7 +860,6 @@ shumate_view_init (ShumateView *view)
   priv->viewport = shumate_viewport_new ();
   priv->zoom_on_double_click = TRUE;
   priv->animate_zoom = TRUE;
-  priv->kinetic_mode = FALSE;
   priv->state = SHUMATE_STATE_NONE;
   priv->goto_context = NULL;
   priv->tiles_loading = 0;
@@ -1155,26 +1131,6 @@ shumate_view_set_map_source (ShumateView      *view,
 }
 
 /**
- * shumate_view_set_kinetic_mode:
- * @view: a #ShumateView
- * @kinetic: TRUE for kinetic mode, FALSE for push mode
- *
- * Determines the way the view reacts to scroll events.
- */
-void
-shumate_view_set_kinetic_mode (ShumateView *view,
-                               gboolean     kinetic)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-
-  priv->kinetic_mode = kinetic;
-  //g_object_set (view->priv->kinetic_scroll, "mode", kinetic, NULL);
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_KINETIC_MODE]);
-}
-
-/**
  * shumate_view_set_zoom_on_double_click:
  * @view: a #ShumateView
  * @value: a #gboolean
@@ -1211,24 +1167,6 @@ shumate_view_set_animate_zoom (ShumateView *view,
 
   priv->animate_zoom = value;
   g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ANIMATE_ZOOM]);
-}
-
-/**
- * shumate_view_get_kinetic_mode:
- * @view: a #ShumateView
- *
- * Gets the view's scroll mode behaviour.
- *
- * Returns: TRUE for kinetic mode, FALSE for push mode.
- */
-gboolean
-shumate_view_get_kinetic_mode (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
-
-  return priv->kinetic_mode;
 }
 
 /**
