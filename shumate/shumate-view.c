@@ -81,8 +81,7 @@ enum
 
 enum
 {
-  PROP_DECELERATION = 1,
-  PROP_KINETIC_MODE,
+  PROP_KINETIC_MODE = 1,
   PROP_ZOOM_ON_DOUBLE_CLICK,
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
@@ -626,14 +625,6 @@ shumate_view_get_property (GObject *object,
       g_value_set_boolean (value, priv->kinetic_mode);
       break;
 
-    case PROP_DECELERATION:
-      {
-        double decel = 0.0;
-        //g_object_get (priv->kinetic_scroll, "deceleration", &decel, NULL);
-        g_value_set_double (value, decel);
-        break;
-      }
-
     case PROP_ZOOM_ON_DOUBLE_CLICK:
       g_value_set_boolean (value, priv->zoom_on_double_click);
       break;
@@ -668,10 +659,6 @@ shumate_view_set_property (GObject *object,
     {
     case PROP_KINETIC_MODE:
       shumate_view_set_kinetic_mode (view, g_value_get_boolean (value));
-      break;
-
-    case PROP_DECELERATION:
-      shumate_view_set_deceleration (view, g_value_get_double (value));
       break;
 
     case PROP_ZOOM_ON_DOUBLE_CLICK:
@@ -764,18 +751,6 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                           "Determines whether the view should use kinetic mode.",
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateView:deceleration:
-   *
-   * The deceleration rate for the kinetic mode. The default value is 1.1.
-   */
-  obj_properties[PROP_DECELERATION] =
-    g_param_spec_double ("deceleration",
-                         "Deceleration rate",
-                         "Rate at which the view will decelerate in kinetic mode.",
-                         1.0001, 2.0, 1.1,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateView:zoom-on-double-click:
@@ -1179,26 +1154,6 @@ shumate_view_set_map_source (ShumateView      *view,
   shumate_viewport_set_reference_map_source (priv->viewport, source);
 }
 
-
-/**
- * shumate_view_set_deceleration:
- * @view: a #ShumateView
- * @rate: a #double between 1.001 and 2.0
- *
- * The deceleration rate for the kinetic mode.
- */
-void
-shumate_view_set_deceleration (ShumateView *view,
-                               double      rate)
-{
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-  g_return_if_fail (rate < 2.0 && rate > 1.0001);
-
-  //g_object_set (view->priv->kinetic_scroll, "decel-rate", rate, NULL);
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_DECELERATION]);
-}
-
-
 /**
  * shumate_view_set_kinetic_mode:
  * @view: a #ShumateView
@@ -1257,25 +1212,6 @@ shumate_view_set_animate_zoom (ShumateView *view,
   priv->animate_zoom = value;
   g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ANIMATE_ZOOM]);
 }
-
-/**
- * shumate_view_get_deceleration:
- * @view: a #ShumateView
- *
- * Gets the view's deceleration rate.
- *
- * Returns: the view's deceleration rate.
- */
-double
-shumate_view_get_deceleration (ShumateView *view)
-{
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), 0.0);
-
-  double decel = 0.0;
-  //g_object_get (view->priv->kinetic_scroll, "decel-rate", &decel, NULL);
-  return decel;
-}
-
 
 /**
  * shumate_view_get_kinetic_mode:
