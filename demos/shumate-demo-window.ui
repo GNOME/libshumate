@@ -24,6 +24,12 @@
           </object>
         </child>
         <child type="overlay">
+          <object class="ShumateScale" id="scale">
+            <property name="halign">start</property>
+            <property name="valign">end</property>
+          </object>
+        </child>
+        <child type="overlay">
           <object class="ShumateLicense" id="license">
             <property name="halign">end</property>
             <property name="valign">end</property>

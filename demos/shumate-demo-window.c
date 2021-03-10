@@ -26,6 +26,7 @@ struct _ShumateDemoWindow
 
   ShumateView *view;
   GtkOverlay *overlay;
+  ShumateScale *scale;
   ShumateLicense *license;
   GtkDropDown *layers_dropdown;
 
@@ -127,6 +128,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/ui/shumate-demo-window.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, view);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, overlay);
+  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, scale);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, license);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
   gtk_widget_class_bind_template_callback (widget_class, on_layers_dropdown_notify_selected);
@@ -136,22 +138,16 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
 static void
 shumate_demo_window_init (ShumateDemoWindow *self)
 {
-  ShumateScale *scale;
   ShumateViewport *viewport;
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
   viewport = shumate_view_get_viewport (self->view);
 
-  scale = shumate_scale_new (viewport);
-  g_object_set (scale,
-                "halign", GTK_ALIGN_START,
-                "valign", GTK_ALIGN_END,
-                NULL);
-  gtk_overlay_add_overlay (self->overlay, GTK_WIDGET (scale));
-
   /* Set the map source */
   on_layers_dropdown_notify_selected (self, NULL, self->layers_dropdown);
+
+  shumate_scale_set_viewport (self->scale, viewport);
 
   /* Add the marker layers */
   self->marker_layer = shumate_marker_layer_new (viewport);
