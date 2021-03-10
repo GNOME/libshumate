@@ -45,7 +45,6 @@
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
 #include "shumate-marshal.h"
-#include "shumate-network-tile-source.h"
 #include "shumate-map-source-chain.h"
 
 #include <glib.h>
@@ -61,10 +60,6 @@ struct _ShumateMapSourceFactory
 };
 
 G_DEFINE_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, G_TYPE_OBJECT);
-
-static ShumateMapSource *shumate_map_source_new_generic (
-    ShumateMapSourceDesc *desc);
-
 
 static void
 shumate_map_source_factory_finalize (GObject *object)
@@ -118,7 +113,7 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
 
   factory->registered_sources = NULL;
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OSM_MAPNIK,
         "OpenStreetMap Mapnik",
         "Map Data ODBL OpenStreetMap Contributors, Map Imagery CC-BY-SA 2.0 OpenStreetMap",
@@ -127,12 +122,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "https://tile.openstreetmap.org/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "https://tile.openstreetmap.org/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OSM_CYCLE_MAP,
         "OpenStreetMap Cycle Map",
         "Map data is CC-BY-SA 2.0 OpenStreetMap contributors",
@@ -141,12 +134,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.opencyclemap.org/cycle/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.opencyclemap.org/cycle/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OSM_TRANSPORT_MAP,
         "OpenStreetMap Transport Map",
         "Map data is CC-BY-SA 2.0 OpenStreetMap contributors",
@@ -155,12 +146,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.xn--pnvkarte-m4a.de/tilegen/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.xn--pnvkarte-m4a.de/tilegen/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_MFF_RELIEF,
         "Maps for Free Relief",
         "Map data available under GNU Free Documentation license, Version 1.2 or later",
@@ -169,12 +158,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         11,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://maps-for-free.com/layer/relief/z#Z#/row#Y#/#Z#_#X#-#Y#.jpg",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://maps-for-free.com/layer/relief/z#Z#/row#Y#/#Z#_#X#-#Y#.jpg");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OWM_CLOUDS,
         "OpenWeatherMap cloud layer",
         "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -183,12 +170,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.openweathermap.org/map/clouds/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.openweathermap.org/map/clouds/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OWM_WIND,
         "OpenWeatherMap wind layer",
         "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -197,12 +182,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.openweathermap.org/map/wind/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.openweathermap.org/map/wind/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OWM_TEMPERATURE,
         "OpenWeatherMap temperature layer",
         "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -211,12 +194,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.openweathermap.org/map/temp/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.openweathermap.org/map/temp/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OWM_PRECIPITATION,
         "OpenWeatherMap precipitation layer",
         "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -225,12 +206,10 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.openweathermap.org/map/precipitation/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.openweathermap.org/map/precipitation/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 
-  desc = shumate_map_source_desc_new_full (
+  desc = shumate_map_source_desc_new (
         SHUMATE_MAP_SOURCE_OWM_PRESSURE,
         "OpenWeatherMap sea level pressure layer",
         "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -239,9 +218,7 @@ shumate_map_source_factory_init (ShumateMapSourceFactory *factory)
         18,
         256,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "http://tile.openweathermap.org/map/pressure/#Z#/#X#/#Y#.png",
-        shumate_map_source_new_generic,
-        NULL);
+        "http://tile.openweathermap.org/map/pressure/#Z#/#X#/#Y#.png");
   shumate_map_source_factory_register (factory, desc);
 }
 
@@ -287,8 +264,8 @@ shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
  * Note: The id should not contain any character that can't be in a filename as it
  * will be used as the cache directory name for that map source.
  *
- * Returns: (transfer none): a ready to use #ShumateMapSource matching the given name;
- * returns NULL if the source with the given name doesn't exist.
+ * Returns: (transfer floating) (nullable): a ready to use #ShumateMapSource
+ * matching the given name or %NULL if no source with the given name exists.
  */
 ShumateMapSource *
 shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
@@ -303,12 +280,9 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
   while (item != NULL)
     {
       ShumateMapSourceDesc *desc = SHUMATE_MAP_SOURCE_DESC (item->data);
-      if (strcmp (shumate_map_source_desc_get_id (desc), id) == 0)
+      if (g_strcmp0 (shumate_map_source_desc_get_id (desc), id) == 0)
         {
-          ShumateMapSourceConstructor constructor;
-
-          constructor = shumate_map_source_desc_get_constructor (desc);
-          return constructor (desc);
+          return shumate_map_source_desc_create_source (desc);
         }
       item = g_slist_next (item);
     }
@@ -458,37 +432,3 @@ shumate_map_source_factory_register (ShumateMapSourceFactory *factory,
     }
   return FALSE;
 }
-
-
-static ShumateMapSource *
-shumate_map_source_new_generic (ShumateMapSourceDesc *desc)
-{
-  ShumateMapSource *map_source;
-  const char *id, *name, *license, *license_uri, *uri_format;
-  guint min_zoom, max_zoom, tile_size;
-  ShumateMapProjection projection;
-
-  id = shumate_map_source_desc_get_id (desc);
-  name = shumate_map_source_desc_get_name (desc);
-  license = shumate_map_source_desc_get_license (desc);
-  license_uri = shumate_map_source_desc_get_license_uri (desc);
-  min_zoom = shumate_map_source_desc_get_min_zoom_level (desc);
-  max_zoom = shumate_map_source_desc_get_max_zoom_level (desc);
-  tile_size = shumate_map_source_desc_get_tile_size (desc);
-  projection = shumate_map_source_desc_get_projection (desc);
-  uri_format = shumate_map_source_desc_get_uri_format (desc);
-
-  map_source = SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_full (
-            id,
-            name,
-            license,
-            license_uri,
-            min_zoom,
-            max_zoom,
-            tile_size,
-            projection,
-            uri_format));
-
-  return map_source;
-}
-

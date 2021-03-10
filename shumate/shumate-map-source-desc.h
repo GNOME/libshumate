@@ -31,7 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE_DESC shumate_map_source_desc_get_type ()
-G_DECLARE_FINAL_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, SHUMATE, MAP_SOURCE_DESC, GObject)
+G_DECLARE_DERIVABLE_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, SHUMATE, MAP_SOURCE_DESC, GObject)
 
 /**
  * ShumateMapSourceDesc:
@@ -40,25 +40,16 @@ G_DECLARE_FINAL_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, SHUMATE, MA
  * and should be accessed using the provided API
  */
 
-/**
- * ShumateMapSourceConstructor:
- * @desc: a #ShumateMapSourceDesc
- *
- * A #ShumateMapSource constructor.  It should return a ready to use
- * #ShumateMapSource.
- *
- * Returns: A fully constructed #ShumateMapSource ready to be used.
- */
-typedef ShumateMapSource* (*ShumateMapSourceConstructor) (ShumateMapSourceDesc *desc);
+struct _ShumateMapSourceDescClass
+{
+  GObjectClass parent_class;
 
-/**
- * SHUMATE_MAP_SOURCE_CONSTRUCTOR:
- *
- * Conversion macro to #ShumateMapSourceConstructor.
- */
-#define SHUMATE_MAP_SOURCE_CONSTRUCTOR (f) ((ShumateMapSourceConstructor) (f))
+  ShumateMapSource * (* create_source) (ShumateMapSourceDesc *self);
 
-ShumateMapSourceDesc *shumate_map_source_desc_new_full (
+  gpointer padding[12];
+};
+
+ShumateMapSourceDesc *shumate_map_source_desc_new (
     char *id,
     char *name,
     char *license,
@@ -67,9 +58,7 @@ ShumateMapSourceDesc *shumate_map_source_desc_new_full (
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    char *uri_format,
-    ShumateMapSourceConstructor constructor,
-    gpointer data);
+    char *uri_format);
 
 const char *shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc);
 const char *shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc);
@@ -80,8 +69,7 @@ guint shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc);
 guint shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc);
 guint shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc);
 ShumateMapProjection shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc);
-gpointer shumate_map_source_desc_get_data (ShumateMapSourceDesc *desc);
-ShumateMapSourceConstructor shumate_map_source_desc_get_constructor (ShumateMapSourceDesc *desc);
+ShumateMapSource *shumate_map_source_desc_create_source (ShumateMapSourceDesc *self);
 
 G_END_DECLS
 

@@ -29,10 +29,11 @@
 
 #include "shumate-enum-types.h"
 
+#include "shumate-network-tile-source.h"
+
 enum
 {
-  PROP_0,
-  PROP_ID,
+  PROP_ID = 1,
   PROP_NAME,
   PROP_LICENSE,
   PROP_LICENSE_URI,
@@ -41,14 +42,13 @@ enum
   PROP_MAX_ZOOM_LEVEL,
   PROP_TILE_SIZE,
   PROP_PROJECTION,
-  PROP_CONSTRUCTOR,
-  PROP_DATA,
+  N_PROPERTIES
 };
 
-struct _ShumateMapSourceDesc
-{
-  GObject parent_instance;
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+typedef struct
+{
   char *id;
   char *name;
   char *license;
@@ -58,35 +58,24 @@ struct _ShumateMapSourceDesc
   guint max_zoom_level;
   guint tile_size;
   ShumateMapProjection projection;
-  ShumateMapSourceConstructor constructor;
-  gpointer data;
-};
+} ShumateMapSourceDescPrivate;
 
-G_DEFINE_TYPE (ShumateMapSourceDesc, shumate_map_source_desc, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateMapSourceDesc, shumate_map_source_desc, G_TYPE_OBJECT);
 
-static void set_id (ShumateMapSourceDesc *desc,
-    const char *id);
-static void set_name (ShumateMapSourceDesc *desc,
-    const char *name);
-static void set_license (ShumateMapSourceDesc *desc,
-    const char *license);
-static void set_license_uri (ShumateMapSourceDesc *desc,
-    const char *license_uri);
-static void set_uri_format (ShumateMapSourceDesc *desc,
-    const char *uri_format);
-static void set_min_zoom_level (ShumateMapSourceDesc *desc,
-    guint zoom_level);
-static void set_max_zoom_level (ShumateMapSourceDesc *desc,
-    guint zoom_level);
-static void set_tile_size (ShumateMapSourceDesc *desc,
-    guint tile_size);
-static void set_projection (ShumateMapSourceDesc *desc,
-    ShumateMapProjection projection);
-static void set_data (ShumateMapSourceDesc *desc,
-    gpointer data);
-static void set_constructor (ShumateMapSourceDesc *desc,
-    ShumateMapSourceConstructor constructor);
-
+static ShumateMapSource *
+shumate_map_source_desc_default_create_source (ShumateMapSourceDesc *self)
+{
+    return SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_full (
+        shumate_map_source_desc_get_id (self),
+        shumate_map_source_desc_get_name (self),
+        shumate_map_source_desc_get_license (self),
+        shumate_map_source_desc_get_license_uri (self),
+        shumate_map_source_desc_get_min_zoom_level (self),
+        shumate_map_source_desc_get_max_zoom_level (self),
+        shumate_map_source_desc_get_tile_size (self),
+        shumate_map_source_desc_get_projection (self),
+        shumate_map_source_desc_get_uri_format (self)));
+}
 
 static void
 shumate_map_source_desc_get_property (GObject *object,
@@ -95,51 +84,44 @@ shumate_map_source_desc_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateMapSourceDesc *self = SHUMATE_MAP_SOURCE_DESC (object);
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (self);
 
   switch (prop_id)
     {
     case PROP_ID:
-      g_value_set_string (value, self->id);
+      g_value_set_string (value, priv->id);
       break;
 
     case PROP_NAME:
-      g_value_set_string (value, self->name);
+      g_value_set_string (value, priv->name);
       break;
 
     case PROP_LICENSE:
-      g_value_set_string (value, self->license);
+      g_value_set_string (value, priv->license);
       break;
 
     case PROP_LICENSE_URI:
-      g_value_set_string (value, self->license_uri);
+      g_value_set_string (value, priv->license_uri);
       break;
 
     case PROP_URI_FORMAT:
-      g_value_set_string (value, self->uri_format);
+      g_value_set_string (value, priv->uri_format);
       break;
 
     case PROP_MIN_ZOOM_LEVEL:
-      g_value_set_uint (value, self->min_zoom_level);
+      g_value_set_uint (value, priv->min_zoom_level);
       break;
 
     case PROP_MAX_ZOOM_LEVEL:
-      g_value_set_uint (value, self->max_zoom_level);
+      g_value_set_uint (value, priv->max_zoom_level);
       break;
 
     case PROP_TILE_SIZE:
-      g_value_set_uint (value, self->tile_size);
+      g_value_set_uint (value, priv->tile_size);
       break;
 
     case PROP_PROJECTION:
-      g_value_set_enum (value, self->projection);
-      break;
-
-    case PROP_CONSTRUCTOR:
-      g_value_set_pointer (value, self->constructor);
-      break;
-
-    case PROP_DATA:
-      g_value_set_pointer (value, self->data);
+      g_value_set_enum (value, priv->projection);
       break;
 
     default:
@@ -155,50 +137,44 @@ shumate_map_source_desc_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateMapSourceDesc *desc = SHUMATE_MAP_SOURCE_DESC (object);
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
 
   switch (prop_id)
     {
     case PROP_ID:
-      set_id (desc, g_value_get_string (value));
+      priv->id = g_value_dup_string (value);
+      break;
 
     case PROP_NAME:
-      set_name (desc, g_value_get_string (value));
+      priv->name = g_value_dup_string (value);
       break;
 
     case PROP_LICENSE:
-      set_license (desc, g_value_get_string (value));
+      priv->license = g_value_dup_string (value);
       break;
 
     case PROP_LICENSE_URI:
-      set_license_uri (desc, g_value_get_string (value));
+      priv->license_uri = g_value_dup_string (value);
       break;
 
     case PROP_URI_FORMAT:
-      set_uri_format (desc, g_value_get_string (value));
+      priv->uri_format = g_value_dup_string (value);
       break;
 
     case PROP_MIN_ZOOM_LEVEL:
-      set_min_zoom_level (desc, g_value_get_uint (value));
+      priv->min_zoom_level = g_value_get_uint (value);
       break;
 
     case PROP_MAX_ZOOM_LEVEL:
-      set_max_zoom_level (desc, g_value_get_uint (value));
+      priv->max_zoom_level = g_value_get_uint (value);
       break;
 
     case PROP_TILE_SIZE:
-      set_tile_size (desc, g_value_get_uint (value));
+      priv->tile_size = g_value_get_uint (value);
       break;
 
     case PROP_PROJECTION:
-      set_projection (desc, g_value_get_enum (value));
-      break;
-
-    case PROP_CONSTRUCTOR:
-      set_constructor (desc, g_value_get_pointer (value));
-      break;
-
-    case PROP_DATA:
-      set_data (desc, g_value_get_pointer (value));
+      priv->projection = g_value_get_enum (value);
       break;
 
     default:
@@ -210,12 +186,13 @@ static void
 shumate_map_source_desc_finalize (GObject *object)
 {
   ShumateMapSourceDesc *self = SHUMATE_MAP_SOURCE_DESC (object);
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (self);
 
-  g_clear_pointer (&self->id, g_free);
-  g_clear_pointer (&self->name, g_free);
-  g_clear_pointer (&self->license, g_free);
-  g_clear_pointer (&self->license_uri, g_free);
-  g_clear_pointer (&self->uri_format, g_free);
+  g_clear_pointer (&priv->id, g_free);
+  g_clear_pointer (&priv->name, g_free);
+  g_clear_pointer (&priv->license, g_free);
+  g_clear_pointer (&priv->license_uri, g_free);
+  g_clear_pointer (&priv->uri_format, g_free);
 
   G_OBJECT_CLASS (shumate_map_source_desc_parent_class)->finalize (object);
 }
@@ -230,175 +207,142 @@ shumate_map_source_desc_class_init (ShumateMapSourceDescClass *klass)
   object_class->get_property = shumate_map_source_desc_get_property;
   object_class->set_property = shumate_map_source_desc_set_property;
 
+  klass->create_source = shumate_map_source_desc_default_create_source;
+
   /**
    * ShumateMapSourceDesc:id:
    *
    * The id of the map source
    */
-  g_object_class_install_property (object_class,
-      PROP_ID,
+  obj_properties[PROP_ID] =
       g_param_spec_string ("id",
           "Map source id",
           "Map source id",
           "",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:name:
    *
    * The name of the map source
    */
-  g_object_class_install_property (object_class,
-      PROP_NAME,
+  obj_properties[PROP_NAME] =
       g_param_spec_string ("name",
           "Map source name",
           "Map source name",
           "",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:license:
    *
    * The license of the map source
    */
-  g_object_class_install_property (object_class,
-      PROP_LICENSE,
+  obj_properties[PROP_LICENSE] =
       g_param_spec_string ("license",
           "Map source license",
           "Map source license",
           "",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:license-uri:
    *
    * The license's uri for more information
    */
-  g_object_class_install_property (object_class,
-      PROP_LICENSE_URI,
+  obj_properties[PROP_LICENSE_URI] =
       g_param_spec_string ("license-uri",
           "Map source license URI",
           "Map source license URI",
           "",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:uri-format:
    *
    * The URI format of a network map source
    */
-  g_object_class_install_property (object_class,
-      PROP_URI_FORMAT,
+  obj_properties[PROP_URI_FORMAT] =
       g_param_spec_string ("uri-format",
           "Network map source URI format",
           "Network map source URI format",
           "",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:min-zoom-level:
    *
    * The minimum zoom level
    */
-  g_object_class_install_property (object_class,
-      PROP_MIN_ZOOM_LEVEL,
+  obj_properties[PROP_MIN_ZOOM_LEVEL] =
       g_param_spec_uint ("min-zoom-level",
           "Min zoom level",
           "The lowest allowed level of zoom",
           0,
           20,
           0,
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:max-zoom-level:
    *
    * The maximum zoom level
    */
-  g_object_class_install_property (object_class,
-      PROP_MAX_ZOOM_LEVEL,
+  obj_properties[PROP_MAX_ZOOM_LEVEL] =
       g_param_spec_uint ("max-zoom-level",
           "Max zoom level",
           "The highest allowed level of zoom",
           0,
           20,
           20,
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:projection:
    *
    * The map projection of the map source
    */
-  g_object_class_install_property (object_class,
-      PROP_PROJECTION,
+  obj_properties[PROP_PROJECTION] =
       g_param_spec_enum ("projection",
           "Map source projection",
           "Map source projection",
           SHUMATE_TYPE_MAP_PROJECTION,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateMapSourceDesc:tile-size:
    *
    * The tile size of the map source
    */
-  g_object_class_install_property (object_class,
-      PROP_TILE_SIZE,
+  obj_properties[PROP_TILE_SIZE] =
       g_param_spec_uint ("tile-size",
           "Tile Size",
           "The size of the map source tile",
           0,
           G_MAXINT,
           256,
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * ShumateMapSourceDesc:constructor:
-   *
-   * The map source constructor
-   */
-  g_object_class_install_property (object_class,
-      PROP_CONSTRUCTOR,
-      g_param_spec_pointer ("constructor",
-          "Map source constructor",
-          "Map source constructor",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
-
-  /**
-   * ShumateMapSourceDesc:data:
-   *
-   * User data passed to the constructor
-   */
-  g_object_class_install_property (object_class,
-      PROP_DATA,
-      g_param_spec_pointer ("data",
-          "User data",
-          "User data",
-          G_PARAM_READABLE | G_PARAM_WRITABLE | G_PARAM_CONSTRUCT_ONLY));
+  g_object_class_install_properties (object_class,
+                                     N_PROPERTIES,
+                                     obj_properties);
 }
 
 
 static void
 shumate_map_source_desc_init (ShumateMapSourceDesc *desc)
 {
-  desc->id = NULL;
-  desc->name = NULL;
-  desc->license = NULL;
-  desc->license_uri = NULL;
-  desc->uri_format = NULL;
-  desc->min_zoom_level = 0;
-  desc->max_zoom_level = 20;
-  desc->tile_size = 256;
-  desc->projection = SHUMATE_MAP_PROJECTION_MERCATOR;
-  desc->constructor = NULL;
-  desc->data = NULL;
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
+  priv->max_zoom_level = 20;
+  priv->tile_size = 256;
+  priv->projection = SHUMATE_MAP_PROJECTION_MERCATOR;
 }
 
 
 /**
- * shumate_map_source_desc_new_full: (skip)
+ * shumate_map_source_desc_new:
  * @id: the map source's id
  * @name: the map source's name
  * @license: the map source's license
@@ -408,16 +352,14 @@ shumate_map_source_desc_init (ShumateMapSourceDesc *desc)
  * @tile_size: the map source's tile size (in pixels)
  * @projection: the map source's projection
  * @uri_format: the URI to fetch the tiles from, see #shumate_network_tile_source_set_uri_format
- * @constructor: the map source's constructor
- * @data: user data passed to the constructor
  *
  * Constructor of #ShumateMapSourceDesc which describes a #ShumateMapSource.
  * This is returned by #shumate_map_source_factory_get_registered
  *
- * Returns: a constructed #ShumateMapSourceDesc object
+ * Returns: a new #ShumateMapSourceDesc object
  */
 ShumateMapSourceDesc *
-shumate_map_source_desc_new_full (
+shumate_map_source_desc_new (
     char *id,
     char *name,
     char *license,
@@ -426,9 +368,7 @@ shumate_map_source_desc_new_full (
     guint max_zoom,
     guint tile_size,
     ShumateMapProjection projection,
-    char *uri_format,
-    ShumateMapSourceConstructor constructor,
-    gpointer data)
+    char *uri_format)
 {
   return g_object_new (SHUMATE_TYPE_MAP_SOURCE_DESC,
       "id", id,
@@ -440,11 +380,8 @@ shumate_map_source_desc_new_full (
       "tile-size", tile_size,
       "projection", projection,
       "uri-format", uri_format,
-      "constructor", constructor,
-      "data", data,
       NULL);
 }
-
 
 /**
  * shumate_map_source_desc_get_id:
@@ -457,9 +394,11 @@ shumate_map_source_desc_new_full (
 const char *
 shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->id;
+  return priv->id;
 }
 
 
@@ -474,9 +413,11 @@ shumate_map_source_desc_get_id (ShumateMapSourceDesc *desc)
 const char *
 shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->name;
+  return priv->name;
 }
 
 
@@ -491,9 +432,11 @@ shumate_map_source_desc_get_name (ShumateMapSourceDesc *desc)
 const char *
 shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->license;
+  return priv->license;
 }
 
 
@@ -508,9 +451,11 @@ shumate_map_source_desc_get_license (ShumateMapSourceDesc *desc)
 const char *
 shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->license_uri;
+  return priv->license_uri;
 }
 
 
@@ -525,9 +470,11 @@ shumate_map_source_desc_get_license_uri (ShumateMapSourceDesc *desc)
 const char *
 shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
 
-  return desc->uri_format;
+  return priv->uri_format;
 }
 
 
@@ -542,9 +489,11 @@ shumate_map_source_desc_get_uri_format (ShumateMapSourceDesc *desc)
 guint
 shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->min_zoom_level;
+  return priv->min_zoom_level;
 }
 
 
@@ -559,9 +508,11 @@ shumate_map_source_desc_get_min_zoom_level (ShumateMapSourceDesc *desc)
 guint
 shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->max_zoom_level;
+  return priv->max_zoom_level;
 }
 
 
@@ -576,9 +527,11 @@ shumate_map_source_desc_get_max_zoom_level (ShumateMapSourceDesc *desc)
 guint
 shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), 0);
 
-  return desc->tile_size;
+  return priv->tile_size;
 }
 
 
@@ -593,178 +546,25 @@ shumate_map_source_desc_get_tile_size (ShumateMapSourceDesc *desc)
 ShumateMapProjection
 shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc)
 {
+  ShumateMapSourceDescPrivate *priv = shumate_map_source_desc_get_instance_private (desc);
+
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), SHUMATE_MAP_PROJECTION_MERCATOR);
 
-  return desc->projection;
+  return priv->projection;
 }
-
 
 /**
- * shumate_map_source_desc_get_data:
- * @desc: a #ShumateMapSourceDesc
+ * shumate_map_source_desc_create_source:
+ * @self: a #ShumateMapSourceDesc
  *
- * Gets user data.
+ * Creates a #ShumateMapSource describes by @self.
  *
- * Returns: (transfer none): the user data.
+ * Returns: (transfer floating): a newly created #ShumateMapSource.
  */
-gpointer
-shumate_map_source_desc_get_data (ShumateMapSourceDesc *desc)
+ShumateMapSource *
+shumate_map_source_desc_create_source (ShumateMapSourceDesc *self)
 {
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (self), NULL);
 
-  return desc->data;
-}
-
-
-/**
- * shumate_map_source_desc_get_constructor: (skip)
- * @desc: a #ShumateMapSourceDesc
- *
- * Gets the map source constructor.
- *
- * Returns: the constructor.
- */
-ShumateMapSourceConstructor
-shumate_map_source_desc_get_constructor (ShumateMapSourceDesc *desc)
-{
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc), NULL);
-
-  return desc->constructor;
-}
-
-
-static void
-set_id (ShumateMapSourceDesc *desc,
-    const char *id)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  g_free (desc->id);
-  desc->id = g_strdup (id);
-
-  g_object_notify (G_OBJECT (desc), "id");
-}
-
-
-static void
-set_name (ShumateMapSourceDesc *desc,
-    const char *name)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  g_free (desc->name);
-  desc->name = g_strdup (name);
-
-  g_object_notify (G_OBJECT (desc), "name");
-}
-
-
-static void
-set_license (ShumateMapSourceDesc *desc,
-    const char *license)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  g_free (desc->license);
-  desc->license = g_strdup (license);
-
-  g_object_notify (G_OBJECT (desc), "license");
-}
-
-
-static void
-set_license_uri (ShumateMapSourceDesc *desc,
-    const char *license_uri)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  g_free (desc->license_uri);
-  desc->license_uri = g_strdup (license_uri);
-
-  g_object_notify (G_OBJECT (desc), "license-uri");
-}
-
-
-static void
-set_uri_format (ShumateMapSourceDesc *desc,
-    const char *uri_format)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  g_free (desc->uri_format);
-  desc->uri_format = g_strdup (uri_format);
-
-  g_object_notify (G_OBJECT (desc), "uri-format");
-}
-
-
-static void
-set_min_zoom_level (ShumateMapSourceDesc *desc,
-    guint zoom_level)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->min_zoom_level = zoom_level;
-
-  g_object_notify (G_OBJECT (desc), "min-zoom-level");
-}
-
-
-static void
-set_max_zoom_level (ShumateMapSourceDesc *desc,
-    guint zoom_level)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->max_zoom_level = zoom_level;
-
-  g_object_notify (G_OBJECT (desc), "max-zoom-level");
-}
-
-
-static void
-set_tile_size (ShumateMapSourceDesc *desc,
-    guint tile_size)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->tile_size = tile_size;
-
-  g_object_notify (G_OBJECT (desc), "tile-size");
-}
-
-
-static void
-set_projection (ShumateMapSourceDesc *desc,
-    ShumateMapProjection projection)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->projection = projection;
-
-  g_object_notify (G_OBJECT (desc), "projection");
-}
-
-
-static void
-set_data (ShumateMapSourceDesc *desc,
-    gpointer data)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->data = data;
-
-  g_object_notify (G_OBJECT (desc), "data");
-}
-
-
-static void
-set_constructor (ShumateMapSourceDesc *desc,
-    ShumateMapSourceConstructor constructor)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE_DESC (desc));
-
-  desc->constructor = constructor;
-
-  g_object_notify (G_OBJECT (desc), "constructor");
+  return SHUMATE_MAP_SOURCE_DESC_GET_CLASS (self)->create_source (self);
 }
