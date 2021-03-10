@@ -68,6 +68,10 @@ ShumateUnit shumate_scale_get_unit (ShumateScale *scale);
 void shumate_scale_set_unit (ShumateScale *scale,
                              ShumateUnit   unit);
 
+ShumateViewport *shumate_scale_get_viewport (ShumateScale *scale);
+void shumate_scale_set_viewport (ShumateScale    *scale,
+                                 ShumateViewport *viewport);
+
 G_END_DECLS
 
 #endif
