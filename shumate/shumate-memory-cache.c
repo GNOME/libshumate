@@ -55,6 +55,7 @@ typedef struct
   char *key;
   char *data;
   guint size;
+  GdkTexture *texture;
 } QueueMember;
 
 
@@ -261,6 +262,7 @@ delete_queue_member (QueueMember *member, gpointer user_data)
 {
   if (member)
     {
+      g_clear_object (&member->texture);
       g_free (member->key);
       g_free (member->data);
       g_free (member);
@@ -290,29 +292,33 @@ fill_tile (ShumateMapSource *map_source,
       link = g_hash_table_lookup (priv->hash_table, key);
       if (link)
         {
-          g_autoptr(GInputStream) stream = NULL;
-          g_autoptr(GError) error = NULL;
-          g_autoptr(GdkPixbuf) pixbuf = NULL;
-          g_autoptr(GdkTexture) texture = NULL;
           QueueMember *member = link->data;
 
           move_queue_member_to_head (priv->queue, link);
 
-          stream = g_memory_input_stream_new_from_data (member->data, member->size, NULL);
-          pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
-          if (!pixbuf)
+          if (!member->texture)
             {
-              if (next_source)
-                shumate_map_source_fill_tile (next_source, tile, cancellable);
+              g_autoptr(GInputStream) stream = NULL;
+              g_autoptr(GdkPixbuf) pixbuf = NULL;
+              g_autoptr(GError) error = NULL;
 
-              return;
+              stream = g_memory_input_stream_new_from_data (member->data, member->size, NULL);
+              pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
+              if (!pixbuf)
+                {
+                  if (next_source)
+                    shumate_map_source_fill_tile (next_source, tile, cancellable);
+
+                  return;
+                }
+
+              member->texture = gdk_texture_new_for_pixbuf (pixbuf);
             }
 
           if (SHUMATE_IS_TILE_CACHE (next_source))
             shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
 
-          texture = gdk_texture_new_for_pixbuf (pixbuf);
-          shumate_tile_set_texture (tile, texture);
+          shumate_tile_set_texture (tile, member->texture);
           shumate_tile_set_fade_in (tile, FALSE);
           shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
           return;
