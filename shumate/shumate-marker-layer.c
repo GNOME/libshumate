@@ -444,10 +444,10 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 
   shumate_marker_set_selectable (marker, priv->mode != GTK_SELECTION_NONE);
 
-  g_signal_connect (G_OBJECT (marker), "notify::latitude",
-      G_CALLBACK (marker_position_notify), layer);
-  g_signal_connect (G_OBJECT (marker), "notify::longitude",
-      G_CALLBACK (marker_position_notify), layer);
+  g_signal_connect_object (G_OBJECT (marker), "notify::latitude",
+      G_CALLBACK (marker_position_notify), layer, 0);
+  g_signal_connect_object (G_OBJECT (marker), "notify::longitude",
+      G_CALLBACK (marker_position_notify), layer, 0);
 
   /*g_signal_connect (G_OBJECT (marker), "drag-motion",
       G_CALLBACK (marker_move_by_cb), layer);*/
