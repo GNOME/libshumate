@@ -212,21 +212,13 @@ shumate_scale_on_scale_changed (ShumateScale *self)
 }
 
 static void
-on_latitude_changed (ShumateScale *self,
-                     G_GNUC_UNUSED GParamSpec *pspec,
-                     ShumateViewport *viewport)
+on_viewport_props_changed (ShumateScale *self,
+                           G_GNUC_UNUSED GParamSpec *pspec,
+                           ShumateViewport *viewport)
 {
   shumate_scale_on_scale_changed (self);
 }
 
-
-static void
-on_zoom_level_changed (ShumateScale *self,
-                       G_GNUC_UNUSED GParamSpec *pspec,
-                       ShumateViewport *viewport)
-{
-  shumate_scale_on_scale_changed (self);
-}
 
 static void
 shumate_scale_get_property (GObject *object,
@@ -477,8 +469,9 @@ shumate_scale_set_viewport (ShumateScale    *scale,
       g_object_notify_by_pspec(G_OBJECT (scale), obj_properties[PROP_VIEWPORT]);
       if (scale->viewport)
         {
-          g_signal_connect_swapped (scale->viewport, "notify::latitude", G_CALLBACK (on_latitude_changed), scale);
-          g_signal_connect_swapped (scale->viewport, "notify::zoom-level", G_CALLBACK (on_zoom_level_changed), scale);
+          g_signal_connect_swapped (scale->viewport, "notify::latitude", G_CALLBACK (on_viewport_props_changed), scale);
+          g_signal_connect_swapped (scale->viewport, "notify::zoom-level", G_CALLBACK (on_viewport_props_changed), scale);
+          g_signal_connect_swapped (scale->viewport, "notify::reference-map-source", G_CALLBACK (on_viewport_props_changed), scale);
         }
 
       shumate_scale_on_scale_changed (scale);
