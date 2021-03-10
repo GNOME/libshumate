@@ -53,8 +53,6 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateMemoryCache, shumate_memory_cache, SHUMATE_TY
 typedef struct
 {
   char *key;
-  char *data;
-  guint size;
   GdkTexture *texture;
 } QueueMember;
 
@@ -264,7 +262,6 @@ delete_queue_member (QueueMember *member, gpointer user_data)
     {
       g_clear_object (&member->texture);
       g_free (member->key);
-      g_free (member->data);
       g_free (member);
     }
 }
@@ -298,21 +295,10 @@ fill_tile (ShumateMapSource *map_source,
 
           if (!member->texture)
             {
-              g_autoptr(GInputStream) stream = NULL;
-              g_autoptr(GdkPixbuf) pixbuf = NULL;
-              g_autoptr(GError) error = NULL;
+              if (next_source)
+                shumate_map_source_fill_tile (next_source, tile, cancellable);
 
-              stream = g_memory_input_stream_new_from_data (member->data, member->size, NULL);
-              pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
-              if (!pixbuf)
-                {
-                  if (next_source)
-                    shumate_map_source_fill_tile (next_source, tile, cancellable);
-
-                  return;
-                }
-
-              member->texture = gdk_texture_new_for_pixbuf (pixbuf);
+              return;
             }
 
           if (SHUMATE_IS_TILE_CACHE (next_source))
@@ -334,6 +320,25 @@ fill_tile (ShumateMapSource *map_source,
     }
 }
 
+static GdkTexture *
+create_texture_from_data (const char *data,
+                          gsize       size)
+{
+  g_autoptr(GInputStream) stream = NULL;
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(GError) error = NULL;
+
+  stream = g_memory_input_stream_new_from_data (data, size, NULL);
+  pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
+
+  if (error)
+    {
+      g_warning ("Error creating texture: %s", error->message);
+      return NULL;
+    }
+
+  return gdk_texture_new_for_pixbuf (pixbuf);
+}
 
 static void
 store_tile (ShumateTileCache *tile_cache,
@@ -370,8 +375,7 @@ store_tile (ShumateTileCache *tile_cache,
 
       member = g_new0 (QueueMember, 1);
       member->key = key;
-      member->data = g_memdup (contents, size);
-      member->size = size;
+      member->texture = create_texture_from_data (contents, size);
 
       g_queue_push_head (priv->queue, member);
       g_hash_table_insert (priv->hash_table, g_strdup (key), g_queue_peek_head_link (priv->queue));
