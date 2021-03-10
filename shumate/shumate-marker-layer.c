@@ -464,26 +464,20 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 void
 shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
 {
-  //ClutterActorIter iter;
-  //ClutterActor *child;
+  GtkWidget *child;
 
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
 
-  /*
-  clutter_actor_iter_init (&iter, CLUTTER_ACTOR (layer));
-  while (clutter_actor_iter_next (&iter, &child))
+  child = gtk_widget_get_first_child (GTK_WIDGET (layer));
+  while (child)
     {
-      GObject *marker = G_OBJECT (child);
+      GtkWidget *next = gtk_widget_get_next_sibling (child);
 
-      g_signal_handlers_disconnect_by_func (marker,
-          G_CALLBACK (marker_position_notify), layer);
+      g_signal_handlers_disconnect_by_data (child, layer);
+      gtk_widget_unparent (child);
 
-      g_signal_handlers_disconnect_by_func (marker,
-          G_CALLBACK (marker_move_by_cb), layer);
-
-      clutter_actor_iter_remove (&iter);
+      child = next;
     }
-   */
 }
 
 
