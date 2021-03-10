@@ -10,6 +10,7 @@ tests = [
   'coordinate',
   'marker',
   'view',
+  'marker-layer',
   'viewport',
 ]
 
