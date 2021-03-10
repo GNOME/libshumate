@@ -446,6 +446,8 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
 
   g_signal_connect (G_OBJECT (marker), "notify::latitude",
       G_CALLBACK (marker_position_notify), layer);
+  g_signal_connect (G_OBJECT (marker), "notify::longitude",
+      G_CALLBACK (marker_position_notify), layer);
 
   /*g_signal_connect (G_OBJECT (marker), "drag-motion",
       G_CALLBACK (marker_move_by_cb), layer);*/
