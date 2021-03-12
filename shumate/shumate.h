@@ -49,6 +49,10 @@
 
 #include "shumate/shumate-map-source-chain.h"
 
+#if HAS_MEMPHIS
+#include "shumate/shumate-memphis-map-source.h"
+#endif
+
 #include "shumate/shumate-network-tile-source.h"
 #include "shumate/shumate-error-tile-source.h"
 

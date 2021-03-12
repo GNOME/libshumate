@@ -12,3 +12,7 @@ option('gtk_doc',
 option('demos',
        type: 'boolean', value: false,
        description: 'Build demonstration programs')
+
+option('memphis',
+       type: 'boolean', value: false,
+       description: 'Build memphis support')

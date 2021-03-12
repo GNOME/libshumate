@@ -67,8 +67,14 @@ libshumate_deps = [
   gtk_dep,
   cairo_dep,
   sqlite_dep,
-  libsoup_dep,
+  libsoup_dep
 ]
+
+if memphis_support
+  libshumate_public_h += 'shumate-memphis-map-source.h'
+  libshumate_sources += 'shumate-memphis-map-source.c'
+  libshumate_deps += memphis_dep
+endif
 
 libshumate_c_args = [
   '-DHAVE_CONFIG_H',
@@ -225,6 +231,10 @@ libshumate_dep = declare_dependency(
   sources: libshumate_dep_sources,
 )
 
+extra_cflags = []
+if memphis_support
+    extra_cflags += '-DHAS_MEMPHIS=1'
+endif
 libshumate_pc = pkg.generate(
   libshumate_lib,
   name: package_string,
@@ -232,4 +242,5 @@ libshumate_pc = pkg.generate(
   requires: [glib_dep, gobject_dep, gtk_dep],
   subdirs: package_string,
   install_dir: pkgconfigdir,
+  extra_cflags: extra_cflags,
 )

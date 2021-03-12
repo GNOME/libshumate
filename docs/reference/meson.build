@@ -15,6 +15,10 @@ libshumate_reference_ignored_h = [
   'shumate.h',
 ]
 
+if not memphis_support
+libshumate_reference_ignored_h += 'shumate-memphis-map-source.h'
+endif
+
 libshumate_reference_source_folders = [
   join_paths(srcdir, 'shumate'),
   join_paths(builddir, 'shumate'),
@@ -54,6 +58,7 @@ gnome.gtkdoc(
   main_sgml: 'libshumate-docs.sgml',
   gobject_typesfile: files('libshumate.types'),
   src_dir: libshumate_reference_source_folders,
+  c_args: extra_cflags,
   dependencies: libshumate_dep,
   scan_args: libshumate_reference_scan_args,
   mkdb_args: libshumate_reference_mkdb_args,

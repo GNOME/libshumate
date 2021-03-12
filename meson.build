@@ -100,6 +100,13 @@ if generate_vapi and not vapigen_dep.found()
   generate_vapi = false
 endif
 
+memphis_support = get_option('memphis')
+if memphis_support
+    memphis_dep = dependency('memphis',
+                             fallback : ['memphis', 'memphis_dep'])
+    add_project_arguments('-DHAS_MEMPHIS=1', language: 'c')
+endif
+
 subdir('data')
 
 subdir('shumate')
@@ -121,6 +128,7 @@ summary = [
   '     Documentation: @0@'.format(build_gtk_doc),
   '     Introspection: @0@'.format(generate_gir),
   '          Vala API: @0@'.format(generate_vapi),
+  '   Memphis support: @0@'.format(memphis_support),
   '',
   'Directories:',
   '           prefix: @0@'.format(prefix),

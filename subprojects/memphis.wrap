@@ -1,0 +1,6 @@
+[wrap-git]
+directory=memphis
+url=https://github.com/tintou/memphis.git
+push-url=ssh://git@github.com:tintou/memphis.git
+revision=master
+depth=1

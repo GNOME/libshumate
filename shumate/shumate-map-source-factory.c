@@ -44,6 +44,7 @@
 #include "shumate-file-cache.h"
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
+#include "shumate-memphis-map-source.h"
 #include "shumate-marshal.h"
 #include "shumate-map-source-chain.h"
 
@@ -333,7 +334,8 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   shumate_map_source_chain_push (source_chain, file_cache);
   shumate_map_source_chain_push (source_chain, memory_cache);
 
-  return SHUMATE_MAP_SOURCE (source_chain);
+  //return SHUMATE_MAP_SOURCE (source_chain);
+  return SHUMATE_MAP_SOURCE (shumate_memphis_map_source_new ());
 }
 
 
