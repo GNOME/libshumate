@@ -31,7 +31,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_FILE_CACHE shumate_file_cache_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, ShumateTileCache)
+G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, GObject)
 
 /**
  * ShumateFileCache:
@@ -42,7 +42,7 @@ G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CA
 
 struct _ShumateFileCacheClass
 {
-  ShumateTileCacheClass parent_class;
+  GObjectClass parent_class;
 };
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
@@ -79,6 +79,9 @@ void shumate_file_cache_store_tile_async (ShumateFileCache *self,
 gboolean shumate_file_cache_store_tile_finish (ShumateFileCache *self,
                                                GAsyncResult *result,
                                                GError **error);
+
+void shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
+                                         ShumateTile *tile);
 
 G_END_DECLS
 

@@ -792,7 +792,7 @@ on_message_sent (GObject *source_object,
       if (tile_cache)
         shumate_tile_cache_refresh_tile_time (tile_cache, tile);
 
-      shumate_tile_cache_refresh_tile_time (SHUMATE_TILE_CACHE (priv->file_cache), tile);
+      shumate_file_cache_mark_up_to_date (priv->file_cache, tile);
 
       cache_stream = g_memory_input_stream_new_from_bytes (cached_data);
       gdk_pixbuf_new_from_stream_async (cache_stream, cancellable, on_pixbuf_created_from_cache, g_object_ref (tile));

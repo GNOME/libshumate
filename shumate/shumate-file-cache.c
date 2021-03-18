@@ -58,7 +58,7 @@ typedef struct
   sqlite3_stmt *stmt_update;
 } ShumateFileCachePrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, SHUMATE_TYPE_TILE_CACHE);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT);
 
 static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
@@ -70,17 +70,11 @@ static void delete_tile (ShumateFileCache *file_cache,
     const char *filename);
 static gboolean create_cache_dir (const char *dir_name);
 
-static void fill_tile (ShumateMapSource *map_source,
-                       ShumateTile      *tile,
-                       GCancellable     *cancellable);
-
-static void store_tile (ShumateTileCache *tile_cache,
+static void store_tile (ShumateFileCache *self,
     ShumateTile *tile,
     const char *contents,
     gsize size);
-static void refresh_tile_time (ShumateTileCache *tile_cache,
-    ShumateTile *tile);
-static void on_tile_filled (ShumateTileCache *tile_cache,
+static void on_tile_filled (ShumateFileCache *self,
     ShumateTile *tile);
 
 static void
@@ -286,8 +280,6 @@ shumate_file_cache_constructed (GObject *object)
 static void
 shumate_file_cache_class_init (ShumateFileCacheClass *klass)
 {
-  ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
-  ShumateTileCacheClass *tile_cache_class = SHUMATE_TILE_CACHE_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GParamSpec *pspec;
 
@@ -336,12 +328,6 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
         NULL,
         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
   g_object_class_install_property (object_class, PROP_CACHE_KEY, pspec);
-
-  tile_cache_class->store_tile = store_tile;
-  tile_cache_class->refresh_tile_time = refresh_tile_time;
-  tile_cache_class->on_tile_filled = on_tile_filled;
-
-  map_source_class->fill_tile = fill_tile;
 }
 
 
@@ -477,11 +463,7 @@ get_filename (ShumateFileCache *file_cache,
   g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
   g_return_val_if_fail (priv->cache_dir, NULL);
 
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (file_cache);
-
   cache_key = shumate_file_cache_get_cache_key (file_cache);
-  if (cache_key == NULL)
-    cache_key = shumate_map_source_get_id (map_source);
 
   char *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
         "%s" G_DIR_SEPARATOR_S
@@ -557,215 +539,50 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
 }
 
 
-typedef struct
+/**
+ * shumate_file_cache_mark_up_to_date:
+ * @self: a #ShumateFileCache
+ * @tile: a #ShumateTile
+ *
+ * Marks a tile in the cache as being up to date, without changing its data.
+ *
+ * For example, a network source might call this function when it gets an HTTP
+ * 304 Not Modified response.
+ */
+void
+shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
+                                    ShumateTile *tile)
 {
-  ShumateFileCache *self;
-  ShumateTile *tile;
-  GCancellable *cancellable;
-} FileLoadedData;
-
-static void
-file_loaded_data_free (FileLoadedData *data)
-{
-  g_clear_object (&data->self);
-  g_clear_object (&data->tile);
-  g_clear_object (&data->cancellable);
-  g_slice_free (FileLoadedData, data);
-}
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (FileLoadedData, file_loaded_data_free)
-
-static void
-on_pixbuf_created (GObject *source_object,
-                   GAsyncResult *res,
-                   gpointer user_data)
-{
-  g_autoptr(FileLoadedData) loaded_data = user_data;
-  ShumateFileCache *self = loaded_data->self;
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
-  ShumateTile *tile = loaded_data->tile;
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
-  g_autoptr(GdkPixbuf) pixbuf = NULL;
-  g_autoptr(GdkTexture) texture = NULL;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(GFile) file = NULL;
   g_autofree char *filename = NULL;
+  g_autoptr(GFile) file = NULL;
   g_autoptr(GFileInfo) info = NULL;
 
-  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
-  if (!pixbuf)
-    {
-      DEBUG ("Tile rendering failed");
-      goto load_next;
-    }
-
-  texture = gdk_texture_new_for_pixbuf (pixbuf);
-  shumate_tile_set_texture (tile, texture);
-  shumate_tile_set_state (tile, SHUMATE_STATE_LOADED);
-
-  filename = get_filename (self, tile);
-  file = g_file_new_for_path (filename);
-
-  /* Retrieve modification time */
-  info = g_file_query_info (file,
-                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                            G_FILE_QUERY_INFO_NONE, loaded_data->cancellable, NULL);
-  if (info)
-    {
-      g_autoptr(GDateTime) modified_time = g_file_info_get_modification_date_time (info);
-      shumate_tile_set_modified_time (tile, modified_time);
-    }
-
-  /* Notify other caches that the tile has been filled */
-  if (SHUMATE_IS_TILE_CACHE (next_source))
-    shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
-
-  if (tile_is_expired (self, tile))
-    {
-      db_get_etag (self, tile);
-    }
-  else
-    {
-      /* Tile loaded and no validation needed - done */
-      shumate_tile_set_fade_in (tile, FALSE);
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      return;
-    }
-
-load_next:
-  if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile, loaded_data->cancellable);
-  else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
-    {
-      /* if we have some content, use the tile even if it wasn't validated */
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-    }
-}
-
-
-static void
-on_file_loaded (GObject      *source_object,
-                GAsyncResult *res,
-                gpointer      user_data)
-{
-  g_autoptr(FileLoadedData) loaded_data = user_data;
-  ShumateFileCache *self = loaded_data->self;
-  ShumateTile *tile = loaded_data->tile;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(GInputStream) input_stream = NULL;
-  GCancellable *cancellable = loaded_data->cancellable;
-
-  input_stream = G_INPUT_STREAM (g_file_read_finish (G_FILE (source_object), res, &error));
-  if (!input_stream)
-    {
-      g_autofree char *path = g_file_get_path (G_FILE (source_object));
-      ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
-
-      DEBUG ("Failed to load tile %s, error: %s", path, error->message);
-
-      if (next_source)
-        shumate_map_source_fill_tile (next_source, tile, loaded_data->cancellable);
-
-      return;
-    }
-
-  gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_steal_pointer (&loaded_data));
-}
-
-
-static void
-fill_tile (ShumateMapSource *map_source,
-           ShumateTile      *tile,
-           GCancellable     *cancellable)
-{
-  ShumateFileCache *self = (ShumateFileCache *)map_source;
-  
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
 
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-
-  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
-    return;
-
-  if (shumate_tile_get_state (tile) != SHUMATE_STATE_LOADED)
-    {
-      FileLoadedData *user_data;
-      g_autoptr(GFile) file = NULL;
-      g_autofree char *filename = NULL;
-
-      filename = get_filename (self, tile);
-      file = g_file_new_for_path (filename);
-
-      user_data = g_slice_new0 (FileLoadedData);
-      user_data->self = g_object_ref (self);
-      user_data->tile = g_object_ref (tile);
-      if (cancellable)
-        user_data->cancellable = g_object_ref (cancellable);
-
-      DEBUG ("fill of %s", filename);
-
-      g_file_read_async (file, G_PRIORITY_DEFAULT, cancellable, on_file_loaded, user_data);
-    }
-  else if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile, cancellable);
-  else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
-    {
-      /* if we have some content, use the tile even if it wasn't validated */
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-    }
-}
-
-
-static void
-refresh_tile_time (ShumateTileCache *tile_cache,
-    ShumateTile *tile)
-{
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (tile_cache));
-
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  char *filename = NULL;
-  GFile *file;
-  GFileInfo *info;
-
-  filename = get_filename (file_cache, tile);
+  filename = get_filename (self, tile);
   file = g_file_new_for_path (filename);
-  g_free (filename);
 
   info = g_file_query_info (file, G_FILE_ATTRIBUTE_TIME_MODIFIED,
         G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
   if (info)
     {
-      GDateTime *now = g_date_time_new_now_utc ();
+      g_autoptr(GDateTime) now = g_date_time_new_now_utc ();
 
       g_file_info_set_modification_date_time (info, now);
       g_file_set_attributes_from_info (file, info, G_FILE_QUERY_INFO_NONE, NULL, NULL);
-
-      g_date_time_unref (now);
-      g_object_unref (info);
     }
-
-  g_object_unref (file);
-
-  if (SHUMATE_IS_TILE_CACHE (next_source))
-    shumate_tile_cache_refresh_tile_time (SHUMATE_TILE_CACHE (next_source), tile);
 }
 
 
 static void
-store_tile (ShumateTileCache *tile_cache,
+store_tile (ShumateFileCache *self,
     ShumateTile *tile,
     const char *contents,
     gsize size)
 {
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (tile_cache));
-
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   char *query = NULL;
   char *error = NULL;
   char *path = NULL;
@@ -777,7 +594,7 @@ store_tile (ShumateTileCache *tile_cache,
 
   DEBUG ("Update of %p", tile);
 
-  filename = get_filename (file_cache, tile);
+  filename = get_filename (self, tile);
   file = g_file_new_for_path (filename);
 
   /* If the file exists, delete it */
@@ -827,9 +644,6 @@ store_tile (ShumateTileCache *tile_cache,
   sqlite3_free (query);
 
 store_next:
-  if (SHUMATE_IS_TILE_CACHE (next_source))
-    shumate_tile_cache_store_tile (SHUMATE_TILE_CACHE (next_source), tile, contents, size);
-
   g_free (filename);
   g_free (path);
   g_object_unref (file);
@@ -837,20 +651,14 @@ store_next:
 
 
 static void
-on_tile_filled (ShumateTileCache *tile_cache,
+on_tile_filled (ShumateFileCache *self,
     ShumateTile *tile)
 {
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (tile_cache));
-  g_return_if_fail (SHUMATE_IS_TILE (tile));
-
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (tile_cache);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   int sql_rc = SQLITE_OK;
-  char *filename = NULL;
+  g_autofree char *filename = NULL;
 
-  filename = get_filename (file_cache, tile);
+  filename = get_filename (self, tile);
 
   DEBUG ("popularity of %s", filename);
 
@@ -860,20 +668,15 @@ on_tile_filled (ShumateTileCache *tile_cache,
     {
       DEBUG ("Failed to set values to the popularity query of '%s', error: %s",
           filename, sqlite3_errmsg (priv->db));
-      goto call_next;
+      return;
     }
 
   sql_rc = sqlite3_step (priv->stmt_update);
   if (sql_rc != SQLITE_DONE)
     {
       /* may not be present in this cache */
-      goto call_next;
+      return;
     }
-
-call_next:
-  g_free (filename);
-  if (SHUMATE_IS_TILE_CACHE (next_source))
-    shumate_tile_cache_on_tile_filled (SHUMATE_TILE_CACHE (next_source), tile);
 }
 
 
@@ -1188,7 +991,7 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
   contents = g_bytes_get_data (bytes, &size);
 
   // TODO: Make store_tile an async function
-  store_tile (SHUMATE_TILE_CACHE (self), tile, contents, size);
+  store_tile (self, tile, contents, size);
 
   g_task_return_boolean (task, TRUE);
 }

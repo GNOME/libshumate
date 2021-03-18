@@ -504,6 +504,7 @@ shumate_file_cache_get_tile_async
 shumate_file_cache_get_tile_finish
 shumate_file_cache_store_tile_async
 shumate_file_cache_store_tile_finish
+shumate_file_cache_mark_up_to_date
 <SUBSECTION Standard>
 SHUMATE_FILE_CACHE
 SHUMATE_IS_FILE_CACHE
