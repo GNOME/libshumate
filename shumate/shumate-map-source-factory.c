@@ -323,7 +323,7 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   tile_size = shumate_map_source_get_tile_size (tile_source);
   error_source = shumate_map_source_factory_create_error_source (factory, tile_size);
 
-  file_cache = SHUMATE_MAP_SOURCE (shumate_file_cache_new_full (100000000, NULL));
+  file_cache = SHUMATE_MAP_SOURCE (shumate_file_cache_new_full (100000000, id, NULL));
 
   memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100));
 

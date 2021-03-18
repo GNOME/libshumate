@@ -43,13 +43,15 @@ enum
 {
   PROP_0,
   PROP_SIZE_LIMIT,
-  PROP_CACHE_DIR
+  PROP_CACHE_DIR,
+  PROP_CACHE_KEY,
 };
 
 typedef struct
 {
   guint size_limit;
   char *cache_dir;
+  char *cache_key;
 
   sqlite3 *db;
   sqlite3_stmt *stmt_select;
@@ -99,6 +101,10 @@ shumate_file_cache_get_property (GObject *object,
       g_value_set_string (value, shumate_file_cache_get_cache_dir (file_cache));
       break;
 
+    case PROP_CACHE_KEY:
+      g_value_set_string (value, shumate_file_cache_get_cache_key (file_cache));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -121,9 +127,13 @@ shumate_file_cache_set_property (GObject *object,
       break;
 
     case PROP_CACHE_DIR:
-      if (priv->cache_dir)
-        g_free (priv->cache_dir);
+      g_free (priv->cache_dir);
       priv->cache_dir = g_strdup (g_value_get_string (value));
+      break;
+
+    case PROP_CACHE_KEY:
+      g_free (priv->cache_key);
+      priv->cache_key = g_strdup (g_value_get_string (value));
       break;
 
     default:
@@ -158,6 +168,7 @@ shumate_file_cache_finalize (GObject *object)
   finalize_sql (file_cache);
 
   g_clear_pointer (&priv->cache_dir, g_free);
+  g_clear_pointer (&priv->cache_key, g_free);
 
   G_OBJECT_CLASS (shumate_file_cache_parent_class)->finalize (object);
 }
@@ -313,6 +324,19 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
   g_object_class_install_property (object_class, PROP_CACHE_DIR, pspec);
 
+  /**
+   * ShumateFileCache:cache-key:
+   *
+   * The key used to store and retrieve tiles from the cache. Different keys
+   * can be used to store multiple tilesets in the same cache directory.
+   */
+  pspec = g_param_spec_string ("cache-key",
+        "Cache Key",
+        "The key used when storing and retrieving tiles",
+        NULL,
+        G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+  g_object_class_install_property (object_class, PROP_CACHE_KEY, pspec);
+
   tile_cache_class->store_tile = store_tile;
   tile_cache_class->refresh_tile_time = refresh_tile_time;
   tile_cache_class->on_tile_filled = on_tile_filled;
@@ -340,6 +364,7 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  * @size_limit: maximum size of the cache in bytes
  * @cache_dir: (allow-none): the directory where the cache is created. When cache_dir == NULL,
  * a cache in ~/.cache/shumate is used.
+ * @cache_key: an ID for the tileset to store/retrieve
  *
  * Constructor of #ShumateFileCache.
  *
@@ -347,12 +372,16 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  */
 ShumateFileCache *
 shumate_file_cache_new_full (guint size_limit,
+    const char *cache_key,
     const char *cache_dir)
 {
   ShumateFileCache *cache;
 
+  g_return_val_if_fail (cache_key != NULL, NULL);
+
   cache = g_object_new (SHUMATE_TYPE_FILE_CACHE,
         "size-limit", size_limit,
+        "cache-key", cache_key,
         "cache-dir", cache_dir,
         NULL);
   return cache;
@@ -398,6 +427,26 @@ shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
 
 
 /**
+ * shumate_file_cache_get_cache_key:
+ * @file_cache: a #ShumateFileCache
+ *
+ * Gets the key used to store and retrieve tiles from the cache. Different keys
+ * can be used to store multiple tilesets in the same cache directory.
+ *
+ * Returns: the cache key
+ */
+const char *
+shumate_file_cache_get_cache_key (ShumateFileCache *file_cache)
+{
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
+
+  return priv->cache_key;
+}
+
+
+/**
  * shumate_file_cache_set_size_limit:
  * @file_cache: a #ShumateFileCache
  * @size_limit: the cache limit in bytes
@@ -422,6 +471,7 @@ get_filename (ShumateFileCache *file_cache,
     ShumateTile *tile)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  const char *cache_key;
 
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
   g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
@@ -429,12 +479,16 @@ get_filename (ShumateFileCache *file_cache,
 
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (file_cache);
 
+  cache_key = shumate_file_cache_get_cache_key (file_cache);
+  if (cache_key == NULL)
+    cache_key = shumate_map_source_get_id (map_source);
+
   char *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
         "%s" G_DIR_SEPARATOR_S
         "%d" G_DIR_SEPARATOR_S
         "%d" G_DIR_SEPARATOR_S "%d.png",
         priv->cache_dir,
-        shumate_map_source_get_id (map_source),
+        cache_key,
         shumate_tile_get_zoom_level (tile),
         shumate_tile_get_x (tile),
         shumate_tile_get_y (tile));
@@ -465,6 +519,41 @@ tile_is_expired (ShumateFileCache *file_cache,
   DEBUG ("%p is %s expired", tile, (validate_cache ? "" : "not"));
 
   return validate_cache;
+}
+
+
+static void
+db_get_etag (ShumateFileCache *self, ShumateTile *tile)
+{
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
+  int sql_rc = SQLITE_OK;
+  g_autofree char *filename = get_filename (self, tile);
+
+  sqlite3_reset (priv->stmt_select);
+  sql_rc = sqlite3_bind_text (priv->stmt_select, 1, filename, -1, SQLITE_STATIC);
+  if (sql_rc == SQLITE_ERROR)
+    {
+      DEBUG ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
+          filename, sqlite3_errmsg (priv->db));
+      return;
+    }
+
+  sql_rc = sqlite3_step (priv->stmt_select);
+  if (sql_rc == SQLITE_ROW)
+    {
+      const char *etag = (const char *) sqlite3_column_text (priv->stmt_select, 0);
+      shumate_tile_set_etag (SHUMATE_TILE (tile), etag);
+    }
+  else if (sql_rc == SQLITE_DONE)
+    {
+      DEBUG ("'%s' doesn't have an etag",
+          filename);
+    }
+  else if (sql_rc == SQLITE_ERROR)
+    {
+      DEBUG ("Failed to finding the Etag of '%s', %d error: %s",
+          filename, sql_rc, sqlite3_errmsg (priv->db));
+    }
 }
 
 
@@ -532,39 +621,7 @@ on_pixbuf_created (GObject *source_object,
 
   if (tile_is_expired (self, tile))
     {
-      int sql_rc = SQLITE_OK;
-
-      /* Retrieve etag */
-      sqlite3_reset (priv->stmt_select);
-      sql_rc = sqlite3_bind_text (priv->stmt_select, 1, filename, -1, SQLITE_STATIC);
-      if (sql_rc == SQLITE_ERROR)
-        {
-          DEBUG ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
-              filename, sqlite3_errmsg (priv->db));
-          goto load_next;
-        }
-
-      sql_rc = sqlite3_step (priv->stmt_select);
-      if (sql_rc == SQLITE_ROW)
-        {
-          const char *etag = (const char *) sqlite3_column_text (priv->stmt_select, 0);
-          shumate_tile_set_etag (SHUMATE_TILE (tile), etag);
-        }
-      else if (sql_rc == SQLITE_DONE)
-        {
-          DEBUG ("'%s' does't have an etag",
-              filename);
-          goto load_next;
-        }
-      else if (sql_rc == SQLITE_ERROR)
-        {
-          DEBUG ("Failed to finding the Etag of '%s', %d error: %s",
-              filename, sql_rc, sqlite3_errmsg (priv->db));
-          goto load_next;
-        }
-
-      /* Validate the tile */
-      /* goto load_next; */
+      db_get_etag (self, tile);
     }
   else
     {
@@ -961,4 +1018,200 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   sqlite3_free (query);
 
   sqlite3_exec (priv->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
+}
+
+
+static void on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer user_data);
+
+
+/**
+ * shumate_file_cache_get_tile_async:
+ * @self: a #ShumateFileCache
+ * @tile: a #ShumateTile
+ * @cancellable: (nullable): a #GCancellable
+ * @callback: a #GAsyncReadyCallback to execute upon completion
+ * @user_data: closure data for @callback
+ *
+ * Gets tile data from the cache, if it is available.
+ */
+void
+shumate_file_cache_get_tile_async (ShumateFileCache *self,
+                                   ShumateTile *tile,
+                                   GCancellable *cancellable,
+                                   GAsyncReadyCallback callback,
+                                   gpointer user_data)
+{
+  g_autoptr(GTask) task = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *filename = NULL;
+  g_autoptr(GFileInfo) info = NULL;
+  g_autoptr(GError) error = NULL;
+
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
+  g_return_if_fail (SHUMATE_IS_TILE (tile));
+  g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  task = g_task_new (self, cancellable, callback, user_data);
+  g_task_set_source_tag (task, shumate_file_cache_get_tile_async);
+
+  filename = get_filename (self, tile);
+  file = g_file_new_for_path (filename);
+
+  /* Retrieve modification time */
+  info = g_file_query_info (file,
+                            G_FILE_ATTRIBUTE_TIME_MODIFIED,
+                            G_FILE_QUERY_INFO_NONE, cancellable, NULL);
+  if (error)
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_task_return_pointer (task, NULL, NULL);
+      else
+        g_task_return_error (task, g_error_copy (error));
+
+      return;
+    }
+  else if (info)
+    {
+      g_autoptr(GDateTime) modified_time = g_file_info_get_modification_date_time (info);
+      shumate_tile_set_modified_time (tile, modified_time);
+    }
+
+  if (tile_is_expired (self, tile))
+    {
+      db_get_etag (self, tile);
+      g_task_set_task_data (task, tile, NULL);
+    }
+
+  /* update tile popularity */
+  on_tile_filled (self, tile);
+
+  g_file_load_bytes_async (file, cancellable, on_get_tile_file_loaded, g_object_ref (task));
+}
+
+
+static void
+on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  GFile *file = G_FILE (source_object);
+  g_autoptr(GError) error = NULL;
+  GBytes *bytes;
+
+  bytes = g_file_load_bytes_finish (file, res, NULL, &error);
+
+  if (error != NULL)
+    {
+      /* Return NULL but not an error if the file doesn't exist */
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        g_task_return_pointer (task, NULL, NULL);
+      else
+        g_task_return_error (task, g_error_copy (error));
+
+      return;
+    }
+
+  g_task_return_pointer (task, bytes, (GDestroyNotify) g_bytes_unref);
+}
+
+
+/**
+ * shumate_file_cache_get_tile_finish:
+ * @self: a #ShumateFileCache
+ * @etag: a location for the data's ETag, or %NULL
+ * @result: a #GAsyncResult provided to callback
+ * @error: a location for a #GError, or %NULL
+ *
+ * Gets the tile data from a completed shumate_file_cache_get_tile_async()
+ * operation.
+ *
+ * @etag will only be set if the tile data is potentially out of date.
+ *
+ * Returns: a #GBytes containing the tile data, or %NULL if the tile was not in
+ * the cache or an error occurred
+ */
+GBytes *
+shumate_file_cache_get_tile_finish (ShumateFileCache *self,
+                                    char **etag,
+                                    GAsyncResult *result,
+                                    GError **error)
+{
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
+  g_return_val_if_fail (G_IS_TASK (result), NULL);
+
+  if (etag)
+    {
+      ShumateTile *tile = g_task_get_task_data (G_TASK (result));
+      if (tile != NULL)
+        *etag = g_strdup (shumate_tile_get_etag (tile));
+    }
+
+  return g_task_propagate_pointer (G_TASK (result), error);
+}
+
+
+/**
+ * shumate_file_cache_store_tile_async:
+ * @self: an #ShumateFileCache
+ * @tile: a #ShumateTile
+ * @bytes: a #GBytes
+ * @etag: (nullable): an ETag string, or %NULL
+ * @cancellable: (nullable): a #GCancellable
+ * @callback: a #GAsyncReadyCallback to execute upon completion
+ * @user_data: closure data for @callback
+ *
+ * Stores a tile in the cache.
+ */
+void
+shumate_file_cache_store_tile_async (ShumateFileCache *self,
+                                     ShumateTile *tile,
+                                     GBytes *bytes,
+                                     const char *etag,
+                                     GCancellable *cancellable,
+                                     GAsyncReadyCallback callback,
+                                     gpointer user_data)
+{
+  g_autoptr(GTask) task = NULL;
+  gconstpointer contents;
+  gsize size;
+
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
+  g_return_if_fail (SHUMATE_IS_TILE (tile));
+  g_return_if_fail (bytes != NULL);
+  g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  task = g_task_new (self, cancellable, callback, user_data);
+  g_task_set_source_tag (task, shumate_file_cache_store_tile_async);
+
+  if (etag != NULL)
+    shumate_tile_set_etag (tile, etag);
+
+  contents = g_bytes_get_data (bytes, &size);
+
+  // TODO: Make store_tile an async function
+  store_tile (SHUMATE_TILE_CACHE (self), tile, contents, size);
+
+  g_task_return_boolean (task, TRUE);
+}
+
+
+/**
+ * shumate_file_cache_store_tile_finish:
+ * @self: an #ShumateFileCache
+ * @result: a #GAsyncResult provided to callback
+ * @error: a location for a #GError, or %NULL
+ *
+ * Gets the success value of a completed shumate_file_cache_store_tile_async()
+ * operation.
+ *
+ * Returns: %TRUE if the operation was successful, otherwise %FALSE
+ */
+gboolean
+shumate_file_cache_store_tile_finish (ShumateFileCache *self,
+                                      GAsyncResult *result,
+                                      GError **error)
+{
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), FALSE);
+  g_return_val_if_fail (G_IS_TASK (result), FALSE);
+
+  return g_task_propagate_boolean (G_TASK (result), error);
 }

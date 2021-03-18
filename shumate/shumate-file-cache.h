@@ -46,6 +46,7 @@ struct _ShumateFileCacheClass
 };
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
+    const char *cache_key,
     const char *cache_dir);
 
 guint shumate_file_cache_get_size_limit (ShumateFileCache *file_cache);
@@ -53,9 +54,31 @@ void shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
     guint size_limit);
 
 const char *shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache);
+const char *shumate_file_cache_get_cache_key (ShumateFileCache *file_cache);
 
 void shumate_file_cache_purge (ShumateFileCache *file_cache);
 void shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache);
+
+void shumate_file_cache_get_tile_async (ShumateFileCache *self,
+                                        ShumateTile *tile,
+                                        GCancellable *cancellable,
+                                        GAsyncReadyCallback callback,
+                                        gpointer user_data);
+GBytes *shumate_file_cache_get_tile_finish (ShumateFileCache *self,
+                                            char **etag,
+                                            GAsyncResult *result,
+                                            GError **error);
+
+void shumate_file_cache_store_tile_async (ShumateFileCache *self,
+                                          ShumateTile *tile,
+                                          GBytes *bytes,
+                                          const char *etag,
+                                          GCancellable *cancellable,
+                                          GAsyncReadyCallback callback,
+                                          gpointer user_data);
+gboolean shumate_file_cache_store_tile_finish (ShumateFileCache *self,
+                                               GAsyncResult *result,
+                                               GError **error);
 
 G_END_DECLS
 

@@ -8,6 +8,7 @@ test_env = [
 
 tests = [
   'coordinate',
+  'file-cache',
   'marker',
   'view',
   'marker-layer',
