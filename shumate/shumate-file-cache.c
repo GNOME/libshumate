@@ -74,8 +74,6 @@ static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
 static char *get_filename (ShumateFileCache *file_cache,
     ShumateTile *tile);
-static gboolean tile_is_expired (ShumateFileCache *file_cache,
-    ShumateTile *tile);
 static void delete_tile (ShumateFileCache *file_cache,
     const char *filename);
 static gboolean create_cache_dir (const char *dir_name);
@@ -489,32 +487,16 @@ get_filename (ShumateFileCache *file_cache,
 
 
 static gboolean
-tile_is_expired (ShumateFileCache *file_cache,
-    ShumateTile *tile)
+tile_is_expired (ShumateFileCache *file_cache, GDateTime *modified_time)
 {
-  GDateTime *modified_time;
-  gboolean validate_cache = TRUE;
+  g_autoptr(GDateTime) now = g_date_time_new_now_utc ();
+  GTimeSpan diff = g_date_time_difference (now, modified_time);
 
-  g_return_val_if_fail (SHUMATE_FILE_CACHE (file_cache), FALSE);
-  g_return_val_if_fail (SHUMATE_TILE (tile), FALSE);
-
-  modified_time = shumate_tile_get_modified_time (tile);
-  if (modified_time)
-    {
-      GDateTime *now = g_date_time_new_now_utc ();
-      GTimeSpan diff = g_date_time_difference (now, modified_time);
-
-      validate_cache = (diff > 7 * G_TIME_SPAN_DAY); /* Cache expires in 7 days */
-      g_date_time_unref (now);
-    }
-
-  DEBUG ("%p is %s expired", tile, (validate_cache ? "" : "not"));
-
-  return validate_cache;
+  return diff > 7 * G_TIME_SPAN_DAY; /* Cache expires in 7 days */
 }
 
 
-static void
+static char *
 db_get_etag (ShumateFileCache *self, ShumateTile *tile)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
@@ -527,14 +509,14 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
     {
       DEBUG ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
           filename, sqlite3_errmsg (priv->db));
-      return;
+      return NULL;
     }
 
   sql_rc = sqlite3_step (priv->stmt_select);
   if (sql_rc == SQLITE_ROW)
     {
       const char *etag = (const char *) sqlite3_column_text (priv->stmt_select, 0);
-      shumate_tile_set_etag (SHUMATE_TILE (tile), etag);
+      return g_strdup (etag);
     }
   else if (sql_rc == SQLITE_DONE)
     {
@@ -546,6 +528,8 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
       DEBUG ("Failed to finding the Etag of '%s', %d error: %s",
           filename, sql_rc, sqlite3_errmsg (priv->db));
     }
+
+  return NULL;
 }
 
 
@@ -859,6 +843,7 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
   g_autofree char *filename = NULL;
   g_autoptr(GFileInfo) info = NULL;
   g_autoptr(GError) error = NULL;
+  g_autoptr(GDateTime) modified_time = NULL;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -873,7 +858,7 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
   /* Retrieve modification time */
   info = g_file_query_info (file,
                             G_FILE_ATTRIBUTE_TIME_MODIFIED,
-                            G_FILE_QUERY_INFO_NONE, cancellable, NULL);
+                            G_FILE_QUERY_INFO_NONE, cancellable, &error);
   if (error)
     {
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
@@ -883,17 +868,13 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
 
       return;
     }
-  else if (info)
-    {
-      g_autoptr(GDateTime) modified_time = g_file_info_get_modification_date_time (info);
-      shumate_tile_set_modified_time (tile, modified_time);
-    }
 
-  if (tile_is_expired (self, tile))
-    {
-      db_get_etag (self, tile);
-      g_task_set_task_data (task, tile, NULL);
-    }
+  modified_time = g_file_info_get_modification_date_time (info);
+  shumate_tile_set_modified_time (tile, modified_time);
+
+  /* If the tile is expired, set the ETag */
+  if (tile_is_expired (self, modified_time))
+    g_task_set_task_data (task, db_get_etag (self, tile), g_free);
 
   /* update tile popularity */
   on_tile_filled (self, tile);
@@ -952,11 +933,7 @@ shumate_file_cache_get_tile_finish (ShumateFileCache *self,
   g_return_val_if_fail (G_IS_TASK (result), NULL);
 
   if (etag)
-    {
-      ShumateTile *tile = g_task_get_task_data (G_TASK (result));
-      if (tile != NULL)
-        *etag = g_strdup (shumate_tile_get_etag (tile));
-    }
+    *etag = g_strdup (g_task_get_task_data (G_TASK (result)));
 
   return g_task_propagate_pointer (G_TASK (result), error);
 }
