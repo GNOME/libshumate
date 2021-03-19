@@ -25,7 +25,6 @@
 
 #include <glib.h>
 
-#include "shumate/shumate-features.h"
 #include "shumate/shumate-enum-types.h"
 #include "shumate/shumate-version.h"
 

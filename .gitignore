@@ -30,7 +30,6 @@ shumate/shumate-enum-types.c
 shumate/shumate-enum-types.h
 shumate/stamp-enum-types
 shumate/shumate-version.h
-shumate/shumate-features.h
 compile
 config.guess
 config.h

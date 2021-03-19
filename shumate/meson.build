@@ -76,18 +76,6 @@ libshumate_c_args = [
   '-DG_LOG_DOMAIN="@0@"'.format(package_name),
 ]
 
-features_h = configuration_data()
-
-libshumate_features_h = configure_file(
-  output: 'shumate-features.h',
-  configuration: features_h,
-  install: true,
-  install_dir: join_paths(
-    pkgincludedir,
-    'shumate',
-  )
-)
-
 version_h = configuration_data()
 version_h.set('SHUMATE_MAJOR_VERSION', version_major)
 version_h.set('SHUMATE_MINOR_VERSION', version_minor)
@@ -106,7 +94,6 @@ libshumate_version_h = configure_file(
 )
 
 libshumate_public_h += [
-  libshumate_features_h,
   libshumate_version_h,
 ]
 
@@ -163,7 +150,6 @@ libshumate_lib = library(
 
 libshumate_dep_sources = [
   libshumate_enums_h,
-  libshumate_features_h,
   libshumate_marshals_h,
   libshumate_version_h,
 ]

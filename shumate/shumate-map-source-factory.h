@@ -25,7 +25,6 @@
 #ifndef SHUMATE_MAP_SOURCE_FACTORY_H
 #define SHUMATE_MAP_SOURCE_FACTORY_H
 
-#include <shumate/shumate-features.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-map-source-desc.h>
 
