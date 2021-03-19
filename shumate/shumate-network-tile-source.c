@@ -22,14 +22,12 @@
  * SECTION:shumate-network-tile-source
  * @short_description: A map source that downloads tile data from a web server
  *
- * This class is specialized for map tiles that can be downloaded
- * from a web server.  This includes all web based map services such as
- * OpenStreetMap, Google Maps, Yahoo Maps and more.  This class contains
- * all mechanisms necessary to download tiles.
+ * #ShumateNetworkTileSource fetches raster (that is, image) tiles from a
+ * web API such as Mapbox or OpenStreetMap. It has a built-in #ShumateFileCache
+ * to avoid repeated downloads.
  *
  * Some preconfigured network map sources are built-in this library,
  * see #ShumateMapSourceFactory.
- *
  */
 
 #include "config.h"

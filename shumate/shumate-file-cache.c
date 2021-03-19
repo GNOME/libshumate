@@ -20,11 +20,21 @@
 
 /**
  * SECTION:shumate-file-cache
- * @short_description: Stores and loads cached tiles from the file system
+ * @short_description: Caches tiles on the filesystem
  *
  * #ShumateFileCache is a cache that stores and retrieves tiles from the
- * file system. Tiles most frequently loaded gain in "popularity". This popularity
- * is taken into account when purging the cache.
+ * file system. It is mainly used by #ShumateNetworkTileSource, but can also
+ * be used by custom map sources.
+ *
+ * The cache will be filled up to a certain size limit. When this limit is
+ * reached, the cache can be purged, and the tiles that are accessed least are
+ * deleted.
+ *
+ * ## ETags
+ *
+ * The cache can optionally store an ETag string with each tile. This is
+ * useful to avoid redownloading old tiles that haven't changed (for example,
+ * using the HTTP If-None-Match header).
  */
 
 #define DEBUG_FLAG SHUMATE_DEBUG_CACHE
@@ -348,9 +358,9 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
 /**
  * shumate_file_cache_new_full:
  * @size_limit: maximum size of the cache in bytes
+ * @cache_key: an ID for the tileset to store/retrieve
  * @cache_dir: (allow-none): the directory where the cache is created. When cache_dir == NULL,
  * a cache in ~/.cache/shumate is used.
- * @cache_key: an ID for the tileset to store/retrieve
  *
  * Constructor of #ShumateFileCache.
  *
