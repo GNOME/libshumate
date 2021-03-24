@@ -901,7 +901,8 @@ fill_tile (ShumateMapSource *map_source,
   data = g_new0 (FillTileData, 1);
   data->self = g_object_ref (tile_source);
   data->tile = g_object_ref (tile);
-  data->cancellable = g_object_ref (cancellable);
+  if (cancellable)
+    data->cancellable = g_object_ref (cancellable);
 
   shumate_file_cache_get_tile_async (priv->file_cache, tile, cancellable, on_file_cache_get_tile, data);
 }
