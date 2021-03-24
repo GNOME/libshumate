@@ -12,6 +12,7 @@ tests = [
   'marker',
   'view',
   'marker-layer',
+  'memory-cache',
   'network-tile-source',
   'viewport',
 ]

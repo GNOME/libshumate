@@ -52,6 +52,14 @@ void shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,
 
 void shumate_memory_cache_clean (ShumateMemoryCache *memory_cache);
 
+gboolean shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self,
+                                             ShumateTile        *tile,
+                                             const char         *source_id);
+void shumate_memory_cache_store_texture (ShumateMemoryCache *self,
+                                         ShumateTile        *tile,
+                                         GdkTexture         *texture,
+                                         const char         *source_id);
+
 G_END_DECLS
 
 #endif /* _SHUMATE_MEMORY_CACHE_H_ */

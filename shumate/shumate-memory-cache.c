@@ -230,7 +230,8 @@ shumate_memory_cache_set_size_limit (ShumateMemoryCache *memory_cache,
 
 static char *
 generate_queue_key (ShumateMemoryCache *memory_cache,
-    ShumateTile *tile)
+    ShumateTile *tile,
+    const char *source_id)
 {
   g_return_val_if_fail (SHUMATE_IS_MEMORY_CACHE (memory_cache), NULL);
   g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
@@ -238,11 +239,14 @@ generate_queue_key (ShumateMemoryCache *memory_cache,
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (memory_cache);
   char *key;
 
+  if (source_id == NULL)
+    source_id = shumate_map_source_get_id (map_source);
+
   key = g_strdup_printf ("%d/%d/%d/%s",
         shumate_tile_get_zoom_level (tile),
         shumate_tile_get_x (tile),
         shumate_tile_get_y (tile),
-        shumate_map_source_get_id (map_source));
+        source_id);
   return key;
 }
 
@@ -284,7 +288,7 @@ fill_tile (ShumateMapSource *map_source,
       ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (map_source);
       ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
       GList *link;
-      g_autofree char *key = generate_queue_key (memory_cache, tile);
+      g_autofree char *key = generate_queue_key (memory_cache, tile, NULL);
 
       link = g_hash_table_lookup (priv->hash_table, key);
       if (link)
@@ -350,36 +354,9 @@ store_tile (ShumateTileCache *tile_cache,
 
   ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (tile_cache);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-  ShumateMemoryCache *memory_cache = SHUMATE_MEMORY_CACHE (tile_cache);
-  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
-  GList *link;
-  char *key;
+  g_autoptr(GdkTexture) texture = create_texture_from_data (contents, size);
 
-  key = generate_queue_key (memory_cache, tile);
-  link = g_hash_table_lookup (priv->hash_table, key);
-  if (link)
-    {
-      move_queue_member_to_head (priv->queue, link);
-      g_free (key);
-    }
-  else
-    {
-      QueueMember *member;
-
-      if (priv->queue->length >= priv->size_limit)
-        {
-          member = g_queue_pop_tail (priv->queue);
-          g_hash_table_remove (priv->hash_table, member->key);
-          delete_queue_member (member, NULL);
-        }
-
-      member = g_new0 (QueueMember, 1);
-      member->key = key;
-      member->texture = create_texture_from_data (contents, size);
-
-      g_queue_push_head (priv->queue, member);
-      g_hash_table_insert (priv->hash_table, g_strdup (key), g_queue_peek_head_link (priv->queue));
-    }
+  shumate_memory_cache_store_texture (SHUMATE_MEMORY_CACHE (tile_cache), tile, texture, NULL);
 
   if (SHUMATE_IS_TILE_CACHE (next_source))
     shumate_tile_cache_store_tile (SHUMATE_TILE_CACHE (next_source), tile, contents, size);
@@ -418,6 +395,75 @@ shumate_memory_cache_clean (ShumateMemoryCache *memory_cache)
 }
 
 
+gboolean
+shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self, ShumateTile *tile, const char *source_id)
+{
+  ShumateMemoryCache *memory_cache = (ShumateMemoryCache *) self;
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
+  GList *link;
+  QueueMember *member;
+  g_autofree char *key = NULL;
+
+  g_return_val_if_fail (SHUMATE_IS_MEMORY_CACHE (self), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_TILE (tile), FALSE);
+
+  key = generate_queue_key (memory_cache, tile, source_id);
+
+  link = g_hash_table_lookup (priv->hash_table, key);
+  if (link == NULL)
+    return FALSE;
+
+  member = link->data;
+
+  move_queue_member_to_head (priv->queue, link);
+
+  if (!member->texture)
+    return FALSE;
+
+  shumate_tile_set_texture (tile, member->texture);
+  shumate_tile_set_fade_in (tile, FALSE);
+  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+  return TRUE;
+}
+
+void
+shumate_memory_cache_store_texture (ShumateMemoryCache *self, ShumateTile *tile, GdkTexture *texture, const char *source_id)
+{
+  ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (self);
+  GList *link;
+  char *key;
+
+  g_return_if_fail (SHUMATE_IS_MEMORY_CACHE (self));
+  g_return_if_fail (SHUMATE_IS_TILE (tile));
+
+  key = generate_queue_key (self, tile, source_id);
+  link = g_hash_table_lookup (priv->hash_table, key);
+  if (link)
+    {
+      move_queue_member_to_head (priv->queue, link);
+      g_free (key);
+    }
+  else
+    {
+      QueueMember *member;
+
+      if (priv->queue->length >= priv->size_limit)
+        {
+          member = g_queue_pop_tail (priv->queue);
+          g_hash_table_remove (priv->hash_table, member->key);
+          delete_queue_member (member, NULL);
+        }
+
+      member = g_new0 (QueueMember, 1);
+      member->key = key;
+      member->texture = g_object_ref (texture);
+
+      g_queue_push_head (priv->queue, member);
+      g_hash_table_insert (priv->hash_table, g_strdup (key), g_queue_peek_head_link (priv->queue));
+    }
+}
+
+
 static void
 on_tile_filled (ShumateTileCache *tile_cache,
     ShumateTile *tile)
@@ -432,7 +478,7 @@ on_tile_filled (ShumateTileCache *tile_cache,
   GList *link;
   char *key;
 
-  key = generate_queue_key (memory_cache, tile);
+  key = generate_queue_key (memory_cache, tile, NULL);
   link = g_hash_table_lookup (priv->hash_table, key);
   g_free (key);
   if (link)
