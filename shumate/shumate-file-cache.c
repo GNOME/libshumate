@@ -930,7 +930,7 @@ shumate_file_cache_get_tile_finish (ShumateFileCache *self,
                                     GError **error)
 {
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
-  g_return_val_if_fail (G_IS_TASK (result), NULL);
+  g_return_val_if_fail (g_task_is_valid (result, self), NULL);
 
   if (etag)
     *etag = g_strdup (g_task_get_task_data (G_TASK (result)));
@@ -1001,7 +1001,7 @@ shumate_file_cache_store_tile_finish (ShumateFileCache *self,
                                       GError **error)
 {
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), FALSE);
-  g_return_val_if_fail (G_IS_TASK (result), FALSE);
+  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
 
   return g_task_propagate_boolean (G_TASK (result), error);
 }
