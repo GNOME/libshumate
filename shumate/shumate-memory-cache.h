@@ -30,7 +30,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MEMORY_CACHE shumate_memory_cache_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, ShumateTileCache)
+G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, GObject)
 
 /**
  * ShumateMemoryCache:
@@ -41,7 +41,7 @@ G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEM
 
 struct _ShumateMemoryCacheClass
 {
-  ShumateTileCacheClass parent_class;
+  GObjectClass parent_class;
 };
 
 ShumateMemoryCache *shumate_memory_cache_new_full (guint size_limit);
