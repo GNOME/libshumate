@@ -551,3 +551,74 @@ shumate_map_source_fill_tile (ShumateMapSource *map_source,
   shumate_tile_set_state (tile, SHUMATE_STATE_LOADING);
   SHUMATE_MAP_SOURCE_GET_CLASS (map_source)->fill_tile (map_source, tile, cancellable);
 }
+
+
+static void on_tile_notify_state (GObject *object, GParamSpec *pspec, gpointer user_data);
+
+/**
+ * shumate_map_source_fill_tile_async:
+ * @self: a #ShumateMapSource
+ * @tile: a #ShumateTile
+ * @cancellable: (nullable): a #GCancellable
+ * @callback: a #GAsyncReadyCallback to execute upon completion
+ * @user_data: closure data for @callback
+ *
+ * Asynchronous version of shumate_map_source_fill_tile().
+ */
+void
+shumate_map_source_fill_tile_async (ShumateMapSource *self,
+                                    ShumateTile *tile,
+                                    GCancellable *cancellable,
+                                    GAsyncReadyCallback callback,
+                                    gpointer user_data)
+{
+  g_autoptr(GTask) task = NULL;
+
+  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (self));
+  g_return_if_fail (SHUMATE_IS_TILE (tile));
+  g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  task = g_task_new (self, cancellable, callback, user_data);
+  g_task_set_source_tag (task, shumate_map_source_fill_tile_async);
+
+  g_signal_connect (tile, "notify::state", G_CALLBACK (on_tile_notify_state), g_object_ref (task));
+
+  shumate_map_source_fill_tile (self, tile, cancellable);
+}
+
+static void
+on_tile_notify_state (GObject *object, GParamSpec *pspec, gpointer user_data)
+{
+  GTask *task = user_data;
+  ShumateTile *tile = SHUMATE_TILE (object);
+
+  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
+    {
+      g_signal_handlers_disconnect_by_data (object, user_data);
+      g_task_return_boolean (task, TRUE);
+      g_object_unref (task);
+      return;
+    }
+}
+
+/**
+ * shumate_map_source_fill_tile_finish:
+ * @self: a #ShumateMapSource
+ * @result: a #GAsyncResult provided to callback
+ * @error: a location for a #GError, or %NULL
+ *
+ * Gets the success value of a completed shumate_map_source_fill_tile_async()
+ * operation.
+ *
+ * Returns: %TRUE if the tile was filled with valid data, otherwise %FALSE
+ */
+gboolean
+shumate_map_source_fill_tile_finish (ShumateMapSource *self,
+                                     GAsyncResult *result,
+                                     GError **error)
+{
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (self), FALSE);
+  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+
+  return g_task_propagate_boolean (G_TASK (result), error);
+}

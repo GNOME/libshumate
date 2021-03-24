@@ -104,6 +104,14 @@ double shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
 void shumate_map_source_fill_tile (ShumateMapSource *map_source,
                                    ShumateTile      *tile,
                                    GCancellable     *cancellable);
+void shumate_map_source_fill_tile_async (ShumateMapSource    *self,
+                                         ShumateTile         *tile,
+                                         GCancellable        *cancellable,
+                                         GAsyncReadyCallback  callback,
+                                         gpointer             user_data);
+gboolean shumate_map_source_fill_tile_finish (ShumateMapSource *self,
+                                              GAsyncResult     *result,
+                                              GError          **error);
 
 G_END_DECLS
 
