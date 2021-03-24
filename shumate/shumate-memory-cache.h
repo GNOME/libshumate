@@ -25,7 +25,7 @@
 #define _SHUMATE_MEMORY_CACHE_H_
 
 #include <glib-object.h>
-#include <shumate/shumate-tile-cache.h>
+#include <shumate/shumate-tile.h>
 
 G_BEGIN_DECLS
 

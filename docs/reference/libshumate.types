@@ -16,7 +16,6 @@ shumate_network_tile_source_get_type
 shumate_path_layer_get_type
 shumate_point_get_type
 shumate_scale_get_type
-shumate_tile_cache_get_type
 shumate_tile_get_type
 shumate_tile_source_get_type
 shumate_view_get_type

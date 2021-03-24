@@ -42,7 +42,6 @@
 
 #include "shumate/shumate-map-source.h"
 #include "shumate/shumate-tile-source.h"
-#include "shumate/shumate-tile-cache.h"
 
 #include "shumate/shumate-map-source-factory.h"
 

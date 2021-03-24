@@ -81,7 +81,6 @@
     </chapter>
     <chapter>
       <title>Tile Caches</title>
-      <xi:include href="xml/shumate-tile-cache.xml"/>
       <xi:include href="xml/shumate-file-cache.xml"/>
       <xi:include href="xml/shumate-memory-cache.xml"/>
     </chapter>

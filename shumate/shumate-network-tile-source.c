@@ -680,7 +680,6 @@ on_pixbuf_created (GObject      *source_object,
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GdkTexture) texture = NULL;
   g_autofree char *etag = g_steal_pointer (&rendered_data->etag);
-  ShumateTileCache *tile_cache = shumate_tile_source_get_cache (SHUMATE_TILE_SOURCE (self));
 
   g_slice_free (TileRenderedData, rendered_data);
   g_signal_handlers_disconnect_by_func (tile, tile_state_notify, cancellable);
@@ -712,13 +711,7 @@ on_pixbuf_created (GObject      *source_object,
     g_warning ("Unable to export tile: %s", error->message);
   else
     {
-      g_autoptr(GBytes) bytes = NULL;
-
-      if (tile_cache)
-        shumate_tile_cache_store_tile (tile_cache, tile, buffer, buffer_size);
-
-      bytes = g_bytes_new_take (buffer, buffer_size);
-      buffer = NULL;
+      g_autoptr(GBytes) bytes = g_bytes_new_take (g_steal_pointer (&buffer), buffer_size);
       shumate_file_cache_store_tile_async (priv->file_cache, tile, bytes, etag, cancellable, NULL, NULL);
     }
 
@@ -760,8 +753,6 @@ on_message_sent (GObject *source_object,
   g_autoptr(GInputStream) input_stream = NULL;
   g_autoptr(GError) error = NULL;
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (self);
-  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (self);
-  ShumateTileCache *tile_cache = shumate_tile_source_get_cache (tile_source);
   ShumateMapSource *next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (self));
   const char *etag;
   TileRenderedData *data;
@@ -786,9 +777,6 @@ on_message_sent (GObject *source_object,
   if (msg->status_code == SOUP_STATUS_NOT_MODIFIED)
     {
       g_autoptr(GInputStream) cache_stream = NULL;
-
-      if (tile_cache)
-        shumate_tile_cache_refresh_tile_time (tile_cache, tile);
 
       shumate_file_cache_mark_up_to_date (priv->file_cache, tile);
 
@@ -919,26 +907,15 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
 
   bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object), &etag, res, NULL);
 
-  if (bytes)
+  if (bytes && etag == NULL)
     {
-      g_autoptr(GInputStream) input_stream = NULL;
-      ShumateTileCache *tile_cache = shumate_tile_source_get_cache (SHUMATE_TILE_SOURCE (data->self));
+      /* No need to fetch new data from the network (the file cache does not
+       * set the etag when the data is up to date). Just fill the tile directly
+       * from the cache. */
 
-      if (tile_cache)
-        {
-          gsize size;
-          gconstpointer buffer = g_bytes_get_data (bytes, &size);
-          shumate_tile_cache_store_tile (tile_cache, data->tile, buffer, size);
-        }
-
-      if (etag == NULL)
-        {
-          /* No need to fetch new data from the network. Just fill the tile
-           * directly from the cache. */
-          input_stream = g_memory_input_stream_new_from_bytes (bytes);
-          gdk_pixbuf_new_from_stream_async (input_stream, data->cancellable, on_pixbuf_created_from_cache, g_object_ref (data->tile));
-          return;
-        }
+      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (bytes);
+      gdk_pixbuf_new_from_stream_async (input_stream, data->cancellable, on_pixbuf_created_from_cache, g_object_ref (data->tile));
+      return;
     }
 
   uri = get_tile_uri (data->self,

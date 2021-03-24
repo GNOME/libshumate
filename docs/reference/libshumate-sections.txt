@@ -361,26 +361,6 @@ ShumateScalePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-tile-cache</FILE>
-<TITLE>ShumateTileCache</TITLE>
-ShumateTileCache
-shumate_tile_cache_store_tile
-shumate_tile_cache_refresh_tile_time
-shumate_tile_cache_on_tile_filled
-<SUBSECTION Standard>
-SHUMATE_TILE_CACHE
-SHUMATE_IS_TILE_CACHE
-SHUMATE_TYPE_TILE_CACHE
-shumate_tile_cache_get_type
-SHUMATE_TILE_CACHE_CLASS
-SHUMATE_IS_TILE_CACHE_CLASS
-SHUMATE_TILE_CACHE_GET_CLASS
-<SUBSECTION Private>
-ShumateTileCacheClass
-ShumateTileCachePrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-map-source-factory</FILE>
 <TITLE>ShumateMapSourceFactory</TITLE>
 ShumateMapSourceFactory

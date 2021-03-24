@@ -26,7 +26,6 @@
 #define _SHUMATE_TILE_SOURCE_H_
 
 #include <shumate/shumate-map-source.h>
-#include <shumate/shumate-tile-cache.h>
 
 G_BEGIN_DECLS
 
@@ -44,10 +43,6 @@ struct _ShumateTileSourceClass
 {
   ShumateMapSourceClass parent_class;
 };
-
-ShumateTileCache *shumate_tile_source_get_cache (ShumateTileSource *tile_source);
-void shumate_tile_source_set_cache (ShumateTileSource *tile_source,
-    ShumateTileCache *cache);
 
 void shumate_tile_source_set_id (ShumateTileSource *tile_source,
     const char *id);

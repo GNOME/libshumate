@@ -22,8 +22,7 @@
  * SECTION:shumate-tile-source
  * @short_description: A base class of tile sources
  *
- * This class defines properties common to all tile sources (that is, map
- * sources that are not caches).
+ * This class defines properties common to all tile sources.
  */
 
 #include "shumate-tile-source.h"
@@ -40,7 +39,6 @@ enum
   PROP_MAX_ZOOM_LEVEL,
   PROP_TILE_SIZE,
   PROP_MAP_PROJECTION,
-  PROP_CACHE
 };
 
 typedef struct
@@ -53,7 +51,6 @@ typedef struct
   guint max_zoom_level;
   guint tile_size;
   ShumateMapProjection map_projection;
-  ShumateTileCache *cache;
 } ShumateTileSourcePrivate;
 
 G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateTileSource, shumate_tile_source, SHUMATE_TYPE_MAP_SOURCE);
@@ -108,10 +105,6 @@ shumate_tile_source_get_property (GObject *object,
 
     case PROP_MAP_PROJECTION:
       g_value_set_enum (value, priv->map_projection);
-      break;
-
-    case PROP_CACHE:
-      g_value_set_object (value, priv->cache);
       break;
 
     default:
@@ -169,26 +162,9 @@ shumate_tile_source_set_property (GObject *object,
           g_value_get_enum (value));
       break;
 
-    case PROP_CACHE:
-      shumate_tile_source_set_cache (tile_source,
-          g_value_get_object (value));
-      break;
-
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
-}
-
-
-static void
-shumate_tile_source_dispose (GObject *object)
-{
-  ShumateTileSource *tile_source = SHUMATE_TILE_SOURCE (object);
-  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
-
-  g_clear_object (&priv->cache);
-
-  G_OBJECT_CLASS (shumate_tile_source_parent_class)->dispose (object);
 }
 
 
@@ -214,7 +190,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
   GParamSpec *pspec;
 
   object_class->finalize = shumate_tile_source_finalize;
-  object_class->dispose = shumate_tile_source_dispose;
   object_class->get_property = shumate_tile_source_get_property;
   object_class->set_property = shumate_tile_source_set_property;
 
@@ -331,18 +306,6 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
         SHUMATE_MAP_PROJECTION_MERCATOR,
         G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
   g_object_class_install_property (object_class, PROP_MAP_PROJECTION, pspec);
-
-  /**
-   * ShumateTileSource:cache:
-   *
-   * The cache used for tile storage
-   */
-  pspec = g_param_spec_object ("cache",
-        "Cache",
-        "Cache used for tile sorage",
-        SHUMATE_TYPE_TILE_CACHE,
-        G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_CACHE, pspec);
 }
 
 
@@ -351,7 +314,6 @@ shumate_tile_source_init (ShumateTileSource *tile_source)
 {
   ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
 
-  priv->cache = NULL;
   priv->id = NULL;
   priv->name = NULL;
   priv->license = NULL;
@@ -360,56 +322,6 @@ shumate_tile_source_init (ShumateTileSource *tile_source)
   priv->max_zoom_level = 0;
   priv->tile_size = 0;
   priv->map_projection = SHUMATE_MAP_PROJECTION_MERCATOR;
-}
-
-
-/**
- * shumate_tile_source_get_cache:
- * @tile_source: a #ShumateTileSource
- *
- * Gets the cache used for storing tiles by this tile source.
- *
- * Returns: (transfer none): the cache
- */
-ShumateTileCache *
-shumate_tile_source_get_cache (ShumateTileSource *tile_source)
-{
-  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
-
-  g_return_val_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source), NULL);
-
-  return priv->cache;
-}
-
-
-/**
- * shumate_tile_source_set_cache:
- * @tile_source: a #ShumateTileSource
- * @cache: a #ShumateTileCache
- *
- * Sets the map source's cache used for storing tiles.
- */
-void
-shumate_tile_source_set_cache (ShumateTileSource *tile_source,
-    ShumateTileCache *cache)
-{
-  ShumateTileSourcePrivate *priv = shumate_tile_source_get_instance_private (tile_source);
-
-  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (tile_source));
-
-  if (priv->cache != NULL)
-    g_object_unref (priv->cache);
-
-  if (cache)
-    {
-      g_return_if_fail (SHUMATE_IS_TILE_CACHE (cache));
-
-      g_object_ref_sink (cache);
-    }
-
-  priv->cache = cache;
-
-  g_object_notify (G_OBJECT (tile_source), "cache");
 }
 
 

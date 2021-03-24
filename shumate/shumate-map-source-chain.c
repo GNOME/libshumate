@@ -32,7 +32,6 @@
  */
 
 #include "shumate-map-source-chain.h"
-#include "shumate-tile-cache.h"
 #include "shumate-tile-source.h"
 
 typedef struct
@@ -236,28 +235,6 @@ on_set_next_source_cb (ShumateMapSourceChain *source_chain,
 }
 
 
-static void
-assign_cache_of_next_source_sequence (ShumateMapSourceChain *source_chain,
-    ShumateMapSource *start_map_source,
-    ShumateTileCache *tile_cache)
-{
-  ShumateMapSource *map_source = start_map_source;
-  ShumateMapSource *chain_next_source = shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (source_chain));
-
-  do
-    {
-      map_source = shumate_map_source_get_next_source (map_source);
-    }
-  while (SHUMATE_IS_TILE_CACHE (map_source));
-
-  while (SHUMATE_IS_TILE_SOURCE (map_source) && map_source != chain_next_source)
-    {
-      shumate_tile_source_set_cache (SHUMATE_TILE_SOURCE (map_source), tile_cache);
-      map_source = shumate_map_source_get_next_source (map_source);
-    }
-}
-
-
 /**
  * shumate_map_source_chain_push:
  * @source_chain: a #ShumateMapSourceChain
@@ -272,10 +249,7 @@ shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
   ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
   gboolean is_cache = FALSE;
 
-  if (SHUMATE_IS_TILE_CACHE (map_source))
-    is_cache = TRUE;
-  else
-    g_return_if_fail (SHUMATE_IS_TILE_SOURCE (map_source));
+  g_return_if_fail (SHUMATE_IS_TILE_SOURCE (map_source));
 
   g_object_ref_sink (map_source);
 
@@ -295,12 +269,6 @@ shumate_map_source_chain_push (ShumateMapSourceChain *source_chain,
     {
       shumate_map_source_set_next_source (map_source, priv->stack_top);
       priv->stack_top = map_source;
-
-      if (is_cache)
-        {
-          ShumateTileCache *tile_cache = SHUMATE_TILE_CACHE (map_source);
-          assign_cache_of_next_source_sequence (source_chain, priv->stack_top, tile_cache);
-        }
     }
 }
 
@@ -319,18 +287,6 @@ shumate_map_source_chain_pop (ShumateMapSourceChain *source_chain)
   ShumateMapSource *next_source = shumate_map_source_get_next_source (priv->stack_top);
 
   g_return_if_fail (priv->stack_top);
-
-  if (SHUMATE_IS_TILE_CACHE (priv->stack_top))
-    {
-      ShumateTileCache *tile_cache = NULL;
-
-      if (SHUMATE_IS_TILE_CACHE (next_source))
-        tile_cache = SHUMATE_TILE_CACHE (next_source);
-
-      /* _push() guarantees that the last source is tile_source so we can be
-         sure that the next map source is still within the chain */
-      assign_cache_of_next_source_sequence (source_chain, priv->stack_top, tile_cache);
-    }
 
   if (next_source == shumate_map_source_get_next_source (SHUMATE_MAP_SOURCE (source_chain)))
     {
