@@ -298,7 +298,7 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
  * Creates a cached map source.
  *
  * Returns: (transfer none): a ready to use #ShumateMapSourceChain consisting of
- * #ShumateMemoryCache, #ShumateMapSource matching the given name, and
+ * #ShumateMapSource matching the given name and
  * an error tile source created with shumate_map_source_factory_create_error_source ().
  * Returns NULL if the source with the given name doesn't exist.
  */
@@ -309,7 +309,6 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   ShumateMapSourceChain *source_chain;
   ShumateMapSource *tile_source;
   ShumateMapSource *error_source;
-  ShumateMapSource *memory_cache;
   guint tile_size;
 
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
@@ -321,47 +320,9 @@ shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factor
   tile_size = shumate_map_source_get_tile_size (tile_source);
   error_source = shumate_map_source_factory_create_error_source (factory, tile_size);
 
-  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100));
-
   source_chain = shumate_map_source_chain_new ();
   shumate_map_source_chain_push (source_chain, error_source);
   shumate_map_source_chain_push (source_chain, tile_source);
-  shumate_map_source_chain_push (source_chain, memory_cache);
-
-  return SHUMATE_MAP_SOURCE (source_chain);
-}
-
-
-/**
- * shumate_map_source_factory_create_memcached_source:
- * @factory: the Factory
- * @id: the wanted map source id
- *
- * Creates a memory cached map source.
- *
- * Returns: (transfer none): a ready to use #ShumateMapSourceChain consisting of
- * #ShumateMemoryCache and #ShumateMapSource matching the given name.
- * Returns NULL if the source with the given name doesn't exist.
- */
-ShumateMapSource *
-shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *factory,
-    const char *id)
-{
-  ShumateMapSourceChain *source_chain;
-  ShumateMapSource *tile_source;
-  ShumateMapSource *memory_cache;
-
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
-
-  tile_source = shumate_map_source_factory_create (factory, id);
-  if (!tile_source)
-    return NULL;
-
-  memory_cache = SHUMATE_MAP_SOURCE (shumate_memory_cache_new_full (100));
-
-  source_chain = shumate_map_source_chain_new ();
-  shumate_map_source_chain_push (source_chain, tile_source);
-  shumate_map_source_chain_push (source_chain, memory_cache);
 
   return SHUMATE_MAP_SOURCE (source_chain);
 }

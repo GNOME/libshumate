@@ -48,8 +48,6 @@ ShumateMapSource *shumate_map_source_factory_create (ShumateMapSourceFactory *fa
     const char *id);
 ShumateMapSource *shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
     const char *id);
-ShumateMapSource *shumate_map_source_factory_create_memcached_source (ShumateMapSourceFactory *factory,
-    const char *id);
 ShumateMapSource *shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
     guint tile_size);
 

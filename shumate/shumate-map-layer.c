@@ -19,6 +19,7 @@
 
 #include "shumate-map-layer.h"
 #include "shumate-view.h"
+#include "shumate-memory-cache.h"
 
 struct _ShumateMapLayer
 {
@@ -32,6 +33,8 @@ struct _ShumateMapLayer
   GHashTable *tile_fill;
 
   guint recompute_grid_idle_id;
+
+  ShumateMemoryCache *memcache;
 };
 
 G_DEFINE_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE_TYPE_LAYER)
@@ -422,6 +425,7 @@ shumate_map_layer_dispose (GObject *object)
   g_clear_pointer (&self->tile_fill, g_hash_table_unref);
   g_clear_pointer (&self->tiles_positions, g_ptr_array_unref);
   g_clear_object (&self->map_source);
+  g_clear_object (&self->memcache);
 
   G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
 }
@@ -439,6 +443,42 @@ shumate_map_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
 
+}
+
+
+typedef struct {
+  ShumateMapLayer *self;
+  ShumateTile *tile;
+  char *source_id;
+} TileFilledData;
+
+static void
+tile_filled_data_free (TileFilledData *data)
+{
+  g_clear_object (&data->self);
+  g_clear_object (&data->tile);
+  g_clear_pointer (&data->source_id, g_free);
+  g_free (data);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileFilledData, tile_filled_data_free);
+
+static void
+on_tile_filled (GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(TileFilledData) data = user_data;
+  g_autoptr(GError) error = NULL;
+  gboolean success;
+
+  success = shumate_map_source_fill_tile_finish (SHUMATE_MAP_SOURCE (source_object), res, &error);
+
+  // TODO: Report the error
+  if (!success)
+    return;
+
+  shumate_memory_cache_store_texture (data->self->memcache,
+                                      data->tile,
+                                      shumate_tile_get_texture (data->tile),
+                                      data->source_id);
 }
 
 static void
@@ -511,6 +551,8 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
               shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
             {
               GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
+              const char *source_id = shumate_map_source_get_id (self->map_source);
+
               if (cancellable)
                 g_cancellable_cancel (cancellable);
 
@@ -518,10 +560,18 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
               shumate_tile_set_x (child, tile_column % source_columns);
               shumate_tile_set_y (child, tile_row % source_rows);
 
-              cancellable = g_cancellable_new ();
-              shumate_tile_set_texture (child, NULL);
-              shumate_map_source_fill_tile (self->map_source, child, cancellable);
-              g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
+              if (!shumate_memory_cache_try_fill_tile (self->memcache, tile_child->tile, source_id))
+                {
+                  TileFilledData *data = g_new0 (TileFilledData, 1);
+                  data->self = g_object_ref (self);
+                  data->tile = g_object_ref (tile_child->tile);
+                  data->source_id = g_strdup (source_id);
+
+                  cancellable = g_cancellable_new ();
+                  shumate_tile_set_texture (child, NULL);
+                  shumate_map_source_fill_tile_async (self->map_source, child, cancellable, on_tile_filled, data);
+                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
+                }
             }
 
           child_allocation.x += tile_size;
@@ -603,6 +653,7 @@ shumate_map_layer_init (ShumateMapLayer *self)
 {
   self->tiles_positions = g_ptr_array_new_with_free_func ((GDestroyNotify) tile_grid_position_free);
   self->tile_fill = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, g_object_unref);
+  self->memcache = shumate_memory_cache_new_full (100);
 }
 
 ShumateMapLayer *
