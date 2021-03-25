@@ -30,6 +30,26 @@
 
 G_BEGIN_DECLS
 
+/**
+ * SHUMATE_FILE_CACHE_ERROR:
+ *
+ * Error domain for errors that may occur while storing or retrieving tiles
+ * from a #ShumateFileCache. Errors in this domain will be from the
+ * #ShumateFileCacheError enum.
+ */
+#define SHUMATE_FILE_CACHE_ERROR shumate_file_cache_error_quark ()
+GQuark shumate_file_cache_error_quark (void);
+
+/**
+ * ShumateFileCacheError:
+ * @SHUMATE_FILE_CACHE_ERROR_FAILED: An unspecified error occurred during the operation.
+ *
+ * Error codes in the #SHUMATE_FILE_CACHE_ERROR domain.
+ */
+typedef enum {
+  SHUMATE_FILE_CACHE_ERROR_FAILED,
+} ShumateFileCacheError;
+
 #define SHUMATE_TYPE_FILE_CACHE shumate_file_cache_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, GObject)
 

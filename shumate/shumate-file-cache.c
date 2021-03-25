@@ -70,6 +70,11 @@ typedef struct
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT);
 
+
+typedef char sqlite_str;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (sqlite_str, sqlite3_free);
+
+
 static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
 static char *get_filename (ShumateFileCache *file_cache,
@@ -78,10 +83,6 @@ static void delete_tile (ShumateFileCache *file_cache,
     const char *filename);
 static gboolean create_cache_dir (const char *dir_name);
 
-static void store_tile (ShumateFileCache *self,
-    ShumateTile *tile,
-    const char *contents,
-    gsize size);
 static void on_tile_filled (ShumateFileCache *self,
     ShumateTile *tile);
 
@@ -571,80 +572,6 @@ shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
 
 
 static void
-store_tile (ShumateFileCache *self,
-    ShumateTile *tile,
-    const char *contents,
-    gsize size)
-{
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
-  char *query = NULL;
-  char *error = NULL;
-  char *path = NULL;
-  char *filename = NULL;
-  GError *gerror = NULL;
-  GFile *file;
-  GFileOutputStream *ostream;
-  gsize bytes_written;
-
-  DEBUG ("Update of %p", tile);
-
-  filename = get_filename (self, tile);
-  file = g_file_new_for_path (filename);
-
-  /* If the file exists, delete it */
-  g_file_delete (file, NULL, NULL);
-
-  /* If needed, create the cache's dirs */
-  path = g_path_get_dirname (filename);
-  if (g_mkdir_with_parents (path, 0700) == -1)
-    {
-      if (errno != EEXIST)
-        {
-          g_warning ("Unable to create the image cache path '%s': %s",
-              path, g_strerror (errno));
-          goto store_next;
-        }
-    }
-
-  ostream = g_file_create (file, G_FILE_CREATE_PRIVATE, NULL, &gerror);
-  if (!ostream)
-    {
-      DEBUG ("GFileOutputStream creation failed: %s", gerror->message);
-      g_error_free (gerror);
-      goto store_next;
-    }
-
-  /* Write the cache */
-  if (!g_output_stream_write_all (G_OUTPUT_STREAM (ostream), contents, size, &bytes_written, NULL, &gerror))
-    {
-      DEBUG ("Writing file contents failed: %s", gerror->message);
-      g_error_free (gerror);
-      g_object_unref (ostream);
-      goto store_next;
-    }
-
-  g_object_unref (ostream);
-
-  query = sqlite3_mprintf ("REPLACE INTO tiles (filename, etag, size) VALUES (%Q, %Q, %d)",
-        filename,
-        shumate_tile_get_etag (tile),
-        size);
-  sqlite3_exec (priv->db, query, NULL, NULL, &error);
-  if (error != NULL)
-    {
-      DEBUG ("Saving Etag and size failed: %s", error);
-      sqlite3_free (error);
-    }
-  sqlite3_free (query);
-
-store_next:
-  g_free (filename);
-  g_free (path);
-  g_object_unref (file);
-}
-
-
-static void
 on_tile_filled (ShumateFileCache *self,
     ShumateTile *tile)
 {
@@ -939,6 +866,27 @@ shumate_file_cache_get_tile_finish (ShumateFileCache *self,
 }
 
 
+typedef struct {
+  ShumateFileCache *self;
+  char *etag;
+  GBytes *bytes;
+  char *filename;
+} StoreTileData;
+
+static void
+store_tile_data_free (StoreTileData *data)
+{
+  g_clear_object (&data->self);
+  g_clear_pointer (&data->etag, g_free);
+  g_clear_pointer (&data->bytes, g_bytes_unref);
+  g_clear_pointer (&data->filename, g_free);
+  g_free (data);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (StoreTileData, store_tile_data_free);
+
+static void on_file_created (GObject *object, GAsyncResult *result, gpointer user_data);
+static void on_file_written (GObject *object, GAsyncResult *result, gpointer user_data);
+
 /**
  * shumate_file_cache_store_tile_async:
  * @self: an #ShumateFileCache
@@ -961,8 +909,10 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
                                      gpointer user_data)
 {
   g_autoptr(GTask) task = NULL;
-  gconstpointer contents;
-  gsize size;
+  g_autofree char *filename = NULL;
+  g_autoptr(GFile) file = NULL;
+  g_autofree char *path = NULL;
+  StoreTileData *data;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -972,13 +922,86 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_file_cache_store_tile_async);
 
-  if (etag != NULL)
-    shumate_tile_set_etag (tile, etag);
+  filename = get_filename (self, tile);
+  file = g_file_new_for_path (filename);
 
-  contents = g_bytes_get_data (bytes, &size);
+  DEBUG ("Update of %p", tile);
 
-  // TODO: Make store_tile an async function
-  store_tile (self, tile, contents, size);
+  /* If needed, create the cache's dirs */
+  path = g_path_get_dirname (filename);
+  if (g_mkdir_with_parents (path, 0700) == -1)
+    {
+      if (errno != EEXIST)
+        {
+          const char *error_string = g_strerror (errno);
+          g_task_return_new_error (task, SHUMATE_FILE_CACHE_ERROR,
+                                   SHUMATE_FILE_CACHE_ERROR_FAILED,
+                                   "Failed to create cache directory %s: %s", path, error_string);
+          return;
+        }
+    }
+
+  data = g_new0 (StoreTileData, 1);
+  data->self = g_object_ref (self);
+  data->etag = g_strdup (etag);
+  data->bytes = g_bytes_ref (bytes);
+  data->filename = g_steal_pointer (&filename);
+  g_task_set_task_data (task, data, (GDestroyNotify) store_tile_data_free);
+
+  g_file_create_async (file, G_FILE_CREATE_PRIVATE, G_PRIORITY_DEFAULT, cancellable, on_file_created, g_object_ref (task));
+}
+
+static void
+on_file_created (GObject *object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  StoreTileData *data = g_task_get_task_data (task);
+  GCancellable *cancellable = g_task_get_cancellable (task);
+  GError *error = NULL;
+  g_autoptr(GFileOutputStream) ostream = NULL;
+  gconstpointer contents;
+  gsize size;
+
+  ostream = g_file_create_finish (G_FILE (object), res, &error);
+  if (error != NULL)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  contents = g_bytes_get_data (data->bytes, &size);
+
+  g_output_stream_write_all_async (G_OUTPUT_STREAM (ostream),
+                                   contents, size, G_PRIORITY_DEFAULT,
+                                   cancellable, on_file_written, g_object_ref (task));
+}
+
+static void
+on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  StoreTileData *data = g_task_get_task_data (task);
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (data->self);
+  g_autoptr(sqlite_str) query = NULL;
+  g_autoptr(sqlite_str) sql_error = NULL;
+  GError *error = NULL;
+
+  g_output_stream_write_all_finish (G_OUTPUT_STREAM (object), res, NULL, &error);
+  if (error != NULL)
+    {
+      g_task_return_error (task, error);
+      return;
+    }
+
+  query = sqlite3_mprintf ("REPLACE INTO tiles (filename, etag, size) VALUES (%Q, %Q, %d)",
+                           data->filename, data->etag, g_bytes_get_size (data->bytes));
+  sqlite3_exec (priv->db, query, NULL, NULL, &sql_error);
+  if (sql_error != NULL)
+    {
+      g_task_return_new_error (task, SHUMATE_FILE_CACHE_ERROR, SHUMATE_FILE_CACHE_ERROR_FAILED,
+                               "Failed to insert tile into SQLite database: %s", sql_error);
+      return;
+    }
 
   g_task_return_boolean (task, TRUE);
 }
@@ -1005,3 +1028,12 @@ shumate_file_cache_store_tile_finish (ShumateFileCache *self,
 
   return g_task_propagate_boolean (G_TASK (result), error);
 }
+
+/**
+ * shumate_file_cache_error_quark:
+ *
+ * Gets the #ShumateFileCache error quark.
+ *
+ * Returns: a #GQuark
+ */
+G_DEFINE_QUARK (shumate-file-cache-error-quark, shumate_file_cache_error);
