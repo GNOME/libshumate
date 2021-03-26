@@ -69,10 +69,6 @@ struct _ShumateMapSourceClass
                             gpointer              user_data);
 };
 
-ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_source);
-void shumate_map_source_set_next_source (ShumateMapSource *map_source,
-    ShumateMapSource *next_source);
-
 const char *shumate_map_source_get_id (ShumateMapSource *map_source);
 const char *shumate_map_source_get_name (ShumateMapSource *map_source);
 const char *shumate_map_source_get_license (ShumateMapSource *map_source);

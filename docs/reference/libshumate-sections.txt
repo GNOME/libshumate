@@ -19,8 +19,6 @@ shumate_map_source_get_row_count
 shumate_map_source_get_column_count
 shumate_map_source_get_meters_per_pixel
 shumate_map_source_fill_tile
-shumate_map_source_get_next_source
-shumate_map_source_set_next_source
 <SUBSECTION Standard>
 SHUMATE_MAP_SOURCE
 SHUMATE_IS_MAP_SOURCE

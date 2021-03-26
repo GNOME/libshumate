@@ -57,83 +57,12 @@
 
 #include <math.h>
 
-typedef struct
-{
-  ShumateMapSource *next_source;
-} ShumateMapSourcePrivate;
-
-G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
-
-enum
-{
-  PROP_0,
-  PROP_NEXT_SOURCE,
-};
-
-static void
-shumate_map_source_get_property (GObject *object,
-    guint prop_id,
-    GValue *value,
-    GParamSpec *pspec)
-{
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (object);
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  switch (prop_id)
-    {
-    case PROP_NEXT_SOURCE:
-      g_value_set_object (value, priv->next_source);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-
-static void
-shumate_map_source_set_property (GObject *object,
-    guint prop_id,
-    const GValue *value,
-    GParamSpec *pspec)
-{
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (object);
-
-  switch (prop_id)
-    {
-    case PROP_NEXT_SOURCE:
-      shumate_map_source_set_next_source (map_source,
-          g_value_get_object (value));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-    }
-}
-
-
-static void
-shumate_map_source_dispose (GObject *object)
-{
-  ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (object);
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  g_clear_object (&priv->next_source);
-
-  G_OBJECT_CLASS (shumate_map_source_parent_class)->dispose (object);
-}
+G_DEFINE_ABSTRACT_TYPE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
 
 
 static void
 shumate_map_source_class_init (ShumateMapSourceClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  GParamSpec *pspec;
-
-  object_class->dispose = shumate_map_source_dispose;
-  object_class->get_property = shumate_map_source_get_property;
-  object_class->set_property = shumate_map_source_set_property;
-
   klass->get_id = NULL;
   klass->get_name = NULL;
   klass->get_license = NULL;
@@ -144,76 +73,12 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
   klass->get_projection = NULL;
 
   klass->fill_tile_async = NULL;
-
-  /**
-   * ShumateMapSource:next-source:
-   *
-   * Next source in the loading chain.
-   */
-  pspec = g_param_spec_object ("next-source",
-        "Next Source",
-        "Next source in the loading chain",
-        SHUMATE_TYPE_MAP_SOURCE,
-        G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_NEXT_SOURCE, pspec);
 }
 
 
 static void
 shumate_map_source_init (ShumateMapSource *map_source)
 {
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  priv->next_source = NULL;
-}
-
-
-/**
- * shumate_map_source_get_next_source:
- * @map_source: a #ShumateMapSource
- *
- * Get the next source in the chain.
- *
- * Returns: (transfer none): the next source in the chain.
- */
-ShumateMapSource *
-shumate_map_source_get_next_source (ShumateMapSource *map_source)
-{
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), NULL);
-
-  return priv->next_source;
-}
-
-/**
- * shumate_map_source_set_next_source:
- * @map_source: a #ShumateMapSource
- * @next_source: the next #ShumateMapSource in the chain
- *
- * Sets the next map source in the chain.
- */
-void
-shumate_map_source_set_next_source (ShumateMapSource *map_source,
-    ShumateMapSource *next_source)
-{
-  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
-
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
-
-  if (priv->next_source != NULL)
-    g_object_unref (priv->next_source);
-
-  if (next_source)
-    {
-      g_return_if_fail (SHUMATE_IS_MAP_SOURCE (next_source));
-
-      g_object_ref_sink (next_source);
-    }
-
-  priv->next_source = next_source;
-
-  g_object_notify (G_OBJECT (map_source), "next-source");
 }
 
 /**
