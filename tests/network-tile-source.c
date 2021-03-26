@@ -37,7 +37,8 @@ on_tile_filled (GObject *object, GAsyncResult *res, gpointer user_data)
 static void
 test_network_tile_source_tile (void)
 {
-  g_autofree char *uri = testserver_start ();
+  g_autoptr(TestTileServer) server = test_tile_server_new ();
+  g_autofree char *uri = test_tile_server_start (server);
   g_autoptr(ShumateMapSource) source = create_tile_source (uri);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GMainLoop) loop = NULL;
