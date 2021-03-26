@@ -16,7 +16,7 @@ test_coordinate_convert (void)
 
   g_assert_nonnull (factory);
 
-  source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  source = shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
 
   g_assert_nonnull (source);
   

@@ -196,24 +196,6 @@ ShumateNetworkTileSourcePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-error-tile-source</FILE>
-<TITLE>ShumateErrorTileSource</TITLE>
-ShumateErrorTileSource
-shumate_error_tile_source_new_full
-<SUBSECTION Standard>
-SHUMATE_ERROR_TILE_SOURCE
-SHUMATE_IS_ERROR_TILE_SOURCE
-SHUMATE_TYPE_ERROR_TILE_SOURCE
-shumate_error_tile_source_get_type
-SHUMATE_ERROR_TILE_SOURCE_CLASS
-SHUMATE_IS_ERROR_TILE_SOURCE_CLASS
-SHUMATE_ERROR_TILE_SOURCE_GET_CLASS
-<SUBSECTION Private>
-ShumateErrorTileSourceClass
-ShumateErrorTileSourcePrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-tile</FILE>
 <TITLE>ShumateTile</TITLE>
 ShumateState

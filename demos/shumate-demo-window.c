@@ -97,7 +97,7 @@ on_layers_dropdown_notify_selected (ShumateDemoWindow *self, GParamSpec *pspec, 
   switch (gtk_drop_down_get_selected (dropdown)) {
   case 0:
     factory = shumate_map_source_factory_dup_default ();
-    set_map_source (self, shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK));
+    set_map_source (self, shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK));
     break;
   case 1:
     set_map_source (self, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));

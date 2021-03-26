@@ -46,10 +46,6 @@ ShumateMapSourceFactory *shumate_map_source_factory_dup_default (void);
 
 ShumateMapSource *shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
     const char *id);
-ShumateMapSource *shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
-    const char *id);
-ShumateMapSource *shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
-    guint tile_size);
 
 gboolean shumate_map_source_factory_register (ShumateMapSourceFactory *factory,
     ShumateMapSourceDesc *desc);

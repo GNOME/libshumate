@@ -290,67 +290,6 @@ shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
 }
 
 
-/**
- * shumate_map_source_factory_create_cached_source:
- * @factory: the Factory
- * @id: the wanted map source id
- *
- * Creates a cached map source.
- *
- * Returns: (transfer none): a ready to use #ShumateMapSourceChain consisting of
- * #ShumateMapSource matching the given name and
- * an error tile source created with shumate_map_source_factory_create_error_source ().
- * Returns NULL if the source with the given name doesn't exist.
- */
-ShumateMapSource *
-shumate_map_source_factory_create_cached_source (ShumateMapSourceFactory *factory,
-    const char *id)
-{
-  ShumateMapSourceChain *source_chain;
-  ShumateMapSource *tile_source;
-  ShumateMapSource *error_source;
-  guint tile_size;
-
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
-
-  tile_source = shumate_map_source_factory_create (factory, id);
-  if (!tile_source)
-    return NULL;
-
-  tile_size = shumate_map_source_get_tile_size (tile_source);
-  error_source = shumate_map_source_factory_create_error_source (factory, tile_size);
-
-  source_chain = shumate_map_source_chain_new ();
-  shumate_map_source_chain_push (source_chain, error_source);
-  shumate_map_source_chain_push (source_chain, tile_source);
-
-  return SHUMATE_MAP_SOURCE (source_chain);
-}
-
-
-/**
- * shumate_map_source_factory_create_error_source:
- * @factory: the Factory
- * @tile_size: the size of the error tile
- *
- * Creates a map source generating error tiles.
- *
- * Returns: (transfer none): a ready to use map source generating error tiles.
- */
-ShumateMapSource *
-shumate_map_source_factory_create_error_source (ShumateMapSourceFactory *factory,
-    guint tile_size)
-{
-  ShumateMapSource *error_source;
-
-  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE_FACTORY (factory), NULL);
-
-  error_source = SHUMATE_MAP_SOURCE (shumate_error_tile_source_new_full ());
-
-  return error_source;
-}
-
-
 static int
 compare_id (ShumateMapSourceDesc *a, ShumateMapSourceDesc *b)
 {

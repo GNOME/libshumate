@@ -922,7 +922,7 @@ shumate_view_new_simple (void)
   
   viewport = shumate_view_get_viewport (view);
   factory = shumate_map_source_factory_dup_default ();
-  source = shumate_map_source_factory_create_cached_source (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  source = shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
   shumate_viewport_set_reference_map_source (viewport, source);
   map_layer = shumate_map_layer_new (source, viewport);
   shumate_view_add_layer (view, SHUMATE_LAYER (map_layer));

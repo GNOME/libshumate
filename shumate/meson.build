@@ -1,6 +1,5 @@
 libshumate_public_h = [
   'shumate-coordinate.h',
-  'shumate-error-tile-source.h',
   'shumate-file-cache.h',
   'shumate-layer.h',
   'shumate-license.h',
@@ -33,7 +32,6 @@ libshumate_private_h = [
 libshumate_sources = [
   'shumate-coordinate.c',
   'shumate-debug.c',
-  'shumate-error-tile-source.c',
   'shumate-file-cache.c',
   'shumate-kinetic-scrolling.c',
   'shumate-layer.c',
