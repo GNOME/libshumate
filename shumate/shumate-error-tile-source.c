@@ -27,97 +27,25 @@
 #include "shumate-debug.h"
 #include "shumate-enum-types.h"
 #include "shumate-tile.h"
-
-static GdkTexture *
-texture_new_for_surface (cairo_surface_t *surface)
-{
-  g_autoptr(GBytes) bytes = NULL;
-  GdkTexture *texture;
-
-  g_return_val_if_fail (cairo_surface_get_type (surface) == CAIRO_SURFACE_TYPE_IMAGE, NULL);
-  g_return_val_if_fail (cairo_image_surface_get_width (surface) > 0, NULL);
-  g_return_val_if_fail (cairo_image_surface_get_height (surface) > 0, NULL);
-
-  bytes = g_bytes_new_with_free_func (cairo_image_surface_get_data (surface),
-                                      cairo_image_surface_get_height (surface)
-                                      * cairo_image_surface_get_stride (surface),
-                                      (GDestroyNotify) cairo_surface_destroy,
-                                      cairo_surface_reference (surface));
-  
-  texture = gdk_memory_texture_new (cairo_image_surface_get_width (surface),
-                                    cairo_image_surface_get_height (surface),
-                                    GDK_MEMORY_B8G8R8A8_PREMULTIPLIED,
-                                    bytes,
-                                    cairo_image_surface_get_stride (surface));
-
-  return texture;
-}
+#include "shumate-network-tile-source.h"
 
 
 G_DEFINE_TYPE (ShumateErrorTileSource, shumate_error_tile_source, SHUMATE_TYPE_TILE_SOURCE)
 
 
 static void
-fill_tile (ShumateMapSource *map_source,
-           ShumateTile      *tile,
-           GCancellable     *cancellable)
+fill_tile_async (ShumateMapSource *self,
+                 ShumateTile *tile,
+                 GCancellable *cancellable,
+                 GAsyncReadyCallback callback,
+                 gpointer user_data)
 {
-  g_return_if_fail (SHUMATE_IS_ERROR_TILE_SOURCE (map_source));
+  g_return_if_fail (SHUMATE_IS_ERROR_TILE_SOURCE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
 
-  ShumateMapSource *next_source = shumate_map_source_get_next_source (map_source);
-
-  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
-    return;
-
-  if (shumate_tile_get_state (tile) != SHUMATE_STATE_LOADED)
-    {
-      g_autoptr(GdkTexture) texture = NULL;
-      guint tile_size = shumate_tile_get_size (tile);
-      cairo_surface_t *surface;
-      cairo_t *cr;
-      cairo_pattern_t *pat;
-
-      surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, tile_size, tile_size);
-      cr = cairo_create (surface);
-
-      // draw a linear gray to white pattern
-      pat = cairo_pattern_create_linear (tile_size / 2.0, 0.0, tile_size, tile_size / 2.0);
-      cairo_pattern_add_color_stop_rgb (pat, 0, 0.686, 0.686, 0.686);
-      cairo_pattern_add_color_stop_rgb (pat, 1, 0.925, 0.925, 0.925);
-      cairo_set_source (cr, pat);
-      cairo_rectangle (cr, 0, 0, tile_size, tile_size);
-      cairo_fill (cr);
-
-      cairo_pattern_destroy (pat);
-
-      // draw the red cross
-      cairo_set_source_rgb (cr, 0.424, 0.078, 0.078);
-      cairo_set_line_width (cr, 14.0);
-      cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
-      cairo_move_to (cr, 24, 24);
-      cairo_line_to (cr, 50, 50);
-      cairo_move_to (cr, 50, 24);
-      cairo_line_to (cr, 24, 50);
-      cairo_stroke (cr);
-
-      cairo_destroy (cr);
-      cairo_surface_flush (surface);
-
-      texture = texture_new_for_surface (surface);
-      cairo_surface_destroy (surface);
-
-      shumate_tile_set_texture (tile, texture);
-      shumate_tile_set_fade_in (tile, TRUE);
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-    }
-  else if (SHUMATE_IS_MAP_SOURCE (next_source))
-    shumate_map_source_fill_tile (next_source, tile, cancellable);
-  else if (shumate_tile_get_state (tile) == SHUMATE_STATE_LOADED)
-    {
-      /* if we have some content, use the tile even if it wasn't validated */
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-    }
+  g_task_report_new_error (self, callback, user_data, fill_tile_async,
+                           SHUMATE_NETWORK_SOURCE_ERROR, SHUMATE_NETWORK_SOURCE_ERROR_FAILED,
+                           "No tile found.");
 }
 
 static void
@@ -125,7 +53,7 @@ shumate_error_tile_source_class_init (ShumateErrorTileSourceClass *klass)
 {
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
-  map_source_class->fill_tile = fill_tile;
+  map_source_class->fill_tile_async = fill_tile_async;
 }
 
 

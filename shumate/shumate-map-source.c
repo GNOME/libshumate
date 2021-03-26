@@ -143,7 +143,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
   klass->get_tile_size = NULL;
   klass->get_projection = NULL;
 
-  klass->fill_tile = NULL;
+  klass->fill_tile_async = NULL;
 
   /**
    * ShumateMapSource:next-source:
@@ -533,29 +533,6 @@ shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
 
 
 /**
- * shumate_map_source_fill_tile:
- * @map_source: a #ShumateMapSource
- * @tile: a #ShumateTile
- * @cancellable: a #GCancellable or %NULL
- *
- * Fills the tile with image data (either from cache, network or rendered
- * locally).
- */
-void
-shumate_map_source_fill_tile (ShumateMapSource *map_source,
-                              ShumateTile      *tile,
-                              GCancellable     *cancellable)
-{
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
-
-  shumate_tile_set_state (tile, SHUMATE_STATE_LOADING);
-  SHUMATE_MAP_SOURCE_GET_CLASS (map_source)->fill_tile (map_source, tile, cancellable);
-}
-
-
-static void on_tile_notify_state (GObject *object, GParamSpec *pspec, gpointer user_data);
-
-/**
  * shumate_map_source_fill_tile_async:
  * @self: a #ShumateMapSource
  * @tile: a #ShumateTile
@@ -572,33 +549,11 @@ shumate_map_source_fill_tile_async (ShumateMapSource *self,
                                     GAsyncReadyCallback callback,
                                     gpointer user_data)
 {
-  g_autoptr(GTask) task = NULL;
-
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
 
-  task = g_task_new (self, cancellable, callback, user_data);
-  g_task_set_source_tag (task, shumate_map_source_fill_tile_async);
-
-  g_signal_connect (tile, "notify::state", G_CALLBACK (on_tile_notify_state), g_object_ref (task));
-
-  shumate_map_source_fill_tile (self, tile, cancellable);
-}
-
-static void
-on_tile_notify_state (GObject *object, GParamSpec *pspec, gpointer user_data)
-{
-  GTask *task = user_data;
-  ShumateTile *tile = SHUMATE_TILE (object);
-
-  if (shumate_tile_get_state (tile) == SHUMATE_STATE_DONE)
-    {
-      g_signal_handlers_disconnect_by_data (object, user_data);
-      g_task_return_boolean (task, TRUE);
-      g_object_unref (task);
-      return;
-    }
+  return SHUMATE_MAP_SOURCE_GET_CLASS (self)->fill_tile_async (self, tile, cancellable, callback, user_data);
 }
 
 /**

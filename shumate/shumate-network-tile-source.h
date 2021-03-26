@@ -29,6 +29,34 @@
 
 G_BEGIN_DECLS
 
+
+/**
+ * SHUMATE_NETWORK_SOURCE_ERROR:
+ *
+ * Error domain for errors that may occur while fetching tiles from the network
+ * using #ShumateNetworkTileSource. Errors in this domain will be from the
+ * #ShumateNetworkTileError enum.
+ */
+#define SHUMATE_NETWORK_SOURCE_ERROR shumate_network_source_error_quark ()
+GQuark shumate_network_source_error_quark (void);
+
+/**
+ * ShumateNetworkSourceError:
+ * @SHUMATE_NETWORK_SOURCE_ERROR_FAILED: An unspecified error occurred during the operation.
+ * @SHUMATE_NETWORK_SOURCE_ERROR_BAD_RESPONSE: An unsuccessful HTTP response was received from the server.
+ * @SHUMATE_NETWORK_SOURCE_ERROR_COULD_NOT_CONNECT: The server could not be reached.
+ * @SHUMATE_NETWORK_SOURCE_ERROR_OFFLINE: The tile source has been marked as offline.
+ *
+ * Error codes in the #SHUMATE_NETWORK_SOURCE_ERROR domain.
+ */
+typedef enum {
+  SHUMATE_NETWORK_SOURCE_ERROR_FAILED,
+  SHUMATE_NETWORK_SOURCE_ERROR_BAD_RESPONSE,
+  SHUMATE_NETWORK_SOURCE_ERROR_COULD_NOT_CONNECT,
+  SHUMATE_NETWORK_SOURCE_ERROR_OFFLINE,
+} ShumateNetworkSourceError;
+
+
 #define SHUMATE_TYPE_NETWORK_TILE_SOURCE shumate_network_tile_source_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE, NETWORK_TILE_SOURCE, ShumateTileSource)
 

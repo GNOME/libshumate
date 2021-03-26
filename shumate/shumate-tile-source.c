@@ -202,7 +202,7 @@ shumate_tile_source_class_init (ShumateTileSourceClass *klass)
   map_source_class->get_tile_size = get_tile_size;
   map_source_class->get_projection = get_projection;
 
-  map_source_class->fill_tile = NULL;
+  map_source_class->fill_tile_async = NULL;
 
   /**
    * ShumateTileSource:id:

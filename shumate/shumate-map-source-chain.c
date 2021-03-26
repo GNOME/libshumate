@@ -50,9 +50,11 @@ static guint get_min_zoom_level (ShumateMapSource *map_source);
 static guint get_max_zoom_level (ShumateMapSource *map_source);
 static guint get_tile_size (ShumateMapSource *map_source);
 
-static void fill_tile (ShumateMapSource *map_source,
-                       ShumateTile      *tile,
-                       GCancellable     *cancellable);
+static void fill_tile_async (ShumateMapSource *map_source,
+                             ShumateTile *tile,
+                             GCancellable *cancellable,
+                             GAsyncReadyCallback callback,
+                             gpointer user_data);
 static void on_set_next_source_cb (ShumateMapSourceChain *source_chain,
     G_GNUC_UNUSED gpointer user_data);
 
@@ -85,7 +87,7 @@ shumate_map_source_chain_class_init (ShumateMapSourceChainClass *klass)
   map_source_class->get_max_zoom_level = get_max_zoom_level;
   map_source_class->get_tile_size = get_tile_size;
 
-  map_source_class->fill_tile = fill_tile;
+  map_source_class->fill_tile_async = fill_tile_async;
 }
 
 
@@ -203,9 +205,11 @@ get_tile_size (ShumateMapSource *map_source)
 
 
 static void
-fill_tile (ShumateMapSource *map_source,
-           ShumateTile      *tile,
-           GCancellable     *cancellable)
+fill_tile_async (ShumateMapSource *map_source,
+                 ShumateTile *tile,
+                 GCancellable *cancellable,
+                 GAsyncReadyCallback callback,
+                 gpointer user_data)
 {
   ShumateMapSourceChain *source_chain = SHUMATE_MAP_SOURCE_CHAIN (map_source);
   ShumateMapSourceChainPrivate *priv = shumate_map_source_chain_get_instance_private (source_chain);
@@ -213,7 +217,7 @@ fill_tile (ShumateMapSource *map_source,
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_CHAIN (map_source));
   g_return_if_fail (priv->stack_top);
 
-  shumate_map_source_fill_tile (priv->stack_top, tile, cancellable);
+  shumate_map_source_fill_tile_async (priv->stack_top, tile, cancellable, callback, user_data);
 }
 
 

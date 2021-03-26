@@ -62,9 +62,11 @@ struct _ShumateMapSourceClass
   guint (*get_tile_size)(ShumateMapSource *map_source);
   ShumateMapProjection (*get_projection)(ShumateMapSource *map_source);
 
-  void (*fill_tile)(ShumateMapSource *map_source,
-                    ShumateTile      *tile,
-                    GCancellable     *cancellable);
+  void (*fill_tile_async)  (ShumateMapSource     *self,
+                            ShumateTile          *tile,
+                            GCancellable         *cancellable,
+                            GAsyncReadyCallback   callback,
+                            gpointer              user_data);
 };
 
 ShumateMapSource *shumate_map_source_get_next_source (ShumateMapSource *map_source);
@@ -101,9 +103,6 @@ double shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
     double latitude,
     double longitude);
 
-void shumate_map_source_fill_tile (ShumateMapSource *map_source,
-                                   ShumateTile      *tile,
-                                   GCancellable     *cancellable);
 void shumate_map_source_fill_tile_async (ShumateMapSource    *self,
                                          ShumateTile         *tile,
                                          GCancellable        *cancellable,

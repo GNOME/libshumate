@@ -60,11 +60,14 @@ texture_new_for_surface (cairo_surface_t *surface)
 
 
 static void
-shumate_test_tile_source_fill_tile (ShumateMapSource *map_source,
-                                    ShumateTile      *tile,
-                                    GCancellable     *cancellable)
+shumate_test_tile_source_fill_tile_async (ShumateMapSource *map_source,
+                                          ShumateTile *tile,
+                                          GCancellable *cancellable,
+                                          GAsyncReadyCallback callback,
+                                          gpointer user_data)
 {
   g_autoptr(GdkTexture) texture = NULL;
+  g_autoptr(GTask) task = NULL;
   guint tile_size = shumate_tile_get_size (tile);
   int x = shumate_tile_get_x (tile), y = shumate_tile_get_y (tile);
   int zoom = shumate_tile_get_zoom_level (tile);
@@ -76,6 +79,7 @@ shumate_test_tile_source_fill_tile (ShumateMapSource *map_source,
 
   g_return_if_fail (SHUMATE_IS_TEST_TILE_SOURCE (map_source));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, tile_size, tile_size);
   cr = cairo_create (surface);
@@ -97,6 +101,10 @@ shumate_test_tile_source_fill_tile (ShumateMapSource *map_source,
   shumate_tile_set_texture (tile, texture);
   shumate_tile_set_fade_in (tile, TRUE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+
+  task = g_task_new (map_source, cancellable, callback, user_data);
+  g_task_set_source_tag (task, shumate_test_tile_source_fill_tile_async);
+  g_task_return_boolean (task, TRUE);
 }
 
 
@@ -105,7 +113,7 @@ shumate_test_tile_source_class_init (ShumateTestTileSourceClass *klass)
 {
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
-  map_source_class->fill_tile = shumate_test_tile_source_fill_tile;
+  map_source_class->fill_tile_async = shumate_test_tile_source_fill_tile_async;
 }
 
 
