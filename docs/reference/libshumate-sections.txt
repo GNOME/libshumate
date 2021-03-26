@@ -379,26 +379,6 @@ ShumateMapSourceFactoryPrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-map-source-chain</FILE>
-<TITLE>ShumateMapSourceChain</TITLE>
-ShumateMapSourceChain
-shumate_map_source_chain_new
-shumate_map_source_chain_push
-shumate_map_source_chain_pop
-<SUBSECTION Standard>
-SHUMATE_MAP_SOURCE_CHAIN
-SHUMATE_IS_MAP_SOURCE_CHAIN
-SHUMATE_TYPE_MAP_SOURCE_CHAIN
-shumate_map_source_chain_get_type
-SHUMATE_MAP_SOURCE_CHAIN_CLASS
-SHUMATE_IS_MAP_SOURCE_CHAIN_CLASS
-SHUMATE_MAP_SOURCE_CHAIN_GET_CLASS
-<SUBSECTION Private>
-ShumateMapSourceChainClass
-ShumateMapSourceChainPrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-license</FILE>
 <TITLE>ShumateLicense</TITLE>
 ShumateLicense

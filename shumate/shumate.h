@@ -45,8 +45,6 @@
 
 #include "shumate/shumate-map-source-factory.h"
 
-#include "shumate/shumate-map-source-chain.h"
-
 #include "shumate/shumate-network-tile-source.h"
 
 #include "shumate/shumate-memory-cache.h"

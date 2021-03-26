@@ -4,7 +4,6 @@ shumate_layer_get_type
 shumate_license_get_type
 shumate_location_get_type
 shumate_map_layer_get_type
-shumate_map_source_chain_get_type
 shumate_map_source_desc_get_type
 shumate_map_source_factory_get_type
 shumate_map_source_get_type

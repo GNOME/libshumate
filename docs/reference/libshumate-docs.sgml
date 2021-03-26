@@ -85,7 +85,6 @@
     </chapter>
     <chapter>
       <title>Map Source Utilities</title>
-      <xi:include href="xml/shumate-map-source-chain.xml"/>
       <xi:include href="xml/shumate-map-source-factory.xml"/>
       <xi:include href="xml/shumate-map-source-desc.xml"/>
     </chapter>

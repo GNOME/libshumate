@@ -44,7 +44,6 @@
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
 #include "shumate-marshal.h"
-#include "shumate-map-source-chain.h"
 
 #include <glib.h>
 #include <string.h>
