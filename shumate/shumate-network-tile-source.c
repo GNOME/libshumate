@@ -873,6 +873,14 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
     data->cached_data = g_bytes_ref (bytes);
   data->msg = soup_message_new (SOUP_METHOD_GET, uri);
 
+  if (data->msg == NULL)
+    {
+      g_task_return_new_error (task, SHUMATE_NETWORK_SOURCE_ERROR,
+                               SHUMATE_NETWORK_SOURCE_ERROR_MALFORMED_URL,
+                               "The URL %s is not valid", uri);
+      return;
+    }
+
   if (etag)
     {
       g_autofree char *date = get_modified_time_string (data->tile);
