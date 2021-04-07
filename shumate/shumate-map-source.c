@@ -21,35 +21,12 @@
  * SECTION:shumate-map-source
  * @short_description: A base class for map sources
  *
- * #ShumateTile objects come from map sources which are represented by
- * #ShumateMapSource.  This is should be considered an abstract
- * type as it does nothing of interest.
+ * #ShumateMapSource is the base class for all map sources. Map sources fill
+ * #ShumateTile objects with images from various sources: a web API, for
+ * example, or a test pattern generated on demand.
  *
- * When loading new tiles, #ShumateView calls shumate_map_source_fill_tile()
- * on the current #ShumateMapSource passing it a #ShumateTile to be filled
- * with the image.
- *
- * Apart from being a base class of all map sources, #ShumateMapSource
- * also supports cooperation of multiple map sources by arranging them into
- * chains. Every map source has the #ShumateMapSource:next-source property
- * that determines the next map source in the chain. When a function of
- * a #ShumateMapSource object is invoked, the map source may decide to
- * delegate the work to the next map source in the chain by invoking the
- * same function on it.
-
- * To understand the concept of chains, consider for instance a chain
- * consisting of #ShumateFileCache whose next source is
- * #ShumateNetworkTileSource whose next source is an error tile source
- * created with shumate_map_source_factory_create_error_source ().
- * When shumate_map_source_fill_tile() is called on the first object of the
- * chain, #ShumateFileCache, the cache checks whether it contains the
- * requested tile in its database. If it does, it returns the tile; otherwise,
- * it calls shumate_map_source_fill_tile() on the next source in the chain
- * (#ShumateNetworkTileSource). The network tile source loads the tile
- * from the network. When successful, it returns the tile; otherwise it requests
- * the tile from the next source in the chain (error tile source).
- * The error tile source always generates an error tile, no matter what
- * its next source is.
+ * The most common map source is #ShumateNetworkMapSource, which fetches tiles
+ * from an API.
  */
 
 #include "shumate-map-source.h"
