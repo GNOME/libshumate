@@ -668,6 +668,16 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
 }
 
 
+static gboolean
+tile_is_expired (GDateTime *modified_time)
+{
+  g_autoptr(GDateTime) now = g_date_time_new_now_utc ();
+  GTimeSpan diff = g_date_time_difference (now, modified_time);
+
+  return diff > 7 * G_TIME_SPAN_DAY; /* Cache expires in 7 days */
+}
+
+
 static void
 on_pixbuf_created (GObject      *source_object,
                    GAsyncResult *res,
@@ -847,17 +857,18 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
   FillTileData *data = g_task_get_task_data (task);
   GCancellable *cancellable = g_task_get_cancellable (task);
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
+  g_autoptr(GDateTime) modtime = NULL;
   g_autofree char *uri = NULL;
   g_autofree char *etag = NULL;
   g_autoptr(GBytes) bytes = NULL;
 
-  bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object), &etag, res, NULL);
+  bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
+                                              &etag, &modtime, res, NULL);
 
-  if (bytes && etag == NULL)
+  if (bytes && !tile_is_expired (modtime))
     {
-      /* No need to fetch new data from the network (the file cache does not
-       * set the etag when the data is up to date). Just fill the tile directly
-       * from the cache. */
+      /* No need to fetch new data from the network. Just fill the tile
+       * directly from the cache. */
 
       g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (bytes);
       gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created_from_cache, g_object_ref (task));

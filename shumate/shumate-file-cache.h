@@ -86,6 +86,7 @@ void shumate_file_cache_get_tile_async (ShumateFileCache *self,
                                         gpointer user_data);
 GBytes *shumate_file_cache_get_tile_finish (ShumateFileCache *self,
                                             char **etag,
+                                            GDateTime **modtime,
                                             GAsyncResult *result,
                                             GError **error);
 

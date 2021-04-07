@@ -487,16 +487,6 @@ get_filename (ShumateFileCache *file_cache,
 }
 
 
-static gboolean
-tile_is_expired (ShumateFileCache *file_cache, GDateTime *modified_time)
-{
-  g_autoptr(GDateTime) now = g_date_time_new_now_utc ();
-  GTimeSpan diff = g_date_time_difference (now, modified_time);
-
-  return diff > 7 * G_TIME_SPAN_DAY; /* Cache expires in 7 days */
-}
-
-
 static char *
 db_get_etag (ShumateFileCache *self, ShumateTile *tile)
 {
@@ -744,6 +734,18 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   sqlite3_exec (priv->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
 }
 
+typedef struct {
+  char *etag;
+  GDateTime *modtime;
+} GetTileData;
+
+static void
+get_tile_data_free (GetTileData *data)
+{
+  g_clear_pointer (&data->etag, g_free);
+  g_clear_pointer (&data->modtime, g_date_time_unref);
+  g_free (data);
+}
 
 static void on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer user_data);
 
@@ -770,7 +772,7 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
   g_autofree char *filename = NULL;
   g_autoptr(GFileInfo) info = NULL;
   g_autoptr(GError) error = NULL;
-  g_autoptr(GDateTime) modified_time = NULL;
+  GetTileData *task_data = NULL;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -778,6 +780,9 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
 
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_file_cache_get_tile_async);
+
+  task_data = g_new0 (GetTileData, 1);
+  g_task_set_task_data (task, task_data, (GDestroyNotify) get_tile_data_free);
 
   filename = get_filename (self, tile);
   file = g_file_new_for_path (filename);
@@ -796,12 +801,10 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
       return;
     }
 
-  modified_time = g_file_info_get_modification_date_time (info);
-  shumate_tile_set_modified_time (tile, modified_time);
+  task_data->modtime = g_file_info_get_modification_date_time (info);
+  shumate_tile_set_modified_time (tile, task_data->modtime);
 
-  /* If the tile is expired, set the ETag */
-  if (tile_is_expired (self, modified_time))
-    g_task_set_task_data (task, db_get_etag (self, tile), g_free);
+  task_data->etag = db_get_etag (self, tile);
 
   /* update tile popularity */
   on_tile_filled (self, tile);
@@ -838,14 +841,18 @@ on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer use
 /**
  * shumate_file_cache_get_tile_finish:
  * @self: a #ShumateFileCache
- * @etag: a location for the data's ETag, or %NULL
+ * @etag: (nullable) (out) (optional): a location for the data's ETag, or %NULL
+ * @modtime: (nullable) (out) (optional): a location to return the tile's last modification time, or %NULL
  * @result: a #GAsyncResult provided to callback
  * @error: a location for a #GError, or %NULL
  *
  * Gets the tile data from a completed shumate_file_cache_get_tile_async()
  * operation.
  *
- * @etag will only be set if the tile data is potentially out of date.
+ * @modtime will be set to the time the tile was added to the cache, or the
+ * latest time it was confirmed to be up to date.
+ *
+ * @etag will be set to the data's ETag, if present.
  *
  * Returns: a #GBytes containing the tile data, or %NULL if the tile was not in
  * the cache or an error occurred
@@ -853,14 +860,19 @@ on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer use
 GBytes *
 shumate_file_cache_get_tile_finish (ShumateFileCache *self,
                                     char **etag,
+                                    GDateTime **modtime,
                                     GAsyncResult *result,
                                     GError **error)
 {
+  GetTileData *data = g_task_get_task_data (G_TASK (result));
+
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
   g_return_val_if_fail (g_task_is_valid (result, self), NULL);
 
   if (etag)
-    *etag = g_strdup (g_task_get_task_data (G_TASK (result)));
+    *etag = g_steal_pointer (&data->etag);
+  if (modtime)
+    *modtime = g_steal_pointer (&data->modtime);
 
   return g_task_propagate_pointer (G_TASK (result), error);
 }
