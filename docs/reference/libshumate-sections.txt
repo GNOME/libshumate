@@ -213,11 +213,7 @@ shumate_tile_set_size
 shumate_tile_set_state
 shumate_tile_set_fade_in
 shumate_tile_get_content
-shumate_tile_get_etag
-shumate_tile_get_modified_time
 shumate_tile_set_content
-shumate_tile_set_etag
-shumate_tile_set_modified_time
 shumate_tile_display_content
 <SUBSECTION Standard>
 SHUMATE_TILE

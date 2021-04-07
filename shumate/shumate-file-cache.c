@@ -802,8 +802,6 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
     }
 
   task_data->modtime = g_file_info_get_modification_date_time (info);
-  shumate_tile_set_modified_time (tile, task_data->modtime);
-
   task_data->etag = db_get_etag (self, tile);
 
   /* update tile popularity */

@@ -45,8 +45,6 @@ typedef struct
   ShumateState state; /* The tile state: loading, validation, done */
   gboolean fade_in;
 
-  GDateTime *modified_time; /* The last modified time of the cache */
-  char *etag; /* The HTTP ETag sent by the server */
   GdkTexture *texture;
 } ShumateTilePrivate;
 
@@ -59,8 +57,6 @@ enum
   PROP_ZOOM_LEVEL,
   PROP_SIZE,
   PROP_STATE,
-  PROP_ETAG,
-  PROP_MODIFIED_TIME,
   PROP_FADE_IN,
   PROP_TEXTURE,
   N_PROPERTIES
@@ -143,14 +139,6 @@ shumate_tile_get_property (GObject    *object,
       g_value_set_enum (value, shumate_tile_get_state (self));
       break;
 
-    case PROP_ETAG:
-      g_value_set_string (value, shumate_tile_get_etag (self));
-      break;
-
-    case PROP_MODIFIED_TIME:
-      g_value_set_boxed (value, shumate_tile_get_modified_time (self));
-      break;
-
     case PROP_FADE_IN:
       g_value_set_boolean (value, shumate_tile_get_fade_in (self));
       break;
@@ -195,14 +183,6 @@ shumate_tile_set_property (GObject      *object,
       shumate_tile_set_state (self, g_value_get_enum (value));
       break;
 
-    case PROP_ETAG:
-      shumate_tile_set_etag (self, g_value_get_string (value));
-      break;
-
-    case PROP_MODIFIED_TIME:
-      shumate_tile_set_modified_time (self, g_value_get_boxed (value));
-      break;
-
     case PROP_FADE_IN:
       shumate_tile_set_fade_in (self, g_value_get_boolean (value));
       break;
@@ -224,21 +204,8 @@ shumate_tile_dispose (GObject *object)
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   g_clear_object (&priv->texture);
-  g_clear_pointer (&priv->modified_time, g_date_time_unref);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_tile_finalize (GObject *object)
-{
-  ShumateTile *self = SHUMATE_TILE (object);
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  g_clear_pointer (&priv->etag, g_free);
-
-  G_OBJECT_CLASS (shumate_tile_parent_class)->finalize (object);
 }
 
 
@@ -251,7 +218,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
   object_class->get_property = shumate_tile_get_property;
   object_class->set_property = shumate_tile_set_property;
   object_class->dispose = shumate_tile_dispose;
-  object_class->finalize = shumate_tile_finalize;
 
   widget_class->snapshot = shumate_tile_snapshot;
   widget_class->measure = shumate_tile_measure;
@@ -325,32 +291,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
                        SHUMATE_TYPE_STATE,
                        SHUMATE_STATE_NONE,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
-  /**
-   * ShumateTile:modified-time:
-   *
-   * The tile's last modified time
-   */
-  obj_properties[PROP_MODIFIED_TIME] =
-    g_param_spec_boxed ("modified-time",
-                        "Modified Time",
-                        "The last modified time of the tile", 
-                        G_TYPE_DATE_TIME,
-                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  
-  /**
-   * ShumateTile:etag:
-   *
-   * The tile's ETag. This information is sent by some web servers as a mean
-   * to identify if a tile has changed.  This information is saved in the cache
-   * and sent in GET queries.
-   */
-  obj_properties[PROP_ETAG] =
-    g_param_spec_string ("etag",
-                         "Entity Tag",
-                         "The entity tag of the tile",
-                         NULL,
-                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateTile:fade-in:
@@ -639,95 +579,6 @@ shumate_tile_set_state (ShumateTile *self,
 
   priv->state = state;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_STATE]);
-}
-
-
-/**
- * shumate_tile_get_modified_time:
- * @self: the #ShumateTile
- *
- * Gets the tile's last modified time.
- *
- * Returns: (transfer none): the tile's last modified time
- */
-GDateTime *
-shumate_tile_get_modified_time (ShumateTile *self)
-{
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  g_return_val_if_fail (SHUMATE_TILE (self), NULL);
-
-  return priv->modified_time;
-}
-
-
-/**
- * shumate_tile_set_modified_time:
- * @self: the #ShumateTile
- * @modified_time: a #GDateTime, the value will be copied
- *
- * Sets the tile's modified time
- */
-void
-shumate_tile_set_modified_time (ShumateTile *self,
-                                GDateTime   *modified_time)
-{
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  g_return_if_fail (SHUMATE_TILE (self));
-  g_return_if_fail (modified_time != NULL);
-
-  if (priv->modified_time == modified_time)
-    return;
-
-  if (priv->modified_time)
-    g_date_time_unref (priv->modified_time);
-
-  priv->modified_time = g_date_time_ref (modified_time);
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MODIFIED_TIME]);
-}
-
-
-/**
- * shumate_tile_get_etag:
- * @self: the #ShumateTile
- *
- * Gets the tile's ETag.
- *
- * Returns: the tile's ETag
- */
-const char *
-shumate_tile_get_etag (ShumateTile *self)
-{
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  g_return_val_if_fail (SHUMATE_TILE (self), "");
-
-  return priv->etag;
-}
-
-
-/**
- * shumate_tile_set_etag:
- * @self: the #ShumateTile
- * @etag: the tile's ETag as sent by the server
- *
- * Sets the tile's ETag
- */
-void
-shumate_tile_set_etag (ShumateTile *self,
-                       const char  *etag)
-{
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  g_return_if_fail (SHUMATE_TILE (self));
-
-  if (!g_strcmp0 (priv->etag, etag))
-    return;
-
-  g_free (priv->etag);
-  priv->etag = g_strdup (etag);
-  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ETAG]);
 }
 
 

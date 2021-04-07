@@ -700,9 +700,6 @@ on_pixbuf_created (GObject      *source_object,
       return;
     }
 
-  if (data->etag != NULL)
-    shumate_tile_set_etag (data->tile, data->etag);
-
   if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
     {
       g_warning ("Unable to export tile: %s", error->message);
