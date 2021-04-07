@@ -800,13 +800,8 @@ on_message_sent (GObject *source_object,
 
 
 static char *
-get_modified_time_string (ShumateTile *tile)
+get_modified_time_string (GDateTime *modified_time)
 {
-  GDateTime *modified_time;
-
-  g_return_val_if_fail (SHUMATE_TILE (tile), NULL);
-
-  modified_time = shumate_tile_get_modified_time (tile);
   if (modified_time == NULL)
     return NULL;
 
@@ -861,6 +856,7 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
   g_autofree char *uri = NULL;
   g_autofree char *etag = NULL;
   g_autoptr(GBytes) bytes = NULL;
+  g_autofree char *modtime_string = NULL;
 
   bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
                                               &etag, &modtime, res, NULL);
@@ -892,26 +888,23 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
       return;
     }
 
+  modtime_string = get_modified_time_string (modtime);
+
+  /* If an etag is available, only use it.
+   * OSM servers seems to send now as the modified time for all tiles
+   * Omarender servers set the modified time correctly
+   */
   if (etag)
     {
-      g_autofree char *date = get_modified_time_string (data->tile);
-
-      /* If an etag is available, only use it.
-       * OSM servers seems to send now as the modified time for all tiles
-       * Omarender servers set the modified time correctly
-       */
-      if (etag)
-        {
-          DEBUG ("If-None-Match: %s", etag);
-          soup_message_headers_append (data->msg->request_headers,
-              "If-None-Match", etag);
-        }
-      else if (date)
-        {
-          DEBUG ("If-Modified-Since %s", date);
-          soup_message_headers_append (data->msg->request_headers,
-              "If-Modified-Since", date);
-        }
+      DEBUG ("If-None-Match: %s", etag);
+      soup_message_headers_append (data->msg->request_headers,
+          "If-None-Match", etag);
+    }
+  else if (modtime_string)
+    {
+      DEBUG ("If-Modified-Since %s", modtime_string);
+      soup_message_headers_append (data->msg->request_headers,
+          "If-Modified-Since", modtime_string);
     }
 
   soup_session_send_async (priv->soup_session, data->msg, cancellable, on_message_sent, g_object_ref (task));
