@@ -85,9 +85,10 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_sourc
 typedef struct {
   ShumateNetworkTileSource *self;
   ShumateTile *tile;
-  GBytes *cached_data;
+  GBytes *bytes;
   char *etag;
   SoupMessage *msg;
+  GDateTime *modtime;
 } FillTileData;
 
 static void
@@ -95,9 +96,10 @@ fill_tile_data_free (FillTileData *data)
 {
   g_clear_object (&data->self);
   g_clear_object (&data->tile);
-  g_clear_pointer (&data->cached_data, g_bytes_unref);
+  g_clear_pointer (&data->bytes, g_bytes_unref);
   g_clear_pointer (&data->etag, g_free);
   g_clear_object (&data->msg);
+  g_clear_pointer (&data->modtime, g_date_time_unref);
   g_free (data);
 }
 
@@ -667,6 +669,7 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
   return token;
 }
 
+static void fetch_from_network (GTask *task);
 
 static gboolean
 tile_is_expired (GDateTime *modified_time)
@@ -678,6 +681,9 @@ tile_is_expired (GDateTime *modified_time)
 }
 
 
+/* Fill the tile from the pixbuf, created from the network response. Begin
+ * storing the data in the cache (but don't wait for that to finish). Then
+ * return. */
 static void
 on_pixbuf_created (GObject      *source_object,
                    GAsyncResult *res,
@@ -703,7 +709,7 @@ on_pixbuf_created (GObject      *source_object,
   if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
     {
       g_warning ("Unable to export tile: %s", error->message);
-      g_error_free (error);
+      g_clear_pointer (&error, g_error_free);
     }
   else
     {
@@ -714,11 +720,13 @@ on_pixbuf_created (GObject      *source_object,
   texture = gdk_texture_new_for_pixbuf (pixbuf);
   shumate_tile_set_texture (data->tile, texture);
   shumate_tile_set_fade_in (data->tile, TRUE);
-  shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
 
+  shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
   g_task_return_boolean (task, TRUE);
 }
 
+/* Fill the tile from the pixbuf, created from the cache. Then, if the cache
+ * data is potentially out of date, fetch from the network. */
 static void
 on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
@@ -739,11 +747,19 @@ on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointe
   texture = gdk_texture_new_for_pixbuf (pixbuf);
   shumate_tile_set_texture (data->tile, texture);
   shumate_tile_set_fade_in (data->tile, TRUE);
-  shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
 
-  g_task_return_boolean (task, TRUE);
+  if (data->bytes != NULL && !tile_is_expired (data->modtime))
+    {
+      shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+      g_task_return_boolean (task, TRUE);
+    }
+  else
+    fetch_from_network (task);
 }
 
+
+/* Receive the response from the network. If the tile hasn't been modified,
+ * return; otherwise, parse the data into a pixbuf. */
 static void
 on_message_sent (GObject *source_object,
                  GAsyncResult *res,
@@ -755,7 +771,6 @@ on_message_sent (GObject *source_object,
   g_autoptr(GInputStream) input_stream = NULL;
   GError *error = NULL;
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
-  const char *etag;
 
   input_stream = soup_session_send_finish (priv->soup_session, res, &error);
   if (error != NULL)
@@ -763,17 +778,19 @@ on_message_sent (GObject *source_object,
       g_task_return_error (task, error);
       return;
     }
-  
+
   DEBUG ("Got reply %d", data->msg->status_code);
 
   if (data->msg->status_code == SOUP_STATUS_NOT_MODIFIED)
     {
-      g_autoptr(GInputStream) cache_stream = NULL;
+      /* The tile has already been filled from the cache, and the server says
+       * it doesn't have a newer one. Just update the cache, mark the tile as
+       * DONE, and return. */
 
       shumate_file_cache_mark_up_to_date (priv->file_cache, data->tile);
 
-      cache_stream = g_memory_input_stream_new_from_bytes (data->cached_data);
-      gdk_pixbuf_new_from_stream_async (cache_stream, cancellable, on_pixbuf_created_from_cache, g_object_ref (task));
+      shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+      g_task_return_boolean (task, TRUE);
       return;
     }
 
@@ -787,10 +804,9 @@ on_message_sent (GObject *source_object,
     }
 
   /* Verify if the server sent an etag and save it */
-  etag = soup_message_headers_get_one (data->msg->response_headers, "ETag");
+  g_clear_pointer (&data->etag, g_free);
+  data->etag = g_strdup (soup_message_headers_get_one (data->msg->response_headers, "ETag"));
   DEBUG ("Received ETag %s", etag);
-
-  data->etag = g_strdup (etag);
 
   gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
 }
@@ -842,39 +858,47 @@ fill_tile_async (ShumateMapSource *self,
   shumate_file_cache_get_tile_async (priv->file_cache, tile, cancellable, on_file_cache_get_tile, g_object_ref (task));
 }
 
+/* If the cache returned data, parse it into a pixbuf, otherwise go straight
+ * to fetching from the network */
 static void
 on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
   g_autoptr(GTask) task = user_data;
   FillTileData *data = g_task_get_task_data (task);
   GCancellable *cancellable = g_task_get_cancellable (task);
-  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
-  g_autoptr(GDateTime) modtime = NULL;
-  g_autofree char *uri = NULL;
-  g_autofree char *etag = NULL;
-  g_autoptr(GBytes) bytes = NULL;
-  g_autofree char *modtime_string = NULL;
 
-  bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
-                                              &etag, &modtime, res, NULL);
+  data->bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
+                                                    &data->etag, &data->modtime, res, NULL);
 
-  if (bytes && !tile_is_expired (modtime))
+  if (data->bytes != NULL)
     {
-      /* No need to fetch new data from the network. Just fill the tile
-       * directly from the cache. */
+      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (data->bytes);
 
-      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (bytes);
+      /* When on_pixbuf_created_from_cache() is called, it will call
+       * fetch_from_network() if needed */
       gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created_from_cache, g_object_ref (task));
-      return;
     }
+  else
+    {
+      fetch_from_network (task);
+    }
+}
+
+/* Fetch the tile from the network. */
+static void
+fetch_from_network (GTask *task)
+{
+  FillTileData *data = g_task_get_task_data (task);
+  GCancellable *cancellable = g_task_get_cancellable (task);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
+  g_autofree char *uri = NULL;
+  g_autofree char *modtime_string = NULL;
 
   uri = get_tile_uri (data->self,
         shumate_tile_get_x (data->tile),
         shumate_tile_get_y (data->tile),
         shumate_tile_get_zoom_level (data->tile));
 
-  if (bytes)
-    data->cached_data = g_bytes_ref (bytes);
   data->msg = soup_message_new (SOUP_METHOD_GET, uri);
 
   if (data->msg == NULL)
@@ -885,17 +909,17 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
       return;
     }
 
-  modtime_string = get_modified_time_string (modtime);
+  modtime_string = get_modified_time_string (data->modtime);
 
   /* If an etag is available, only use it.
    * OSM servers seems to send now as the modified time for all tiles
    * Omarender servers set the modified time correctly
    */
-  if (etag)
+  if (data->etag)
     {
-      DEBUG ("If-None-Match: %s", etag);
+      DEBUG ("If-None-Match: %s", data->etag);
       soup_message_headers_append (data->msg->request_headers,
-          "If-None-Match", etag);
+          "If-None-Match", data->etag);
     }
   else if (modtime_string)
     {
