@@ -763,13 +763,13 @@ on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointe
   FillTileData *data = g_task_get_task_data (task);
   g_autoptr(GdkTexture) texture = NULL;
   g_autoptr(GdkPixbuf) pixbuf = NULL;
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
 
   pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
 
   if (error != NULL)
     {
-      g_task_return_error (task, error);
+      g_task_return_error (task, g_steal_pointer (&error));
       return;
     }
 
@@ -842,13 +842,13 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   FillTileData *data = g_task_get_task_data (task);
   GCancellable *cancellable = g_task_get_cancellable (task);
   g_autoptr(GInputStream) input_stream = NULL;
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
 
   input_stream = soup_session_send_finish (priv->soup_session, res, &error);
   if (error != NULL)
     {
-      g_task_return_error (task, error);
+      g_task_return_error (task, g_steal_pointer (&error));
       return;
     }
 
@@ -879,7 +879,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   /* Verify if the server sent an etag and save it */
   g_clear_pointer (&data->etag, g_free);
   data->etag = g_strdup (soup_message_headers_get_one (data->msg->response_headers, "ETag"));
-  DEBUG ("Received ETag %s", etag);
+  DEBUG ("Received ETag %s", data->etag);
 
   gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
 }
@@ -894,7 +894,7 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
   FillTileData *data = g_task_get_task_data (task);
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
   GCancellable *cancellable = g_task_get_cancellable (task);
-  GError *error = NULL;
+  g_autoptr(GError) error = NULL;
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GdkTexture) texture = NULL;
   g_autofree char *buffer = NULL;
@@ -903,15 +903,12 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
   pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
   if (error != NULL)
     {
-      g_task_return_error (task, error);
+      g_task_return_error (task, g_steal_pointer (&error));
       return;
     }
 
   if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
-    {
-      g_warning ("Unable to export tile: %s", error->message);
-      g_clear_pointer (&error, g_error_free);
-    }
+    g_warning ("Unable to export tile: %s", error->message);
   else
     {
       g_autoptr(GBytes) bytes = g_bytes_new_take (g_steal_pointer (&buffer), buffer_size);
