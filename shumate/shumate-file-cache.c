@@ -958,7 +958,7 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
   data->filename = g_steal_pointer (&filename);
   g_task_set_task_data (task, data, (GDestroyNotify) store_tile_data_free);
 
-  g_file_create_async (file, G_FILE_CREATE_PRIVATE, G_PRIORITY_DEFAULT, cancellable, on_file_created, g_object_ref (task));
+  g_file_replace_async (file, NULL, FALSE, G_FILE_CREATE_PRIVATE, G_PRIORITY_DEFAULT, cancellable, on_file_created, g_object_ref (task));
 }
 
 static void
