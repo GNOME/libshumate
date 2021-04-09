@@ -114,7 +114,7 @@ test_tile_server_start (TestTileServer *self)
   g_autoptr(GSList) uris = NULL;
   soup_server_add_handler (self->server, NULL, server_callback, self, NULL);
 
-  soup_server_listen_local (self->server, 0, 0, &error);
+  soup_server_listen_local (self->server, 0, SOUP_SERVER_LISTEN_IPV4_ONLY, &error);
   g_assert_no_error (error);
 
   uris = soup_server_get_uris (self->server);
