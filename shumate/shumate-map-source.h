@@ -79,23 +79,23 @@ guint shumate_map_source_get_tile_size (ShumateMapSource *map_source);
 ShumateMapProjection shumate_map_source_get_projection (ShumateMapSource *map_source);
 
 double shumate_map_source_get_x (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double longitude);
 double shumate_map_source_get_y (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double latitude);
 double shumate_map_source_get_longitude (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double x);
 double shumate_map_source_get_latitude (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double y);
 guint shumate_map_source_get_row_count (ShumateMapSource *map_source,
     guint zoom_level);
 guint shumate_map_source_get_column_count (ShumateMapSource *map_source,
     guint zoom_level);
 double shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double latitude,
     double longitude);
 

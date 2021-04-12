@@ -40,7 +40,7 @@ struct _ShumateViewport
   double lon;
   double lat;
 
-  guint zoom_level;
+  double zoom_level;
   guint min_zoom_level;
   guint max_zoom_level;
 
@@ -112,7 +112,7 @@ shumate_viewport_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_ZOOM_LEVEL:
-      g_value_set_uint (value, self->zoom_level);
+      g_value_set_double (value, self->zoom_level);
       break;
 
     case PROP_MIN_ZOOM_LEVEL:
@@ -152,7 +152,7 @@ shumate_viewport_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_ZOOM_LEVEL:
-      shumate_viewport_set_zoom_level (self, g_value_get_uint (value));
+      shumate_viewport_set_zoom_level (self, g_value_get_double (value));
       break;
 
     case PROP_MIN_ZOOM_LEVEL:
@@ -208,11 +208,11 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The level of zoom of the content.
    */
   obj_properties[PROP_ZOOM_LEVEL] =
-    g_param_spec_uint ("zoom-level",
-                       "Zoom level",
-                       "The level of zoom of the map",
-                       0, 20, 3,
-                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+    g_param_spec_double ("zoom-level",
+                         "Zoom level",
+                         "The level of zoom of the map",
+                         0, 20, 3,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateViewport:min-zoom-level:
@@ -298,7 +298,7 @@ shumate_viewport_new (void)
  */
 void
 shumate_viewport_set_zoom_level (ShumateViewport *self,
-                                 guint            zoom_level)
+                                 double           zoom_level)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
@@ -319,7 +319,7 @@ shumate_viewport_set_zoom_level (ShumateViewport *self,
  * 
  * Returns: the current zoom level
  */
-guint
+double
 shumate_viewport_get_zoom_level (ShumateViewport *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0U);

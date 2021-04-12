@@ -38,8 +38,8 @@ G_DECLARE_FINAL_TYPE (ShumateViewport, shumate_viewport, SHUMATE, VIEWPORT, GObj
 ShumateViewport *shumate_viewport_new (void);
 
 void shumate_viewport_set_zoom_level (ShumateViewport *self,
-                                      guint            zoom_level);
-guint shumate_viewport_get_zoom_level (ShumateViewport *self);
+                                      double           zoom_level);
+double shumate_viewport_get_zoom_level (ShumateViewport *self);
 
 void shumate_viewport_set_max_zoom_level (ShumateViewport *self,
                                           guint            max_zoom_level);

@@ -207,7 +207,7 @@ shumate_map_source_get_projection (ShumateMapSource *map_source)
  */
 double
 shumate_map_source_get_x (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double longitude)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0.0);
@@ -232,7 +232,7 @@ shumate_map_source_get_x (ShumateMapSource *map_source,
  */
 double
 shumate_map_source_get_y (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double latitude)
 {
   double sin_latitude;
@@ -259,7 +259,7 @@ shumate_map_source_get_y (ShumateMapSource *map_source,
  */
 double
 shumate_map_source_get_longitude (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double x)
 {
   double longitude;
@@ -286,7 +286,7 @@ shumate_map_source_get_longitude (ShumateMapSource *map_source,
  */
 double
 shumate_map_source_get_latitude (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double y)
 {
   double latitude, map_size, dy;
@@ -355,7 +355,7 @@ shumate_map_source_get_column_count (ShumateMapSource *map_source,
  */
 double
 shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
-    guint zoom_level,
+    double zoom_level,
     double latitude,
     G_GNUC_UNUSED double longitude)
 {

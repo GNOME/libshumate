@@ -10,7 +10,7 @@ test_coordinate_convert (void)
   ShumateMapSource *source;
   double latitude = -73.75f;
   double longitude = 45.466f;
-  guint zoom_level;
+  double zoom_level;
 
   factory = shumate_map_source_factory_dup_default ();
 
@@ -22,7 +22,7 @@ test_coordinate_convert (void)
   
   for (zoom_level = shumate_map_source_get_min_zoom_level (source);
        zoom_level <= shumate_map_source_get_max_zoom_level (source);
-       zoom_level++)
+       zoom_level += 0.5)
     {
       double x;
       double y;
