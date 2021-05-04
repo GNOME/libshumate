@@ -501,7 +501,7 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   tile_size = shumate_map_source_get_tile_size (self->map_source);
-  zoom_level = shumate_viewport_get_zoom_level (viewport);
+  zoom_level = (guint) shumate_viewport_get_zoom_level (viewport);
   latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
   longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
   latitude_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, latitude);
@@ -606,13 +606,13 @@ shumate_map_layer_measure (GtkWidget      *widget,
   if (natural)
     {
       ShumateViewport *viewport;
-      guint tile_size;
+      double tile_size;
       guint zoom_level;
       guint count;
 
       viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-      tile_size = shumate_map_source_get_tile_size (self->map_source);
       zoom_level = shumate_viewport_get_zoom_level (viewport);
+      tile_size = shumate_map_source_get_tile_size (self->map_source) * (fmod (zoom_level, 1.0) + 1.0);
       if (orientation == GTK_ORIENTATION_HORIZONTAL)
         count = shumate_map_source_get_column_count (self->map_source, zoom_level);
       else
@@ -620,6 +620,24 @@ shumate_map_layer_measure (GtkWidget      *widget,
 
       *natural = count * tile_size;
     }
+}
+
+static void
+shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double extra_zoom = fmod (zoom_level, 1.0) + 1.0;
+  int width = gtk_widget_get_width (GTK_WIDGET (self));
+  int height = gtk_widget_get_height (GTK_WIDGET (self));
+
+  /* Scale around the center of the view */
+  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
+  gtk_snapshot_scale (snapshot, extra_zoom, extra_zoom);
+  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
+
+  GTK_WIDGET_CLASS (shumate_map_layer_parent_class)->snapshot (widget, snapshot);
 }
 
 static void
@@ -634,6 +652,7 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
   object_class->constructed = shumate_map_layer_constructed;
 
   widget_class->size_allocate = shumate_map_layer_size_allocate;
+  widget_class->snapshot = shumate_map_layer_snapshot;
   widget_class->measure = shumate_map_layer_measure;
 
   obj_properties[PROP_MAP_SOURCE] =

@@ -411,29 +411,35 @@ shumate_viewport_get_min_zoom_level (ShumateViewport *self)
  * shumate_viewport_zoom_in:
  * @self: a #ShumateViewport
  *
- * Increments the zoom level
+ * Increases the zoom level
  */
 void shumate_viewport_zoom_in (ShumateViewport *self)
 {
+  double zoom_level;
+
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
-  shumate_viewport_set_zoom_level (self, self->zoom_level + 1);
+  /* Round to the nearest 1/5 of a zoom level to prevent floating point
+   * error accumulation. */
+
+  zoom_level = roundf ((self->zoom_level + 0.2) * 5) / 5;
+  shumate_viewport_set_zoom_level (self, zoom_level);
 }
 
 /**
  * shumate_viewport_zoom_out:
  * @self: a #ShumateViewport
  *
- * Decrements the zoom level
+ * Decreases the zoom level
  */
 void shumate_viewport_zoom_out (ShumateViewport *self)
 {
+  double zoom_level;
+
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
-  if (self->zoom_level == 0)
-    return;
-
-  shumate_viewport_set_zoom_level (self, self->zoom_level - 1);
+  zoom_level = roundf ((self->zoom_level - 0.2) * 5) / 5;
+  shumate_viewport_set_zoom_level (self, zoom_level);
 }
 
 /**

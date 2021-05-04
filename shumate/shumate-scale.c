@@ -91,7 +91,7 @@ shumate_scale_compute_length (ShumateScale *self,
                               gboolean     *out_is_small_unit)
 {
   ShumateMapSource *map_source;
-  int zoom_level;
+  double zoom_level;
   double lat, lon;
   float scale_width;
   float base;

@@ -248,8 +248,8 @@ move_viewport_from_pixel_offset (ShumateView *self,
   ShumateMapSource *map_source;
   double x, y;
   double lat, lon;
-  guint zoom_level;
-  guint tile_size, max_x, max_y;
+  double zoom_level;
+  double tile_size, max_x, max_y;
 
   g_assert (SHUMATE_IS_VIEW (self));
 
@@ -261,7 +261,7 @@ move_viewport_from_pixel_offset (ShumateView *self,
   x = shumate_map_source_get_x (map_source, zoom_level, longitude) - offset_x;
   y = shumate_map_source_get_y (map_source, zoom_level, latitude) - offset_y;
 
-  tile_size = shumate_map_source_get_tile_size (map_source);
+  tile_size = shumate_map_source_get_tile_size (map_source) * (fmod (zoom_level, 1.0) + 1.0);
   max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
   max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
 
@@ -544,7 +544,7 @@ on_scroll_controller_scroll (ShumateView              *self,
       double scroll_map_x, scroll_map_y;
       double view_center_x, view_center_y;
       double x_offset, y_offset;
-      guint zoom_level;
+      double zoom_level;
 
       scroll_map_x = shumate_viewport_longitude_to_widget_x (priv->viewport, GTK_WIDGET (self), scroll_longitude);
       scroll_map_y = shumate_viewport_latitude_to_widget_y (priv->viewport, GTK_WIDGET (self), scroll_latitude);
