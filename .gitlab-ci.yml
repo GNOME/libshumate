@@ -4,13 +4,11 @@ stages:
 
 fedora:
   stage: build
-  image: registry.gitlab.gnome.org/gnome/gtk/fedora-base:v28
+  image: registry.gitlab.gnome.org/gnome/gtk/fedora:v30
   script:
-    - dnf install -y vala sqlite-devel libsoup-devel gtk4-devel
+    - sudo dnf install -y vala sqlite-devel libsoup-devel gtk4-devel
     - meson _build -Db_coverage=true -Dgtk_doc=true
     - ninja -C _build shumate-doc
-    # make sure everything gets built, including VAPI, GIR, etc.
-    - ninja -C _build install
     - xvfb-run ninja -C _build test
     - ninja -C _build coverage
     - mv _build/docs/reference/html/ docs
