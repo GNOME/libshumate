@@ -68,6 +68,10 @@ GdkRGBA *shumate_path_layer_get_stroke_color (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
     const GdkRGBA *color);
 
+GdkRGBA *shumate_path_layer_get_outline_color (ShumatePathLayer *layer);
+void shumate_path_layer_set_outline_color (ShumatePathLayer *layer,
+    const GdkRGBA *color);
+
 gboolean shumate_path_layer_get_fill (ShumatePathLayer *layer);
 void shumate_path_layer_set_fill (ShumatePathLayer *layer,
     gboolean value);
@@ -78,6 +82,10 @@ void shumate_path_layer_set_stroke (ShumatePathLayer *layer,
 
 double shumate_path_layer_get_stroke_width (ShumatePathLayer *layer);
 void shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
+    double value);
+
+double shumate_path_layer_get_outline_width (ShumatePathLayer *layer);
+void shumate_path_layer_set_outline_width (ShumatePathLayer *layer,
     double value);
 
 gboolean shumate_path_layer_get_closed (ShumatePathLayer *layer);

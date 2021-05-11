@@ -50,6 +50,8 @@ enum
   PROP_FILL,
   PROP_FILL_COLOR,
   PROP_STROKE,
+  PROP_OUTLINE_WIDTH,
+  PROP_OUTLINE_COLOR,
   N_PROPERTIES
 };
 
@@ -57,6 +59,7 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 static GdkRGBA DEFAULT_FILL_COLOR = { 0.8, 0.0, 0.0, 0.67 };
 static GdkRGBA DEFAULT_STROKE_COLOR = { 0.64, 0.0, 0.0, 1.0 };
+static GdkRGBA DEFAULT_OUTLINE_COLOR = { 1.0, 0.8, 0.8, 1.0 };
 
 typedef struct
 {
@@ -66,6 +69,8 @@ typedef struct
   GdkRGBA *fill_color;
   gboolean stroke;
   double stroke_width;
+  GdkRGBA *outline_color;
+  double outline_width;
   GArray *dashes; /* double */
 
   GList *nodes; /* ShumateLocation */
@@ -139,6 +144,14 @@ shumate_path_layer_get_property (GObject *object,
       g_value_set_double (value, priv->stroke_width);
       break;
 
+    case PROP_OUTLINE_COLOR:
+      g_value_set_boxed (value, priv->outline_color);
+      break;
+
+    case PROP_OUTLINE_WIDTH:
+      g_value_set_double (value, priv->outline_width);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -183,6 +196,16 @@ shumate_path_layer_set_property (GObject *object,
           g_value_get_double (value));
       break;
 
+    case PROP_OUTLINE_COLOR:
+      shumate_path_layer_set_outline_color (SHUMATE_PATH_LAYER (object),
+          g_value_get_boxed (value));
+      break;
+
+    case PROP_OUTLINE_WIDTH:
+      shumate_path_layer_set_outline_width (SHUMATE_PATH_LAYER (object),
+          g_value_get_double (value));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -224,6 +247,7 @@ shumate_path_layer_finalize (GObject *object)
   ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
   g_clear_pointer (&priv->stroke_color, gdk_rgba_free);
+  g_clear_pointer (&priv->outline_color, gdk_rgba_free);
   g_clear_pointer (&priv->fill_color, gdk_rgba_free);
   g_clear_pointer (&priv->dashes, g_array_unref);
 
@@ -271,13 +295,26 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   if (priv->fill)
     cairo_fill_preserve (cr);
 
-  gdk_cairo_set_source_rgba (cr, priv->stroke_color);
-
-  cairo_set_line_width (cr, priv->stroke_width);
-  cairo_set_dash (cr, (const double *) priv->dashes->data, priv->dashes->len, 0);
-
   if (priv->stroke)
-    cairo_stroke (cr);
+    {
+      /* width of the backgroud-colored part of the stroke,
+       * will be reduced by the outline, when that is set (non-zero)
+       */
+      double inner_width = priv->stroke_width - 2 * priv->outline_width;
+
+      cairo_set_dash (cr, (const double *) priv->dashes->data, priv->dashes->len, 0);
+
+      if (priv->outline_width > 0)
+        {
+          gdk_cairo_set_source_rgba (cr, priv->outline_color);
+          cairo_set_line_width (cr, priv->stroke_width);
+          cairo_stroke_preserve (cr);
+        }
+
+      gdk_cairo_set_source_rgba (cr, priv->stroke_color);
+      cairo_set_line_width (cr, inner_width);
+      cairo_stroke (cr);
+    }
 
   cairo_destroy (cr);
 }
@@ -371,6 +408,32 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
                          2.0,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumatePathLayer:outline-color:
+   *
+   * The path's outline color
+   */
+  obj_properties[PROP_OUTLINE_COLOR] =
+    g_param_spec_boxed ("outline-color",
+                        "Outline Color",
+                        "The path's outline color",
+                        GDK_TYPE_RGBA,
+                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumatePathLayer:outline-width:
+   *
+   * The path's outline width (in pixels)
+   */
+  obj_properties[PROP_OUTLINE_WIDTH] =
+    g_param_spec_double ("outline-width",
+                         "Outline Width",
+                         "The path's outline width",
+                         0,
+                         50.0,
+                         0.0,
+                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
@@ -384,11 +447,13 @@ shumate_path_layer_init (ShumatePathLayer *self)
   priv->fill = FALSE;
   priv->stroke = TRUE;
   priv->stroke_width = 2.0;
+  priv->outline_width = 0.0;
   priv->nodes = NULL;
   priv->dashes = g_array_new (FALSE, TRUE, sizeof(double));
 
   priv->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
   priv->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
+  priv->outline_color = gdk_rgba_copy (&DEFAULT_OUTLINE_COLOR);
 }
 
 /**
@@ -640,6 +705,51 @@ shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
   return priv->stroke_color;
 }
 
+/**
+ * shumate_path_layer_set_outline_color:
+ * @layer: a #ShumatePathLayer
+ * @color: (nullable): The path's outline color or %NULL to reset to the
+ *         default color. The color parameter is copied.
+ *
+ * Set the path's outline color.
+ */
+void
+shumate_path_layer_set_outline_color (ShumatePathLayer *layer,
+    const GdkRGBA *color)
+{
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+
+  if (priv->outline_color != NULL)
+    gdk_rgba_free (priv->outline_color);
+
+  if (color == NULL)
+    color = &DEFAULT_OUTLINE_COLOR;
+
+  priv->outline_color = gdk_rgba_copy (color);
+  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_OUTLINE_COLOR]);
+
+  gtk_widget_queue_draw (GTK_WIDGET (layer));
+}
+
+/**
+ * shumate_path_layer_get_outline_color:
+ * @layer: a #ShumatePathLayer
+ *
+ * Gets the path's outline color.
+ *
+ * Returns: the path's outline color.
+ */
+GdkRGBA *
+shumate_path_layer_get_outline_color (ShumatePathLayer *layer)
+{
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
+
+  return priv->outline_color;
+}
 
 /**
  * shumate_path_layer_set_stroke:
@@ -761,6 +871,46 @@ shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), 0);
 
   return priv->stroke_width;
+}
+
+/**
+ * shumate_path_layer_set_outline_width:
+ * @layer: a #ShumatePathLayer
+ * @value: the width of the outline (in pixels)
+ *
+ * Sets the width of the outline
+ */
+void
+shumate_path_layer_set_outline_width (ShumatePathLayer *layer,
+    double value)
+{
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+
+  priv->outline_width = value;
+  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_OUTLINE_WIDTH]);
+
+  gtk_widget_queue_draw (GTK_WIDGET (layer));
+}
+
+
+/**
+ * shumate_path_layer_get_outline_width:
+ * @layer: a #ShumatePathLayer
+ *
+ * Gets the width of the outline.
+ *
+ * Returns: the width of the outline
+ */
+double
+shumate_path_layer_get_outline_width (ShumatePathLayer *layer)
+{
+  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), 0);
+
+  return priv->outline_width;
 }
 
 /**
