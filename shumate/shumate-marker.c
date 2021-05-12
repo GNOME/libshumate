@@ -50,9 +50,6 @@
 #include <cairo.h>
 #include <math.h>
 
-static GdkRGBA SELECTED_COLOR = { 0.0, 0.2, 0.8, 1.0 };
-static GdkRGBA SELECTED_TEXT_COLOR = { 1.0, 1.0, 1.0, 1.0 };
-
 enum
 {
   PROP_SELECTABLE = 1,
@@ -88,69 +85,6 @@ static void location_interface_init (ShumateLocationInterface *iface);
 G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
     G_ADD_PRIVATE (ShumateMarker)
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
-
-/**
- * shumate_marker_set_selection_color:
- * @color: a #ClutterColor
- *
- * Changes the selection color, this is to ensure a better integration with
- * the desktop.
- */
-void
-shumate_marker_set_selection_color (GdkRGBA *color)
-{
-  SELECTED_COLOR.red = color->red;
-  SELECTED_COLOR.green = color->green;
-  SELECTED_COLOR.blue = color->blue;
-  SELECTED_COLOR.alpha = color->alpha;
-}
-
-
-/**
- * shumate_marker_get_selection_color:
- *
- * Gets the selection color.
- *
- * Returns: the selection color. Should not be freed.
- */
-const GdkRGBA *
-shumate_marker_get_selection_color ()
-{
-  return &SELECTED_COLOR;
-}
-
-
-/**
- * shumate_marker_set_selection_text_color:
- * @color: a #ClutterColor
- *
- * Changes the selection text color, this is to ensure a better integration with
- * the desktop.
- */
-void
-shumate_marker_set_selection_text_color (GdkRGBA *color)
-{
-  SELECTED_TEXT_COLOR.red = color->red;
-  SELECTED_TEXT_COLOR.green = color->green;
-  SELECTED_TEXT_COLOR.blue = color->blue;
-  SELECTED_TEXT_COLOR.alpha = color->alpha;
-}
-
-
-/**
- * shumate_marker_get_selection_text_color:
- *
- * Gets the selection text color.
- *
- * Returns: the selection text color. Should not be freed.
- */
-const GdkRGBA *
-shumate_marker_get_selection_text_color ()
-{
-  return &SELECTED_TEXT_COLOR;
-}
-
-
 
 
 static void

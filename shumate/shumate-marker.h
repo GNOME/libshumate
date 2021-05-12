@@ -67,12 +67,6 @@ void shumate_marker_animate_out (ShumateMarker *marker);
 void shumate_marker_animate_out_with_delay (ShumateMarker *marker,
     guint delay);
 
-void shumate_marker_set_selection_color (GdkRGBA *color);
-const GdkRGBA *shumate_marker_get_selection_color (void);
-
-void shumate_marker_set_selection_text_color (GdkRGBA *color);
-const GdkRGBA *shumate_marker_get_selection_text_color (void);
-
 GtkWidget *shumate_marker_get_child (ShumateMarker *marker);
 void shumate_marker_set_child (ShumateMarker *marker,
                                GtkWidget     *child);
