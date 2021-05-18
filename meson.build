@@ -2,7 +2,7 @@ project(
   'libshumate', 'c',
   version: '0.0.0',
   license: 'LGPLv2.1+',
-  meson_version: '>= 0.46.1',
+  meson_version: '>= 0.53.0',
   default_options: [
     'buildtype=debugoptimized',
   ]
@@ -45,7 +45,7 @@ typelibdir = join_paths(libdir, 'girepository-1.0')
 pkgconfigdir = join_paths(libdir, 'pkgconfig')
 
 girdir = join_paths(datadir, 'gir-1.0')
-gtkdocdir = join_paths(datadir, 'gtk-doc')
+docs_dir = datadir / 'docs'
 vapidir = join_paths(datadir, 'vala', 'vapi')
 
 # Dependencies
@@ -73,6 +73,14 @@ introspection_dep = dependency('gobject-introspection-1.0', version: introspecti
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
 gtk_doc_dep = dependency('gtk-doc', version: gtk_doc_req, required: false)
 
+if get_option('gtk_doc')
+  dependency('gi-docgen',
+    version: '>= 2021.1',
+    fallback: ['gi-docgen', 'dummy_dep'],
+  )
+  gidocgen = find_program('gi-docgen')
+endif
+
 # Configurations
 config_h = configuration_data()
 config_h.set_quoted('VERSION', version)
@@ -85,9 +93,8 @@ configure_file(
 # Options
 build_demos = get_option('demos')
 
-build_gtk_doc = get_option('gtk_doc')
-if build_gtk_doc and not gtk_doc_dep.found()
-  build_gtk_doc = false
+if get_option('gtk_doc') and not get_option('gir')
+  error('Cannot generate the documentation if gobjet-introspection is disabled.')
 endif
 
 generate_gir = get_option('gir')
@@ -118,7 +125,7 @@ summary = [
   'libshumate @0@ (@1@)'.format(version, api_version),
   '',
   '             Demos: @0@'.format(build_demos),
-  '     Documentation: @0@'.format(build_gtk_doc),
+  '     Documentation: @0@'.format(get_option('gtk_doc')),
   '     Introspection: @0@'.format(generate_gir),
   '          Vala API: @0@'.format(generate_vapi),
   '',

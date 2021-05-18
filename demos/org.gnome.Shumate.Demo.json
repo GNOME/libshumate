@@ -32,8 +32,7 @@
             "name" : "libshumate",
             "buildsystem" : "meson",
             "config-opts" : [
-                "-Ddemos=true",
-                "-Dgtk_doc=true"
+                "-Ddemos=true"
             ],
             "builddir" : true,
             "sources" : [

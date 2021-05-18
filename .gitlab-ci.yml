@@ -8,10 +8,9 @@ fedora:
   script:
     - sudo dnf install -y vala sqlite-devel libsoup-devel gtk4-devel
     - meson _build -Db_coverage=true -Dgtk_doc=true
-    - ninja -C _build shumate-doc
     - xvfb-run ninja -C _build test
     - ninja -C _build coverage
-    - mv _build/docs/reference/html/ docs
+    - mv _build/docs/libshumate-0.0 docs
     - mv _build/meson-logs/coveragereport coverage
   coverage: '/^\s+lines\.+:\s+([\d.]+\%)\s+/'
   artifacts:
@@ -24,7 +23,7 @@ pages:
   dependencies:
   - fedora
   script:
-  - mv docs/html public
+  - mv docs/libshumate-0.0 public
   - mv coverage public/
   artifacts:
     paths:

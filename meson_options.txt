@@ -7,7 +7,7 @@ option('vapi',
 
 option('gtk_doc',
        type: 'boolean', value: false,
-       description: 'Build reference manual (requires gtk-doc)')
+       description: 'Build reference manual (requires gi-docgen installed and gir enabled)')
 
 option('demos',
        type: 'boolean', value: false,

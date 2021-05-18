@@ -3,3 +3,4 @@
 *.sw?
 *.pyc
 build
+/subprojects/gi-docgen
