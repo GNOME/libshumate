@@ -34,9 +34,6 @@
 
 #include "shumate-network-tile-source.h"
 
-#define DEBUG_FLAG SHUMATE_DEBUG_LOADING
-#include "shumate-debug.h"
-
 #include "shumate.h"
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
@@ -819,13 +816,13 @@ fetch_from_network (GTask *task)
    */
   if (data->etag)
     {
-      DEBUG ("If-None-Match: %s", data->etag);
+      g_debug ("If-None-Match: %s", data->etag);
       soup_message_headers_append (data->msg->request_headers,
           "If-None-Match", data->etag);
     }
   else if (modtime_string)
     {
-      DEBUG ("If-Modified-Since %s", modtime_string);
+      g_debug ("If-Modified-Since %s", modtime_string);
       soup_message_headers_append (data->msg->request_headers,
           "If-Modified-Since", modtime_string);
     }
@@ -852,7 +849,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
       return;
     }
 
-  DEBUG ("Got reply %d", data->msg->status_code);
+  g_debug ("Got reply %d", data->msg->status_code);
 
   if (data->msg->status_code == SOUP_STATUS_NOT_MODIFIED)
     {
@@ -879,7 +876,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   /* Verify if the server sent an etag and save it */
   g_clear_pointer (&data->etag, g_free);
   data->etag = g_strdup (soup_message_headers_get_one (data->msg->response_headers, "ETag"));
-  DEBUG ("Received ETag %s", data->etag);
+  g_debug ("Received ETag %s", data->etag);
 
   gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
 }

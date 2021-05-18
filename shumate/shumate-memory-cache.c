@@ -27,9 +27,6 @@
  * most recently used tiles.
  */
 
-#define DEBUG_FLAG SHUMATE_DEBUG_CACHE
-#include "shumate-debug.h"
-
 #include "shumate-memory-cache.h"
 
 #include <glib.h>

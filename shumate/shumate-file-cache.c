@@ -37,9 +37,6 @@
  * using the HTTP If-None-Match header).
  */
 
-#define DEBUG_FLAG SHUMATE_DEBUG_CACHE
-#include "shumate-debug.h"
-
 #include "shumate-file-cache.h"
 
 #include <sqlite3.h>
@@ -156,7 +153,7 @@ finalize_sql (ShumateFileCache *file_cache)
     {
       int error = sqlite3_close (priv->db);
       if (error != SQLITE_OK)
-        DEBUG ("Sqlite returned error %d when closing cache.db", error);
+        g_debug ("Sqlite returned error %d when closing cache.db", error);
       priv->db = NULL;
     }
 }
@@ -212,7 +209,7 @@ init_cache (ShumateFileCache *file_cache)
 
   if (error == SQLITE_ERROR)
     {
-      DEBUG ("Sqlite returned error %d when opening cache.db", error);
+      g_debug ("Sqlite returned error %d when opening cache.db", error);
       return;
     }
 
@@ -222,7 +219,7 @@ init_cache (ShumateFileCache *file_cache)
       NULL, NULL, &error_msg);
   if (error_msg != NULL)
     {
-      DEBUG ("Set PRAGMA: %s", error_msg);
+      g_debug ("Set PRAGMA: %s", error_msg);
       sqlite3_free (error_msg);
       return;
     }
@@ -236,7 +233,7 @@ init_cache (ShumateFileCache *file_cache)
       NULL, NULL, &error_msg);
   if (error_msg != NULL)
     {
-      DEBUG ("Creating table 'tiles' failed: %s", error_msg);
+      g_debug ("Creating table 'tiles' failed: %s", error_msg);
       sqlite3_free (error_msg);
       return;
     }
@@ -247,7 +244,7 @@ init_cache (ShumateFileCache *file_cache)
   if (error != SQLITE_OK)
     {
       priv->stmt_select = NULL;
-      DEBUG ("Failed to prepare the select Etag statement, error:%d: %s",
+      g_debug ("Failed to prepare the select Etag statement, error:%d: %s",
           error, sqlite3_errmsg (priv->db));
       return;
     }
@@ -258,7 +255,7 @@ init_cache (ShumateFileCache *file_cache)
   if (error != SQLITE_OK)
     {
       priv->stmt_update = NULL;
-      DEBUG ("Failed to prepare the update popularity statement, error: %s",
+      g_debug ("Failed to prepare the update popularity statement, error: %s",
           sqlite3_errmsg (priv->db));
       return;
     }
@@ -498,7 +495,7 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
   sql_rc = sqlite3_bind_text (priv->stmt_select, 1, filename, -1, SQLITE_STATIC);
   if (sql_rc == SQLITE_ERROR)
     {
-      DEBUG ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
+      g_debug ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
           filename, sqlite3_errmsg (priv->db));
       return NULL;
     }
@@ -511,12 +508,12 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
     }
   else if (sql_rc == SQLITE_DONE)
     {
-      DEBUG ("'%s' doesn't have an etag",
+      g_debug ("'%s' doesn't have an etag",
           filename);
     }
   else if (sql_rc == SQLITE_ERROR)
     {
-      DEBUG ("Failed to finding the Etag of '%s', %d error: %s",
+      g_debug ("Failed to finding the Etag of '%s', %d error: %s",
           filename, sql_rc, sqlite3_errmsg (priv->db));
     }
 
@@ -571,13 +568,13 @@ on_tile_filled (ShumateFileCache *self,
 
   filename = get_filename (self, tile);
 
-  DEBUG ("popularity of %s", filename);
+  g_debug ("popularity of %s", filename);
 
   sqlite3_reset (priv->stmt_update);
   sql_rc = sqlite3_bind_text (priv->stmt_update, 1, filename, -1, SQLITE_STATIC);
   if (sql_rc != SQLITE_OK)
     {
-      DEBUG ("Failed to set values to the popularity query of '%s', error: %s",
+      g_debug ("Failed to set values to the popularity query of '%s', error: %s",
           filename, sqlite3_errmsg (priv->db));
       return;
     }
@@ -605,7 +602,7 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
   sqlite3_exec (priv->db, query, NULL, NULL, &error);
   if (error != NULL)
     {
-      DEBUG ("Deleting tile from db failed: %s", error);
+      g_debug ("Deleting tile from db failed: %s", error);
       sqlite3_free (error);
     }
   sqlite3_free (query);
@@ -613,7 +610,7 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
   file = g_file_new_for_path (filename);
   if (!g_file_delete (file, NULL, &gerror))
     {
-      DEBUG ("Deleting tile from disk failed: %s", gerror->message);
+      g_debug ("Deleting tile from disk failed: %s", gerror->message);
       g_error_free (gerror);
     }
   g_object_unref (file);
@@ -670,13 +667,13 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      DEBUG ("Can't compute cache size %s", sqlite3_errmsg (priv->db));
+      g_debug ("Can't compute cache size %s", sqlite3_errmsg (priv->db));
     }
 
   rc = sqlite3_step (stmt);
   if (rc != SQLITE_ROW)
     {
-      DEBUG ("Failed to count the total cache consumption %s",
+      g_debug ("Failed to count the total cache consumption %s",
           sqlite3_errmsg (priv->db));
       sqlite3_finalize (stmt);
       return;
@@ -685,7 +682,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   current_size = sqlite3_column_int (stmt, 0);
   if (current_size < priv->size_limit)
     {
-      DEBUG ("Cache doesn't need to be purged at %d bytes", current_size);
+      g_debug ("Cache doesn't need to be purged at %d bytes", current_size);
       sqlite3_finalize (stmt);
       return;
     }
@@ -697,7 +694,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      DEBUG ("Can't fetch tiles to delete: %s", sqlite3_errmsg (priv->db));
+      g_debug ("Can't fetch tiles to delete: %s", sqlite3_errmsg (priv->db));
     }
 
   rc = sqlite3_step (stmt);
@@ -709,7 +706,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
       filename = (const char *) sqlite3_column_text (stmt, 0);
       size = sqlite3_column_int (stmt, 1);
       highest_popularity = sqlite3_column_int (stmt, 2);
-      DEBUG ("Deleting %s of size %d", filename, size);
+      g_debug ("Deleting %s of size %d", filename, size);
 
       delete_tile (file_cache, filename);
 
@@ -717,7 +714,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
 
       rc = sqlite3_step (stmt);
     }
-  DEBUG ("Cache size is now %d", current_size);
+  g_debug ("Cache size is now %d", current_size);
 
   sqlite3_finalize (stmt);
 
@@ -726,7 +723,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
   sqlite3_exec (priv->db, query, NULL, NULL, &error);
   if (error != NULL)
     {
-      DEBUG ("Updating popularity failed: %s", error);
+      g_debug ("Updating popularity failed: %s", error);
       sqlite3_free (error);
     }
   sqlite3_free (query);
@@ -935,7 +932,7 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
   filename = get_filename (self, tile);
   file = g_file_new_for_path (filename);
 
-  DEBUG ("Update of %p", tile);
+  g_debug ("Update of %p", tile);
 
   /* If needed, create the cache's dirs */
   path = g_path_get_dirname (filename);

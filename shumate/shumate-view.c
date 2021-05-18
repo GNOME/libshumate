@@ -50,9 +50,6 @@
 
 #include "shumate-view.h"
 
-#define DEBUG_FLAG SHUMATE_DEBUG_VIEW
-#include "shumate-debug.h"
-
 #include "shumate.h"
 #include "shumate-enum-types.h"
 #include "shumate-kinetic-scrolling-private.h"
@@ -906,8 +903,6 @@ shumate_view_init (ShumateView *view)
   GtkEventController *motion_controller;
   GtkGesture *swipe_gesture;
   GtkGesture *zoom_gesture;
-
-  shumate_debug_set_flags (g_getenv ("SHUMATE_DEBUG"));
 
   priv->viewport = shumate_viewport_new ();
   priv->zoom_on_double_click = TRUE;

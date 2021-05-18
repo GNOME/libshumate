@@ -23,14 +23,12 @@ libshumate_public_h = [
 ]
 
 libshumate_private_h = [
-  'shumate-debug.h',
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
 ]
 
 libshumate_sources = [
   'shumate-coordinate.c',
-  'shumate-debug.c',
   'shumate-file-cache.c',
   'shumate-kinetic-scrolling.c',
   'shumate-layer.c',

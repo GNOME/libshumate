@@ -37,9 +37,6 @@
 
 #include "shumate-map-source-factory.h"
 
-#define DEBUG_FLAG SHUMATE_DEBUG_NETWORK
-#include "shumate-debug.h"
-
 #include "shumate.h"
 #include "shumate-enum-types.h"
 #include "shumate-map-source.h"
