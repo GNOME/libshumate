@@ -617,32 +617,6 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
 }
 
 
-static gboolean
-purge_on_idle (gpointer data)
-{
-  shumate_file_cache_purge (SHUMATE_FILE_CACHE (data));
-  return FALSE;
-}
-
-
-/**
- * shumate_file_cache_purge_on_idle:
- * @file_cache: a #ShumateFileCache
- *
- * Purge the cache from the less popular tiles until cache's size limit is reached.
- * This is a non blocking call as the purge will happen when the application is idle
- */
-void
-shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache)
-{
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
-  g_idle_add_full (G_PRIORITY_HIGH + 50,
-      (GSourceFunc) purge_on_idle,
-      g_object_ref (file_cache),
-      (GDestroyNotify) g_object_unref);
-}
-
-
 /**
  * shumate_file_cache_purge:
  * @file_cache: a #ShumateFileCache
