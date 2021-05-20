@@ -63,6 +63,9 @@ typedef struct
   sqlite3 *db;
   sqlite3_stmt *stmt_select;
   sqlite3_stmt *stmt_update;
+
+  int size_estimate;
+  gboolean purge_in_progress;
 } ShumateFileCachePrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT);
@@ -70,6 +73,7 @@ G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT)
 
 typedef char sqlite_str;
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (sqlite_str, sqlite3_free);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (sqlite3_stmt, sqlite3_finalize);
 
 
 static void finalize_sql (ShumateFileCache *file_cache);
@@ -205,7 +209,7 @@ init_cache (ShumateFileCache *file_cache)
         "cache.db", NULL);
 
   /* Make sure the database is opened in serialized mode (OPEN_FULLMUTEX)
-   * because shumate_file_cache_purge_async() runs in a separate thread.
+   * because shumate_file_cache_purge_cache_async() runs in a separate thread.
    * See <https://sqlite.org/threadsafe.html> */
   error = sqlite3_open_v2 (filename, &priv->db,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
@@ -598,26 +602,23 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
-  char *query, *error = NULL;
-  GError *gerror = NULL;
-  GFile *file;
-
-  query = sqlite3_mprintf ("DELETE FROM tiles WHERE filename = %Q", filename);
-  sqlite3_exec (priv->db, query, NULL, NULL, &error);
-  if (error != NULL)
-    {
-      g_debug ("Deleting tile from db failed: %s", error);
-      sqlite3_free (error);
-    }
-  sqlite3_free (query);
+  g_autoptr(sqlite_str) query = NULL;
+  g_autoptr(sqlite_str) sql_error = NULL;
+  g_autoptr(GError) gerror = NULL;
+  g_autoptr(GFile) file = NULL;
 
   file = g_file_new_for_path (filename);
   if (!g_file_delete (file, NULL, &gerror))
     {
       g_debug ("Deleting tile from disk failed: %s", gerror->message);
-      g_error_free (gerror);
     }
-  g_object_unref (file);
+
+  query = sqlite3_mprintf ("DELETE FROM tiles WHERE filename = %Q", filename);
+  sqlite3_exec (priv->db, query, NULL, NULL, &sql_error);
+  if (sql_error != NULL)
+    {
+      g_debug ("Deleting tile from db failed: %s", sql_error);
+    }
 }
 
 
@@ -631,25 +632,27 @@ purge_cache (GTask *task,
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
 
   char *query;
-  sqlite3_stmt *stmt;
+  g_autoptr(sqlite3_stmt) stmt = NULL;
   int rc = 0;
   guint current_size = 0;
   guint highest_popularity = 0;
-  char *error;
+  g_autoptr(sqlite_str) error = NULL;
 
   query = "SELECT SUM (size) FROM tiles";
   rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      g_debug ("Can't compute cache size %s", sqlite3_errmsg (priv->db));
+      g_warning ("Can't compute cache size %s", sqlite3_errmsg (priv->db));
+      g_task_return_boolean (task, FALSE);
+      return;
     }
 
   rc = sqlite3_step (stmt);
   if (rc != SQLITE_ROW)
     {
-      g_debug ("Failed to count the total cache consumption %s",
+      g_warning ("Failed to count the total cache consumption %s",
           sqlite3_errmsg (priv->db));
-      sqlite3_finalize (stmt);
+      g_task_return_boolean (task, FALSE);
       return;
     }
 
@@ -657,7 +660,8 @@ purge_cache (GTask *task,
   if (current_size < priv->size_limit)
     {
       g_debug ("Cache doesn't need to be purged at %d bytes", current_size);
-      sqlite3_finalize (stmt);
+      priv->size_estimate = current_size;
+      g_task_return_boolean (task, FALSE);
       return;
     }
 
@@ -668,7 +672,7 @@ purge_cache (GTask *task,
   rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      g_debug ("Can't fetch tiles to delete: %s", sqlite3_errmsg (priv->db));
+      g_warning ("Can't fetch tiles to delete: %s", sqlite3_errmsg (priv->db));
     }
 
   rc = sqlite3_step (stmt);
@@ -690,19 +694,20 @@ purge_cache (GTask *task,
     }
   g_debug ("Cache size is now %d", current_size);
 
-  sqlite3_finalize (stmt);
-
   query = sqlite3_mprintf ("UPDATE tiles SET popularity = popularity - %d",
         highest_popularity);
   sqlite3_exec (priv->db, query, NULL, NULL, &error);
   if (error != NULL)
     {
-      g_debug ("Updating popularity failed: %s", error);
+      g_warning ("Updating popularity failed: %s", error);
       sqlite3_free (error);
     }
   sqlite3_free (query);
 
   sqlite3_exec (priv->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
+
+  priv->purge_in_progress = FALSE;
+  g_task_return_boolean (task, TRUE);
 }
 
 /**
@@ -722,6 +727,7 @@ shumate_file_cache_purge_cache_async (ShumateFileCache *self,
                                       gpointer user_data)
 {
   g_autoptr(GTask) task = NULL;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
@@ -729,6 +735,13 @@ shumate_file_cache_purge_cache_async (ShumateFileCache *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_file_cache_purge_cache_async);
 
+  if (priv->purge_in_progress)
+    {
+      g_task_return_boolean (task, FALSE);
+      return;
+    }
+
+  priv->purge_in_progress = TRUE;
   g_task_run_in_thread (task, purge_cache);
 }
 
