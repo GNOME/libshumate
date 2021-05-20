@@ -65,6 +65,7 @@ typedef struct
   sqlite3_stmt *stmt_update;
 
   int size_estimate;
+  gboolean have_size_estimate;
   gboolean purge_in_progress;
 } ShumateFileCachePrivate;
 
@@ -352,6 +353,8 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
 
   priv->cache_dir = NULL;
   priv->size_limit = 100000000;
+  priv->size_estimate = 0;
+  priv->have_size_estimate = FALSE;
   priv->cache_dir = NULL;
   priv->db = NULL;
   priv->stmt_select = NULL;
@@ -634,7 +637,7 @@ purge_cache (GTask *task,
   char *query;
   g_autoptr(sqlite3_stmt) stmt = NULL;
   int rc = 0;
-  guint current_size = 0;
+  guint original_size, current_size = 0;
   guint highest_popularity = 0;
   g_autoptr(sqlite_str) error = NULL;
 
@@ -657,6 +660,7 @@ purge_cache (GTask *task,
     }
 
   current_size = sqlite3_column_int (stmt, 0);
+  original_size = current_size;
   if (current_size < priv->size_limit)
     {
       g_debug ("Cache doesn't need to be purged at %d bytes", current_size);
@@ -692,7 +696,10 @@ purge_cache (GTask *task,
 
       rc = sqlite3_step (stmt);
     }
-  g_debug ("Cache size is now %d", current_size);
+
+  g_debug ("Cache size is now %d bytes (reduced by %d bytes)", current_size, original_size - current_size);
+  priv->size_estimate = current_size;
+  priv->have_size_estimate = TRUE;
 
   query = sqlite3_mprintf ("UPDATE tiles SET popularity = popularity - %d",
         highest_popularity);
@@ -1029,6 +1036,7 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
   g_autoptr(sqlite_str) query = NULL;
   g_autoptr(sqlite_str) sql_error = NULL;
   GError *error = NULL;
+  guint tile_size = g_bytes_get_size (data->bytes);
 
   g_output_stream_write_all_finish (G_OUTPUT_STREAM (object), res, NULL, &error);
   if (error != NULL)
@@ -1038,7 +1046,7 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
     }
 
   query = sqlite3_mprintf ("REPLACE INTO tiles (filename, etag, size) VALUES (%Q, %Q, %d)",
-                           data->filename, data->etag, g_bytes_get_size (data->bytes));
+                           data->filename, data->etag, tile_size);
   sqlite3_exec (priv->db, query, NULL, NULL, &sql_error);
   if (sql_error != NULL)
     {
@@ -1046,6 +1054,16 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
                                "Failed to insert tile into SQLite database: %s", sql_error);
       return;
     }
+
+  priv->size_estimate += tile_size;
+  if (!priv->have_size_estimate || priv->size_estimate > priv->size_limit + 5000000)
+    {
+      /* automatically purge the cache if the size estimate is 5MB over
+       * the limit, or if there is no estimate of the cache size yet */
+
+      shumate_file_cache_purge_cache_async (data->self, NULL, NULL, NULL);
+    }
+
 
   g_task_return_boolean (task, TRUE);
 }
