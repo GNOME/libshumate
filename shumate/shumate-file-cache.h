@@ -76,8 +76,13 @@ void shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
 const char *shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache);
 const char *shumate_file_cache_get_cache_key (ShumateFileCache *file_cache);
 
-void shumate_file_cache_purge (ShumateFileCache *file_cache);
-void shumate_file_cache_purge_on_idle (ShumateFileCache *file_cache);
+void shumate_file_cache_purge_cache_async (ShumateFileCache *self,
+                                           GCancellable *cancellable,
+                                           GAsyncReadyCallback callback,
+                                           gpointer user_data);
+gboolean shumate_file_cache_purge_cache_finish (ShumateFileCache *self,
+                                                GAsyncResult *result,
+                                                GError **error);
 
 void shumate_file_cache_get_tile_async (ShumateFileCache *self,
                                         ShumateTile *tile,

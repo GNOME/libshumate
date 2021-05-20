@@ -203,8 +203,12 @@ init_cache (ShumateFileCache *file_cache)
 
   filename = g_build_filename (priv->cache_dir,
         "cache.db", NULL);
+
+  /* Make sure the database is opened in serialized mode (OPEN_FULLMUTEX)
+   * because shumate_file_cache_purge_async() runs in a separate thread.
+   * See <https://sqlite.org/threadsafe.html> */
   error = sqlite3_open_v2 (filename, &priv->db,
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
   g_free (filename);
 
   if (error == SQLITE_ERROR)
@@ -617,18 +621,14 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
 }
 
 
-/**
- * shumate_file_cache_purge:
- * @file_cache: a #ShumateFileCache
- *
- * Purge the cache from the less popular tiles until cache's size limit is reached.
- */
-void
-shumate_file_cache_purge (ShumateFileCache *file_cache)
+static void
+purge_cache (GTask *task,
+             gpointer source_object,
+             gpointer _task_data,
+             GCancellable *cancellable)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
-
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
+  ShumateFileCache *self = (ShumateFileCache *) source_object;
+  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
 
   char *query;
   sqlite3_stmt *stmt;
@@ -682,7 +682,7 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
       highest_popularity = sqlite3_column_int (stmt, 2);
       g_debug ("Deleting %s of size %d", filename, size);
 
-      delete_tile (file_cache, filename);
+      delete_tile (self, filename);
 
       current_size -= size;
 
@@ -704,6 +704,56 @@ shumate_file_cache_purge (ShumateFileCache *file_cache)
 
   sqlite3_exec (priv->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
 }
+
+/**
+ * shumate_file_cache_purge_cache_async:
+ * @self: a #ShumateFileCache
+ * @cancellable: (nullable): a #GCancellable
+ * @callback: a #GAsyncReadyCallback to execute upon completion
+ * @user_data: closure data for @callback
+ *
+ * Removes less used tiles from the cache, if necessary, until it fits in
+ * the size limit.
+ */
+void
+shumate_file_cache_purge_cache_async (ShumateFileCache *self,
+                                      GCancellable *cancellable,
+                                      GAsyncReadyCallback callback,
+                                      gpointer user_data)
+{
+  g_autoptr(GTask) task = NULL;
+
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
+  g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
+
+  task = g_task_new (self, cancellable, callback, user_data);
+  g_task_set_source_tag (task, shumate_file_cache_purge_cache_async);
+
+  g_task_run_in_thread (task, purge_cache);
+}
+
+/**
+ * shumate_file_cache_purge_cache_finish:
+ * @self: a #ShumateFileCache
+ * @result: a #GAsyncResult provided to callback
+ * @error: a location for a #GError, or %NULL
+ *
+ * Gets the result of an async operation started using
+ * shumate_file_cache_purge_cache_async().
+ *
+ * Returns: %TRUE if any tiles were removed, otherwise %FALSE
+ */
+gboolean
+shumate_file_cache_purge_cache_finish (ShumateFileCache *self,
+                                      GAsyncResult *result,
+                                      GError **error)
+{
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), FALSE);
+  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+
+  return g_task_propagate_boolean (G_TASK (result), error);
+}
+
 
 typedef struct {
   char *etag;
