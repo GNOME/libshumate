@@ -154,17 +154,69 @@ typedef struct
   double current_y;
 
   double zoom_level_begin;
-  double zoom_center_x;
-  double zoom_center_y;
+  double rotate_begin;
 
   double focus_lat;
   double focus_lon;
   double accumulated_scroll_dy;
-  double drag_begin_lat;
-  double drag_begin_lon;
+  double gesture_begin_lat;
+  double gesture_begin_lon;
+  double drag_begin_x;
+  double drag_begin_y;
 } ShumateMapPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateMap, shumate_map, GTK_TYPE_WIDGET);
+
+static double
+positive_mod (double i, double n)
+{
+  return fmod (fmod (i, n) + n, n);
+}
+
+static void
+move_location_to_coords (ShumateMap *self,
+                         double lat,
+                         double lon,
+                         double x,
+                         double y)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  ShumateMapSource *map_source = shumate_viewport_get_reference_map_source (priv->viewport);
+  double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  double tile_size, map_width, map_height;
+  double map_x, map_y;
+  double target_lat, target_lon;
+  double target_map_x, target_map_y;
+  double current_lat, current_lon;
+  double current_map_x, current_map_y;
+  double new_map_x, new_map_y;
+
+  if (map_source == NULL)
+    return;
+
+  tile_size = shumate_map_source_get_tile_size (map_source) * (fmod (zoom_level, 1.0) + 1.0);
+  map_width = tile_size * shumate_map_source_get_column_count (map_source, zoom_level);
+  map_height = tile_size * shumate_map_source_get_row_count (map_source, zoom_level);
+
+  map_x = shumate_map_source_get_x (map_source, zoom_level, lon);
+  map_y = shumate_map_source_get_y (map_source, zoom_level, lat);
+
+  current_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  current_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  current_map_x = shumate_map_source_get_x (map_source, zoom_level, current_lon);
+  current_map_y = shumate_map_source_get_y (map_source, zoom_level, current_lat);
+
+  shumate_viewport_widget_coords_to_location (priv->viewport, GTK_WIDGET (self), x, y, &target_lat, &target_lon);
+  target_map_x = shumate_map_source_get_x (map_source, zoom_level, target_lon);
+  target_map_y = shumate_map_source_get_y (map_source, zoom_level, target_lat);
+
+  new_map_x = positive_mod (current_map_x - (target_map_x - map_x), map_width);
+  new_map_y = positive_mod (current_map_y - (target_map_y - map_y), map_height);
+
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
+                                 shumate_map_source_get_latitude (map_source, zoom_level, new_map_y),
+                                 shumate_map_source_get_longitude (map_source, zoom_level, new_map_x));
+}
 
 static void
 move_viewport_from_pixel_offset (ShumateMap *self,
@@ -177,8 +229,6 @@ move_viewport_from_pixel_offset (ShumateMap *self,
   ShumateMapSource *map_source;
   double x, y;
   double lat, lon;
-  double zoom_level;
-  double tile_size, max_x, max_y;
 
   g_assert (SHUMATE_IS_MAP (self));
 
@@ -186,24 +236,15 @@ move_viewport_from_pixel_offset (ShumateMap *self,
   if (!map_source)
     return;
 
-  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
-  x = shumate_map_source_get_x (map_source, zoom_level, longitude) - offset_x;
-  y = shumate_map_source_get_y (map_source, zoom_level, latitude) - offset_y;
+  shumate_viewport_location_to_widget_coords (priv->viewport, GTK_WIDGET (self), latitude, longitude, &x, &y);
 
-  tile_size = shumate_map_source_get_tile_size (map_source) * (fmod (zoom_level, 1.0) + 1.0);
-  max_x = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
-  max_y = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
+  x -= offset_x;
+  y -= offset_y;
 
-  x = fmod (x, max_x);
-  if (x < 0)
-    x += max_x;
+  shumate_viewport_widget_coords_to_location (priv->viewport, GTK_WIDGET (self), x, y, &lat, &lon);
 
-  y = fmod (y, max_y);
-  if (y < 0)
-    y += max_y;
-
-  lat = shumate_map_source_get_latitude (map_source, zoom_level, y);
-  lon = shumate_map_source_get_longitude (map_source, zoom_level, x);
+  lat = fmod (lat + 90, 180) - 90;
+  lon = fmod (lon + 180, 360) - 180;
 
   shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
 }
@@ -389,8 +430,13 @@ on_drag_gesture_drag_begin (ShumateMap     *self,
 
   cancel_deceleration (self);
 
-  priv->drag_begin_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  priv->drag_begin_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  priv->drag_begin_x = start_x;
+  priv->drag_begin_y = start_y;
+
+  shumate_viewport_widget_coords_to_location (priv->viewport, GTK_WIDGET (self),
+                                              start_x, start_y,
+                                              &priv->gesture_begin_lat,
+                                              &priv->gesture_begin_lon);
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grabbing");
 }
@@ -403,11 +449,11 @@ on_drag_gesture_drag_update (ShumateMap     *self,
 {
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  move_viewport_from_pixel_offset (self,
-                                   priv->drag_begin_lat,
-                                   priv->drag_begin_lon,
-                                   offset_x,
-                                   offset_y);
+  move_location_to_coords (self,
+                           priv->gesture_begin_lat,
+                           priv->gesture_begin_lon,
+                           priv->drag_begin_x + offset_x,
+                           priv->drag_begin_y + offset_y);
 }
 
 static void
@@ -422,14 +468,8 @@ on_drag_gesture_drag_end (ShumateMap     *self,
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
-  move_viewport_from_pixel_offset (self,
-                                   priv->drag_begin_lat,
-                                   priv->drag_begin_lon,
-                                   offset_x,
-                                   offset_y);
-
-  priv->drag_begin_lon = 0;
-  priv->drag_begin_lat = 0;
+  priv->gesture_begin_lon = 0;
+  priv->gesture_begin_lat = 0;
 }
 
 static void
@@ -447,41 +487,22 @@ set_zoom_level (ShumateMap *self,
 {
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   ShumateMapSource *map_source;
-  double scroll_latitude, scroll_longitude;
-  double view_lon, view_lat;
+  double lat, lon;
 
   g_object_freeze_notify (G_OBJECT (priv->viewport));
-  view_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  view_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
 
   map_source = shumate_viewport_get_reference_map_source (priv->viewport);
   if (map_source)
-    {
-      scroll_longitude = shumate_viewport_widget_x_to_longitude (priv->viewport, GTK_WIDGET (self), priv->current_x);
-      scroll_latitude = shumate_viewport_widget_y_to_latitude (priv->viewport, GTK_WIDGET (self), priv->current_y);
-    }
+    shumate_viewport_widget_coords_to_location (priv->viewport,
+                                                GTK_WIDGET (self),
+                                                priv->current_x, priv->current_y,
+                                                &lat, &lon);
 
   shumate_viewport_set_zoom_level (priv->viewport, zoom_level);
 
   if (map_source)
-    {
-      double scroll_map_x, scroll_map_y;
-      double view_center_x, view_center_y;
-      double x_offset, y_offset;
-      double zoom_level;
+    move_location_to_coords (self, lat, lon, priv->current_x, priv->current_y);
 
-      scroll_map_x = shumate_viewport_longitude_to_widget_x (priv->viewport, GTK_WIDGET (self), scroll_longitude);
-      scroll_map_y = shumate_viewport_latitude_to_widget_y (priv->viewport, GTK_WIDGET (self), scroll_latitude);
-
-      zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
-      view_center_x = shumate_map_source_get_x (map_source, zoom_level, view_lon);
-      view_center_y = shumate_map_source_get_y (map_source, zoom_level, view_lat);
-      x_offset = scroll_map_x - priv->current_x;
-      y_offset = scroll_map_y - priv->current_y;
-      shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
-                                     shumate_map_source_get_latitude (map_source, zoom_level, view_center_y + y_offset),
-                                     shumate_map_source_get_longitude (map_source, zoom_level, view_center_x + x_offset));
-    }
   g_object_thaw_notify (G_OBJECT (priv->viewport));
 }
 
@@ -512,15 +533,18 @@ on_zoom_gesture_begin (ShumateMap       *self,
 {
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  double x, y;
 
   gtk_gesture_set_state (GTK_GESTURE (zoom), GTK_EVENT_SEQUENCE_CLAIMED);
   cancel_deceleration (self);
 
   priv->zoom_level_begin = zoom_level;
 
-  gtk_gesture_get_bounding_box_center (GTK_GESTURE (zoom), &priv->zoom_center_x, &priv->zoom_center_y);
-  priv->drag_begin_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  priv->drag_begin_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  gtk_gesture_get_bounding_box_center (GTK_GESTURE (zoom), &x, &y);
+  shumate_viewport_widget_coords_to_location (priv->viewport, GTK_WIDGET (self),
+                                              x, y,
+                                              &priv->gesture_begin_lat,
+                                              &priv->gesture_begin_lon);
 }
 
 static void
@@ -533,21 +557,42 @@ on_zoom_gesture_update (ShumateMap       *self,
   double scale = gtk_gesture_zoom_get_scale_delta (zoom);
 
   gtk_gesture_get_bounding_box_center (GTK_GESTURE (zoom), &x, &y);
+  shumate_viewport_set_zoom_level (priv->viewport, priv->zoom_level_begin + log (scale) / G_LN2);
+  move_location_to_coords (self, priv->gesture_begin_lat, priv->gesture_begin_lon, x, y);
+}
 
-  move_viewport_from_pixel_offset (self,
-                                   priv->drag_begin_lat,
-                                   priv->drag_begin_lon,
-                                   x - priv->zoom_center_x,
-                                   y - priv->zoom_center_y);
+static void
+on_rotate_gesture_begin (ShumateMap *self,
+                         GdkEventSequence *seq,
+                         GtkGestureRotate *rotate)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  double rotation = shumate_viewport_get_rotation (priv->viewport);
 
-  priv->current_x = x;
-  priv->current_y = y;
-  set_zoom_level (self, priv->zoom_level_begin + log (scale) / G_LN2);
+  gtk_gesture_set_state (GTK_GESTURE (rotate), GTK_EVENT_SEQUENCE_CLAIMED);
+  cancel_deceleration (self);
 
-  priv->drag_begin_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  priv->drag_begin_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
-  priv->zoom_center_x = x;
-  priv->zoom_center_y = y;
+  priv->rotate_begin = rotation;
+}
+
+static void
+on_rotate_gesture_update (ShumateMap *self,
+                          GdkEventSequence *seq,
+                          GtkGestureRotate *rotate)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  double rotation;
+  double x, y;
+
+  rotation = gtk_gesture_rotate_get_angle_delta (rotate) + priv->rotate_begin;
+
+  /* snap to due north */
+  if (fabs (fmod (rotation - 0.25, G_PI * 2)) < 0.5)
+    rotation = 0.0;
+
+  shumate_viewport_set_rotation (priv->viewport, rotation);
+  gtk_gesture_get_bounding_box_center (GTK_GESTURE (rotate), &x, &y);
+  move_location_to_coords (self, priv->gesture_begin_lat, priv->gesture_begin_lon, x, y);
 }
 
 static void
@@ -775,6 +820,7 @@ shumate_map_init (ShumateMap *self)
   GtkEventController *motion_controller;
   GtkGesture *swipe_gesture;
   GtkGesture *zoom_gesture;
+  GtkGesture *rotate_gesture;
 
   priv->viewport = shumate_viewport_new ();
   priv->zoom_on_double_click = TRUE;
@@ -817,6 +863,13 @@ shumate_map_init (ShumateMap *self)
   motion_controller = gtk_event_controller_motion_new ();
   g_signal_connect_swapped (motion_controller, "motion", G_CALLBACK (on_motion_controller_motion), self);
   gtk_widget_add_controller (GTK_WIDGET (self), motion_controller);
+
+  rotate_gesture = gtk_gesture_rotate_new ();
+  g_signal_connect_swapped (rotate_gesture, "begin", G_CALLBACK (on_rotate_gesture_begin), self);
+  g_signal_connect_swapped (rotate_gesture, "update", G_CALLBACK (on_rotate_gesture_update), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (rotate_gesture));
+
+  gtk_gesture_group (zoom_gesture, rotate_gesture);
 
   gtk_widget_set_overflow (GTK_WIDGET (self), GTK_OVERFLOW_HIDDEN);
 }

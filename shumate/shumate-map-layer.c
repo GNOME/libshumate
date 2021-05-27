@@ -209,12 +209,23 @@ recompute_grid (ShumateMapLayer *self)
   int source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
   int source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
-  // This is the (column, row) of the top left tile
-  int tile_initial_column = floor ((longitude_x - width/2) / (double) tile_size);
-  int tile_initial_row = floor ((latitude_y - height/2) / (double) tile_size);
+  double rotation = shumate_viewport_get_rotation (viewport);
 
-  int required_columns = (width / tile_size) + 2;
-  int required_rows = (height / tile_size) + 2;
+  int size_x = MAX (
+    abs (cos (rotation) *  width/2.0 - sin (rotation) * height/2.0),
+    abs (cos (rotation) * -width/2.0 - sin (rotation) * height/2.0)
+  );
+  int size_y = MAX (
+    abs (sin (rotation) *  width/2.0 + cos (rotation) * height/2.0),
+    abs (sin (rotation) * -width/2.0 + cos (rotation) * height/2.0)
+  );
+
+  // This is the (column, row) of the top left tile
+  int tile_initial_column = floor ((longitude_x - size_x) / (double) tile_size);
+  int tile_initial_row = floor ((latitude_y - size_y) / (double) tile_size);
+
+  int required_columns = (size_x * 2 / tile_size) + 2;
+  int required_rows = (size_y * 2 / tile_size) + 2;
 
   gboolean all_filled = TRUE;
 
@@ -343,6 +354,16 @@ on_view_zoom_level_changed (ShumateMapLayer *self,
 }
 
 static void
+on_view_rotation_changed (ShumateMapLayer *self,
+                          GParamSpec      *pspec,
+                          ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+
+  gtk_widget_queue_allocate (GTK_WIDGET (self));
+}
+
+static void
 shumate_map_layer_set_property (GObject      *object,
                                 guint         property_id,
                                 const GValue *value,
@@ -414,6 +435,8 @@ shumate_map_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
+  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
+
 }
 
 static void
@@ -502,10 +525,12 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   double extra_zoom = fmod (zoom_level, 1.0) + 1.0;
   int width = gtk_widget_get_width (GTK_WIDGET (self));
   int height = gtk_widget_get_height (GTK_WIDGET (self));
+  double rotation = shumate_viewport_get_rotation (viewport);
 
-  /* Scale around the center of the view */
+  /* Scale and rotate around the center of the view */
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
   gtk_snapshot_scale (snapshot, extra_zoom, extra_zoom);
+  gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
 
   GTK_WIDGET_CLASS (shumate_map_layer_parent_class)->snapshot (widget, snapshot);

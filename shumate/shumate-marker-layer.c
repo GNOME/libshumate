@@ -123,8 +123,9 @@ update_marker_visibility (ShumateMarkerLayer *layer,
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
-  x = floorf (shumate_viewport_longitude_to_widget_x (viewport, GTK_WIDGET (layer), lon) - marker_width/2.f);
-  y = floorf (shumate_viewport_latitude_to_widget_y (viewport, GTK_WIDGET (layer), lat) - marker_height/2.f);
+  shumate_viewport_location_to_widget_coords (viewport, GTK_WIDGET (layer), lat, lon, &x, &y);
+  x = floorf (x - marker_width/2.f);
+  y = floorf (y - marker_height/2.f);
 
   within_viewport = x > -marker_width && x <= width &&
                     y > -marker_height && y <= height &&
@@ -187,6 +188,16 @@ on_view_zoom_level_changed (ShumateMarkerLayer *self,
 }
 
 static void
+on_view_rotation_changed (ShumateMarkerLayer *self,
+                          GParamSpec      *pspec,
+                          ShumateViewport *view)
+{
+  g_assert (SHUMATE_IS_MARKER_LAYER (self));
+
+  shumate_marker_layer_reposition_markers (self);
+}
+
+static void
 shumate_marker_layer_size_allocate (GtkWidget *widget,
                                     int        width,
                                     int        height,
@@ -217,8 +228,9 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
       gtk_widget_measure (child, GTK_ORIENTATION_HORIZONTAL, -1, 0, &marker_width, NULL, NULL);
       gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
-      x = floorf (shumate_viewport_longitude_to_widget_x (viewport, widget, lon) - marker_width/2.f);
-      y = floorf (shumate_viewport_latitude_to_widget_y (viewport, widget, lat) - marker_height/2.f);
+      shumate_viewport_location_to_widget_coords (viewport, widget, lat, lon, &x, &y);
+      x = floorf (x - marker_width/2.f);
+      y = floorf (y - marker_height/2.f);
 
       allocation.x = x;
       allocation.y = y;
@@ -312,6 +324,7 @@ shumate_marker_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
+  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
 
 }
 

@@ -107,6 +107,16 @@ on_view_zoom_level_changed (ShumatePathLayer *self,
   gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
+static void
+on_view_rotation_changed (ShumatePathLayer *self,
+                          GParamSpec       *pspec,
+                          ShumateViewport  *view)
+{
+  g_assert (SHUMATE_IS_PATH_LAYER (self));
+
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
 
 static void
 shumate_path_layer_get_property (GObject *object,
@@ -235,7 +245,7 @@ shumate_path_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-
+  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
 }
 
 
@@ -278,10 +288,11 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   for (elem = priv->nodes; elem != NULL; elem = elem->next)
     {
       ShumateLocation *location = SHUMATE_LOCATION (elem->data);
-      double x, y;
+      double x, y, lat, lon;
 
-      x = shumate_viewport_longitude_to_widget_x (viewport, widget, shumate_location_get_longitude (location));
-      y = shumate_viewport_latitude_to_widget_y (viewport, widget, shumate_location_get_latitude (location));
+      lat = shumate_location_get_latitude (location);
+      lon = shumate_location_get_longitude (location);
+      shumate_viewport_location_to_widget_coords (viewport, widget, lat, lon, &x, &y);
 
       cairo_line_to (cr, x, y);
     }

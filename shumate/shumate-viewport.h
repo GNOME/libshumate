@@ -56,18 +56,22 @@ void shumate_viewport_set_reference_map_source (ShumateViewport  *self,
                                                 ShumateMapSource *map_source);
 ShumateMapSource *shumate_viewport_get_reference_map_source (ShumateViewport  *self);
 
-double shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
-                                               GtkWidget       *widget,
-                                               double           x);
-double shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
-                                              GtkWidget       *widget,
-                                              double           y);
-double shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
-                                               GtkWidget       *widget,
-                                               double           longitude);
-double shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
-                                              GtkWidget       *widget,
-                                              double           latitude);
+void shumate_viewport_set_rotation (ShumateViewport *self,
+                                    double           rotation);
+double shumate_viewport_get_rotation (ShumateViewport *self);
+
+void shumate_viewport_widget_coords_to_location (ShumateViewport *self,
+                                                 GtkWidget       *widget,
+                                                 double           x,
+                                                 double           y,
+                                                 double          *latitude,
+                                                 double          *longitude);
+void shumate_viewport_location_to_widget_coords (ShumateViewport *self,
+                                                 GtkWidget       *widget,
+                                                 double           latitude,
+                                                 double           longitude,
+                                                 double          *x,
+                                                 double          *y);
 
 G_END_DECLS
 

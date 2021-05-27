@@ -43,6 +43,7 @@ struct _ShumateViewport
   double zoom_level;
   guint min_zoom_level;
   guint max_zoom_level;
+  double rotation;
 
   ShumateMapSource *ref_map_source;
 };
@@ -58,6 +59,7 @@ enum
   PROP_MIN_ZOOM_LEVEL,
   PROP_MAX_ZOOM_LEVEL,
   PROP_REFERENCE_MAP_SOURCE,
+  PROP_ROTATION,
   N_PROPERTIES,
 
   PROP_LONGITUDE,
@@ -127,6 +129,10 @@ shumate_viewport_get_property (GObject    *object,
       g_value_set_object (value, self->ref_map_source);
       break;
 
+    case PROP_ROTATION:
+      g_value_set_double (value, self->rotation);
+      break;
+
     case PROP_LONGITUDE:
       g_value_set_double (value, self->lon);
       break;
@@ -165,6 +171,10 @@ shumate_viewport_set_property (GObject      *object,
 
     case PROP_REFERENCE_MAP_SOURCE:
       shumate_viewport_set_reference_map_source (self, g_value_get_object (value));
+      break;
+
+    case PROP_ROTATION:
+      shumate_viewport_set_rotation (self, g_value_get_double (value));
       break;
 
     case PROP_LONGITUDE:
@@ -248,6 +258,18 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                          "Reference Map Source",
                          "The reference map source being displayed",
                          SHUMATE_TYPE_MAP_SOURCE,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateViewport:rotation:
+   *
+   * The rotation of the map view, in radians clockwise from up being due north
+   */
+  obj_properties[PROP_ROTATION] =
+    g_param_spec_double ("rotation",
+                         "Rotation",
+                         "The rotation of the map view in radians",
+                         0, G_PI * 2.0, 0,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
   
   g_object_class_install_properties (object_class,
@@ -480,139 +502,160 @@ shumate_viewport_get_reference_map_source (ShumateViewport *self)
 }
 
 /**
- * shumate_viewport_widget_x_to_longitude:
+ * shumate_viewport_set_rotation:
+ * @self: a #ShumateViewport
+ * @rotation: the rotation
+ *
+ * Sets the rotation
+ */
+void
+shumate_viewport_set_rotation (ShumateViewport *self,
+                               double           rotation)
+{
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+
+  rotation = fmod (rotation, G_PI * 2.0);
+
+  if (self->rotation == rotation)
+    return;
+
+  self->rotation = rotation;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ROTATION]);
+}
+
+/**
+ * shumate_viewport_get_rotation:
+ * @self: a #ShumateViewport
+ *
+ * Gets the current rotation
+ *
+ * Returns: the current rotation
+ */
+double
+shumate_viewport_get_rotation (ShumateViewport *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0);
+
+  return self->rotation;
+}
+
+static void
+rotate_around_center (double *x, double *y, double width, double height, double angle)
+{
+  /* Rotate (x, y) around (width / 2, height / 2) */
+
+  double old_x = *x;
+  double old_y = *y;
+  double center_x = width / 2.0;
+  double center_y = height / 2.0;
+
+  *x = cos(angle) * (old_x - center_x) - sin(angle) * (old_y - center_y) + center_x;
+  *y = sin(angle) * (old_x - center_x) + cos(angle) * (old_y - center_y) + center_y;
+}
+
+static double
+positive_mod (double i, double n)
+{
+  return fmod (fmod (i, n) + n, n);
+}
+
+/**
+ * shumate_viewport_widget_coords_to_location:
  * @self: a #ShumateViewport
  * @widget: a #GtkWidget that uses @self as viewport
  * @x: the x coordinate
- *
- * Get the longitude from an x coordinate of a widget.
- * The widget is assumed to be using the viewport.
- * 
- * Returns: the longitude
- */
-double
-shumate_viewport_widget_x_to_longitude (ShumateViewport *self,
-                                        GtkWidget       *widget,
-                                        double           x)
-{
-  double center_x;
-  int width;
-
-  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
-
-  if (!self->ref_map_source)
-    {
-      g_critical ("A reference map source is required to compute the longitude from X.");
-      return 0.0;
-    }
-
-  width = gtk_widget_get_width (widget);
-  center_x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, self->lon);
-  return shumate_map_source_get_longitude (self->ref_map_source, self->zoom_level, center_x - width/2 + x);
-}
-
-/**
- * shumate_viewport_widget_y_to_latitude:
- * @self: a #ShumateViewport
- * @widget: a #GtkWidget that uses @self as viewport
  * @y: the y coordinate
+ * @latitude: (out): return location for the latitude
+ * @longitude: (out): return location for the longitude
  *
- * Get the latitude from an y coordinate of a widget.
- * The widget is assumed to be using the viewport.
- * 
- * Returns: the latitude
+ * Gets the latitude and longitude corresponding to a position on @widget.
  */
-double
-shumate_viewport_widget_y_to_latitude (ShumateViewport *self,
-                                       GtkWidget       *widget,
-                                       double           y)
+void
+shumate_viewport_widget_coords_to_location (ShumateViewport *self,
+                                            GtkWidget       *widget,
+                                            double           x,
+                                            double           y,
+                                            double          *latitude,
+                                            double          *longitude)
 {
-  double center_y;
-  int height;
+  double center_x, center_y;
+  double width, height;
+  double tile_size;
+  double map_width, map_height;
 
-  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+  g_return_if_fail (latitude != NULL);
+  g_return_if_fail (longitude != NULL);
 
   if (!self->ref_map_source)
     {
-      g_critical ("A reference map source is required to compute Y from the latitude.");
-      return 0.0;
-    }
-
-  height = gtk_widget_get_height (widget);
-  center_y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, self->lat);
-  return shumate_map_source_get_latitude (self->ref_map_source, self->zoom_level, center_y - height/2 + y);
-}
-
-/**
- * shumate_viewport_longitude_to_widget_x:
- * @self: a #ShumateViewport
- * @widget: a #GtkWidget that uses @self as viewport
- * @longitude: the longitude
- *
- * Get an x coordinate of a widget from the longitude.
- * The widget is assumed to be using the viewport.
- * 
- * Returns: the x coordinate
- */
-double
-shumate_viewport_longitude_to_widget_x (ShumateViewport *self,
-                                        GtkWidget       *widget,
-                                        double           longitude)
-{
-  double center_longitude;
-  double left_x, x;
-  int width;
-
-  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
-
-  if (!self->ref_map_source)
-    {
-      g_critical ("A reference map source is required to compute X from the longitude.");
-      return 0.0;
+      g_critical ("A reference map source is required.");
+      return;
     }
 
   width = gtk_widget_get_width (widget);
-  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (self));
-  left_x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, center_longitude) - width/2;
-  x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, longitude);
-  return x - left_x;
+  height = gtk_widget_get_height (widget);
+  rotate_around_center (&x, &y, width, height, -self->rotation);
+
+  tile_size = shumate_map_source_get_tile_size (self->ref_map_source) * (fmod (self->zoom_level, 1.0) + 1);
+  map_width = tile_size * shumate_map_source_get_column_count (self->ref_map_source, self->zoom_level);
+  map_height = tile_size * shumate_map_source_get_row_count (self->ref_map_source, self->zoom_level);
+
+  center_x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, self->lon) - width/2 + x;
+  center_y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, self->lat) - height/2 + y;
+
+  center_x = positive_mod (center_x, map_width);
+  center_y = positive_mod (center_y, map_height);
+
+  *latitude = shumate_map_source_get_latitude (self->ref_map_source, self->zoom_level, center_y);
+  *longitude = shumate_map_source_get_longitude (self->ref_map_source, self->zoom_level, center_x);
 }
 
 /**
- * shumate_viewport_latitude_to_widget_y:
+ * shumate_viewport_location_to_widget_coords:
  * @self: a #ShumateViewport
  * @widget: a #GtkWidget that uses @self as viewport
  * @latitude: the latitude
+ * @longitude: the longitude
+ * @x: (out): return value for the x coordinate
+ * @y: (out): return value for the y coordinate
  *
- * Get an y coordinate of a widget from the latitude.
- * The widget is assumed to be using the viewport.
- * 
- * Returns: the y coordinate
+ * Gets the position on @widget that correspond to the given latitude and
+ * longitude.
  */
-double
-shumate_viewport_latitude_to_widget_y (ShumateViewport *self,
-                                       GtkWidget       *widget,
-                                       double           latitude)
+void
+shumate_viewport_location_to_widget_coords (ShumateViewport *self,
+                                            GtkWidget       *widget,
+                                            double           latitude,
+                                            double           longitude,
+                                            double          *x,
+                                            double          *y)
 {
-  double center_latitude;
-  double top_y, y;
-  int height;
+  double center_latitude, center_longitude;
+  double width, height;
 
-  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), 0.0);
-  g_return_val_if_fail (GTK_IS_WIDGET (widget), 0.0);
+  g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
+  g_return_if_fail (GTK_IS_WIDGET (widget));
+  g_return_if_fail (x != NULL);
+  g_return_if_fail (y != NULL);
 
   if (!self->ref_map_source)
     {
-      g_critical ("A reference map source is required to compute the latitude from Y.");
-      return 0.0;
+      g_critical ("A reference map source is required.");
+      return;
     }
 
+  width = gtk_widget_get_width (widget);
   height = gtk_widget_get_height (widget);
+
+  *x = shumate_map_source_get_x (self->ref_map_source, self->zoom_level, longitude);
+  *y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, latitude);
+
   center_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (self));
-  top_y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, center_latitude) - height/2;
-  y = shumate_map_source_get_y (self->ref_map_source, self->zoom_level, latitude);
-  return y - top_y;
+  center_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (self));
+  *x -= shumate_map_source_get_x (self->ref_map_source, self->zoom_level, center_longitude) - width/2;
+  *y -= shumate_map_source_get_y (self->ref_map_source, self->zoom_level, center_latitude) - height/2;
+
+  rotate_around_center (x, y, width, height, self->rotation);
 }
