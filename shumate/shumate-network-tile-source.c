@@ -648,6 +648,7 @@ static void on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, g
 static void on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void fetch_from_network (GTask *task);
 static void on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data);
 
 typedef struct {
@@ -831,7 +832,7 @@ fetch_from_network (GTask *task)
 }
 
 /* Receive the response from the network. If the tile hasn't been modified,
- * return; otherwise, parse the data into a pixbuf. */
+ * return; otherwise, read the data into a GBytes. */
 static void
 on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
@@ -841,6 +842,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   g_autoptr(GInputStream) input_stream = NULL;
   g_autoptr(GError) error = NULL;
   ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (data->self);
+  g_autoptr(GOutputStream) output_stream = NULL;
 
   input_stream = soup_session_send_finish (priv->soup_session, res, &error);
   if (error != NULL)
@@ -878,6 +880,38 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   data->etag = g_strdup (soup_message_headers_get_one (data->msg->response_headers, "ETag"));
   g_debug ("Received ETag %s", data->etag);
 
+  output_stream = g_memory_output_stream_new_resizable ();
+  g_output_stream_splice_async (output_stream,
+                                input_stream,
+                                G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
+                                G_PRIORITY_DEFAULT,
+                                cancellable,
+                                on_message_read,
+                                g_steal_pointer (&task));
+}
+
+/* Parse the GBytes into a pixbuf. */
+static void
+on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  GOutputStream *output_stream = G_OUTPUT_STREAM (source_object);
+  g_autoptr(GTask) task = user_data;
+  FillTileData *data = g_task_get_task_data (task);
+  GCancellable *cancellable = g_task_get_cancellable (task);
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GInputStream) input_stream = NULL;
+
+  g_output_stream_splice_finish (output_stream, res, &error);
+  if (error != NULL)
+    {
+      g_task_return_error (task, g_steal_pointer (&error));
+      return;
+    }
+
+  g_bytes_unref (data->bytes);
+  data->bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
+
+  input_stream = g_memory_input_stream_new_from_bytes (data->bytes);
   gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
 }
 
@@ -894,8 +928,6 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
   g_autoptr(GError) error = NULL;
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GdkTexture) texture = NULL;
-  g_autofree char *buffer = NULL;
-  gsize buffer_size;
 
   pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
   if (error != NULL)
@@ -904,13 +936,7 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
       return;
     }
 
-  if (!gdk_pixbuf_save_to_buffer (pixbuf, &buffer, &buffer_size, "png", &error, NULL))
-    g_warning ("Unable to export tile: %s", error->message);
-  else
-    {
-      g_autoptr(GBytes) bytes = g_bytes_new_take (g_steal_pointer (&buffer), buffer_size);
-      shumate_file_cache_store_tile_async (priv->file_cache, data->tile, bytes, data->etag, cancellable, NULL, NULL);
-    }
+  shumate_file_cache_store_tile_async (priv->file_cache, data->tile, data->bytes, data->etag, cancellable, NULL, NULL);
 
   texture = gdk_texture_new_for_pixbuf (pixbuf);
   shumate_tile_set_texture (data->tile, texture);
