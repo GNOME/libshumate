@@ -1,7 +1,7 @@
 map-scale label {
   border: 2px solid rgba(0, 0, 0, 0.5);
   border-top: none;
-  background: rgba(255, 255, 255, 0.5);
+  background: alpha(@theme_bg_color, 0.5);
   padding: 3px;
 }
 
