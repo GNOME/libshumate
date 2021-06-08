@@ -559,7 +559,7 @@ shumate_map_source_desc_get_projection (ShumateMapSourceDesc *desc)
  *
  * Creates a #ShumateMapSource describes by @self.
  *
- * Returns: (transfer floating): a newly created #ShumateMapSource.
+ * Returns: (transfer full): a newly created #ShumateMapSource.
  */
 ShumateMapSource *
 shumate_map_source_desc_create_source (ShumateMapSourceDesc *self)

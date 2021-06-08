@@ -259,7 +259,7 @@ shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory)
  * Note: The id should not contain any character that can't be in a filename as it
  * will be used as the cache directory name for that map source.
  *
- * Returns: (transfer floating) (nullable): a ready to use #ShumateMapSource
+ * Returns: (transfer full) (nullable): a ready to use #ShumateMapSource
  * matching the given name or %NULL if no source with the given name exists.
  */
 ShumateMapSource *

@@ -29,7 +29,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP_SOURCE shumate_map_source_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateMapSource, shumate_map_source, SHUMATE, MAP_SOURCE, GInitiallyUnowned)
+G_DECLARE_DERIVABLE_TYPE (ShumateMapSource, shumate_map_source, SHUMATE, MAP_SOURCE, GObject)
 
 /**
  * ShumateMapProjection:
@@ -51,7 +51,7 @@ typedef enum
 
 struct _ShumateMapSourceClass
 {
-  GInitiallyUnownedClass parent_class;
+  GObjectClass parent_class;
 
   const char * (*get_id)(ShumateMapSource *map_source);
   const char * (*get_name)(ShumateMapSource *map_source);

@@ -34,8 +34,7 @@
 
 #include <math.h>
 
-G_DEFINE_ABSTRACT_TYPE (ShumateMapSource, shumate_map_source, G_TYPE_INITIALLY_UNOWNED);
-
+G_DEFINE_ABSTRACT_TYPE (ShumateMapSource, shumate_map_source, G_TYPE_OBJECT);
 
 static void
 shumate_map_source_class_init (ShumateMapSourceClass *klass)
