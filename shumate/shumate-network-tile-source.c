@@ -71,7 +71,7 @@ typedef struct
   ShumateFileCache *file_cache;
 } ShumateNetworkTileSourcePrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_TILE_SOURCE);
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_MAP_SOURCE);
 
 /* The osm.org tile set require us to use no more than 2 simultaneous
  * connections so let that be the default.

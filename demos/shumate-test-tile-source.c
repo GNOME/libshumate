@@ -20,10 +20,10 @@
 
 struct _ShumateTestTileSource
 {
-  ShumateTileSource parent_instance;
+  ShumateMapSource parent_instance;
 };
 
-G_DEFINE_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE_TYPE_TILE_SOURCE)
+G_DEFINE_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE_TYPE_MAP_SOURCE)
 
 
 ShumateTestTileSource *

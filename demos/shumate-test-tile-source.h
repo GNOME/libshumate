@@ -25,7 +25,7 @@ G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TEST_TILE_SOURCE (shumate_test_tile_source_get_type())
 
-G_DECLARE_FINAL_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE, TEST_TILE_SOURCE, ShumateTileSource)
+G_DECLARE_FINAL_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE, TEST_TILE_SOURCE, ShumateMapSource)
 
 ShumateTestTileSource *shumate_test_tile_source_new (void);
 

@@ -15,7 +15,6 @@ libshumate_public_h = [
   'shumate-path-layer.h',
   'shumate-point.h',
   'shumate-scale.h',
-  'shumate-tile-source.h',
   'shumate-tile.h',
   'shumate-viewport.h',
   'shumate.h',
@@ -44,7 +43,6 @@ libshumate_sources = [
   'shumate-path-layer.c',
   'shumate-point.c',
   'shumate-scale.c',
-  'shumate-tile-source.c',
   'shumate-tile.c',
   'shumate-viewport.c',
 ]
