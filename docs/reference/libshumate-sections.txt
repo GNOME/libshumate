@@ -33,6 +33,41 @@ ShumateMapSourcePrivate
 </SECTION>
 
 <SECTION>
+<FILE>shumate-map-source-registry</FILE>
+<TITLE>ShumateMapSourceRegistry</TITLE>
+ShumateMapSourceRegistry
+shumate_map_source_registry_new
+shumate_map_source_registry_new_with_defaults
+shumate_map_source_registry_populate_defaults
+shumate_map_source_registry_get_by_id
+shumate_map_source_registry_add
+shumate_map_source_registry_remove
+SHUMATE_MAP_SOURCE_OSM_MAPNIK
+SHUMATE_MAP_SOURCE_OSM_CYCLE_MAP
+SHUMATE_MAP_SOURCE_OSM_TRANSPORT_MAP
+SHUMATE_MAP_SOURCE_OSM_AERIAL_MAP
+SHUMATE_MAP_SOURCE_OSM_MAPQUEST
+SHUMATE_MAP_SOURCE_MFF_RELIEF
+SHUMATE_MAP_SOURCE_OAM
+SHUMATE_MAP_SOURCE_OSM_OSMARENDER
+SHUMATE_MAP_SOURCE_OWM_CLOUDS
+SHUMATE_MAP_SOURCE_OWM_PRECIPITATION
+SHUMATE_MAP_SOURCE_OWM_PRESSURE
+SHUMATE_MAP_SOURCE_OWM_TEMPERATURE
+SHUMATE_MAP_SOURCE_OWM_WIND
+<SUBSECTION Standard>
+SHUMATE_MAP_SOURCE_REGISTRY
+SHUMATE_IS_MAP_SOURCE_REGISTRY
+SHUMATE_TYPE_MAP_SOURCE_REGISTRY
+shumate_map_source_factory_get_type
+SHUMATE_MAP_SOURCE_REGISTRY_CLASS
+SHUMATE_IS_MAP_SOURCE_REGISTRY_CLASS
+SHUMATE_MAP_SOURCE_REGISTRY_GET_CLASS
+<SUBSECTION Private>
+ShumateMapSourceRegistryClass
+</SECTION>
+
+<SECTION>
 <FILE>shumate-marker</FILE>
 <TITLE>ShumateMarker</TITLE>
 ShumateMarker
@@ -333,42 +368,6 @@ ShumateScalePrivate
 </SECTION>
 
 <SECTION>
-<FILE>shumate-map-source-factory</FILE>
-<TITLE>ShumateMapSourceFactory</TITLE>
-ShumateMapSourceFactory
-shumate_map_source_factory_dup_default
-shumate_map_source_factory_create
-shumate_map_source_factory_create_cached_source
-shumate_map_source_factory_create_error_source
-shumate_map_source_factory_register
-shumate_map_source_factory_get_registered
-SHUMATE_MAP_SOURCE_OSM_MAPNIK
-SHUMATE_MAP_SOURCE_OSM_CYCLE_MAP
-SHUMATE_MAP_SOURCE_OSM_TRANSPORT_MAP
-SHUMATE_MAP_SOURCE_OSM_AERIAL_MAP
-SHUMATE_MAP_SOURCE_OSM_MAPQUEST
-SHUMATE_MAP_SOURCE_MFF_RELIEF
-SHUMATE_MAP_SOURCE_OAM
-SHUMATE_MAP_SOURCE_OSM_OSMARENDER
-SHUMATE_MAP_SOURCE_OWM_CLOUDS
-SHUMATE_MAP_SOURCE_OWM_PRECIPITATION
-SHUMATE_MAP_SOURCE_OWM_PRESSURE
-SHUMATE_MAP_SOURCE_OWM_TEMPERATURE
-SHUMATE_MAP_SOURCE_OWM_WIND
-<SUBSECTION Standard>
-SHUMATE_MAP_SOURCE_FACTORY
-SHUMATE_IS_MAP_SOURCE_FACTORY
-SHUMATE_TYPE_MAP_SOURCE_FACTORY
-shumate_map_source_factory_get_type
-SHUMATE_MAP_SOURCE_FACTORY_CLASS
-SHUMATE_IS_MAP_SOURCE_FACTORY_CLASS
-SHUMATE_MAP_SOURCE_FACTORY_GET_CLASS
-<SUBSECTION Private>
-ShumateMapSourceFactoryClass
-ShumateMapSourceFactoryPrivate
-</SECTION>
-
-<SECTION>
 <FILE>shumate-license</FILE>
 <TITLE>ShumateLicense</TITLE>
 ShumateLicense
@@ -468,37 +467,6 @@ SHUMATE_MEMORY_CACHE_GET_CLASS
 <SUBSECTION Private>
 ShumateMemoryCacheClass
 ShumateMemoryCachePrivate
-</SECTION>
-
-<SECTION>
-<FILE>shumate-map-source-desc</FILE>
-<TITLE>ShumateMapSourceDesc</TITLE>
-ShumateMapSourceDesc
-ShumateMapSourceConstructor
-SHUMATE_MAP_SOURCE_CONSTRUCTOR
-shumate_map_source_desc_new_full
-shumate_map_source_desc_get_id
-shumate_map_source_desc_get_name
-shumate_map_source_desc_get_license
-shumate_map_source_desc_get_license_uri
-shumate_map_source_desc_get_uri_format
-shumate_map_source_desc_get_min_zoom_level
-shumate_map_source_desc_get_max_zoom_level
-shumate_map_source_desc_get_tile_size
-shumate_map_source_desc_get_projection
-shumate_map_source_desc_get_data
-shumate_map_source_desc_get_constructor
-<SUBSECTION Standard>
-SHUMATE_MAP_SOURCE_DESC
-SHUMATE_IS_MAP_SOURCE_DESC
-SHUMATE_TYPE_MAP_SOURCE_DESC
-shumate_map_source_desc_get_type
-SHUMATE_MAP_SOURCE_DESC_CLASS
-SHUMATE_IS_MAP_SOURCE_DESC_CLASS
-SHUMATE_MAP_SOURCE_DESC_GET_CLASS
-<SUBSECTION Private>
-ShumateMapSourceDescClass
-ShumateMapSourceDescPrivate
 </SECTION>
 
 <SECTION>

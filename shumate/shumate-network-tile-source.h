@@ -45,6 +45,7 @@ GQuark shumate_network_source_error_quark (void);
  * @SHUMATE_NETWORK_SOURCE_ERROR_FAILED: An unspecified error occurred during the operation.
  * @SHUMATE_NETWORK_SOURCE_ERROR_BAD_RESPONSE: An unsuccessful HTTP response was received from the server.
  * @SHUMATE_NETWORK_SOURCE_ERROR_COULD_NOT_CONNECT: The server could not be reached.
+ * @SHUMATE_NETWORK_SOURCE_ERROR_MALFORMED_URL: The provided URL isn't valid
  * @SHUMATE_NETWORK_SOURCE_ERROR_OFFLINE: The tile source has been marked as offline.
  *
  * Error codes in the #SHUMATE_NETWORK_SOURCE_ERROR domain.

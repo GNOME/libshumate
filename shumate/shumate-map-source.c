@@ -25,7 +25,7 @@
  * #ShumateTile objects with images from various sources: a web API, for
  * example, or a test pattern generated on demand.
  *
- * The most common map source is #ShumateNetworkMapSource, which fetches tiles
+ * The most common map source is #ShumateNetworkTileSource, which fetches tiles
  * from an API.
  */
 
