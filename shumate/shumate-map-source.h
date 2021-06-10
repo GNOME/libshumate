@@ -53,15 +53,6 @@ struct _ShumateMapSourceClass
 {
   GObjectClass parent_class;
 
-  const char * (*get_id)(ShumateMapSource *map_source);
-  const char * (*get_name)(ShumateMapSource *map_source);
-  const char * (*get_license)(ShumateMapSource *map_source);
-  const char * (*get_license_uri)(ShumateMapSource *map_source);
-  guint (*get_min_zoom_level)(ShumateMapSource *map_source);
-  guint (*get_max_zoom_level)(ShumateMapSource *map_source);
-  guint (*get_tile_size)(ShumateMapSource *map_source);
-  ShumateMapProjection (*get_projection)(ShumateMapSource *map_source);
-
   void (*fill_tile_async)  (ShumateMapSource     *self,
                             ShumateTile          *tile,
                             GCancellable         *cancellable,
@@ -70,34 +61,50 @@ struct _ShumateMapSourceClass
 };
 
 const char *shumate_map_source_get_id (ShumateMapSource *map_source);
+void shumate_map_source_set_id (ShumateMapSource *map_source,
+                                const char       *id);
 const char *shumate_map_source_get_name (ShumateMapSource *map_source);
+void shumate_map_source_set_name (ShumateMapSource *map_source,
+                                  const char       *name);
 const char *shumate_map_source_get_license (ShumateMapSource *map_source);
+void shumate_map_source_set_license (ShumateMapSource *map_source,
+                                     const char       *license);
 const char *shumate_map_source_get_license_uri (ShumateMapSource *map_source);
+void shumate_map_source_set_license_uri (ShumateMapSource *map_source,
+                                         const char       *license_uri);
 guint shumate_map_source_get_min_zoom_level (ShumateMapSource *map_source);
+void shumate_map_source_set_min_zoom_level (ShumateMapSource *map_source,
+                                            guint             zoom_level);
 guint shumate_map_source_get_max_zoom_level (ShumateMapSource *map_source);
+void shumate_map_source_set_max_zoom_level (ShumateMapSource *map_source,
+                                            guint             zoom_level);
 guint shumate_map_source_get_tile_size (ShumateMapSource *map_source);
+void shumate_map_source_set_tile_size (ShumateMapSource *map_source,
+                                       guint             tile_size);
 ShumateMapProjection shumate_map_source_get_projection (ShumateMapSource *map_source);
+void shumate_map_source_set_projection (ShumateMapSource     *map_source,
+                                        ShumateMapProjection  projection);
 
 double shumate_map_source_get_x (ShumateMapSource *map_source,
-    double zoom_level,
-    double longitude);
+                                 double            zoom_level,
+                                 double            longitude);
 double shumate_map_source_get_y (ShumateMapSource *map_source,
-    double zoom_level,
-    double latitude);
+                                 double            zoom_level,
+                                 double            latitude);
 double shumate_map_source_get_longitude (ShumateMapSource *map_source,
-    double zoom_level,
-    double x);
+                                         double            zoom_level,
+                                         double            x);
 double shumate_map_source_get_latitude (ShumateMapSource *map_source,
-    double zoom_level,
-    double y);
+                                        double            zoom_level,
+                                        double            y);
 guint shumate_map_source_get_row_count (ShumateMapSource *map_source,
-    guint zoom_level);
+                                        guint             zoom_level);
 guint shumate_map_source_get_column_count (ShumateMapSource *map_source,
-    guint zoom_level);
+                                           guint             zoom_level);
 double shumate_map_source_get_meters_per_pixel (ShumateMapSource *map_source,
-    double zoom_level,
-    double latitude,
-    double longitude);
+                                                double            zoom_level,
+                                                double            latitude,
+                                                double            longitude);
 
 void shumate_map_source_fill_tile_async (ShumateMapSource    *self,
                                          ShumateTile         *tile,

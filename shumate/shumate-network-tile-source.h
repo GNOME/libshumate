@@ -25,7 +25,7 @@
 #ifndef _SHUMATE_NETWORK_TILE_SOURCE_H_
 #define _SHUMATE_NETWORK_TILE_SOURCE_H_
 
-#include <shumate/shumate-tile-source.h>
+#include <shumate/shumate-map-source.h>
 
 G_BEGIN_DECLS
 
@@ -60,7 +60,7 @@ typedef enum {
 
 
 #define SHUMATE_TYPE_NETWORK_TILE_SOURCE shumate_network_tile_source_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE, NETWORK_TILE_SOURCE, ShumateTileSource)
+G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE, NETWORK_TILE_SOURCE, ShumateMapSource)
 
 /**
  * ShumateNetworkTileSource:
@@ -71,7 +71,7 @@ G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source,
 
 struct _ShumateNetworkTileSourceClass
 {
-  ShumateTileSourceClass parent_class;
+  ShumateMapSourceClass parent_class;
 };
 
 ShumateNetworkTileSource *shumate_network_tile_source_new_full (const char *id,
