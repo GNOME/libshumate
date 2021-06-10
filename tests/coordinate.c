@@ -6,17 +6,17 @@
 static void
 test_coordinate_convert (void)
 {
-  ShumateMapSourceFactory *factory;
+  ShumateMapSourceRegistry *registry;
   ShumateMapSource *source;
   double latitude = -73.75f;
   double longitude = 45.466f;
   double zoom_level;
 
-  factory = shumate_map_source_factory_dup_default ();
+  registry = shumate_map_source_registry_new_with_defaults ();
 
-  g_assert_nonnull (factory);
+  g_assert_nonnull (registry);
 
-  source = shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  source = shumate_map_source_registry_get_by_id (registry, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
 
   g_assert_nonnull (source);
   
@@ -34,8 +34,7 @@ test_coordinate_convert (void)
       g_assert_cmpfloat_with_epsilon (shumate_map_source_get_latitude (source, zoom_level, y), latitude, ACCEPTABLE_EPSILON);
     }
 
-  g_object_unref (source);
-  g_object_unref (factory);
+  g_object_unref (registry);
 }
 
 int

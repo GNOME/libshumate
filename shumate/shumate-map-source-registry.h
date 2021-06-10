@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2009 Pierre-Luc Beaudoin <pierre-luc@pierlux.com>
- * Copyright (C) 2010-2013 Jiri Techet <techet@gmail.com>
- * Copyright (C) 2019 Marcus Lundblad <ml@update.uu.se>
+ * Copyright 2021 Collabora Ltd. (https://collabora.com)
+ * Copyright 2021 Corentin Noël <corentin.noel@collabora.com>
+ * Copyright 2009 Pierre-Luc Beaudoin <pierre-luc@pierlux.com>
+ * Copyright 2010-2013 Jiri Techet <techet@gmail.com>
+ * Copyright 2019 Marcus Lundblad <ml@update.uu.se>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,34 +24,28 @@
 #error "Only <shumate/shumate.h> can be included directly."
 #endif
 
-#ifndef SHUMATE_MAP_SOURCE_FACTORY_H
-#define SHUMATE_MAP_SOURCE_FACTORY_H
-
-#include <shumate/shumate-map-source.h>
-#include <shumate/shumate-map-source-desc.h>
+#ifndef __SHUMATE_MAP_SOURCE_REGISTRY_H__
+#define __SHUMATE_MAP_SOURCE_REGISTRY_H__
 
 #include <glib-object.h>
 
+#include <shumate/shumate-map-source.h>
+
 G_BEGIN_DECLS
 
-#define SHUMATE_TYPE_MAP_SOURCE_FACTORY shumate_map_source_factory_get_type ()
-G_DECLARE_FINAL_TYPE (ShumateMapSourceFactory, shumate_map_source_factory, SHUMATE, MAP_SOURCE_FACTORY, GObject)
+#define SHUMATE_TYPE_MAP_SOURCE_REGISTRY (shumate_map_source_registry_get_type())
 
-/**
- * ShumateMapSourceFactory:
- *
- * The #ShumateMapSourceFactory structure contains only private data
- * and should be accessed using the provided API
- */
+G_DECLARE_FINAL_TYPE (ShumateMapSourceRegistry, shumate_map_source_registry, SHUMATE, MAP_SOURCE_REGISTRY, GObject)
 
-ShumateMapSourceFactory *shumate_map_source_factory_dup_default (void);
-
-ShumateMapSource *shumate_map_source_factory_create (ShumateMapSourceFactory *factory,
-    const char *id);
-
-gboolean shumate_map_source_factory_register (ShumateMapSourceFactory *factory,
-    ShumateMapSourceDesc *desc);
-GSList *shumate_map_source_factory_get_registered (ShumateMapSourceFactory *factory);
+ShumateMapSourceRegistry *shumate_map_source_registry_new (void);
+ShumateMapSourceRegistry *shumate_map_source_registry_new_with_defaults (void);
+void shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self);
+ShumateMapSource *shumate_map_source_registry_get_by_id (ShumateMapSourceRegistry *self,
+                                                         const gchar              *id);
+void shumate_map_source_registry_add (ShumateMapSourceRegistry *self,
+                                      ShumateMapSource         *map_source);
+void shumate_map_source_registry_remove (ShumateMapSourceRegistry *self,
+                                         const gchar              *id);
 
 /**
  * SHUMATE_MAP_SOURCE_OSM_MAPNIK:
@@ -108,4 +104,4 @@ GSList *shumate_map_source_factory_get_registered (ShumateMapSourceFactory *fact
 
 G_END_DECLS
 
-#endif
+#endif /* __SHUMATE_MAP_SOURCE_REGISTRY_H__ */

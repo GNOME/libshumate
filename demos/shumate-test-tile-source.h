@@ -29,4 +29,6 @@ G_DECLARE_FINAL_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE, 
 
 ShumateTestTileSource *shumate_test_tile_source_new (void);
 
+#define SHUMATE_MAP_SOURCE_TEST "test-source"
+
 G_END_DECLS

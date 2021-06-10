@@ -73,6 +73,7 @@
   <part>
     <title>Map Source API</title>
     <xi:include href="xml/shumate-map-source.xml"/>
+    <xi:include href="xml/shumate-map-source-registry.xml"/>
     <chapter>
       <title>Tile Sources</title>
       <xi:include href="xml/shumate-tile-source.xml"/>
@@ -82,11 +83,6 @@
       <title>Tile Caches</title>
       <xi:include href="xml/shumate-file-cache.xml"/>
       <xi:include href="xml/shumate-memory-cache.xml"/>
-    </chapter>
-    <chapter>
-      <title>Map Source Utilities</title>
-      <xi:include href="xml/shumate-map-source-factory.xml"/>
-      <xi:include href="xml/shumate-map-source-desc.xml"/>
     </chapter>
   </part>
   <part>

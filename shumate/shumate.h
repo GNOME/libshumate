@@ -43,7 +43,7 @@
 #include "shumate/shumate-map-source.h"
 #include "shumate/shumate-tile-source.h"
 
-#include "shumate/shumate-map-source-factory.h"
+#include "shumate/shumate-map-source-registry.h"
 
 #include "shumate/shumate-network-tile-source.h"
 

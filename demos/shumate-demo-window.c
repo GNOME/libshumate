@@ -29,6 +29,7 @@ struct _ShumateDemoWindow
   ShumateScale *scale;
   ShumateLicense *license;
   GtkDropDown *layers_dropdown;
+  ShumateMapSourceRegistry *registry;
 
   ShumateMapLayer *tile_layer;
   ShumateMarkerLayer *marker_layer;
@@ -73,8 +74,7 @@ set_map_source (ShumateDemoWindow *self, ShumateMapSource *new_source)
     shumate_license_remove_map_source (self->license, self->current_source);
   }
 
-  g_clear_object (&self->current_source);
-  self->current_source = new_source;
+  g_set_object (&self->current_source, new_source);
 
   shumate_viewport_set_reference_map_source (viewport, new_source);
   shumate_view_set_map_source (self->view, new_source);
@@ -92,28 +92,19 @@ set_map_source (ShumateDemoWindow *self, ShumateMapSource *new_source)
 static void
 on_layers_dropdown_notify_selected (ShumateDemoWindow *self, GParamSpec *pspec, GtkDropDown *dropdown)
 {
-  g_autoptr(ShumateMapSourceFactory) factory = NULL;
-
-  switch (gtk_drop_down_get_selected (dropdown)) {
-  case 0:
-    factory = shumate_map_source_factory_dup_default ();
-    set_map_source (self, shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK));
-    break;
-  case 1:
-    set_map_source (self, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));
-    break;
-  }
+  set_map_source (self, gtk_drop_down_get_selected_item (dropdown));
 }
 
 
 static void
-shumate_demo_window_finalize (GObject *object)
+shumate_demo_window_dispose (GObject *object)
 {
   ShumateDemoWindow *self = SHUMATE_DEMO_WINDOW (object);
 
   g_clear_object (&self->current_source);
+  g_clear_object (&self->registry);
 
-  G_OBJECT_CLASS (shumate_demo_window_parent_class)->finalize (object);
+  G_OBJECT_CLASS (shumate_demo_window_parent_class)->dispose (object);
 }
 
 
@@ -123,7 +114,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
-  object_class->finalize = shumate_demo_window_finalize;
+  object_class->dispose = shumate_demo_window_dispose;
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/ui/shumate-demo-window.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, view);
@@ -134,13 +125,27 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   gtk_widget_class_bind_template_callback (widget_class, on_layers_dropdown_notify_selected);
 }
 
+static gchar *
+get_map_source_name (ShumateMapSource *map_source)
+{
+  return g_strdup (shumate_map_source_get_name (map_source));
+}
 
 static void
 shumate_demo_window_init (ShumateDemoWindow *self)
 {
   ShumateViewport *viewport;
+  GtkExpression *expression;
 
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  self->registry = shumate_map_source_registry_new_with_defaults ();
+  shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));
+  expression = gtk_cclosure_expression_new (G_TYPE_STRING, NULL, 0, NULL,
+                                            (GCallback)get_map_source_name, NULL, NULL);
+  gtk_drop_down_set_expression (self->layers_dropdown, expression);
+  gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
+
 
   viewport = shumate_view_get_viewport (self->view);
 

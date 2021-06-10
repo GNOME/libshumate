@@ -10,7 +10,6 @@
       <object class="GtkHeaderBar">
         <child>
           <object class="GtkDropDown" id="layers_dropdown">
-            <property name="model">layers</property>
             <signal name="notify::selected" handler="on_layers_dropdown_notify_selected" swapped="true" />
           </object>
         </child>
@@ -38,10 +37,4 @@
       </object>
     </child>
   </template>
-  <object class="GtkStringList" id="layers">
-    <items>
-      <item translatable="yes">Mapnik (OSM)</item>
-      <item translatable="yes">Test Pattern</item>
-    </items>
-  </object>
 </interface>

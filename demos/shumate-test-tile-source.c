@@ -29,7 +29,10 @@ G_DEFINE_TYPE (ShumateTestTileSource, shumate_test_tile_source, SHUMATE_TYPE_TIL
 ShumateTestTileSource *
 shumate_test_tile_source_new (void)
 {
-  return g_object_new (SHUMATE_TYPE_TEST_TILE_SOURCE, NULL);
+  return g_object_new (SHUMATE_TYPE_TEST_TILE_SOURCE,
+                       "id", SHUMATE_MAP_SOURCE_TEST,
+                       "name", "Test Pattern",
+                       NULL);
 }
 
 

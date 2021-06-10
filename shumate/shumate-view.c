@@ -56,7 +56,7 @@
 #include "shumate-marshal.h"
 #include "shumate-map-layer.h"
 #include "shumate-map-source.h"
-#include "shumate-map-source-factory.h"
+#include "shumate-map-source-registry.h"
 #include "shumate-tile.h"
 #include "shumate-license.h"
 #include "shumate-location.h"
@@ -967,14 +967,14 @@ ShumateView *
 shumate_view_new_simple (void)
 {
   ShumateView *view = g_object_new (SHUMATE_TYPE_VIEW, NULL);
-  ShumateMapSourceFactory *factory;
+  g_autoptr(ShumateMapSourceRegistry) registry = NULL;
   ShumateMapSource *source;
   ShumateMapLayer *map_layer;
   ShumateViewport *viewport;
   
   viewport = shumate_view_get_viewport (view);
-  factory = shumate_map_source_factory_dup_default ();
-  source = shumate_map_source_factory_create (factory, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
+  registry = shumate_map_source_registry_new_with_defaults ();
+  source = shumate_map_source_registry_get_by_id (registry, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
   shumate_viewport_set_reference_map_source (viewport, source);
   map_layer = shumate_map_layer_new (source, viewport);
   shumate_view_add_layer (view, SHUMATE_LAYER (map_layer));
