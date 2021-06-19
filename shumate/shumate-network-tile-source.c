@@ -847,7 +847,19 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   input_stream = soup_session_send_finish (priv->soup_session, res, &error);
   if (error != NULL)
     {
-      g_task_return_error (task, g_steal_pointer (&error));
+      if (data->bytes)
+        {
+          /* The tile has already been filled from the cache, so the operation
+           * was overall successful even though the network request failed. */
+          g_debug ("Fetching tile failed, but there is a cached version (error: %s)", error->message);
+          shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+          g_task_return_boolean (task, TRUE);
+        }
+      else
+        {
+          g_task_return_error (task, g_steal_pointer (&error));
+        }
+
       return;
     }
 
@@ -868,10 +880,21 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
 
   if (!SOUP_STATUS_IS_SUCCESSFUL (data->msg->status_code))
     {
-      g_task_return_new_error (task, SHUMATE_NETWORK_SOURCE_ERROR,
-                               SHUMATE_NETWORK_SOURCE_ERROR_BAD_RESPONSE,
-                               "Unable to download tile: HTTP %s",
-                               soup_status_get_phrase (data->msg->status_code));
+      if (data->bytes)
+        {
+          g_debug ("Fetching tile failed, but there is a cached version (HTTP %s)",
+                   soup_status_get_phrase (data->msg->status_code));
+          shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+          g_task_return_boolean (task, TRUE);
+        }
+      else
+        {
+          g_task_return_new_error (task, SHUMATE_NETWORK_SOURCE_ERROR,
+                                   SHUMATE_NETWORK_SOURCE_ERROR_BAD_RESPONSE,
+                                   "Unable to download tile: HTTP %s",
+                                   soup_status_get_phrase (data->msg->status_code));
+        }
+
       return;
     }
 
