@@ -25,6 +25,7 @@ pages:
   - fedora
   script:
   - mv docs/html public
+  - mv coverage public/
   artifacts:
     paths:
     - public
