@@ -78,8 +78,8 @@ shumate_tile_snapshot (GtkWidget   *widget,
                                    texture,
                                    &GRAPHENE_RECT_INIT(
                                      0, 0,
-                                     gdk_texture_get_width (texture),
-                                     gdk_texture_get_height (texture)
+                                     gtk_widget_get_width (widget),
+                                     gtk_widget_get_height (widget)
                                    ));
     }
 }
