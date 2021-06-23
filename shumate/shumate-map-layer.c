@@ -28,8 +28,10 @@ struct _ShumateMapLayer
   ShumateMapSource *map_source;
 
   GHashTable *tile_children;
-  guint required_tiles_rows;
-  guint required_tiles_columns;
+  int tile_initial_row;
+  int tile_initial_column;
+  int required_tiles_rows;
+  int required_tiles_columns;
   GHashTable *tile_fill;
 
   guint recompute_grid_idle_id;
@@ -49,25 +51,29 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 typedef struct
 {
-  guint left_attach;
-  guint top_attach;
+  int x;
+  int y;
+  int zoom;
 } TileGridPosition;
 
 static void
 tile_grid_position_init (TileGridPosition *self,
-                         guint left_attach,
-                         guint top_attach)
+                         int x,
+                         int y,
+                         int zoom)
 {
-  self->left_attach = left_attach;
-  self->top_attach = top_attach;
+  self->x = x;
+  self->y = y;
+  self->zoom = zoom;
 }
 
 static TileGridPosition *
-tile_grid_position_new (guint left_attach,
-                        guint top_attach)
+tile_grid_position_new (int x,
+                        int y,
+                        int zoom)
 {
   TileGridPosition *self = g_new0 (TileGridPosition, 1);
-  tile_grid_position_init (self, left_attach, top_attach);
+  tile_grid_position_init (self, x, y, zoom);
   return self;
 }
 
@@ -75,7 +81,7 @@ static guint
 tile_grid_position_hash (gconstpointer pointer)
 {
   const TileGridPosition *self = pointer;
-  return self->left_attach ^ self->top_attach;
+  return self->x ^ self->y ^ self->zoom;
 }
 
 static gboolean
@@ -83,7 +89,7 @@ tile_grid_position_equal (gconstpointer a, gconstpointer b)
 {
   const TileGridPosition *pos_a = a;
   const TileGridPosition *pos_b = b;
-  return pos_a->left_attach == pos_b->left_attach && pos_a->top_attach == pos_b->top_attach;
+  return pos_a->x == pos_b->x && pos_a->y == pos_b->y && pos_a->zoom == pos_b->zoom;
 }
 
 static void
@@ -93,21 +99,15 @@ tile_grid_position_free (gpointer pointer)
   if (!self)
     return;
 
-  self->left_attach = 0;
-  self->top_attach = 0;
   g_free (self);
 }
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileGridPosition, tile_grid_position_free);
 
-static ShumateTile *
-shumate_map_layer_get_tile_child (ShumateMapLayer *self,
-                                  guint            left_attach,
-                                  guint            top_attach)
+static int
+positive_mod (int i, int n)
 {
-  TileGridPosition pos;
-  tile_grid_position_init (&pos, left_attach, top_attach);
-  return g_hash_table_lookup (self->tile_children, &pos);
+  return (i % n + n) % n;
 }
 
 static inline int
@@ -126,228 +126,141 @@ modadd (int current,
   return (size + current + shift) % size;
 }
 
+typedef struct {
+  ShumateMapLayer *self;
+  ShumateTile *tile;
+  char *source_id;
+} TileFilledData;
+
 static void
-maybe_shift_grid (ShumateMapLayer *self,
-                  guint            n_columns,
-                  guint            n_rows,
-                  int              new_first_tile_column,
-                  int              new_first_tile_row)
+tile_filled_data_free (TileFilledData *data)
 {
-  ShumateTile *first_tile;
-  int first_tile_column;
-  int first_tile_row;
-  int column_backward_diff;
-  int column_forward_diff;
-  int row_backward_diff;
-  int row_forward_diff;
-  int column_diff;
-  int row_diff;
+  g_clear_object (&data->self);
+  g_clear_object (&data->tile);
+  g_clear_pointer (&data->source_id, g_free);
+  g_free (data);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileFilledData, tile_filled_data_free);
+
+static void
+on_tile_filled (GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(TileFilledData) data = user_data;
+  g_autoptr(GError) error = NULL;
+  gboolean success;
+
+  success = shumate_map_source_fill_tile_finish (SHUMATE_MAP_SOURCE (source_object), res, &error);
+
+  // TODO: Report the error
+  if (!success)
+    return;
+
+  shumate_memory_cache_store_texture (data->self->memcache,
+                                      data->tile,
+                                      shumate_tile_get_texture (data->tile),
+                                      data->source_id);
+}
+
+static void
+add_tile (ShumateMapLayer *self,
+          ShumateTile     *tile)
+{
+  const char *source_id = shumate_map_source_get_id (self->map_source);
+
+  if (!shumate_memory_cache_try_fill_tile (self->memcache, tile, source_id))
+    {
+      GCancellable *cancellable = g_cancellable_new ();
+      TileFilledData *data = g_new0 (TileFilledData, 1);
+      data->self = g_object_ref (self);
+      data->tile = g_object_ref (tile);
+      data->source_id = g_strdup (source_id);
+
+      shumate_tile_set_texture (tile, NULL);
+      shumate_map_source_fill_tile_async (self->map_source, tile, cancellable, on_tile_filled, data);
+      g_hash_table_insert (self->tile_fill, g_object_ref (tile), cancellable);
+    }
+
+  gtk_widget_insert_before (GTK_WIDGET (tile), GTK_WIDGET (self), NULL);
+}
+
+static void
+remove_tile (ShumateMapLayer *self,
+             ShumateTile     *tile)
+{
+  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, tile);
+  if (cancellable)
+    {
+      g_cancellable_cancel (cancellable);
+      g_hash_table_remove (self->tile_fill, tile);
+    }
+
+  gtk_widget_unparent (GTK_WIDGET (tile));
+}
+
+static void
+recompute_grid (ShumateMapLayer *self)
+{
   GHashTableIter iter;
   gpointer key, value;
-  GHashTable *new_tile_children;
 
-  first_tile = shumate_map_layer_get_tile_child (self, 0, 0);
-  if (!first_tile)
-    return;
+  int width = gtk_widget_get_width (GTK_WIDGET (self));
+  int height = gtk_widget_get_height (GTK_WIDGET (self));
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  int tile_size = shumate_map_source_get_tile_size (self->map_source);
+  int zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
+  double longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
+  int latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
+  int longitude_x = shumate_map_source_get_x (self->map_source, zoom_level, longitude);
+  int source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
+  int source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
-  first_tile_column = shumate_tile_get_x (first_tile);
-  first_tile_row = shumate_tile_get_y (first_tile);
+  // This is the (column, row) of the top left tile
+  int tile_initial_column = floor ((longitude_x - width/2) / (double) tile_size);
+  int tile_initial_row = floor ((latitude_y - height/2) / (double) tile_size);
 
-  /* The allocation function uses unsigned ints everywhere, and they do wrap
-   * around, so we can often receive super large values here.
-   */
-  new_first_tile_column = new_first_tile_column % n_columns;
-  new_first_tile_row = new_first_tile_row % n_rows;
+  int required_columns = (width / tile_size) + 2;
+  int required_rows = (height / tile_size) + 2;
 
-  if (new_first_tile_column == first_tile_column && new_first_tile_row == first_tile_row)
-    return;
-
-  /* This too looks more complicated than it is. Because all the calculations
-   * are modular, we check which is closest: moving forward or backward.
-   *
-   * For example, in a 8x8 grid, if the first tile is going from 7x0 to 0x0,
-   * the forward diff is 7x0, and the backward diff is 1x0. We want to pick
-   * the backward diff in this case.
-   */
-  column_backward_diff = (new_first_tile_column - first_tile_column) % n_columns;
-  column_forward_diff = (first_tile_column - new_first_tile_column) % n_columns;
-
-  row_backward_diff = (new_first_tile_row - first_tile_row) % n_rows;
-  row_forward_diff = (first_tile_row - new_first_tile_row) % n_rows;
-
-  column_diff = ABS (column_backward_diff) < ABS (column_forward_diff) ? column_backward_diff : -column_forward_diff;
-  row_diff = ABS (row_backward_diff) < ABS (row_forward_diff) ? row_backward_diff : -row_forward_diff;
-
-  /* If the diff is bigger than the number of tiles being displayed in any axis,
-   * there's no point shifting them; they all will need to reload.
-   */
-  if (ABS (column_diff) >= self->required_tiles_columns || ABS (row_diff) >= self->required_tiles_rows)
-    return;
-
-  new_tile_children = g_hash_table_new_full (tile_grid_position_hash, tile_grid_position_equal, tile_grid_position_free, g_object_unref);
+  /* First, remove all the tiles that aren't in bounds */
   g_hash_table_iter_init (&iter, self->tile_children);
-
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       TileGridPosition *pos = key;
       ShumateTile *tile = value;
 
-      g_hash_table_iter_steal (&iter);
-
-      pos->left_attach = modadd (pos->left_attach,
-                                 -column_diff,
-                                 self->required_tiles_columns);
-
-      pos->top_attach = modadd (pos->top_attach,
-                                -row_diff,
-                                self->required_tiles_rows);
-
-      g_hash_table_insert (new_tile_children, pos, tile);
+      if (pos->x < tile_initial_column
+          || pos->x >= tile_initial_column + required_columns
+          || pos->y < tile_initial_row
+          || pos->y >= tile_initial_row + required_rows
+          || pos->zoom != zoom_level)
+        {
+          remove_tile (self, tile);
+          g_hash_table_iter_remove (&iter);
+        }
     }
 
-  g_clear_pointer (&self->tile_children, g_hash_table_unref);
-  self->tile_children = new_tile_children;
-}
-
-static void
-recompute_grid (ShumateMapLayer *self,
-                int              width,
-                int              height)
-{
-  GtkWidget *widget = GTK_WIDGET (self);
-  guint required_tiles_columns, required_tiles_rows;
-  guint tile_size;
-
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
-  required_tiles_columns = (width / tile_size) + 2;
-  required_tiles_rows = (height / tile_size) + 2;
-  if (self->required_tiles_columns != required_tiles_columns)
+  /* Next, add all tile positions that don't yet exist */
+  for (int x = tile_initial_column; x < tile_initial_column + required_columns; x ++)
     {
-      if (required_tiles_columns > self->required_tiles_columns)
+      for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
         {
-          for (guint column = self->required_tiles_columns;
-               column < required_tiles_columns;
-               column++)
-            {
-              for (guint row = 0; row < self->required_tiles_rows; row++)
-                {
-                  ShumateTile *tile;
-                  TileGridPosition *pos;
+          g_autoptr(TileGridPosition) pos = tile_grid_position_new (x, y, zoom_level);
+          ShumateTile *tile = g_hash_table_lookup (self->tile_children, pos);
 
-                  tile = shumate_tile_new ();
-                  shumate_tile_set_size (tile, tile_size);
-                  gtk_widget_insert_before (GTK_WIDGET (tile), widget, NULL);
-                  pos = tile_grid_position_new (column, row);
-                  g_hash_table_insert (self->tile_children, pos, g_object_ref (tile));
-                }
+          if (!tile)
+            {
+              tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
+              g_hash_table_insert (self->tile_children, g_steal_pointer (&pos), g_object_ref (tile));
+              add_tile (self, tile);
             }
         }
-      else
-        {
-          for (guint column = self->required_tiles_columns - 1;
-               column>= required_tiles_columns;
-               column--)
-            {
-              for (guint row = 0; row < self->required_tiles_rows; row++)
-                {
-                  TileGridPosition pos;
-                  ShumateTile *tile;
-
-                  tile_grid_position_init (&pos, column, row);
-                  tile = g_hash_table_lookup (self->tile_children, &pos);
-
-                  if (!tile)
-                    {
-                      g_critical ("Unable to find tile to remove at (%u;%u)", column, row);
-                      continue;
-                    }
-
-                  gtk_widget_unparent (GTK_WIDGET (tile));
-                  g_hash_table_remove (self->tile_children, &pos);
-                }
-            }
-        }
-
-      self->required_tiles_columns = required_tiles_columns;
     }
 
-  if (self->required_tiles_rows != required_tiles_rows)
-    {
-      if (required_tiles_rows > self->required_tiles_rows)
-        {
-          for (guint column = 0; column < self->required_tiles_columns; column++)
-            {
-              for (guint row = self->required_tiles_rows; row < required_tiles_rows; row++)
-                {
-                  ShumateTile *tile;
-                  TileGridPosition *pos;
-
-                  tile = shumate_tile_new ();
-                  shumate_tile_set_size (tile, tile_size);
-                  gtk_widget_insert_before (GTK_WIDGET (tile), widget, NULL);
-                  pos = tile_grid_position_new (column, row);
-                  g_hash_table_insert (self->tile_children, pos, g_object_ref (tile));
-                }
-            }
-        }
-      else
-        {
-          for (guint column = 0; column < self->required_tiles_columns; column++)
-            {
-              for (guint row = self->required_tiles_rows - 1; row >= required_tiles_rows; row--)
-                {
-                  TileGridPosition pos;
-                  ShumateTile *tile;
-
-                  tile_grid_position_init (&pos, column, row);
-                  tile = g_hash_table_lookup (self->tile_children, &pos);
-
-                  if (!tile)
-                    {
-                      g_critical ("Unable to find tile to remove at (%u;%u)", column, row);
-                      continue;
-                    }
-
-                  gtk_widget_unparent (GTK_WIDGET (tile));
-                  g_hash_table_remove (self->tile_children, &pos);
-                }
-            }
-        }
-
-      self->required_tiles_rows = required_tiles_rows;
-    }
-}
-
-static gboolean
-grid_needs_recompute (ShumateMapLayer *self,
-                      int              width,
-                      int              height)
-{
-  guint required_tiles_columns, required_tiles_rows;
-  guint tile_size;
-
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
-  required_tiles_columns = (width / tile_size) + 2;
-  required_tiles_rows = (height / tile_size) + 2;
-
-  return self->required_tiles_columns != required_tiles_columns ||
-         self->required_tiles_rows != required_tiles_rows;
-}
-
-static void
-maybe_recompute_grid (ShumateMapLayer *self)
-{
-  int width, height;
-
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  width = gtk_widget_get_width (GTK_WIDGET (self));
-  height = gtk_widget_get_height (GTK_WIDGET (self));
-
-  if (grid_needs_recompute (self, width, height))
-    recompute_grid (self, width, height);
+  self->tile_initial_column = tile_initial_column;
+  self->tile_initial_row = tile_initial_row;
+  self->required_tiles_columns = required_columns;
+  self->required_tiles_rows = required_rows;
 }
 
 static gboolean
@@ -357,7 +270,7 @@ recompute_grid_in_idle_cb (gpointer user_data)
 
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  maybe_recompute_grid (self);
+  recompute_grid (self);
 
   self->recompute_grid_idle_id = 0;
   return G_SOURCE_REMOVE;
@@ -383,7 +296,7 @@ on_view_longitude_changed (ShumateMapLayer *self,
 {
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  maybe_recompute_grid (self);
+  recompute_grid (self);
   gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
@@ -394,7 +307,7 @@ on_view_latitude_changed (ShumateMapLayer *self,
 {
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  maybe_recompute_grid (self);
+  recompute_grid (self);
   gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
@@ -405,7 +318,7 @@ on_view_zoom_level_changed (ShumateMapLayer *self,
 {
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  maybe_recompute_grid (self);
+  recompute_grid (self);
   gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
@@ -481,43 +394,6 @@ shumate_map_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-
-}
-
-
-typedef struct {
-  ShumateMapLayer *self;
-  ShumateTile *tile;
-  char *source_id;
-} TileFilledData;
-
-static void
-tile_filled_data_free (TileFilledData *data)
-{
-  g_clear_object (&data->self);
-  g_clear_object (&data->tile);
-  g_clear_pointer (&data->source_id, g_free);
-  g_free (data);
-}
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileFilledData, tile_filled_data_free);
-
-static void
-on_tile_filled (GObject *source_object, GAsyncResult *res, gpointer user_data)
-{
-  g_autoptr(TileFilledData) data = user_data;
-  g_autoptr(GError) error = NULL;
-  gboolean success;
-
-  success = shumate_map_source_fill_tile_finish (SHUMATE_MAP_SOURCE (source_object), res, &error);
-
-  // TODO: Report the error
-  if (!success)
-    return;
-
-  shumate_memory_cache_store_texture (data->self->memcache,
-                                      data->tile,
-                                      shumate_tile_get_texture (data->tile),
-                                      data->source_id);
 }
 
 static void
@@ -529,14 +405,11 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
   ShumateViewport *viewport;
   GtkAllocation child_allocation;
-  guint tile_size;
-  guint zoom_level;
+  int tile_size;
+  int zoom_level;
   double latitude, longitude;
-  guint longitude_x, latitude_y;
+  int longitude_x, latitude_y;
   int x_offset, y_offset;
-  guint tile_column, tile_row;
-  guint tile_initial_column, tile_initial_row;
-  guint source_rows, source_columns;
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   tile_size = shumate_map_source_get_tile_size (self->map_source);
@@ -545,84 +418,42 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
   latitude_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, latitude);
   longitude_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, longitude);
-  source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
-  source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
-  // This is the (column,row) of the top left ShumateTile
-  tile_initial_row = (latitude_y - height/2)/tile_size;
-  tile_initial_column = (longitude_x - width/2)/tile_size;
-
-  x_offset = (longitude_x - tile_initial_column * tile_size) - width/2;
-  y_offset = (latitude_y - tile_initial_row * tile_size) - height/2;
+  x_offset = (longitude_x - self->tile_initial_column * tile_size) - width/2;
+  y_offset = (latitude_y - self->tile_initial_row * tile_size) - height/2;
   child_allocation.y = -y_offset;
   child_allocation.width = tile_size;
   child_allocation.height = tile_size;
 
-  maybe_shift_grid (self,
-                    source_columns, source_rows,
-                    tile_initial_column, tile_initial_row);
-
-  tile_row = tile_initial_row;
-  for (int row = 0; row < self->required_tiles_rows; row++)
+  for (int row = self->tile_initial_row; row < self->tile_initial_row + self->required_tiles_rows; row++)
     {
       child_allocation.x = -x_offset;
-      tile_column = tile_initial_column;
-      for (int column = 0; column < self->required_tiles_columns; column++)
+      for (int column = self->tile_initial_column; column < self->tile_initial_column + self->required_tiles_columns; column++)
         {
+          TileGridPosition pos;
           ShumateTile *child;
 
-          child = shumate_map_layer_get_tile_child (self, column, row);
+          tile_grid_position_init (&pos, column, row, zoom_level);
+          child = g_hash_table_lookup (self->tile_children, &pos);
           if (!child)
             {
-              g_critical ("Unable to find tile at (%u;%u)", column, row);
+              g_critical ("Unable to find tile at (%d; %d; %d)", column, row, zoom_level);
               continue;
             }
 
           gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
           gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, baseline);
 
-          if (shumate_tile_get_zoom_level (child) != zoom_level ||
-              shumate_tile_get_x (child) != (tile_column % source_columns) ||
-              shumate_tile_get_y (child) != (tile_row % source_rows) ||
-              shumate_tile_get_state (child) == SHUMATE_STATE_NONE)
-            {
-              GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, child);
-              const char *source_id = shumate_map_source_get_id (self->map_source);
-
-              if (cancellable)
-                g_cancellable_cancel (cancellable);
-
-              shumate_tile_set_zoom_level (child, zoom_level);
-              shumate_tile_set_x (child, tile_column % source_columns);
-              shumate_tile_set_y (child, tile_row % source_rows);
-
-              if (!shumate_memory_cache_try_fill_tile (self->memcache, child, source_id))
-                {
-                  TileFilledData *data = g_new0 (TileFilledData, 1);
-                  data->self = g_object_ref (self);
-                  data->tile = g_object_ref (child);
-                  data->source_id = g_strdup (source_id);
-
-                  cancellable = g_cancellable_new ();
-                  shumate_tile_set_texture (child, NULL);
-                  shumate_map_source_fill_tile_async (self->map_source, child, cancellable, on_tile_filled, data);
-                  g_hash_table_insert (self->tile_fill, g_object_ref (child), cancellable);
-                }
-            }
-
           child_allocation.x += tile_size;
-          tile_column++;
         }
 
       child_allocation.y += tile_size;
-      tile_row++;
     }
 
   /* We can't recompute while allocating, so queue an idle callback to run
    * the recomputation outside the allocation cycle.
    */
-  if (grid_needs_recompute (self, width, height))
-    queue_recompute_grid_in_idle (self);
+  queue_recompute_grid_in_idle (self);
 }
 
 static void
