@@ -49,6 +49,13 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+/* This struct represents the location of a tile on the screen. It is the key
+ * for the hash table tile_children which stores all visible tiles.
+ *
+ * Note that, unlike the values given to ShumateTile, the x and y coordinates
+ * here are *not* wrapped. For example, a ShumateTile at level 3 might have
+ * coordinates of (7, 2) but have a TileGridPosition of (-1, 2). */
+
 typedef struct
 {
   int x;
@@ -108,22 +115,6 @@ static int
 positive_mod (int i, int n)
 {
   return (i % n + n) % n;
-}
-
-static inline int
-modadd (int current,
-        int shift,
-        int size)
-{
-  /* This is scary, but the idea behind it is simple: the regular modulo operator
-   * does *not* wrap around when giving it negative numbers. For example, -1 % 8
-   * yields -1 instead of 7.
-   *
-   * The following pair of lines do exactly that, on top of adding a number. This
-   * is so that we can do e.g. (0 + -1) % 8 = 7.
-   */
-  current = current % size;
-  return (size + current + shift) % size;
 }
 
 typedef struct {
@@ -200,6 +191,10 @@ remove_tile (ShumateMapLayer *self,
 static void
 recompute_grid (ShumateMapLayer *self)
 {
+  /* Computes which tile positions are visible, ensures that all the right
+   * tiles are added to the ShumateMapLayer widget, and removes tiles which are
+   * no longer visible. */
+
   GHashTableIter iter;
   gpointer key, value;
 
@@ -222,25 +217,30 @@ recompute_grid (ShumateMapLayer *self)
   int required_columns = (width / tile_size) + 2;
   int required_rows = (height / tile_size) + 2;
 
-  /* First, remove all the tiles that aren't in bounds */
+  gboolean all_filled = TRUE;
+
+  /* First, remove all the tiles that aren't in bounds. For now, ignore tiles
+   * that aren't on the current zoom level--those are only removed once the
+   * current level is fully loaded */
   g_hash_table_iter_init (&iter, self->tile_children);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       TileGridPosition *pos = key;
       ShumateTile *tile = value;
 
-      if (pos->x < tile_initial_column
+      if ((pos->x < tile_initial_column
           || pos->x >= tile_initial_column + required_columns
           || pos->y < tile_initial_row
-          || pos->y >= tile_initial_row + required_rows
-          || pos->zoom != zoom_level)
+          || pos->y >= tile_initial_row + required_rows)
+          && pos->zoom == zoom_level)
         {
           remove_tile (self, tile);
           g_hash_table_iter_remove (&iter);
         }
     }
 
-  /* Next, add all tile positions that don't yet exist */
+  /* Next, make sure every visible tile position has a matching ShumateTile
+   * widget. */
   for (int x = tile_initial_column; x < tile_initial_column + required_columns; x ++)
     {
       for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
@@ -253,6 +253,27 @@ recompute_grid (ShumateMapLayer *self)
               tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
               g_hash_table_insert (self->tile_children, g_steal_pointer (&pos), g_object_ref (tile));
               add_tile (self, tile);
+            }
+
+          if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+            all_filled = FALSE;
+        }
+    }
+
+  /* If all the tiles on the current zoom level are filled, delete tiles on all
+   * other zoom levels */
+  if (all_filled)
+    {
+      g_hash_table_iter_init (&iter, self->tile_children);
+      while (g_hash_table_iter_next (&iter, &key, &value))
+        {
+          TileGridPosition *pos = key;
+          ShumateTile *tile = value;
+
+          if (pos->zoom != zoom_level)
+            {
+              remove_tile (self, tile);
+              g_hash_table_iter_remove (&iter);
             }
         }
     }
@@ -409,7 +430,9 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   int zoom_level;
   double latitude, longitude;
   int longitude_x, latitude_y;
-  int x_offset, y_offset;
+
+  GHashTableIter iter;
+  gpointer key, value;
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   tile_size = shumate_map_source_get_tile_size (self->map_source);
@@ -419,35 +442,17 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   latitude_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, latitude);
   longitude_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, longitude);
 
-  x_offset = (longitude_x - self->tile_initial_column * tile_size) - width/2;
-  y_offset = (latitude_y - self->tile_initial_row * tile_size) - height/2;
-  child_allocation.y = -y_offset;
-  child_allocation.width = tile_size;
-  child_allocation.height = tile_size;
-
-  for (int row = self->tile_initial_row; row < self->tile_initial_row + self->required_tiles_rows; row++)
+  g_hash_table_iter_init (&iter, self->tile_children);
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      child_allocation.x = -x_offset;
-      for (int column = self->tile_initial_column; column < self->tile_initial_column + self->required_tiles_columns; column++)
-        {
-          TileGridPosition pos;
-          ShumateTile *child;
+      TileGridPosition *pos = key;
+      ShumateTile *tile = value;
 
-          tile_grid_position_init (&pos, column, row, zoom_level);
-          child = g_hash_table_lookup (self->tile_children, &pos);
-          if (!child)
-            {
-              g_critical ("Unable to find tile at (%d; %d; %d)", column, row, zoom_level);
-              continue;
-            }
-
-          gtk_widget_measure (GTK_WIDGET (child), GTK_ORIENTATION_HORIZONTAL, 0, NULL, NULL, NULL, NULL);
-          gtk_widget_size_allocate (GTK_WIDGET (child), &child_allocation, baseline);
-
-          child_allocation.x += tile_size;
-        }
-
-      child_allocation.y += tile_size;
+      child_allocation.width = tile_size * pow (2, zoom_level - pos->zoom);
+      child_allocation.height = child_allocation.width;
+      child_allocation.x = -(longitude_x - width/2) + child_allocation.width * pos->x;
+      child_allocation.y = -(latitude_y - height/2) + child_allocation.height * pos->y;
+      gtk_widget_size_allocate (GTK_WIDGET (tile), &child_allocation, baseline);
     }
 
   /* We can't recompute while allocating, so queue an idle callback to run
