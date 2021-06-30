@@ -139,8 +139,6 @@ typedef struct
    */
   GList *user_layer_slots;
 
-  GList *overlay_sources;
-
   gboolean zoom_on_double_click;
   gboolean animate_zoom;
 
@@ -739,9 +737,6 @@ shumate_view_dispose (GObject *object)
 
   g_clear_object (&priv->viewport);
 
-  g_list_free_full (priv->overlay_sources, g_object_unref);
-  priv->overlay_sources = NULL;
-
   //g_clear_object (&priv->background_content);
   //g_clear_handle_id (&priv->zoom_actor_timeout, g_source_remove);
   g_clear_handle_id (&priv->zoom_timeout, g_source_remove);
@@ -1320,64 +1315,4 @@ shumate_view_get_state (ShumateView *view)
   g_return_val_if_fail (SHUMATE_IS_VIEW (view), SHUMATE_STATE_NONE);
 
   return priv->state;
-}
-
-/**
- * shumate_view_add_overlay_source:
- * @view: a #ShumateView
- * @map_source: a #ShumateMapSource
- *
- * Adds a new overlay map source to render tiles on top of the ordinary map
- * source. Multiple overlay sources can be added.
- */
-void
-shumate_view_add_overlay_source (ShumateView      *view,
-                                 ShumateMapSource *map_source)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
-
-  priv->overlay_sources = g_list_append (priv->overlay_sources, g_object_ref (map_source));
-}
-
-
-/**
- * shumate_view_remove_overlay_source:
- * @view: a #ShumateView
- * @map_source: a #ShumateMapSource
- *
- * Removes an overlay source from #ShumateView.
- */
-void
-shumate_view_remove_overlay_source (ShumateView      *view,
-                                    ShumateMapSource *map_source)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-  g_return_if_fail (SHUMATE_IS_MAP_SOURCE (map_source));
-
-  priv->overlay_sources = g_list_remove (priv->overlay_sources, map_source);
-  g_object_unref (map_source);
-}
-
-
-/**
- * shumate_view_get_overlay_sources:
- * @view: a #ShumateView
- *
- * Gets a list of overlay sources.
- *
- * Returns: (transfer container) (element-type ShumateMapSource): the list
- */
-GList *
-shumate_view_get_overlay_sources (ShumateView *view)
-{
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), NULL);
-
-  return g_list_copy (priv->overlay_sources);
 }

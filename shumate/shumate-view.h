@@ -71,11 +71,6 @@ void shumate_view_set_go_to_duration (ShumateView *self,
 
 void shumate_view_set_map_source (ShumateView *view,
     ShumateMapSource *map_source);
-void shumate_view_add_overlay_source (ShumateView *view,
-    ShumateMapSource *map_source);
-void shumate_view_remove_overlay_source (ShumateView *view,
-    ShumateMapSource *map_source);
-GList *shumate_view_get_overlay_sources (ShumateView *view);
 
 void shumate_view_set_zoom_on_double_click (ShumateView *view,
     gboolean value);
