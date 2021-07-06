@@ -10,7 +10,7 @@ tests = [
   'coordinate',
   'file-cache',
   'marker',
-  'view',
+  'map',
   'marker-layer',
   'memory-cache',
   'network-tile-source',

@@ -18,7 +18,6 @@
  */
 
 #include "shumate-map-layer.h"
-#include "shumate-view.h"
 #include "shumate-memory-cache.h"
 
 struct _ShumateMapLayer

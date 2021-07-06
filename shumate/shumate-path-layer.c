@@ -35,7 +35,6 @@
 #include "shumate-path-layer.h"
 
 #include "shumate-enum-types.h"
-#include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
 #include <gdk/gdk.h>

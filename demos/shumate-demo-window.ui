@@ -19,7 +19,7 @@
       <object class="GtkOverlay" id="overlay">
         <property name="vexpand">True</property>
         <child>
-          <object class="ShumateView" id="view">
+          <object class="ShumateMap" id="map">
           </object>
         </child>
         <child type="overlay">

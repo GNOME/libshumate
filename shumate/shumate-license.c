@@ -27,7 +27,6 @@
 #include "config.h"
 
 #include "shumate-license.h"
-#include "shumate-view.h"
 
 enum
 {

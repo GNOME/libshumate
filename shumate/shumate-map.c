@@ -25,7 +25,7 @@
  * SECTION:shumate-view
  * @short_description: A #GtkWidget to display maps
  *
- * The #ShumateView is a #GtkWidget to display maps.  It supports two modes
+ * The #ShumateMap is a #GtkWidget to display maps.  It supports two modes
  * of scrolling:
  * <itemizedlist>
  *   <listitem><para>Push: the normal behavior where the maps don't move
@@ -34,21 +34,21 @@
  *   the user stopped scrolling.</para></listitem>
  * </itemizedlist>
  *
- * You can use the same #ShumateView to display many types of maps.  In
+ * You can use the same #ShumateMap to display many types of maps.  In
  * Shumate they are called map sources.  You can change the #map-source
  * property at anytime to replace the current displayed map.
  *
  * The maps are downloaded from Internet from open maps sources (like
  * <ulink role="online-location"
  * url="http://www.openstreetmap.org">OpenStreetMap</ulink>).  Maps are divided
- * in tiles for each zoom level.  When a tile is requested, #ShumateView will
+ * in tiles for each zoom level.  When a tile is requested, #ShumateMap will
  * first check if it is in cache (in the user's cache dir under shumate). If
  * an error occurs during download, an error tile will be displayed.
  */
 
 #include "config.h"
 
-#include "shumate-view.h"
+#include "shumate-map.h"
 
 #include "shumate.h"
 #include "shumate-enum-types.h"
@@ -93,7 +93,7 @@ static GQuark go_to_quark;
 /* Between state values for go_to */
 typedef struct
 {
-  ShumateView *view;
+  ShumateMap *map;
   int64_t duration_us;
   int64_t start_us;
   double to_latitude;
@@ -103,21 +103,10 @@ typedef struct
   guint tick_id;
 } GoToContext;
 
-
-typedef struct
-{
-  ShumateView *view;
-  ShumateMapSource *map_source;
-  int x;
-  int y;
-  int zoom_level;
-  int size;
-} FillTileCallbackData;
-
 typedef struct
 {
   ShumateKineticScrolling *kinetic_scrolling;
-  ShumateView *view;
+  ShumateMap *map;
   double start_lat;
   double start_lon;
   int64_t last_deceleration_time_us;
@@ -144,7 +133,7 @@ typedef struct
 
   ShumateState state; /* View's global state */
 
-  // shumate_view_go_to's context, kept for stop_go_to
+  // shumate_map_go_to's context, kept for stop_go_to
   GoToContext *goto_context;
 
   guint deceleration_tick_id;
@@ -173,81 +162,25 @@ typedef struct
   double accumulated_scroll_dy;
   double drag_begin_lat;
   double drag_begin_lon;
-} ShumateViewPrivate;
+} ShumateMapPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateView, shumate_view, GTK_TYPE_WIDGET);
-
-/*static gboolean
-zoom_timeout_cb (gpointer data)
-{
-  ShumateView *view = data;
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  priv->accumulated_scroll_dy = 0;
-  priv->zoom_timeout = 0;
-
-  return FALSE;
-}*/
-
-
-/* static gboolean
-scroll_event (G_GNUC_UNUSED ShumateView *this,
-    GdkEvent *event,
-    ShumateView *view)
-{
-  GdkScrollDirection direction;
-  gdk_event_get_scroll_direction(event, &direction);
-  double x, y;
-  gdk_event_get_coords(event, &x, &y);
-
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
-
-  guint zoom_level = priv->zoom_level;
-
-  if (direction == GDK_SCROLL_UP)
-    zoom_level = priv->zoom_level + 1;
-  else if (direction == GDK_SCROLL_DOWN)
-    zoom_level = priv->zoom_level - 1;
-  else if (direction == GDK_SCROLL_SMOOTH)
-    {
-      double dx, dy;
-      int steps;
-
-      gdk_event_get_scroll_deltas (event, &dx, &dy);
-
-      priv->accumulated_scroll_dy += dy;
-      // add some small value to avoid missing step for values like 0.999999
-      if (dy > 0)
-        steps = (int) (priv->accumulated_scroll_dy + 0.01);
-      else
-        steps = (int) (priv->accumulated_scroll_dy - 0.01);
-      zoom_level = priv->zoom_level - steps;
-      priv->accumulated_scroll_dy -= steps;
-
-      if (priv->zoom_timeout != 0)
-        g_source_remove (priv->zoom_timeout);
-      priv->zoom_timeout = g_timeout_add (1000, zoom_timeout_cb, view);
-    }
-
-  return view_set_zoom_level_at (view, zoom_level, TRUE, x, y);
-}
-*/
+G_DEFINE_TYPE_WITH_PRIVATE (ShumateMap, shumate_map, GTK_TYPE_WIDGET);
 
 static void
-move_viewport_from_pixel_offset (ShumateView *self,
-                                 double       latitude,
-                                 double       longitude,
-                                 double       offset_x,
-                                 double       offset_y)
+move_viewport_from_pixel_offset (ShumateMap *self,
+                                 double      latitude,
+                                 double      longitude,
+                                 double      offset_x,
+                                 double      offset_y)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   ShumateMapSource *map_source;
   double x, y;
   double lat, lon;
   double zoom_level;
   double tile_size, max_x, max_y;
 
-  g_assert (SHUMATE_IS_VIEW (self));
+  g_assert (SHUMATE_IS_MAP (self));
 
   map_source = shumate_viewport_get_reference_map_source (priv->viewport);
   if (!map_source)
@@ -276,9 +209,9 @@ move_viewport_from_pixel_offset (ShumateView *self,
 }
 
 static void
-cancel_deceleration (ShumateView *self)
+cancel_deceleration (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
   if (priv->deceleration_tick_id > 0)
     {
@@ -293,12 +226,12 @@ view_deceleration_tick_cb (GtkWidget     *widget,
                            gpointer       user_data)
 {
   KineticScrollData *data = user_data;
-  ShumateView *view = data->view;
+  ShumateMap *map = data->map;
   int64_t current_time_us;
   double elapsed_us;
   double position;
 
-  g_assert (SHUMATE_IS_VIEW (view));
+  g_assert (SHUMATE_IS_MAP (map));
 
   current_time_us = gdk_frame_clock_get_frame_time (frame_clock);
   elapsed_us = current_time_us - data->last_deceleration_time_us;
@@ -320,7 +253,7 @@ view_deceleration_tick_cb (GtkWidget     *widget,
       graphene_vec2_init (&new_positions, position, position);
       graphene_vec2_multiply (&new_positions, &data->direction, &new_positions);
 
-      move_viewport_from_pixel_offset (view,
+      move_viewport_from_pixel_offset (map,
                                        data->start_lat,
                                        data->start_lon,
                                        graphene_vec2_get_x (&new_positions),
@@ -333,7 +266,7 @@ view_deceleration_tick_cb (GtkWidget     *widget,
 
   if (!data->kinetic_scrolling)
     {
-      cancel_deceleration (view);
+      cancel_deceleration (map);
       return G_SOURCE_REMOVE;
     }
 
@@ -352,11 +285,11 @@ kinetic_scroll_data_free (KineticScrollData *data)
 }
 
 static void
-start_deceleration (ShumateView *self,
-                    double       h_velocity,
-                    double       v_velocity)
+start_deceleration (ShumateMap *self,
+                    double      h_velocity,
+                    double      v_velocity)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   GdkFrameClock *frame_clock;
   KineticScrollData *data;
   graphene_vec2_t velocity;
@@ -368,7 +301,7 @@ start_deceleration (ShumateView *self,
   graphene_vec2_init (&velocity, h_velocity, v_velocity);
 
   data = g_new0 (KineticScrollData, 1);
-  data->view = self;
+  data->map = self;
   data->last_deceleration_time_us = gdk_frame_clock_get_frame_time (frame_clock);
   data->start_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
   data->start_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
@@ -407,12 +340,12 @@ go_to_tick_cb (GtkWidget     *widget,
                gpointer       user_data)
 {
   GoToContext *ctx = user_data;
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (ctx->view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (ctx->map);
   int64_t now_us;
   double latitude, longitude;
   double progress;
 
-  g_assert (SHUMATE_IS_VIEW (ctx->view));
+  g_assert (SHUMATE_IS_MAP (ctx->map));
   g_assert (ctx->duration_us >= 0);
 
   now_us = g_get_monotonic_time ();
@@ -423,7 +356,7 @@ go_to_tick_cb (GtkWidget     *widget,
       shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
                                      ctx->to_latitude,
                                      ctx->to_longitude);
-      shumate_view_stop_go_to (ctx->view);
+      shumate_map_stop_go_to (ctx->map);
       return G_SOURCE_REMOVE;
     }
 
@@ -445,14 +378,14 @@ go_to_tick_cb (GtkWidget     *widget,
 }
 
 static void
-on_drag_gesture_drag_begin (ShumateView    *self,
-                            double         start_x,
-                            double         start_y,
+on_drag_gesture_drag_begin (ShumateMap     *self,
+                            double          start_x,
+                            double          start_y,
                             GtkGestureDrag *gesture)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_assert (SHUMATE_IS_VIEW (self));
+  g_assert (SHUMATE_IS_MAP (self));
 
   cancel_deceleration (self);
 
@@ -463,12 +396,12 @@ on_drag_gesture_drag_begin (ShumateView    *self,
 }
 
 static void
-on_drag_gesture_drag_update (ShumateView    *self,
-                             double         offset_x,
-                             double         offset_y,
+on_drag_gesture_drag_update (ShumateMap     *self,
+                             double          offset_x,
+                             double          offset_y,
                              GtkGestureDrag *gesture)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
   move_viewport_from_pixel_offset (self,
                                    priv->drag_begin_lat,
@@ -478,14 +411,14 @@ on_drag_gesture_drag_update (ShumateView    *self,
 }
 
 static void
-on_drag_gesture_drag_end (ShumateView    *self,
-                          double         offset_x,
-                          double         offset_y,
+on_drag_gesture_drag_end (ShumateMap     *self,
+                          double          offset_x,
+                          double          offset_y,
                           GtkGestureDrag *gesture)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_assert (SHUMATE_IS_VIEW (self));
+  g_assert (SHUMATE_IS_MAP (self));
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
@@ -503,16 +436,16 @@ static void
 view_swipe_cb (GtkGestureSwipe *swipe_gesture,
                double           velocity_x,
                double           velocity_y,
-               ShumateView     *self)
+               ShumateMap      *self)
 {
   start_deceleration (self, velocity_x, velocity_y);
 }
 
 static void
-set_zoom_level (ShumateView *self,
-                double zoom_level)
+set_zoom_level (ShumateMap *self,
+                double      zoom_level)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   ShumateMapSource *map_source;
   double scroll_latitude, scroll_longitude;
   double view_lon, view_lat;
@@ -553,12 +486,12 @@ set_zoom_level (ShumateView *self,
 }
 
 static gboolean
-on_scroll_controller_scroll (ShumateView              *self,
-                             double                   dx,
-                             double                   dy,
+on_scroll_controller_scroll (ShumateMap               *self,
+                             double                    dx,
+                             double                    dy,
                              GtkEventControllerScroll *controller)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
 
   if (dy < 0)
@@ -573,11 +506,11 @@ on_scroll_controller_scroll (ShumateView              *self,
 }
 
 static void
-on_zoom_gesture_begin (ShumateView *self,
+on_zoom_gesture_begin (ShumateMap       *self,
                        GdkEventSequence *seq,
-                       GtkGestureZoom *zoom)
+                       GtkGestureZoom   *zoom)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
 
   gtk_gesture_set_state (GTK_GESTURE (zoom), GTK_EVENT_SEQUENCE_CLAIMED);
@@ -591,11 +524,11 @@ on_zoom_gesture_begin (ShumateView *self,
 }
 
 static void
-on_zoom_gesture_update (ShumateView *self,
+on_zoom_gesture_update (ShumateMap       *self,
                         GdkEventSequence *seq,
-                        GtkGestureZoom *zoom)
+                        GtkGestureZoom   *zoom)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double x, y;
   double scale = gtk_gesture_zoom_get_scale_delta (zoom);
 
@@ -618,33 +551,33 @@ on_zoom_gesture_update (ShumateView *self,
 }
 
 static void
-on_motion_controller_motion (ShumateView              *self,
-                             double                   x,
-                             double                   y,
+on_motion_controller_motion (ShumateMap               *self,
+                             double                    x,
+                             double                    y,
                              GtkEventControllerMotion *controller)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
   priv->current_x = x;
   priv->current_y = y;
 }
 
 static void
-shumate_view_go_to_with_duration (ShumateView *view,
-                                  double       latitude,
-                                  double       longitude,
-                                  guint        duration_ms)
+shumate_map_go_to_with_duration (ShumateMap *self,
+                                 double      latitude,
+                                 double      longitude,
+                                 guint       duration_ms)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   GoToContext *ctx;
 
   if (duration_ms == 0)
     {
-      shumate_view_center_on (view, latitude, longitude);
+      shumate_map_center_on (self, latitude, longitude);
       return;
     }
 
-  shumate_view_stop_go_to (view);
+  shumate_map_stop_go_to (self);
 
   ctx = g_new (GoToContext, 1);
   ctx->start_us = g_get_monotonic_time ();
@@ -653,22 +586,22 @@ shumate_view_go_to_with_duration (ShumateView *view,
   ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
   ctx->to_latitude = latitude;
   ctx->to_longitude = longitude;
-  ctx->view = view;
+  ctx->map = self;
 
   /* We keep a reference for stop */
   priv->goto_context = ctx;
 
-  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (view), go_to_tick_cb, ctx, NULL);
+  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (self), go_to_tick_cb, ctx, NULL);
 }
 
 static void
-shumate_view_get_property (GObject *object,
-    guint prop_id,
-    GValue *value,
-    GParamSpec *pspec)
+shumate_map_get_property (GObject    *object,
+                          guint       prop_id,
+                          GValue     *value,
+                          GParamSpec *pspec)
 {
-  ShumateView *view = SHUMATE_VIEW (object);
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMap *view = SHUMATE_MAP (object);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (view);
 
   switch (prop_id)
     {
@@ -695,25 +628,25 @@ shumate_view_get_property (GObject *object,
 
 
 static void
-shumate_view_set_property (GObject *object,
-    guint prop_id,
-    const GValue *value,
-    GParamSpec *pspec)
+shumate_map_set_property (GObject      *object,
+                          guint         prop_id,
+                          const GValue *value,
+                          GParamSpec   *pspec)
 {
-  ShumateView *view = SHUMATE_VIEW (object);
+  ShumateMap *view = SHUMATE_MAP (object);
 
   switch (prop_id)
     {
     case PROP_ZOOM_ON_DOUBLE_CLICK:
-      shumate_view_set_zoom_on_double_click (view, g_value_get_boolean (value));
+      shumate_map_set_zoom_on_double_click (view, g_value_get_boolean (value));
       break;
 
     case PROP_ANIMATE_ZOOM:
-      shumate_view_set_animate_zoom (view, g_value_get_boolean (value));
+      shumate_map_set_animate_zoom (view, g_value_get_boolean (value));
       break;
 
     case PROP_GO_TO_DURATION:
-      shumate_view_set_go_to_duration (view, g_value_get_uint (value));
+      shumate_map_set_go_to_duration (view, g_value_get_uint (value));
       break;
 
     default:
@@ -723,57 +656,36 @@ shumate_view_set_property (GObject *object,
 
 
 static void
-shumate_view_dispose (GObject *object)
+shumate_map_dispose (GObject *object)
 {
-  ShumateView *view = SHUMATE_VIEW (object);
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMap *view = SHUMATE_MAP (object);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (view);
   GtkWidget *child;
 
   if (priv->goto_context != NULL)
-    shumate_view_stop_go_to (view);
+    shumate_map_stop_go_to (view);
 
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
 
   g_clear_object (&priv->viewport);
 
-  //g_clear_object (&priv->background_content);
-  //g_clear_handle_id (&priv->zoom_actor_timeout, g_source_remove);
   g_clear_handle_id (&priv->zoom_timeout, g_source_remove);
 
-  //priv->map_layer = NULL;
-  //priv->license_actor = NULL;
-
-  /* This is needed to prevent race condition see bug #760012 */
-  //if (priv->user_layers)
-  //    clutter_actor_remove_all_children (priv->user_layers);
-  //priv->user_layers = NULL;
-  //priv->zoom_layer = NULL;
-
-  G_OBJECT_CLASS (shumate_view_parent_class)->dispose (object);
-}
-
-
-static void
-shumate_view_finalize (GObject *object)
-{
-/*  ShumateViewPrivate *priv = SHUMATE_VIEW (object)->priv; */
-
-  G_OBJECT_CLASS (shumate_view_parent_class)->finalize (object);
+  G_OBJECT_CLASS (shumate_map_parent_class)->dispose (object);
 }
 
 static void
-shumate_view_class_init (ShumateViewClass *shumateViewClass)
+shumate_map_class_init (ShumateMapClass *klass)
 {
-  GObjectClass *object_class = G_OBJECT_CLASS (shumateViewClass);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (shumateViewClass);
-  object_class->dispose = shumate_view_dispose;
-  object_class->finalize = shumate_view_finalize;
-  object_class->get_property = shumate_view_get_property;
-  object_class->set_property = shumate_view_set_property;
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  object_class->dispose = shumate_map_dispose;
+  object_class->get_property = shumate_map_get_property;
+  object_class->set_property = shumate_map_set_property;
 
   /**
-   * ShumateView:zoom-on-double-click:
+   * ShumateMap:zoom-on-double-click:
    *
    * Should the view zoom in and recenter when the user double click on the map.
    */
@@ -785,7 +697,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
-   * ShumateView:animate-zoom:
+   * ShumateMap:animate-zoom:
    *
    * Animate zoom change when zooming in/out.
    */
@@ -797,7 +709,7 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
-   * ShumateView:state:
+   * ShumateMap:state:
    *
    * The view's global state. Useful to inform using if the view is busy loading
    * tiles or not.
@@ -811,47 +723,12 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   /**
-   * ShumateView:background-pattern:
-   *
-   * The pattern displayed in the background of the map.
-   */
-  /*
-  g_object_class_install_property (object_class,
-      PROP_BACKGROUND_PATTERN,
-      g_param_spec_object ("background-pattern",
-          "Background pattern",
-          "The tile's background pattern",
-          CLUTTER_TYPE_ACTOR,
-          G_PARAM_READWRITE));
-   */
-
-  /**
-   * ShumateView:goto-animation-mode:
-   *
-   * The mode of animation when going to a location.
-   *
-   * Please note that animation of #shumate_view_ensure_visible also
-   * involves a 'goto' animation.
-   *
-   */
-  /*
-  g_object_class_install_property (object_class,
-      PROP_GOTO_ANIMATION_MODE,
-      g_param_spec_enum ("goto-animation-mode",
-          "Go to animation mode",
-          "The mode of animation when going to a location",
-          CLUTTER_TYPE_ANIMATION_MODE,
-          CLUTTER_EASE_IN_OUT_CIRC,
-          G_PARAM_READWRITE));
-   */
-
-  /**
-   * ShumateView:go-to-duration:
+   * ShumateMap:go-to-duration:
    *
    * The duration of an animation when going to a location, in milliseconds.
    * A value of 0 means that the duration is calculated automatically for you.
    *
-   * Please note that animation of #shumate_view_ensure_visible also
+   * Please note that animation of #shumate_map_ensure_visible also
    * involves a 'go-to' animation.
    *
    */
@@ -867,9 +744,9 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
                                      obj_properties);
 
   /**
-   * ShumateView::animation-completed:
+   * ShumateMap::animation-completed:
    *
-   * The #ShumateView::animation-completed signal is emitted when any animation in the view
+   * The #ShumateMap::animation-completed signal is emitted when any animation in the view
    * ends.  This is a detailed signal.  For example, if you want to be signaled
    * only for go-to animation, you should connect to
    * "animation-completed::go-to". And for zoom, connect to "animation-completed::zoom".
@@ -890,9 +767,9 @@ shumate_view_class_init (ShumateViewClass *shumateViewClass)
 }
 
 static void
-shumate_view_init (ShumateView *view)
+shumate_map_init (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
   GtkEventController *motion_controller;
@@ -912,136 +789,136 @@ shumate_view_init (ShumateView *view)
   priv->map_clones = NULL;
   priv->user_layer_slots = NULL;
 
-  gtk_widget_set_cursor_from_name (GTK_WIDGET (view), "grab");
+  gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
   /* Setup viewport */
   priv->viewport = shumate_viewport_new ();
 
   /* Setup license */
   drag_gesture = gtk_gesture_drag_new ();
-  g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), view);
-  g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), view);
-  g_signal_connect_swapped (drag_gesture, "drag-end", G_CALLBACK (on_drag_gesture_drag_end), view);
-  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (drag_gesture));
+  g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), self);
+  g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), self);
+  g_signal_connect_swapped (drag_gesture, "drag-end", G_CALLBACK (on_drag_gesture_drag_end), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (drag_gesture));
 
   swipe_gesture = gtk_gesture_swipe_new ();
-  g_signal_connect (swipe_gesture, "swipe", G_CALLBACK (view_swipe_cb), view);
-  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (swipe_gesture));
+  g_signal_connect (swipe_gesture, "swipe", G_CALLBACK (view_swipe_cb), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (swipe_gesture));
 
   scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
-  g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), view);
-  gtk_widget_add_controller (GTK_WIDGET (view), scroll_controller);
+  g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), scroll_controller);
 
   zoom_gesture = gtk_gesture_zoom_new ();
-  g_signal_connect_swapped (zoom_gesture, "begin", G_CALLBACK (on_zoom_gesture_begin), view);
-  g_signal_connect_swapped (zoom_gesture, "update", G_CALLBACK (on_zoom_gesture_update), view);
-  gtk_widget_add_controller (GTK_WIDGET (view), GTK_EVENT_CONTROLLER (zoom_gesture));
+  g_signal_connect_swapped (zoom_gesture, "begin", G_CALLBACK (on_zoom_gesture_begin), self);
+  g_signal_connect_swapped (zoom_gesture, "update", G_CALLBACK (on_zoom_gesture_update), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (zoom_gesture));
 
   motion_controller = gtk_event_controller_motion_new ();
-  g_signal_connect_swapped (motion_controller, "motion", G_CALLBACK (on_motion_controller_motion), view);
-  gtk_widget_add_controller (GTK_WIDGET (view), motion_controller);
+  g_signal_connect_swapped (motion_controller, "motion", G_CALLBACK (on_motion_controller_motion), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), motion_controller);
 
-  gtk_widget_set_overflow (GTK_WIDGET (view), GTK_OVERFLOW_HIDDEN);
+  gtk_widget_set_overflow (GTK_WIDGET (self), GTK_OVERFLOW_HIDDEN);
 }
 
 /**
- * shumate_view_new:
+ * shumate_map_new:
  *
- * Creates an instance of #ShumateView.
+ * Creates an instance of #ShumateMap.
  *
- * Returns: a new #ShumateView ready to be used as a #GtkWidget.
+ * Returns: a new #ShumateMap ready to be used as a #GtkWidget.
  */
-ShumateView *
-shumate_view_new (void)
+ShumateMap *
+shumate_map_new (void)
 {
-  return g_object_new (SHUMATE_TYPE_VIEW, NULL);
+  return g_object_new (SHUMATE_TYPE_MAP, NULL);
 }
 
 
-ShumateView *
-shumate_view_new_simple (void)
+ShumateMap *
+shumate_map_new_simple (void)
 {
-  ShumateView *view = g_object_new (SHUMATE_TYPE_VIEW, NULL);
+  ShumateMap *view = g_object_new (SHUMATE_TYPE_MAP, NULL);
   g_autoptr(ShumateMapSourceRegistry) registry = NULL;
   ShumateMapSource *source;
   ShumateMapLayer *map_layer;
   ShumateViewport *viewport;
-  
-  viewport = shumate_view_get_viewport (view);
+
+  viewport = shumate_map_get_viewport (view);
   registry = shumate_map_source_registry_new_with_defaults ();
   source = shumate_map_source_registry_get_by_id (registry, SHUMATE_MAP_SOURCE_OSM_MAPNIK);
   shumate_viewport_set_reference_map_source (viewport, source);
   map_layer = shumate_map_layer_new (source, viewport);
-  shumate_view_add_layer (view, SHUMATE_LAYER (map_layer));
+  shumate_map_add_layer (view, SHUMATE_LAYER (map_layer));
 
   return view;
 }
 
 /**
- * shumate_view_get_viewport:
- * @self: a #ShumateView
+ * shumate_map_get_viewport:
+ * @self: a #ShumateMap
  *
  * Get the #ShumateViewport used by this view.
- * 
+ *
  * Returns: (transfer none): the #ShumateViewport
  */
 ShumateViewport *
-shumate_view_get_viewport (ShumateView *self)
+shumate_map_get_viewport (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_val_if_fail (SHUMATE_IS_VIEW (self), NULL);
+  g_return_val_if_fail (SHUMATE_IS_MAP (self), NULL);
 
   return priv->viewport;
 }
 
 /**
- * shumate_view_center_on:
- * @view: a #ShumateView
+ * shumate_map_center_on:
+ * @self: a #ShumateMap
  * @latitude: the longitude to center the map at
  * @longitude: the longitude to center the map at
  *
  * Centers the map on these coordinates.
  */
 void
-shumate_view_center_on (ShumateView *view,
-    double latitude,
-    double longitude)
+shumate_map_center_on (ShumateMap *self,
+                       double      latitude,
+                       double      longitude)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
 
   shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), latitude, longitude);
 }
 
 /**
- * shumate_view_stop_go_to:
- * @view: a #ShumateView
+ * shumate_map_stop_go_to:
+ * @self: a #ShumateMap
  *
  * Stop the go to animation.  The view will stay where it was when the
  * animation was stopped.
  */
 void
-shumate_view_stop_go_to (ShumateView *view)
+shumate_map_stop_go_to (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
 
   if (priv->goto_context == NULL)
     return;
 
-  gtk_widget_remove_tick_callback (GTK_WIDGET (view), priv->goto_context->tick_id);
+  gtk_widget_remove_tick_callback (GTK_WIDGET (self), priv->goto_context->tick_id);
   g_clear_pointer (&priv->goto_context, g_free);
 
-  g_signal_emit (view, signals[ANIMATION_COMPLETED], go_to_quark, NULL);
+  g_signal_emit (self, signals[ANIMATION_COMPLETED], go_to_quark, NULL);
 }
 
 
 /**
- * shumate_view_go_to:
- * @view: a #ShumateView
+ * shumate_map_go_to:
+ * @self: a #ShumateMap
  * @latitude: the longitude to center the map at
  * @longitude: the longitude to center the map at
  *
@@ -1049,14 +926,14 @@ shumate_view_stop_go_to (ShumateView *view)
  * intermediate view WILL be loaded!
  */
 void
-shumate_view_go_to (ShumateView *view,
-                    double      latitude,
-                    double      longitude)
+shumate_map_go_to (ShumateMap *self,
+                   double      latitude,
+                   double      longitude)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   guint duration;
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
   g_return_if_fail (longitude >= SHUMATE_MIN_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
 
@@ -1064,42 +941,42 @@ shumate_view_go_to (ShumateView *view,
   if (duration == 0) /* calculate duration from zoom level */
       duration = 500 * shumate_viewport_get_zoom_level (priv->viewport) / 2.0;
 
-  shumate_view_go_to_with_duration (view, latitude, longitude, duration);
+  shumate_map_go_to_with_duration (self, latitude, longitude, duration);
 }
 
 /**
- * shumate_view_get_go_to_duration:
- * @self: a #ShumateView
+ * shumate_map_get_go_to_duration:
+ * @self: a #ShumateMap
  *
  * Get the 'go-to-duration' property.
  *
- * Returns: the animation duration when calling shumate_view_go_to(),
+ * Returns: the animation duration when calling shumate_map_go_to(),
  *   in milliseconds.
  */
 guint
-shumate_view_get_go_to_duration (ShumateView *self)
+shumate_map_get_go_to_duration (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_val_if_fail (SHUMATE_IS_VIEW (self), 0);
+  g_return_val_if_fail (SHUMATE_IS_MAP (self), 0);
 
   return priv->go_to_duration;
 }
 
 /**
- * shumate_view_set_go_to_duration:
- * @self: a #ShumateView
+ * shumate_map_set_go_to_duration:
+ * @self: a #ShumateMap
  * @duration: the animation duration, in milliseconds
  *
- * Set the duration of the transition of shumate_view_go_to().
+ * Set the duration of the transition of shumate_map_go_to().
  */
 void
-shumate_view_set_go_to_duration (ShumateView *self,
-                                 guint        duration)
+shumate_map_set_go_to_duration (ShumateMap *self,
+                                guint       duration)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (self);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_if_fail (SHUMATE_IS_VIEW (self));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
 
   if (priv->go_to_duration == duration)
     return;
@@ -1109,84 +986,84 @@ shumate_view_set_go_to_duration (ShumateView *self,
 }
 
 /**
- * shumate_view_add_layer:
- * @view: a #ShumateView
+ * shumate_map_add_layer:
+ * @self: a #ShumateMap
  * @layer: a #ShumateLayer
  *
  * Adds a new layer to the view
  */
 void
-shumate_view_add_layer (ShumateView  *view,
-                        ShumateLayer *layer)
+shumate_map_add_layer (ShumateMap   *self,
+                       ShumateLayer *layer)
 {
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (view), NULL);
+  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (self), NULL);
 }
 
 
 /**
- * shumate_view_insert_layer_behind:
- * @view: a #ShumateView
+ * shumate_map_insert_layer_behind:
+ * @self: a #ShumateMap
  * @layer: a #ShumateLayer
- * @next_sibling: (nullable): a #ShumateLayer that is a child of @view, or %NULL
+ * @next_sibling: (nullable): a #ShumateLayer that is a child of @self, or %NULL
  *
- * Adds @layer to @view behind @next_sibling or, if @next_sibling is %NULL, at
+ * Adds @layer to @self behind @next_sibling or, if @next_sibling is %NULL, at
  * the top of the layer list.
  */
 void
-shumate_view_insert_layer_behind (ShumateView  *view,
-                                  ShumateLayer *layer,
-                                  ShumateLayer *next_sibling)
-{
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
-  g_return_if_fail (SHUMATE_IS_LAYER (layer));
-  g_return_if_fail (next_sibling == NULL || SHUMATE_IS_LAYER (next_sibling));
-  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (view));
-
-  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (view), GTK_WIDGET (next_sibling));
-}
-
-
-/**
- * shumate_view_insert_layer_above:
- * @view: a #ShumateView
- * @layer: a #ShumateLayer
- * @next_sibling: (nullable): a #ShumateLayer that is a child of @view, or %NULL
- *
- * Adds @layer to @view above @next_sibling or, if @next_sibling is %NULL, at
- * the bottom of the layer list.
- */
-void
-shumate_view_insert_layer_above (ShumateView  *view,
+shumate_map_insert_layer_behind (ShumateMap   *self,
                                  ShumateLayer *layer,
                                  ShumateLayer *next_sibling)
 {
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
   g_return_if_fail (next_sibling == NULL || SHUMATE_IS_LAYER (next_sibling));
-  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (view));
+  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (self));
 
-  gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (view), GTK_WIDGET (next_sibling));
+  gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (self), GTK_WIDGET (next_sibling));
 }
 
 
 /**
- * shumate_view_remove_layer:
- * @view: a #ShumateView
+ * shumate_map_insert_layer_above:
+ * @self: a #ShumateMap
+ * @layer: a #ShumateLayer
+ * @next_sibling: (nullable): a #ShumateLayer that is a child of @self, or %NULL
+ *
+ * Adds @layer to @self above @next_sibling or, if @next_sibling is %NULL, at
+ * the bottom of the layer list.
+ */
+void
+shumate_map_insert_layer_above (ShumateMap   *self,
+                                ShumateLayer *layer,
+                                ShumateLayer *next_sibling)
+{
+  g_return_if_fail (SHUMATE_IS_MAP (self));
+  g_return_if_fail (SHUMATE_IS_LAYER (layer));
+  g_return_if_fail (next_sibling == NULL || SHUMATE_IS_LAYER (next_sibling));
+  g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (self));
+
+  gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (self), GTK_WIDGET (next_sibling));
+}
+
+
+/**
+ * shumate_map_remove_layer:
+ * @self: a #ShumateMap
  * @layer: a #ShumateLayer
  *
  * Removes the given layer from the view
  */
 void
-shumate_view_remove_layer (ShumateView  *view,
-                           ShumateLayer *layer)
+shumate_map_remove_layer (ShumateMap  *self,
+                          ShumateLayer *layer)
 {
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
-  if (gtk_widget_get_parent (GTK_WIDGET (layer)) != GTK_WIDGET (view))
+  if (gtk_widget_get_parent (GTK_WIDGET (layer)) != GTK_WIDGET (self))
     {
       g_critical ("The given ShumateLayer isn't a child of the view");
       return;
@@ -1196,8 +1073,8 @@ shumate_view_remove_layer (ShumateView  *view,
 }
 
 /**
- * shumate_view_set_map_source:
- * @view: a #ShumateView
+ * shumate_map_set_map_source:
+ * @self: a #ShumateMap
  * @map_source: a #ShumateMapSource
  *
  * Changes the currently used map source. #g_object_unref() will be called on
@@ -1207,13 +1084,13 @@ shumate_view_remove_layer (ShumateView  *view,
  * secondary map sources.
  */
 void
-shumate_view_set_map_source (ShumateView      *view,
-                             ShumateMapSource *source)
+shumate_map_set_map_source (ShumateMap       *self,
+                            ShumateMapSource *source)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   ShumateMapSource *ref_map_source;
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE (source));
 
   ref_map_source = shumate_viewport_get_reference_map_source (priv->viewport);
@@ -1224,95 +1101,95 @@ shumate_view_set_map_source (ShumateView      *view,
 }
 
 /**
- * shumate_view_set_zoom_on_double_click:
- * @view: a #ShumateView
+ * shumate_map_set_zoom_on_double_click:
+ * @self: a #ShumateMap
  * @value: a #gboolean
  *
  * Should the view zoom in and recenter when the user double click on the map.
  */
 void
-shumate_view_set_zoom_on_double_click (ShumateView *view,
-                                       gboolean     value)
+shumate_map_set_zoom_on_double_click (ShumateMap *self,
+                                      gboolean    value)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
 
   priv->zoom_on_double_click = value;
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ZOOM_ON_DOUBLE_CLICK]);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ZOOM_ON_DOUBLE_CLICK]);
 }
 
 
 /**
- * shumate_view_set_animate_zoom:
- * @view: a #ShumateView
+ * shumate_map_set_animate_zoom:
+ * @self: a #ShumateMap
  * @value: a #gboolean
  *
  * Should the view animate zoom level changes.
  */
 void
-shumate_view_set_animate_zoom (ShumateView *view,
-                               gboolean     value)
+shumate_map_set_animate_zoom (ShumateMap *self,
+                              gboolean    value)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_if_fail (SHUMATE_IS_VIEW (view));
+  g_return_if_fail (SHUMATE_IS_MAP (self));
 
   priv->animate_zoom = value;
-  g_object_notify_by_pspec (G_OBJECT (view), obj_properties[PROP_ANIMATE_ZOOM]);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ANIMATE_ZOOM]);
 }
 
 /**
- * shumate_view_get_zoom_on_double_click:
- * @view: a #ShumateView
+ * shumate_map_get_zoom_on_double_click:
+ * @self: a #ShumateMap
  *
  * Checks whether the view zooms on double click.
  *
  * Returns: TRUE if the view zooms on double click, FALSE otherwise.
  */
 gboolean
-shumate_view_get_zoom_on_double_click (ShumateView *view)
+shumate_map_get_zoom_on_double_click (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_MAP (self), FALSE);
 
   return priv->zoom_on_double_click;
 }
 
 
 /**
- * shumate_view_get_animate_zoom:
- * @view: a #ShumateView
+ * shumate_map_get_animate_zoom:
+ * @self: a #ShumateMap
  *
  * Checks whether the view animates zoom level changes.
  *
  * Returns: TRUE if the view animates zooms, FALSE otherwise.
  */
 gboolean
-shumate_view_get_animate_zoom (ShumateView *view)
+shumate_map_get_animate_zoom (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), FALSE);
+  g_return_val_if_fail (SHUMATE_IS_MAP (self), FALSE);
 
   return priv->animate_zoom;
 }
 
 /**
- * shumate_view_get_state:
- * @view: a #ShumateView
+ * shumate_map_get_state:
+ * @self: a #ShumateMap
  *
  * Gets the view's state.
  *
  * Returns: the state.
  */
 ShumateState
-shumate_view_get_state (ShumateView *view)
+shumate_map_get_state (ShumateMap *self)
 {
-  ShumateViewPrivate *priv = shumate_view_get_instance_private (view);
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
 
-  g_return_val_if_fail (SHUMATE_IS_VIEW (view), SHUMATE_STATE_NONE);
+  g_return_val_if_fail (SHUMATE_IS_MAP (self), SHUMATE_STATE_NONE);
 
   return priv->state;
 }

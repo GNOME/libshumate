@@ -28,6 +28,7 @@
 #include "shumate/shumate-enum-types.h"
 #include "shumate/shumate-version.h"
 
+#include "shumate/shumate-license.h"
 #include "shumate/shumate-layer.h"
 #include "shumate/shumate-map-layer.h"
 #include "shumate/shumate-marker-layer.h"
@@ -36,7 +37,7 @@
 #include "shumate/shumate-location.h"
 #include "shumate/shumate-coordinate.h"
 #include "shumate/shumate-marker.h"
-#include "shumate/shumate-view.h"
+#include "shumate/shumate-map.h"
 #include "shumate/shumate-viewport.h"
 #include "shumate/shumate-scale.h"
 

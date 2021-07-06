@@ -4,6 +4,7 @@ libshumate_public_h = [
   'shumate-layer.h',
   'shumate-license.h',
   'shumate-location.h',
+  'shumate-map.h',
   'shumate-map-layer.h',
   'shumate-map-source-registry.h',
   'shumate-map-source.h',
@@ -16,7 +17,6 @@ libshumate_public_h = [
   'shumate-scale.h',
   'shumate-tile-source.h',
   'shumate-tile.h',
-  'shumate-view.h',
   'shumate-viewport.h',
   'shumate.h',
 ]
@@ -33,6 +33,7 @@ libshumate_sources = [
   'shumate-layer.c',
   'shumate-license.c',
   'shumate-location.c',
+  'shumate-map.c',
   'shumate-map-layer.c',
   'shumate-map-source-registry.c',
   'shumate-map-source.c',
@@ -45,7 +46,6 @@ libshumate_sources = [
   'shumate-scale.c',
   'shumate-tile-source.c',
   'shumate-tile.c',
-  'shumate-view.c',
   'shumate-viewport.c',
 ]
 

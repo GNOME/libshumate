@@ -32,7 +32,6 @@
 #include "shumate-marker-private.h"
 
 #include "shumate-enum-types.h"
-#include "shumate-view.h"
 
 #include <cairo/cairo-gobject.h>
 #include <glib.h>
@@ -58,7 +57,6 @@ static guint signals[LAST_SIGNAL];
 typedef struct
 {
   GtkSelectionMode mode;
-  ShumateView *view;
   GList *selected;
 } ShumateMarkerLayerPrivate;
 
@@ -444,20 +442,20 @@ marker_move_by_cb (ShumateMarker *marker,
     GdkEvent *event,
     ShumateMarkerLayer *layer)
 {
-  ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
+  /*ShumateMarkerLayerPrivate *priv = shumate_marker_layer_get_instance_private (layer);
   ShumateView *view = priv->view;
   double x, y, lat, lon;
 
-  /*x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (SHUMATE_LOCATION (marker)));
+  x = shumate_view_longitude_to_x (view, shumate_location_get_longitude (SHUMATE_LOCATION (marker)));
   y = shumate_view_latitude_to_y (view, shumate_location_get_latitude (SHUMATE_LOCATION (marker)));
 
   x += dx;
   y += dy;
 
   lon = shumate_view_x_to_longitude (view, x);
-  lat = shumate_view_y_to_latitude (view, y);*/
+  lat = shumate_view_y_to_latitude (view, y);
 
-  shumate_location_set_location (SHUMATE_LOCATION (marker), lat, lon);
+  shumate_location_set_location (SHUMATE_LOCATION (marker), lat, lon);*/
 }
 
 
@@ -869,12 +867,10 @@ shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *self)
 void
 shumate_marker_layer_select_all_markers (ShumateMarkerLayer *self)
 {
-  ShumateMarkerLayerPrivate *priv;
   g_autoptr(GList) children = NULL;
 
   g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
 
-  priv = shumate_marker_layer_get_instance_private (self);
   children = shumate_marker_layer_get_markers (self);
 
   for (GList *l = children; l != NULL; l = l->next) {
