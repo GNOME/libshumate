@@ -45,7 +45,7 @@ typelibdir = join_paths(libdir, 'girepository-1.0')
 pkgconfigdir = join_paths(libdir, 'pkgconfig')
 
 girdir = join_paths(datadir, 'gir-1.0')
-docs_dir = datadir / 'docs'
+docs_dir = datadir / 'doc'
 vapidir = join_paths(datadir, 'vala', 'vapi')
 
 # Dependencies
