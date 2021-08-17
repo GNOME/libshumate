@@ -29,9 +29,20 @@
           </object>
         </child>
         <child type="overlay">
-          <object class="ShumateLicense" id="license">
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
             <property name="halign">end</property>
             <property name="valign">end</property>
+            <child>
+              <object class="ShumateCompass" id="compass">
+                <property name="halign">end</property>
+              </object>
+            </child>
+            <child>
+              <object class="ShumateLicense" id="license">
+                <property name="halign">end</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

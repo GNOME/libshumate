@@ -36,6 +36,7 @@
 #include "shumate/shumate-point.h"
 #include "shumate/shumate-location.h"
 #include "shumate/shumate-coordinate.h"
+#include "shumate/shumate-compass.h"
 #include "shumate/shumate-marker.h"
 #include "shumate/shumate-map.h"
 #include "shumate/shumate-viewport.h"

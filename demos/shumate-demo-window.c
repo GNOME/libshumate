@@ -28,6 +28,7 @@ struct _ShumateDemoWindow
   GtkOverlay *overlay;
   ShumateScale *scale;
   ShumateLicense *license;
+  ShumateCompass *compass;
   GtkDropDown *layers_dropdown;
   ShumateMapSourceRegistry *registry;
 
@@ -121,6 +122,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, overlay);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, scale);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, license);
+  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, compass);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
   gtk_widget_class_bind_template_callback (widget_class, on_layers_dropdown_notify_selected);
 }
@@ -153,6 +155,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   on_layers_dropdown_notify_selected (self, NULL, self->layers_dropdown);
 
   shumate_scale_set_viewport (self->scale, viewport);
+  shumate_compass_set_viewport (self->compass, viewport);
 
   /* Add the marker layers */
   self->marker_layer = shumate_marker_layer_new (viewport);
