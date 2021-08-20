@@ -295,7 +295,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
 static double
 map_size (ShumateMapSource *self, double zoom_level)
 {
-  return shumate_map_source_get_column_count (self, zoom_level) * shumate_map_source_get_tile_size (self) * (fmod (zoom_level, 1.0) + 1.0);
+  return shumate_map_source_get_column_count (self, zoom_level) * shumate_map_source_get_tile_size_at_zoom (self, zoom_level);
 }
 
 
@@ -570,6 +570,31 @@ shumate_map_source_get_tile_size (ShumateMapSource *map_source)
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0);
 
   return priv->tile_size;
+}
+
+/**
+ * shumate_map_source_get_tile_size_at_zoom:
+ * @map_source: a #ShumateMapSource
+ * @zoom_level: a zoom level
+ *
+ * Gets the apparent size of the map tiles at the given fractional zoom level.
+ *
+ * As the map is zoomed in, a tile gets bigger and bigger until, at the next
+ * integer zoom level, it "splits" into four tiles at the next zoom level.
+ * Thus, the size increase follows an exponential curve, base 2.
+ *
+ * Returns: the tile's size (width and height) in pixels for this map source
+ * at this zoom level
+ */
+double
+shumate_map_source_get_tile_size_at_zoom (ShumateMapSource *map_source,
+                                          double            zoom_level)
+{
+  ShumateMapSourcePrivate *priv = shumate_map_source_get_instance_private (map_source);
+
+  g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (map_source), 0);
+
+  return priv->tile_size * pow (2.0, fmod (zoom_level, 1.0));
 }
 
 /**

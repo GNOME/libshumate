@@ -598,7 +598,7 @@ shumate_viewport_widget_coords_to_location (ShumateViewport *self,
   height = gtk_widget_get_height (widget);
   rotate_around_center (&x, &y, width, height, -self->rotation);
 
-  tile_size = shumate_map_source_get_tile_size (self->ref_map_source) * (fmod (self->zoom_level, 1.0) + 1);
+  tile_size = shumate_map_source_get_tile_size_at_zoom (self->ref_map_source, self->zoom_level);
   map_width = tile_size * shumate_map_source_get_column_count (self->ref_map_source, self->zoom_level);
   map_height = tile_size * shumate_map_source_get_row_count (self->ref_map_source, self->zoom_level);
 

@@ -79,6 +79,8 @@ guint shumate_map_source_get_max_zoom_level (ShumateMapSource *map_source);
 void shumate_map_source_set_max_zoom_level (ShumateMapSource *map_source,
                                             guint             zoom_level);
 guint shumate_map_source_get_tile_size (ShumateMapSource *map_source);
+double shumate_map_source_get_tile_size_at_zoom (ShumateMapSource *map_source,
+                                                 double            zoom_level);
 void shumate_map_source_set_tile_size (ShumateMapSource *map_source,
                                        guint             tile_size);
 ShumateMapProjection shumate_map_source_get_projection (ShumateMapSource *map_source);

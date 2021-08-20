@@ -194,7 +194,7 @@ move_location_to_coords (ShumateMap *self,
   if (map_source == NULL)
     return;
 
-  tile_size = shumate_map_source_get_tile_size (map_source) * (fmod (zoom_level, 1.0) + 1.0);
+  tile_size = shumate_map_source_get_tile_size_at_zoom (map_source, zoom_level);
   map_width = tile_size * shumate_map_source_get_column_count (map_source, zoom_level);
   map_height = tile_size * shumate_map_source_get_row_count (map_source, zoom_level);
 

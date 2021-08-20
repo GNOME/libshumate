@@ -506,7 +506,7 @@ shumate_map_layer_measure (GtkWidget      *widget,
 
       viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
       zoom_level = shumate_viewport_get_zoom_level (viewport);
-      tile_size = shumate_map_source_get_tile_size (self->map_source) * (fmod (zoom_level, 1.0) + 1.0);
+      tile_size = shumate_map_source_get_tile_size_at_zoom (self->map_source, zoom_level);
       if (orientation == GTK_ORIENTATION_HORIZONTAL)
         count = shumate_map_source_get_column_count (self->map_source, zoom_level);
       else
@@ -522,7 +522,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   double zoom_level = shumate_viewport_get_zoom_level (viewport);
-  double extra_zoom = fmod (zoom_level, 1.0) + 1.0;
+  double extra_zoom = pow (2.0, fmod (zoom_level, 1.0));
   int width = gtk_widget_get_width (GTK_WIDGET (self));
   int height = gtk_widget_get_height (GTK_WIDGET (self));
   double rotation = shumate_viewport_get_rotation (viewport);
