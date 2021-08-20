@@ -107,10 +107,15 @@ shumate_license_sources_changed (ShumateLicense *self)
   for (i = 0; i < self->map_sources->len; i++)
     {
       ShumateMapSource *map_source = g_ptr_array_index (self->map_sources, i);
-      if (i == 0)
-        g_string_append (license_str, shumate_map_source_get_license (map_source));
+      const char *license = shumate_map_source_get_license (map_source);
+
+      if (license == NULL)
+        continue;
+
+      if (license_str->len == 0)
+        g_string_append (license_str, license);
       else
-        g_string_append_printf (license_str, "\n%s", shumate_map_source_get_license (map_source));
+        g_string_append_printf (license_str, "\n%s", license);
     }
 
   gtk_label_set_label (GTK_LABEL (self->license_label), license_str->str);
