@@ -25,6 +25,7 @@
 #ifndef _SHUMATE_NETWORK_TILE_SOURCE_H_
 #define _SHUMATE_NETWORK_TILE_SOURCE_H_
 
+#include <shumate/shumate-vector-style.h>
 #include <shumate/shumate-map-source.h>
 
 G_BEGIN_DECLS
@@ -77,6 +78,17 @@ ShumateNetworkTileSource *shumate_network_tile_source_new_full (const char *id,
     ShumateMapProjection projection,
     const char *uri_format);
 
+ShumateNetworkTileSource *shumate_network_tile_source_new_vector_full (const char *id,
+    const char *name,
+    const char *license,
+    const char *license_uri,
+    guint min_zoom,
+    guint max_zoom,
+    guint tile_size,
+    ShumateMapProjection projection,
+    const char *uri_format,
+    ShumateVectorStyle *style);
+
 const char *shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source);
 void shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_source,
     const char *uri_format);
@@ -95,6 +107,8 @@ void shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_s
 
 void shumate_network_tile_source_set_user_agent (ShumateNetworkTileSource *tile_source,
     const char *user_agent);
+
+ShumateVectorStyle *shumate_network_tile_source_get_style (ShumateNetworkTileSource *self);
 
 G_END_DECLS
 

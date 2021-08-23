@@ -48,6 +48,8 @@
 #include "shumate/shumate-memory-cache.h"
 #include "shumate/shumate-file-cache.h"
 
+#include "shumate/shumate-vector-style.h"
+
 #undef __SHUMATE_SHUMATE_H_INSIDE__
 
 #endif

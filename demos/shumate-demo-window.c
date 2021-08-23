@@ -138,6 +138,8 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 {
   ShumateViewport *viewport;
   GtkExpression *expression;
+  g_autoptr(ShumateVectorStyle) style = NULL;
+  ShumateMapSource *map_source = NULL;
 
   gtk_widget_init_template (GTK_WIDGET (self));
 
@@ -148,6 +150,17 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   gtk_drop_down_set_expression (self->layers_dropdown, expression);
   gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
 
+  style = shumate_vector_style_create ("{}", NULL);
+
+  map_source = SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_vector_full (
+    "vector-tiles",
+    "Vector Tiles",
+    "© OpenStreetMap contributors", NULL, 0, 14, 512,
+    SHUMATE_MAP_PROJECTION_MERCATOR,
+    "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/#Z#/#X#/#Y#.pbf",
+    style
+  ));
+  shumate_map_source_registry_add (self->registry, map_source);
 
   viewport = shumate_map_get_viewport (self->map);
 

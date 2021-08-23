@@ -17,6 +17,7 @@ libshumate_public_h = [
   'shumate-point.h',
   'shumate-scale.h',
   'shumate-tile.h',
+  'shumate-vector-style.h',
   'shumate-viewport.h',
   'shumate.h',
 ]
@@ -46,6 +47,7 @@ libshumate_sources = [
   'shumate-point.c',
   'shumate-scale.c',
   'shumate-tile.c',
+  'shumate-vector-style.c',
   'shumate-viewport.c',
 ]
 

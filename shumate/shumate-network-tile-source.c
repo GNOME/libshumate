@@ -56,6 +56,7 @@ enum
   PROP_MAX_CONNS,
   PROP_USER_AGENT,
   PROP_FILE_CACHE,
+  PROP_STYLE,
   N_PROPERTIES,
 };
 
@@ -69,6 +70,7 @@ typedef struct
   SoupSession *soup_session;
   int max_conns;
   ShumateFileCache *file_cache;
+  ShumateVectorStyle *style;
 } ShumateNetworkTileSourcePrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE_TYPE_MAP_SOURCE);
@@ -136,6 +138,10 @@ shumate_network_tile_source_get_property (GObject *object,
       g_value_set_object (value, priv->file_cache);
       break;
 
+    case PROP_STYLE:
+      g_value_set_object (value, priv->style);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -149,6 +155,7 @@ shumate_network_tile_source_set_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumateNetworkTileSource *tile_source = SHUMATE_NETWORK_TILE_SOURCE (object);
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (tile_source);
 
   switch (prop_id)
     {
@@ -170,6 +177,10 @@ shumate_network_tile_source_set_property (GObject *object,
 
     case PROP_USER_AGENT:
       shumate_network_tile_source_set_user_agent (tile_source, g_value_get_string (value));
+      break;
+
+    case PROP_STYLE:
+      g_set_object (&priv->style, g_value_get_object (value));
       break;
 
     default:
@@ -300,6 +311,18 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
                         SHUMATE_TYPE_FILE_CACHE,
                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
+  /**
+   * ShumateNetworkTileSource:style:
+   *
+   * The style for rendering vector tiles.
+   */
+  obj_properties[PROP_STYLE] =
+    g_param_spec_object("style",
+                        "Style",
+                        "Style",
+                        SHUMATE_TYPE_VECTOR_STYLE,
+                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 }
 
@@ -370,6 +393,53 @@ shumate_network_tile_source_new_full (const char *id,
         "tile-size", tile_size,
         "projection", projection,
         "uri-format", uri_format,
+        NULL);
+  return source;
+}
+
+
+/**
+ * shumate_network_tile_source_new_vector_full:
+ * @id: the map source's id
+ * @name: the map source's name
+ * @license: the map source's license
+ * @license_uri: the map source's license URI
+ * @min_zoom: the map source's minimum zoom level
+ * @max_zoom: the map source's maximum zoom level
+ * @tile_size: the map source's tile size (in pixels)
+ * @projection: the map source's projection
+ * @uri_format: the URI to fetch the tiles from, see #shumate_network_tile_source_set_uri_format
+ * @style: the style with which to render tiles
+ *
+ * Creates a [class@NetworkTileSource] that renders tiles with a [class@VectorStyle].
+ *
+ * Returns: a constructed [class@NetworkTileSource] object
+ */
+ShumateNetworkTileSource *
+shumate_network_tile_source_new_vector_full (const char *id,
+    const char *name,
+    const char *license,
+    const char *license_uri,
+    guint min_zoom,
+    guint max_zoom,
+    guint tile_size,
+    ShumateMapProjection projection,
+    const char *uri_format,
+    ShumateVectorStyle *style)
+{
+  ShumateNetworkTileSource *source;
+
+  source = g_object_new (SHUMATE_TYPE_NETWORK_TILE_SOURCE,
+        "id", id,
+        "name", name,
+        "license", license,
+        "license-uri", license_uri,
+        "min-zoom-level", min_zoom,
+        "max-zoom-level", max_zoom,
+        "tile-size", tile_size,
+        "projection", projection,
+        "uri-format", uri_format,
+        "style", style,
         NULL);
   return source;
 }
@@ -593,6 +663,24 @@ shumate_network_tile_source_set_user_agent (
 }
 
 
+/**
+ * shumate_network_tile_source_get_style:
+ * @self: a [class@NetworkTileSource]
+ *
+ * Gets the vector style used to render vector tiles, or %NULL if the source
+ * uses raster tiles.
+ *
+ * Returns: (transfer none): the source's vector rendering style
+ */
+ShumateVectorStyle *
+shumate_network_tile_source_get_style (ShumateNetworkTileSource *self)
+{
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (self);
+  g_return_val_if_fail (SHUMATE_IS_NETWORK_TILE_SOURCE (self), NULL);
+  return priv->style;
+}
+
+
 #define SIZE 8
 static char *
 get_tile_uri (ShumateNetworkTileSource *tile_source,
@@ -646,11 +734,12 @@ get_tile_uri (ShumateNetworkTileSource *tile_source,
 }
 
 static void on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user_data);
-static void on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_tile_rendered_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void fetch_from_network (GTask *task);
 static void on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data);
 static void on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_tile_rendered (GObject *source_object, GAsyncResult *res, gpointer user_data);
 
 typedef struct {
   ShumateNetworkTileSource *self;
@@ -691,6 +780,77 @@ get_modified_time_string (GDateTime *modified_time)
   return g_date_time_format (modified_time, "%a, %d %b %Y %T %Z");
 }
 
+
+static void
+render_tile_async (ShumateNetworkTileSource *self,
+                   ShumateTile *tile,
+                   GBytes *bytes,
+                   GCancellable *cancellable,
+                   GAsyncReadyCallback callback,
+                   gpointer user_data)
+{
+  ShumateNetworkTileSourcePrivate *priv = shumate_network_tile_source_get_instance_private (self);
+
+  g_autoptr(GTask) task = g_task_new (self, cancellable, callback, user_data);
+  g_task_set_source_tag (task, render_tile_async);
+
+  if (priv->style)
+    {
+      g_autoptr(GdkTexture) texture = NULL;
+      g_autoptr(GError) error = NULL;
+
+      texture = shumate_vector_style_render (priv->style, shumate_tile_get_size (tile));
+      if (error != NULL)
+        {
+          g_task_return_error (task, g_steal_pointer (&error));
+          return;
+        }
+
+      shumate_tile_set_texture (tile, texture);
+      shumate_tile_set_fade_in (tile, TRUE);
+
+      g_task_return_boolean (task, TRUE);
+    }
+  else
+    {
+      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (bytes);
+
+      g_task_set_task_data (task, g_object_ref (tile), g_object_unref);
+
+      gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
+    }
+}
+
+static void
+on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GdkPixbuf) pixbuf = NULL;
+  g_autoptr(GdkTexture) texture = NULL;
+  ShumateTile *tile = SHUMATE_TILE (g_task_get_task_data (task));
+
+  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
+  if (error != NULL)
+    {
+      g_task_return_error (task, g_steal_pointer (&error));
+      return;
+    }
+
+  texture = gdk_texture_new_for_pixbuf (pixbuf);
+  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_fade_in (tile, TRUE);
+
+  g_task_return_boolean (task, TRUE);
+}
+
+gboolean
+render_tile_finish (ShumateNetworkTileSource *self,
+                    GAsyncResult *result,
+                    GError **error)
+{
+  return g_task_propagate_boolean (G_TASK (result), error);
+}
 
 static void
 fill_tile_async (ShumateMapSource *self,
@@ -740,23 +900,17 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
                                                     &data->etag, &data->modtime, res, NULL);
 
   if (data->bytes != NULL)
-    {
-      g_autoptr(GInputStream) input_stream = g_memory_input_stream_new_from_bytes (data->bytes);
-
-      /* When on_pixbuf_created_from_cache() is called, it will call
-       * fetch_from_network() if needed */
-      gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created_from_cache, g_object_ref (task));
-    }
+    /* When on_pixbuf_created_from_cache() is called, it will call
+     * fetch_from_network() if needed */
+    render_tile_async (data->self, data->tile, data->bytes, cancellable, on_tile_rendered_from_cache, g_object_ref (task));
   else
-    {
-      fetch_from_network (task);
-    }
+    fetch_from_network (task);
 }
 
 /* Fill the tile from the pixbuf, created from the cache. Then, if the cache
  * data is potentially out of date, fetch from the network. */
 static void
-on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data)
+on_tile_rendered_from_cache (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
   g_autoptr(GTask) task = user_data;
   FillTileData *data = g_task_get_task_data (task);
@@ -764,17 +918,11 @@ on_pixbuf_created_from_cache (GObject *source_object, GAsyncResult *res, gpointe
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GError) error = NULL;
 
-  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
-
-  if (error != NULL)
+  if (!render_tile_finish (data->self, res, &error))
     {
       g_task_return_error (task, g_steal_pointer (&error));
       return;
     }
-
-  texture = gdk_texture_new_for_pixbuf (pixbuf);
-  shumate_tile_set_texture (data->tile, texture);
-  shumate_tile_set_fade_in (data->tile, TRUE);
 
   if (data->bytes != NULL && !tile_is_expired (data->modtime))
     {
@@ -921,9 +1069,7 @@ on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
   GOutputStream *output_stream = G_OUTPUT_STREAM (source_object);
   g_autoptr(GTask) task = user_data;
   FillTileData *data = g_task_get_task_data (task);
-  GCancellable *cancellable = g_task_get_cancellable (task);
   g_autoptr(GError) error = NULL;
-  g_autoptr(GInputStream) input_stream = NULL;
 
   g_output_stream_splice_finish (output_stream, res, &error);
   if (error != NULL)
@@ -935,15 +1081,14 @@ on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
   g_bytes_unref (data->bytes);
   data->bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
 
-  input_stream = g_memory_input_stream_new_from_bytes (data->bytes);
-  gdk_pixbuf_new_from_stream_async (input_stream, cancellable, on_pixbuf_created, g_object_ref (task));
+  render_tile_async (data->self, data->tile, data->bytes, NULL, on_tile_rendered, g_object_ref (task));
 }
 
 /* Fill the tile from the pixbuf, created from the network response. Begin
  * storing the data in the cache (but don't wait for that to finish). Then
  * return. */
 static void
-on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data)
+on_tile_rendered (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
   g_autoptr(GTask) task = user_data;
   FillTileData *data = g_task_get_task_data (task);
@@ -953,8 +1098,7 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
   g_autoptr(GdkPixbuf) pixbuf = NULL;
   g_autoptr(GdkTexture) texture = NULL;
 
-  pixbuf = gdk_pixbuf_new_from_stream_finish (res, &error);
-  if (error != NULL)
+  if (!render_tile_finish (data->self, res, &error))
     {
       g_task_return_error (task, g_steal_pointer (&error));
       return;
@@ -962,11 +1106,8 @@ on_pixbuf_created (GObject *source_object, GAsyncResult *res, gpointer user_data
 
   shumate_file_cache_store_tile_async (priv->file_cache, data->tile, data->bytes, data->etag, cancellable, NULL, NULL);
 
-  texture = gdk_texture_new_for_pixbuf (pixbuf);
-  shumate_tile_set_texture (data->tile, texture);
-  shumate_tile_set_fade_in (data->tile, TRUE);
-
   shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+
   g_task_return_boolean (task, TRUE);
 }
 
