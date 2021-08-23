@@ -1,0 +1,11 @@
+{
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#f6f5f4"
+      }
+    }
+  ]
+}

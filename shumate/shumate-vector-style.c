@@ -15,8 +15,11 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
 
+#include "vector/shumate-vector-utils-private.h"
+#include "vector/shumate-vector-layer-private.h"
 #include "shumate-vector-style.h"
 
 struct _ShumateVectorStyle
@@ -24,9 +27,14 @@ struct _ShumateVectorStyle
   GObject parent_instance;
 
   char *style_json;
+
+  GPtrArray *layers;
 };
 
-G_DEFINE_TYPE (ShumateVectorStyle, shumate_vector_style, G_TYPE_OBJECT)
+static void shumate_vector_style_initable_iface_init (GInitableIface *iface);
+
+G_DEFINE_TYPE_WITH_CODE (ShumateVectorStyle, shumate_vector_style, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, shumate_vector_style_initable_iface_init))
 
 enum {
   PROP_0,
@@ -52,9 +60,9 @@ shumate_vector_style_create (const char *style_json, GError **error)
 {
   g_return_val_if_fail (style_json != NULL, NULL);
 
-  return g_object_new (SHUMATE_TYPE_VECTOR_STYLE,
-                       "style-json", style_json,
-                       NULL);
+  return g_initable_new (SHUMATE_TYPE_VECTOR_STYLE, NULL, error,
+                         "style-json", style_json,
+                         NULL);
 }
 
 
@@ -63,6 +71,7 @@ shumate_vector_style_finalize (GObject *object)
 {
   ShumateVectorStyle *self = (ShumateVectorStyle *)object;
 
+  g_clear_pointer (&self->layers, g_ptr_array_unref);
   g_clear_pointer (&self->style_json, g_free);
 
   G_OBJECT_CLASS (shumate_vector_style_parent_class)->finalize (object);
@@ -123,6 +132,60 @@ shumate_vector_style_class_init (ShumateVectorStyleClass *klass)
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+}
+
+
+static gboolean
+shumate_vector_style_initable_init (GInitable     *initable,
+                                    GCancellable  *cancellable,
+                                    GError       **error)
+{
+  ShumateVectorStyle *self = (ShumateVectorStyle *)initable;
+  g_autoptr(JsonNode) node = NULL;
+  JsonNode *layers_node;
+  JsonObject *object;
+
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_STYLE (self), FALSE);
+  g_return_val_if_fail (self->style_json != NULL, FALSE);
+
+  if (!(node = json_from_string (self->style_json, error)))
+    return FALSE;
+
+  if (!shumate_vector_json_get_object (node, &object, error))
+    return FALSE;
+
+  self->layers = g_ptr_array_new_with_free_func (g_object_unref);
+  if ((layers_node = json_object_get_member (object, "layers")))
+    {
+      JsonArray *layers;
+
+      if (!shumate_vector_json_get_array (layers_node, &layers, error))
+        return FALSE;
+
+      for (int i = 0, n = json_array_get_length (layers); i < n; i ++)
+        {
+          JsonNode *layer_node = json_array_get_element (layers, i);
+          JsonObject *layer_obj;
+          ShumateVectorLayer *layer;
+
+          if (!shumate_vector_json_get_object (layer_node, &layer_obj, error))
+            return FALSE;
+
+          if (!(layer = shumate_vector_layer_create_from_json (layer_obj, error)))
+            return FALSE;
+
+          g_ptr_array_add (self->layers, layer);
+        }
+    }
+
+  return TRUE;
+}
+
+
+static void
+shumate_vector_style_initable_iface_init (GInitableIface *iface)
+{
+  iface->init = shumate_vector_style_initable_init;
 }
 
 
@@ -195,8 +258,8 @@ shumate_vector_style_render (ShumateVectorStyle *self, int size)
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, size, size);
   cr = cairo_create (surface);
 
-  cairo_set_source_rgb (cr, 0, 0, 0);
-  cairo_paint (cr);
+  for (int i = 0; i < self->layers->len; i ++)
+    shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], cr);
 
   texture = texture_new_for_surface (surface);
 

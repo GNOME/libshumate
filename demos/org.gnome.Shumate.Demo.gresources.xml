@@ -6,4 +6,7 @@
   <gresource prefix="/org/gnome/Shumate/Demo/icons">
     <file preprocess="xml-stripblanks">map-marker-symbolic.svg</file>
   </gresource>
+  <gresource prefix="/org/gnome/Shumate/Demo/styles">
+    <file preprocess="json-stripblanks">map-style.json</file>
+  </gresource>
 </gresources>

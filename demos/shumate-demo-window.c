@@ -138,6 +138,8 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 {
   ShumateViewport *viewport;
   GtkExpression *expression;
+  g_autoptr(GBytes) bytes = NULL;
+  const char *style_json;
   g_autoptr(ShumateVectorStyle) style = NULL;
   ShumateMapSource *map_source = NULL;
 
@@ -150,7 +152,9 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   gtk_drop_down_set_expression (self->layers_dropdown, expression);
   gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
 
-  style = shumate_vector_style_create ("{}", NULL);
+  bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/styles/map-style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  style_json = g_bytes_get_data (bytes, NULL);
+  style = shumate_vector_style_create (style_json, NULL);
 
   map_source = SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_vector_full (
     "vector-tiles",

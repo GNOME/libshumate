@@ -54,7 +54,8 @@ G_DECLARE_FINAL_TYPE (ShumateVectorStyle, shumate_vector_style, SHUMATE, VECTOR_
 
 ShumateVectorStyle *shumate_vector_style_create (const char *style_json, GError **error);
 
+const char *shumate_vector_style_get_style_json (ShumateVectorStyle *self);
+
 GdkTexture *shumate_vector_style_render (ShumateVectorStyle *self, int size);
 
 G_END_DECLS
-

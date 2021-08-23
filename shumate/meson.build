@@ -26,6 +26,8 @@ libshumate_private_h = [
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
 
+  'vector/shumate-vector-background-layer-private.h',
+  'vector/shumate-vector-layer-private.h',
   'vector/shumate-vector-utils-private.h',
 ]
 
@@ -52,6 +54,8 @@ libshumate_sources = [
   'shumate-vector-style.c',
   'shumate-viewport.c',
 
+  'vector/shumate-vector-background-layer.c',
+  'vector/shumate-vector-layer.c',
   'vector/shumate-vector-utils.c',
 ]
 

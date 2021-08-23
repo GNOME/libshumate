@@ -14,8 +14,11 @@ tests = [
   'marker-layer',
   'memory-cache',
   'network-tile-source',
+  'vector-style',
   'viewport',
 ]
+
+subdir('data')
 
 test_utils_sources = [
   'test-tile-server.c',
@@ -34,6 +37,7 @@ testutils_dep = declare_dependency(
 foreach test : tests
   executable = executable(
     test,
+    test_resources,
     '@0@.c'.format(test),
     dependencies: [libshumate_dep, testutils_dep],
   )

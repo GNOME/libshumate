@@ -1,0 +1,11 @@
+{
+  "layers": [
+    {
+      "type": "background",
+      "paint": {
+        "background-color": "goldenrod",
+        "background-opacity": 0.5
+      }
+    }
+  ]
+}
