@@ -19,6 +19,7 @@
 #include "shumate-vector-background-layer-private.h"
 #include "shumate-vector-fill-layer-private.h"
 #include "shumate-vector-layer-private.h"
+#include "shumate-vector-line-layer-private.h"
 
 typedef struct
 {
@@ -49,6 +50,8 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
     layer = shumate_vector_background_layer_create_from_json (object, error);
   else if (g_strcmp0 (type, "fill") == 0)
     layer = shumate_vector_fill_layer_create_from_json (object, error);
+  else if (g_strcmp0 (type, "line") == 0)
+    layer = shumate_vector_line_layer_create_from_json (object, error);
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unsupported layer type \"%s\"", type);

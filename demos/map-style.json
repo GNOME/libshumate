@@ -14,6 +14,16 @@
       "paint": {
         "fill-color": "#3584e4"
       }
+    },
+    {
+      "id": "boundary",
+      "type": "line",
+      "source-layer": "boundary",
+      "paint": {
+        "line-color": "#9a9996",
+        "line-opacity": 0.5,
+        "line-width": 0.9
+      }
     }
   ]
 }
