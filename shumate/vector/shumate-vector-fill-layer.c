@@ -16,10 +16,10 @@
  */
 
 #include <gtk/gtk.h>
-#include "shumate-vector-background-layer-private.h"
+#include "shumate-vector-fill-layer-private.h"
 #include "shumate-vector-utils-private.h"
 
-struct _ShumateVectorBackgroundLayer
+struct _ShumateVectorFillLayer
 {
   ShumateVectorLayer parent_instance;
 
@@ -27,13 +27,13 @@ struct _ShumateVectorBackgroundLayer
   double opacity;
 };
 
-G_DEFINE_TYPE (ShumateVectorBackgroundLayer, shumate_vector_background_layer, SHUMATE_TYPE_VECTOR_LAYER)
+G_DEFINE_TYPE (ShumateVectorFillLayer, shumate_vector_fill_layer, SHUMATE_TYPE_VECTOR_LAYER)
 
 
 ShumateVectorLayer *
-shumate_vector_background_layer_create_from_json (JsonObject *object, GError **error)
+shumate_vector_fill_layer_create_from_json (JsonObject *object, GError **error)
 {
-  ShumateVectorBackgroundLayer *layer = g_object_new (SHUMATE_TYPE_VECTOR_BACKGROUND_LAYER, NULL);
+  ShumateVectorFillLayer *layer = g_object_new (SHUMATE_TYPE_VECTOR_FILL_LAYER, NULL);
   JsonNode *paint_node;
 
   if ((paint_node = json_object_get_member (object, "paint")))
@@ -43,8 +43,8 @@ shumate_vector_background_layer_create_from_json (JsonObject *object, GError **e
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      gdk_rgba_parse (&layer->color, json_object_get_string_member_with_default (paint, "background-color", "#000000"));
-      layer->opacity = json_object_get_double_member_with_default (paint, "background-opacity", 1.0);
+      gdk_rgba_parse (&layer->color, json_object_get_string_member_with_default (paint, "fill-color", "#000000"));
+      layer->opacity = json_object_get_double_member_with_default (paint, "fill-opacity", 1.0);
     }
 
   return (ShumateVectorLayer *)layer;
@@ -52,25 +52,27 @@ shumate_vector_background_layer_create_from_json (JsonObject *object, GError **e
 
 
 static void
-shumate_vector_background_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
+shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
 {
-  ShumateVectorBackgroundLayer *self = SHUMATE_VECTOR_BACKGROUND_LAYER (layer);
+  ShumateVectorFillLayer *self = SHUMATE_VECTOR_FILL_LAYER (layer);
 
-  gdk_cairo_set_source_rgba (scope->cr, &self->color);
-  cairo_paint_with_alpha (scope->cr, self->opacity);
+  shumate_vector_render_scope_exec_geometry (scope);
+
+  cairo_set_source_rgba (scope->cr, self->color.red, self->color.green, self->color.blue, self->opacity);
+  cairo_fill (scope->cr);
 }
 
 
 static void
-shumate_vector_background_layer_class_init (ShumateVectorBackgroundLayerClass *klass)
+shumate_vector_fill_layer_class_init (ShumateVectorFillLayerClass *klass)
 {
   ShumateVectorLayerClass *layer_class = SHUMATE_VECTOR_LAYER_CLASS (klass);
 
-  layer_class->render = shumate_vector_background_layer_render;
+  layer_class->render = shumate_vector_fill_layer_render;
 }
 
 
 static void
-shumate_vector_background_layer_init (ShumateVectorBackgroundLayer *self)
+shumate_vector_fill_layer_init (ShumateVectorFillLayer *self)
 {
 }

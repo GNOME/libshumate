@@ -17,6 +17,7 @@
 
 #include <json-glib/json-glib.h>
 #include "shumate-vector-background-layer-private.h"
+#include "shumate-vector-fill-layer-private.h"
 #include "shumate-vector-layer-private.h"
 
 typedef struct
@@ -46,6 +47,8 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
 
   if (g_strcmp0 (type, "background") == 0)
     layer = shumate_vector_background_layer_create_from_json (object, error);
+  else if (g_strcmp0 (type, "fill") == 0)
+    layer = shumate_vector_fill_layer_create_from_json (object, error);
   else
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Unsupported layer type \"%s\"", type);
@@ -99,12 +102,47 @@ shumate_vector_layer_init (ShumateVectorLayer *self)
  * shumate_vector_layer_render:
  * @self: a [class@VectorLayer]
  *
- * Renders the layer by calling the [vfunc@VectorLayer.render] virtual method.
+ * Renders the layer.
  */
 void
-shumate_vector_layer_render (ShumateVectorLayer *self, cairo_t *cr)
+shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope *scope)
 {
+  ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
+
   g_return_if_fail (SHUMATE_IS_VECTOR_LAYER (self));
 
-  SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, cr);
+  if (scope->zoom_level < priv->minzoom || scope->zoom_level > priv->maxzoom)
+    return;
+
+  scope->feature = NULL;
+
+  if (priv->source_layer == NULL)
+    /* Style layers with no source layer are rendered once */
+    SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+  else if (shumate_vector_render_scope_find_layer (scope, priv->source_layer))
+    {
+      /* Style layers with a source layer are rendered once for each feature
+       * in that layer, if it exists */
+
+      cairo_save (scope->cr);
+
+      scope->scale = (double) scope->layer->extent / scope->target_size;
+      cairo_scale (scope->cr, 1.0 / scope->scale, 1.0 / scope->scale);
+
+      for (int j = 0; j < scope->layer->n_features; j ++)
+        {
+          scope->feature = scope->layer->features[j];
+          SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+        }
+
+      cairo_restore (scope->cr);
+    }
+}
+
+const char *
+shumate_vector_layer_get_source_layer (ShumateVectorLayer *self)
+{
+  ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_LAYER (self), NULL);
+  return priv->source_layer;
 }

@@ -18,26 +18,20 @@
 #pragma once
 
 #include <glib-object.h>
-#include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
-#include "shumate-vector-render-scope-private.h"
+#include "vector_tile.pb-c.h"
 
-G_BEGIN_DECLS
+typedef struct {
+  cairo_t *cr;
+  int target_size;
+  double scale;
+  double zoom_level;
 
-#define SHUMATE_TYPE_VECTOR_LAYER (shumate_vector_layer_get_type())
+  VectorTile__Tile *tile;
+  VectorTile__Tile__Layer *layer;
+  VectorTile__Tile__Feature *feature;
+} ShumateVectorRenderScope;
 
-G_DECLARE_DERIVABLE_TYPE (ShumateVectorLayer, shumate_vector_layer, SHUMATE, VECTOR_LAYER, GObject)
 
-struct _ShumateVectorLayerClass
-{
-  GObjectClass parent_class;
-
-  void (*render) (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
-};
-
-ShumateVectorLayer *shumate_vector_layer_create_from_json (JsonObject *object, GError **error);
-
-void shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
-const char *shumate_vector_layer_get_source_layer (ShumateVectorLayer *self);
-
-G_END_DECLS
+gboolean shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name);
+void shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self);

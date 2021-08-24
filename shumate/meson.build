@@ -27,8 +27,11 @@ libshumate_private_h = [
   'shumate-marker-private.h',
 
   'vector/shumate-vector-background-layer-private.h',
+  'vector/shumate-vector-fill-layer-private.h',
   'vector/shumate-vector-layer-private.h',
+  'vector/shumate-vector-render-scope-private.h',
   'vector/shumate-vector-utils-private.h',
+  'vector/vector_tile.pb-c.h',
 ]
 
 libshumate_sources = [
@@ -55,8 +58,11 @@ libshumate_sources = [
   'shumate-viewport.c',
 
   'vector/shumate-vector-background-layer.c',
+  'vector/shumate-vector-fill-layer.c',
   'vector/shumate-vector-layer.c',
+  'vector/shumate-vector-render-scope.c',
   'vector/shumate-vector-utils.c',
+  'vector/vector_tile.pb-c.c',
 ]
 
 libshumate_deps = [
@@ -69,6 +75,7 @@ libshumate_deps = [
   sqlite_dep,
   libsoup_dep,
   json_glib_dep,
+  protobuf_c_dep,
 ]
 
 libshumate_c_args = [

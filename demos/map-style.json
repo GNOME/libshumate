@@ -6,6 +6,14 @@
       "paint": {
         "background-color": "#f6f5f4"
       }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source-layer": "water",
+      "paint": {
+        "fill-color": "#3584e4"
+      }
     }
   ]
 }

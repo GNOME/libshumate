@@ -18,6 +18,7 @@
 #include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
 
+#include "vector/shumate-vector-render-scope-private.h"
 #include "vector/shumate-vector-utils-private.h"
 #include "vector/shumate-vector-layer-private.h"
 #include "shumate-vector-style.h"
@@ -247,24 +248,34 @@ texture_new_for_surface (cairo_surface_t *surface)
  * Returns: (transfer full): a [class@Gdk.Texture] containing the rendered tile
  */
 GdkTexture *
-shumate_vector_style_render (ShumateVectorStyle *self, int size)
+shumate_vector_style_render (ShumateVectorStyle *self, int texture_size, GBytes *tile_data, double zoom_level)
 {
+  ShumateVectorRenderScope scope;
   GdkTexture *texture;
-  cairo_t *cr;
   cairo_surface_t *surface;
+  gconstpointer data;
+  gsize len;
 
   g_return_val_if_fail (SHUMATE_IS_VECTOR_STYLE (self), NULL);
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, size, size);
-  cr = cairo_create (surface);
+  scope.target_size = texture_size;
+  scope.zoom_level = zoom_level;
 
-  for (int i = 0; i < self->layers->len; i ++)
-    shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], cr);
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
+  scope.cr = cairo_create (surface);
+
+  data = g_bytes_get_data (tile_data, &len);
+  scope.tile = vector_tile__tile__unpack (NULL, len, data);
+
+  if (scope.tile != NULL)
+    for (int i = 0; i < self->layers->len; i ++)
+      shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], &scope);
 
   texture = texture_new_for_surface (surface);
 
-  cairo_destroy (cr);
+  cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
+  vector_tile__tile__free_unpacked (scope.tile, NULL);
 
   return texture;
 }

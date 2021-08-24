@@ -799,7 +799,7 @@ render_tile_async (ShumateNetworkTileSource *self,
       g_autoptr(GdkTexture) texture = NULL;
       g_autoptr(GError) error = NULL;
 
-      texture = shumate_vector_style_render (priv->style, shumate_tile_get_size (tile));
+      texture = shumate_vector_style_render (priv->style, shumate_tile_get_size (tile), bytes, shumate_tile_get_zoom_level (tile));
       if (error != NULL)
         {
           g_task_return_error (task, g_steal_pointer (&error));

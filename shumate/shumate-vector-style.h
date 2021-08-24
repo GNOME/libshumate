@@ -56,6 +56,6 @@ ShumateVectorStyle *shumate_vector_style_create (const char *style_json, GError 
 
 const char *shumate_vector_style_get_style_json (ShumateVectorStyle *self);
 
-GdkTexture *shumate_vector_style_render (ShumateVectorStyle *self, int size);
+GdkTexture *shumate_vector_style_render (ShumateVectorStyle *self, int texture_size, GBytes *tile_data, double zoom_level);
 
 G_END_DECLS

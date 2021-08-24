@@ -17,27 +17,16 @@
 
 #pragma once
 
-#include <glib-object.h>
 #include <json-glib/json-glib.h>
-#include <cairo/cairo.h>
-#include "shumate-vector-render-scope-private.h"
+
+#include "shumate-vector-layer-private.h"
 
 G_BEGIN_DECLS
 
-#define SHUMATE_TYPE_VECTOR_LAYER (shumate_vector_layer_get_type())
+#define SHUMATE_TYPE_VECTOR_FILL_LAYER (shumate_vector_fill_layer_get_type())
 
-G_DECLARE_DERIVABLE_TYPE (ShumateVectorLayer, shumate_vector_layer, SHUMATE, VECTOR_LAYER, GObject)
+G_DECLARE_FINAL_TYPE (ShumateVectorFillLayer, shumate_vector_fill_layer, SHUMATE, VECTOR_FILL_LAYER, ShumateVectorLayer)
 
-struct _ShumateVectorLayerClass
-{
-  GObjectClass parent_class;
-
-  void (*render) (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
-};
-
-ShumateVectorLayer *shumate_vector_layer_create_from_json (JsonObject *object, GError **error);
-
-void shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
-const char *shumate_vector_layer_get_source_layer (ShumateVectorLayer *self);
+ShumateVectorLayer *shumate_vector_fill_layer_create_from_json (JsonObject *object, GError **error);
 
 G_END_DECLS
