@@ -59,7 +59,10 @@ enum
   PROP_MAX_CONNS,
   PROP_USER_AGENT,
   PROP_FILE_CACHE,
+  N_PROPERTIES,
 };
+
+static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
 typedef struct
 {
@@ -99,7 +102,7 @@ shumate_network_tile_source_constructed (GObject *object)
   const char *id = shumate_map_source_get_id (SHUMATE_MAP_SOURCE (self));
 
   priv->file_cache = shumate_file_cache_new_full (100000000, id, NULL);
-  g_object_notify (object, "file-cache");
+  g_object_notify_by_pspec (object, obj_properties[PROP_FILE_CACHE]);
 
   G_OBJECT_CLASS (shumate_network_tile_source_parent_class)->constructed (object);
 }
@@ -227,36 +230,36 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    *
    * The uri format of the tile source, see #shumate_network_tile_source_set_uri_format
    */
-  pspec = g_param_spec_string ("uri-format",
-        "URI Format",
-        "The URI format",
-        "",
-        G_PARAM_READWRITE | G_PARAM_CONSTRUCT);
-  g_object_class_install_property (object_class, PROP_URI_FORMAT, pspec);
+  obj_properties[PROP_URI_FORMAT] =
+    g_param_spec_string ("uri-format",
+                         "URI Format",
+                         "The URI format",
+                         "",
+                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * ShumateNetworkTileSource:offline:
    *
    * Specifies whether the network tile source can access network
    */
-  pspec = g_param_spec_boolean ("offline",
-        "Offline",
-        "Offline",
-        FALSE,
-        G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_OFFLINE, pspec);
+  obj_properties[PROP_OFFLINE] =
+    g_param_spec_boolean ("offline",
+                          "Offline",
+                          "Offline",
+                          FALSE,
+                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * ShumateNetworkTileSource:proxy-uri:
    *
    * Used to override the default proxy for accessing the network.
    */
-  pspec = g_param_spec_string ("proxy-uri",
-        "Proxy URI",
-        "The proxy URI to use to access network",
-        "",
-        G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_PROXY_URI, pspec);
+  obj_properties[PROP_PROXY_URI] =
+    g_param_spec_string ("proxy-uri",
+                         "Proxy URI",
+                         "The proxy URI to use to access network",
+                         "",
+                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * ShumateNetworkTileSource:max-conns:
@@ -267,41 +270,41 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
    * Before changing this remember to verify how many simultaneous connections
    * your tile provider allows you to make.
    */
-  pspec = g_param_spec_int ("max-conns",
-        "Max Connection Count",
-        "The maximum number of allowed simultaneous connections "
-        "for this tile source.",
-        1,
-        G_MAXINT,
-        MAX_CONNS_DEFAULT,
-        G_PARAM_READWRITE);
-
-  g_object_class_install_property (object_class, PROP_MAX_CONNS, pspec);
+  obj_properties[PROP_MAX_CONNS] =
+    g_param_spec_int ("max-conns",
+                      "Max Connection Count",
+                      "The maximum number of allowed simultaneous connections "
+                      "for this tile source.",
+                      1,
+                      G_MAXINT,
+                      MAX_CONNS_DEFAULT,
+                      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * ShumateNetworkTileSource:user-agent:
    *
    * The HTTP user agent used for requests
    */
-  pspec = g_param_spec_string ("user-agent",
-        "HTTP User Agent",
-        "The HTTP user agent used for network requests",
-        "libshumate/" SHUMATE_VERSION_S,
-        G_PARAM_WRITABLE);
-
-  g_object_class_install_property (object_class, PROP_USER_AGENT, pspec);
+  obj_properties[PROP_USER_AGENT] =
+    g_param_spec_string ("user-agent",
+                         "HTTP User Agent",
+                         "The HTTP user agent used for network requests",
+                         "libshumate/" SHUMATE_VERSION_S,
+                         G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
    * ShumateNetworkTileSource:file-cache:
    *
    * The cache where downloaded tiles are stored.
    */
-  pspec = g_param_spec_object("file-cache",
-                              "File Cache",
-                              "Cache for storing tile data",
-                              SHUMATE_TYPE_FILE_CACHE,
-                              G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
-  g_object_class_install_property (object_class, PROP_FILE_CACHE, pspec);
+  obj_properties[PROP_FILE_CACHE] =
+    g_param_spec_object("file-cache",
+                        "File Cache",
+                        "Cache for storing tile data",
+                        SHUMATE_TYPE_FILE_CACHE,
+                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 }
 
 
@@ -421,7 +424,7 @@ shumate_network_tile_source_set_uri_format (ShumateNetworkTileSource *tile_sourc
   g_free (priv->uri_format);
   priv->uri_format = g_strdup (uri_format);
 
-  g_object_notify (G_OBJECT (tile_source), "uri-format");
+  g_object_notify_by_pspec (G_OBJECT (tile_source), obj_properties[PROP_URI_FORMAT]);
 }
 
 
@@ -475,7 +478,7 @@ shumate_network_tile_source_set_proxy_uri (ShumateNetworkTileSource *tile_source
   if (uri)
     soup_uri_free (uri);
 
-  g_object_notify (G_OBJECT (tile_source), "proxy-uri");
+  g_object_notify_by_pspec (G_OBJECT (tile_source), obj_properties[PROP_PROXY_URI]);
 }
 
 
@@ -515,7 +518,7 @@ shumate_network_tile_source_set_offline (ShumateNetworkTileSource *tile_source,
 
   priv->offline = offline;
 
-  g_object_notify (G_OBJECT (tile_source), "offline");
+  g_object_notify_by_pspec (G_OBJECT (tile_source), obj_properties[PROP_OFFLINE]);
 }
 
 
@@ -566,7 +569,7 @@ shumate_network_tile_source_set_max_conns (ShumateNetworkTileSource *tile_source
       "max-conns", max_conns,
       NULL);
 
-  g_object_notify (G_OBJECT (tile_source), "max_conns");
+  g_object_notify_by_pspec (G_OBJECT (tile_source), obj_properties[PROP_MAX_CONNS]);
 }
 
 /**
@@ -589,6 +592,8 @@ shumate_network_tile_source_set_user_agent (
   if (priv->soup_session)
     g_object_set (G_OBJECT (priv->soup_session), "user-agent",
         user_agent, NULL);
+
+  g_object_notify_by_pspec (G_OBJECT (tile_source), obj_properties[PROP_USER_AGENT]);
 }
 
 
