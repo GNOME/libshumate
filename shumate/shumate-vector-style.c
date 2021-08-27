@@ -206,3 +206,9 @@ shumate_vector_style_render (ShumateVectorStyle *self, int size)
   return texture;
 }
 
+/**
+ * shumate_style_error_quark:
+ *
+ * Returns: a #GQuark
+ */
+G_DEFINE_QUARK (shumate-style-error-quark, shumate_style_error);

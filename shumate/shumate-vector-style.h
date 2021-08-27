@@ -21,6 +21,33 @@
 
 G_BEGIN_DECLS
 
+
+/**
+ * SHUMATE_STYLE_ERROR:
+ *
+ * Error domain for errors that may occur when parsing a map style. Errors in
+ * this domain will be from the [enum@StyleError] enum.
+ */
+#define SHUMATE_STYLE_ERROR shumate_style_error_quark ()
+GQuark shumate_style_error_quark (void);
+
+/**
+ * ShumateStyleError:
+ * @SHUMATE_STYLE_ERROR_FAILED: An unspecified error occurred during the operation.
+ * @SHUMATE_STYLE_ERROR_MALFORMED_STYLE: A JSON node in the style has the wrong type (e.g. an object where there should be an array).
+ * @SHUMATE_STYLE_ERROR_UNSUPPORTED_LAYER: An unsupported layer type was encountered.
+ * @SHUMATE_STYLE_ERROR_INVALID_EXPRESSION: An invalid or unrecognized expression was encountered.
+ *
+ * Error codes in the [error@StyleError] domain.
+ */
+typedef enum {
+  SHUMATE_STYLE_ERROR_FAILED,
+  SHUMATE_STYLE_ERROR_MALFORMED_STYLE,
+  SHUMATE_STYLE_ERROR_UNSUPPORTED_LAYER,
+  SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+} ShumateStyleError;
+
+
 #define SHUMATE_TYPE_VECTOR_STYLE (shumate_vector_style_get_type())
 
 G_DECLARE_FINAL_TYPE (ShumateVectorStyle, shumate_vector_style, SHUMATE, VECTOR_STYLE, GObject)
