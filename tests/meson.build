@@ -14,7 +14,9 @@ tests = [
   'marker-layer',
   'memory-cache',
   'network-tile-source',
+  'vector-expression',
   'vector-style',
+  'vector-value',
   'viewport',
 ]
 
@@ -32,6 +34,7 @@ testutils_dep = declare_dependency(
   link_with: testutils_lib,
   dependencies: libshumate_deps,
   sources: test_utils_sources,
+  include_directories: include_directories('../shumate')
 )
 
 foreach test : tests

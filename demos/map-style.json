@@ -12,13 +12,18 @@
       "type": "fill",
       "source-layer": "water",
       "paint": {
-        "fill-color": "#3584e4"
+        "fill-color": {
+          "stops": [
+            [0, "#3584e4"],
+            [5, "#1a5fb4"]
+          ]
+        }
       }
     },
     {
-      "id": "boundary",
+      "id": "country_boundary",
       "type": "line",
-      "source-layer": "boundary",
+      "source-layer": "admin_boundary",
       "paint": {
         "line-color": "#9a9996",
         "line-opacity": 0.5,

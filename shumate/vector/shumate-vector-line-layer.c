@@ -16,16 +16,18 @@
  */
 
 #include <gtk/gtk.h>
+#include "shumate-vector-expression-private.h"
 #include "shumate-vector-line-layer-private.h"
 #include "shumate-vector-utils-private.h"
+#include "shumate-vector-value-private.h"
 
 struct _ShumateVectorLineLayer
 {
   ShumateVectorLayer parent_instance;
 
-  GdkRGBA color;
-  double opacity;
-  double width;
+  ShumateVectorExpression *color;
+  ShumateVectorExpression *opacity;
+  ShumateVectorExpression *width;
 };
 
 G_DEFINE_TYPE (ShumateVectorLineLayer, shumate_vector_line_layer, SHUMATE_TYPE_VECTOR_LAYER)
@@ -44,9 +46,14 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      gdk_rgba_parse (&layer->color, json_object_get_string_member_with_default (paint, "line-color", "#000000"));
-      layer->opacity = json_object_get_double_member_with_default (paint, "line-opacity", 1.0);
-      layer->width = json_object_get_double_member_with_default (paint, "line-width", 1.0);
+      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "line-color"), error)))
+        return NULL;
+
+      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "line-opacity"), error)))
+        return NULL;
+
+      if (!(layer->width = shumate_vector_expression_from_json (json_object_get_member (paint, "line-width"), error)))
+        return NULL;
     }
 
   return (ShumateVectorLayer *)layer;
@@ -54,14 +61,34 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
 
 
 static void
+shumate_vector_line_layer_finalize (GObject *object)
+{
+  ShumateVectorLineLayer *self = SHUMATE_VECTOR_LINE_LAYER (object);
+
+  g_clear_object (&self->color);
+  g_clear_object (&self->opacity);
+  g_clear_object (&self->width);
+
+  G_OBJECT_CLASS (shumate_vector_line_layer_parent_class)->finalize (object);
+}
+
+
+static void
 shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
 {
   ShumateVectorLineLayer *self = SHUMATE_VECTOR_LINE_LAYER (layer);
+  GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
+  double opacity;
+  double width;
+
+  shumate_vector_expression_eval_color (self->color, scope, &color);
+  opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
+  width = shumate_vector_expression_eval_number (self->width, scope, 1.0);
 
   shumate_vector_render_scope_exec_geometry (scope);
 
-  cairo_set_source_rgba (scope->cr, self->color.red, self->color.green, self->color.blue, self->opacity);
-  cairo_set_line_width (scope->cr, self->width * scope->scale);
+  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, opacity);
+  cairo_set_line_width (scope->cr, width * scope->scale);
   cairo_stroke (scope->cr);
 }
 
@@ -69,8 +96,10 @@ shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
 static void
 shumate_vector_line_layer_class_init (ShumateVectorLineLayerClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateVectorLayerClass *layer_class = SHUMATE_VECTOR_LAYER_CLASS (klass);
 
+  object_class->finalize = shumate_vector_line_layer_finalize;
   layer_class->render = shumate_vector_line_layer_render;
 }
 

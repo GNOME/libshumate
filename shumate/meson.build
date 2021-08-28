@@ -27,11 +27,15 @@ libshumate_private_h = [
   'shumate-marker-private.h',
 
   'vector/shumate-vector-background-layer-private.h',
+  'vector/shumate-vector-expression-private.h',
+  'vector/shumate-vector-expression-interpolate-private.h',
+  'vector/shumate-vector-expression-literal-private.h',
   'vector/shumate-vector-fill-layer-private.h',
   'vector/shumate-vector-layer-private.h',
   'vector/shumate-vector-line-layer-private.h',
   'vector/shumate-vector-render-scope-private.h',
   'vector/shumate-vector-utils-private.h',
+  'vector/shumate-vector-value-private.h',
   'vector/vector_tile.pb-c.h',
 ]
 
@@ -59,11 +63,15 @@ libshumate_sources = [
   'shumate-viewport.c',
 
   'vector/shumate-vector-background-layer.c',
+  'vector/shumate-vector-expression.c',
+  'vector/shumate-vector-expression-interpolate.c',
+  'vector/shumate-vector-expression-literal.c',
   'vector/shumate-vector-fill-layer.c',
   'vector/shumate-vector-layer.c',
   'vector/shumate-vector-line-layer.c',
   'vector/shumate-vector-render-scope.c',
   'vector/shumate-vector-utils.c',
+  'vector/shumate-vector-value.c',
   'vector/vector_tile.pb-c.c',
 ]
 

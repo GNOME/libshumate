@@ -17,14 +17,15 @@
 
 #include <gtk/gtk.h>
 #include "shumate-vector-background-layer-private.h"
+#include "shumate-vector-expression-private.h"
 #include "shumate-vector-utils-private.h"
 
 struct _ShumateVectorBackgroundLayer
 {
   ShumateVectorLayer parent_instance;
 
-  GdkRGBA color;
-  double opacity;
+  ShumateVectorExpression *color;
+  ShumateVectorExpression *opacity;
 };
 
 G_DEFINE_TYPE (ShumateVectorBackgroundLayer, shumate_vector_background_layer, SHUMATE_TYPE_VECTOR_LAYER)
@@ -43,8 +44,11 @@ shumate_vector_background_layer_create_from_json (JsonObject *object, GError **e
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      gdk_rgba_parse (&layer->color, json_object_get_string_member_with_default (paint, "background-color", "#000000"));
-      layer->opacity = json_object_get_double_member_with_default (paint, "background-opacity", 1.0);
+      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "background-color"), error)))
+        return NULL;
+
+      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "background-opacity"), error)))
+        return NULL;
     }
 
   return (ShumateVectorLayer *)layer;
@@ -52,20 +56,39 @@ shumate_vector_background_layer_create_from_json (JsonObject *object, GError **e
 
 
 static void
+shumate_vector_background_layer_finalize (GObject *object)
+{
+  ShumateVectorBackgroundLayer *self = SHUMATE_VECTOR_BACKGROUND_LAYER (object);
+
+  g_clear_object (&self->color);
+  g_clear_object (&self->opacity);
+
+  G_OBJECT_CLASS (shumate_vector_background_layer_parent_class)->finalize (object);
+}
+
+
+static void
 shumate_vector_background_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
 {
   ShumateVectorBackgroundLayer *self = SHUMATE_VECTOR_BACKGROUND_LAYER (layer);
+  GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
+  double opacity;
 
-  gdk_cairo_set_source_rgba (scope->cr, &self->color);
-  cairo_paint_with_alpha (scope->cr, self->opacity);
+  shumate_vector_expression_eval_color (self->color, scope, &color);
+  opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
+
+  gdk_cairo_set_source_rgba (scope->cr, &color);
+  cairo_paint_with_alpha (scope->cr, opacity);
 }
 
 
 static void
 shumate_vector_background_layer_class_init (ShumateVectorBackgroundLayerClass *klass)
 {
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateVectorLayerClass *layer_class = SHUMATE_VECTOR_LAYER_CLASS (klass);
 
+  object_class->finalize = shumate_vector_background_layer_finalize;
   layer_class->render = shumate_vector_background_layer_render;
 }
 
