@@ -17,6 +17,7 @@
 
 #include <json-glib/json-glib.h>
 #include "shumate-vector-background-layer-private.h"
+#include "shumate-vector-expression-private.h"
 #include "shumate-vector-fill-layer-private.h"
 #include "shumate-vector-layer-private.h"
 #include "shumate-vector-line-layer-private.h"
@@ -28,6 +29,8 @@ typedef struct
   double minzoom;
   double maxzoom;
   char *source_layer;
+  ShumateVectorExpression *filter;
+
 } ShumateVectorLayerPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateVectorLayer, shumate_vector_layer, G_TYPE_OBJECT)
@@ -38,6 +41,7 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
 {
   ShumateVectorLayer *layer;
   ShumateVectorLayerPrivate *priv;
+  JsonNode *filter;
   const char *type = json_object_get_string_member_with_default (object, "type", NULL);
 
   if (type == NULL)
@@ -68,6 +72,13 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
   priv->maxzoom = json_object_get_double_member_with_default (object, "maxzoom", 1000000000.0);
   priv->source_layer = g_strdup (json_object_get_string_member_with_default (object, "source-layer", NULL));
 
+  filter = json_object_get_member (object, "filter");
+  if (filter != NULL)
+    {
+      if (!(priv->filter = shumate_vector_expression_from_json (filter, error)))
+        return NULL;
+    }
+
   return layer;
 }
 
@@ -79,6 +90,7 @@ shumate_vector_layer_finalize (GObject *object)
   ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
 
   g_clear_pointer (&priv->source_layer, g_free);
+  g_clear_object (&priv->filter);
 
   G_OBJECT_CLASS (shumate_vector_layer_parent_class)->finalize (object);
 }
@@ -135,7 +147,8 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
       for (int j = 0; j < scope->layer->n_features; j ++)
         {
           scope->feature = scope->layer->features[j];
-          SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+          if (priv->filter == NULL || shumate_vector_expression_eval_boolean (priv->filter, scope, FALSE))
+            SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
         }
 
       cairo_restore (scope->cr);

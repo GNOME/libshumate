@@ -18,6 +18,7 @@
 
 #include "shumate-vector-style.h"
 #include "shumate-vector-expression-private.h"
+#include "shumate-vector-expression-filter-private.h"
 #include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-literal-private.h"
 #include "shumate-vector-value-private.h"
@@ -50,14 +51,10 @@ shumate_vector_expression_from_json (JsonNode *json, GError **error)
     }
   else if (JSON_NODE_HOLDS_OBJECT (json))
     return shumate_vector_expression_interpolate_from_json_obj (json_node_get_object (json), error);
+  else if (JSON_NODE_HOLDS_ARRAY (json))
+    return shumate_vector_expression_filter_from_json_array (json_node_get_array (json), error);
   else
-    {
-      g_set_error (error,
-                   SHUMATE_STYLE_ERROR,
-                   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                   "Unsupported expression type");
-      return NULL;
-    }
+    g_assert_not_reached ();
 }
 
 

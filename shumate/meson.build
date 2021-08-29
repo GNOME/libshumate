@@ -28,6 +28,7 @@ libshumate_private_h = [
 
   'vector/shumate-vector-background-layer-private.h',
   'vector/shumate-vector-expression-private.h',
+  'vector/shumate-vector-expression-filter-private.h',
   'vector/shumate-vector-expression-interpolate-private.h',
   'vector/shumate-vector-expression-literal-private.h',
   'vector/shumate-vector-fill-layer-private.h',
@@ -65,6 +66,7 @@ libshumate_sources = [
   'vector/shumate-vector-background-layer.c',
   'vector/shumate-vector-expression.c',
   'vector/shumate-vector-expression-interpolate.c',
+  'vector/shumate-vector-expression-filter.c',
   'vector/shumate-vector-expression-literal.c',
   'vector/shumate-vector-fill-layer.c',
   'vector/shumate-vector-layer.c',

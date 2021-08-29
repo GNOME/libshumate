@@ -19,6 +19,7 @@
 
 #include <json-glib/json-glib.h>
 #include <gtk/gtk.h>
+#include "vector_tile.pb-c.h"
 
 #define SHUMATE_VECTOR_COLOR_BLACK ((GdkRGBA) {.red=0, .green=0, .blue=0, .alpha=1})
 
@@ -39,8 +40,10 @@ typedef struct {
 #define SHUMATE_VECTOR_VALUE_INIT ((ShumateVectorValue) {.type = 0})
 
 gboolean shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *value);
+void shumate_vector_value_set_from_feature_value (ShumateVectorValue *self, VectorTile__Tile__Value *value);
 
 void shumate_vector_value_unset (ShumateVectorValue *self);
+gboolean shumate_vector_value_is_null (ShumateVectorValue *self);
 void shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out);
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (ShumateVectorValue, shumate_vector_value_unset)

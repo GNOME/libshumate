@@ -15,25 +15,17 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+
 #pragma once
 
-#include <glib-object.h>
-#include <cairo/cairo.h>
-#include "vector_tile.pb-c.h"
-#include "shumate-vector-value-private.h"
+#include "shumate-vector-expression-private.h"
 
-typedef struct {
-  cairo_t *cr;
-  int target_size;
-  double scale;
-  double zoom_level;
+G_BEGIN_DECLS
 
-  VectorTile__Tile *tile;
-  VectorTile__Tile__Layer *layer;
-  VectorTile__Tile__Feature *feature;
-} ShumateVectorRenderScope;
+#define SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER (shumate_vector_expression_filter_get_type())
+G_DECLARE_FINAL_TYPE (ShumateVectorExpressionFilter, shumate_vector_expression_filter, SHUMATE, VECTOR_EXPRESSION_FILTER, ShumateVectorExpression)
 
+ShumateVectorExpression *shumate_vector_expression_filter_from_json_array (JsonArray  *array,
+                                                                           GError    **error);
 
-gboolean shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name);
-void shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self);
-void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value);
+G_END_DECLS

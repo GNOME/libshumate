@@ -173,7 +173,10 @@ shumate_vector_style_initable_init (GInitable     *initable,
             return FALSE;
 
           if (!(layer = shumate_vector_layer_create_from_json (layer_obj, error)))
-            return FALSE;
+            {
+              g_prefix_error (error, "layer '%s': ", json_object_get_string_member (layer_obj, "id"));
+              return FALSE;
+            }
 
           g_ptr_array_add (self->layers, layer);
         }

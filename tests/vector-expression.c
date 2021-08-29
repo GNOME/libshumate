@@ -108,6 +108,122 @@ test_vector_expression_interpolate_color (void)
 }
 
 
+static gboolean
+filter_with_scope (ShumateVectorRenderScope *scope, const char *filter)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string (filter, NULL);
+  g_autoptr(ShumateVectorExpression) expression = shumate_vector_expression_from_json (node, &error);
+
+  g_assert_no_error (error);
+
+  return shumate_vector_expression_eval_boolean (expression, scope, FALSE);
+}
+
+
+static gboolean
+filter (const char *filter)
+{
+  return filter_with_scope (NULL, filter);
+}
+
+
+static void
+test_vector_expression_basic_filter (void)
+{
+  g_assert_true  (filter ("true"));
+  g_assert_false (filter ("false"));
+  g_assert_false (filter ("[\"!\", true]"));
+  g_assert_true  (filter ("[\"!\", false]"));
+  g_assert_true  (filter ("[\"any\", false, true]"));
+  g_assert_false (filter ("[\"any\", false, false]"));
+  g_assert_true  (filter ("[\"none\", false, false]"));
+  g_assert_false (filter ("[\"none\", true, false]"));
+  g_assert_true  (filter ("[\"all\", true, true]"));
+  g_assert_false (filter ("[\"all\", false, true]"));
+
+  g_assert_false (filter ("[\"any\"]"));
+  g_assert_true  (filter ("[\"none\"]"));
+  g_assert_true  (filter ("[\"all\"]"));
+
+  g_assert_true  (filter ("[\"in\", 10, 20, 10, 13]"));
+  g_assert_true  (filter ("[\"!in\", 10, 20, 0, 13]"));
+
+  g_assert_true  (filter ("[\"==\", 10, 10]"));
+  g_assert_false (filter ("[\"==\", 10, 20]"));
+  g_assert_false (filter ("[\"==\", 10, \"10\"]"));
+  g_assert_false (filter ("[\"!=\", 10, 10]"));
+  g_assert_true  (filter ("[\"!=\", 10, 20]"));
+  g_assert_true  (filter ("[\"!=\", 10, \"10\"]"));
+  g_assert_true  (filter ("[\">\", 20, 10]"));
+  g_assert_false (filter ("[\">\", 10, 10]"));
+  g_assert_false (filter ("[\">\", 5, 10]"));
+  g_assert_true  (filter ("[\"<\", 10, 20]"));
+  g_assert_false (filter ("[\"<\", 10, 10]"));
+  g_assert_false (filter ("[\"<\", 10, 5]"));
+  g_assert_true  (filter ("[\">=\", 20, 10]"));
+  g_assert_true  (filter ("[\">=\", 10, 10]"));
+  g_assert_false (filter ("[\">=\", 5, 10]"));
+  g_assert_true  (filter ("[\"<=\", 10, 20]"));
+  g_assert_true  (filter ("[\"<=\", 10, 10]"));
+  g_assert_false (filter ("[\"<=\", 10, 5]"));
+}
+
+
+static void
+test_vector_expression_feature_filter (void)
+{
+  GError *error = NULL;
+  g_autoptr(GBytes) vector_data = NULL;
+  gconstpointer data;
+  gsize len;
+  ShumateVectorRenderScope scope;
+
+  vector_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  g_assert_no_error (error);
+
+  data = g_bytes_get_data (vector_data, &len);
+  scope.tile = vector_tile__tile__unpack (NULL, len, data);
+  g_assert_nonnull (scope.tile);
+
+  scope.zoom_level = 10;
+
+  g_assert_true (shumate_vector_render_scope_find_layer (&scope, "helloworld"));
+  scope.feature = scope.layer->features[0];
+
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", \"name\", \"Hello, world!\"]"));
+  g_assert_false (filter_with_scope (&scope, "[\"==\", \"name\", \"Goodbye, world!\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"has\", \"name\"]"));
+  g_assert_false (filter_with_scope (&scope, "[\"!has\", \"name\"]"));
+  g_assert_false (filter_with_scope (&scope, "[\"has\", \"name:en\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!has\", \"name:en\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", \"$type\", \"Point\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", \"zoom\", 10]"));
+}
+
+
+static void
+filter_expect_error (const char *filter)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string (filter, NULL);
+  g_autoptr(ShumateVectorExpression) expression = shumate_vector_expression_from_json (node, &error);
+
+  g_assert_error (error, SHUMATE_STYLE_ERROR, SHUMATE_STYLE_ERROR_INVALID_EXPRESSION);
+  g_assert_null (expression);
+}
+
+static void
+test_vector_expression_filter_errors (void)
+{
+  filter_expect_error ("[\"not an operator\"]");
+  filter_expect_error ("[\"in\"]");
+  filter_expect_error ("[\"==\", 0, 1, 2]");
+  filter_expect_error ("[]");
+  filter_expect_error ("[[]]");
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -117,6 +233,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/literal", test_vector_expression_literal);
   g_test_add_func ("/vector/expression/interpolate", test_vector_expression_interpolate);
   g_test_add_func ("/vector/expression/interpolate-color", test_vector_expression_interpolate_color);
+  g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
+  g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
+  g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
 
   return g_test_run ();
 }
