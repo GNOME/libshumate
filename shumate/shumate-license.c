@@ -24,8 +24,6 @@
  * An actor that displays license text.
  */
 
-#include "config.h"
-
 #include "shumate-license.h"
 
 enum

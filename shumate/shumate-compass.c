@@ -35,8 +35,6 @@
  * image named "map-compass".
  */
 
-#include "config.h"
-
 #include "shumate-compass.h"
 
 struct _ShumateCompass

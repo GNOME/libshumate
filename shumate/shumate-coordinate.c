@@ -26,7 +26,6 @@
 
 #include "shumate-coordinate.h"
 
-#include "config.h"
 #include "shumate-marshal.h"
 #include "shumate-location.h"
 

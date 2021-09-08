@@ -34,8 +34,6 @@
  * type of markers with text and image support.
  */
 
-#include "config.h"
-
 #include "shumate-marker.h"
 #include "shumate-marker-private.h"
 

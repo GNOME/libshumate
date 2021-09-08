@@ -30,8 +30,6 @@
  * see #ShumateMapSourceFactory.
  */
 
-#include "config.h"
-
 #include "shumate-network-tile-source.h"
 
 #include "shumate.h"

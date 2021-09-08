@@ -46,8 +46,6 @@
  * an error occurs during download, an error tile will be displayed.
  */
 
-#include "config.h"
-
 #include "shumate-map.h"
 
 #include "shumate.h"

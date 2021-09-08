@@ -30,8 +30,6 @@
  * can be used as well.
  */
 
-#include "config.h"
-
 #include "shumate-path-layer.h"
 
 #include "shumate-enum-types.h"

@@ -26,8 +26,6 @@
  * positioning markers correctly, marker selections and group marker operations.
  */
 
-#include "config.h"
-
 #include "shumate-marker-layer.h"
 #include "shumate-marker-private.h"
 

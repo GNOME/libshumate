@@ -37,8 +37,6 @@
 
  */
 
-#include "config.h"
-
 #include "shumate-scale.h"
 #include "shumate-enum-types.h"
 
