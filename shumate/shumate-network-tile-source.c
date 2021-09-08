@@ -213,7 +213,6 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
 {
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  GParamSpec *pspec;
 
   object_class->constructed = shumate_network_tile_source_constructed;
   object_class->finalize = shumate_network_tile_source_finalize;
