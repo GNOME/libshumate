@@ -289,7 +289,7 @@ shumate_network_tile_source_class_init (ShumateNetworkTileSourceClass *klass)
     g_param_spec_string ("user-agent",
                          "HTTP User Agent",
                          "The HTTP user agent used for network requests",
-                         "libshumate/" SHUMATE_VERSION_S,
+                         "libshumate/" SHUMATE_VERSION,
                          G_PARAM_WRITABLE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
@@ -328,7 +328,7 @@ shumate_network_tile_source_init (ShumateNetworkTileSource *tile_source)
         NULL);
   g_object_set (G_OBJECT (priv->soup_session),
       "user-agent",
-      "libshumate/" SHUMATE_VERSION_S,
+      "libshumate/" SHUMATE_VERSION,
       "max-conns-per-host", MAX_CONNS_DEFAULT,
       "max-conns", MAX_CONNS_DEFAULT,
       NULL);

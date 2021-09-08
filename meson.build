@@ -81,9 +81,10 @@ if get_option('gtk_doc')
   gidocgen = find_program('gi-docgen')
 endif
 
+add_project_arguments('-DSHUMATE_VERSION="@0@"'.format(meson.project_version()), language: 'c')
 # Configurations
 config_h = configuration_data()
-config_h.set_quoted('VERSION', version)
+config_h.set_quoted('SHUMATE_VERSION', version)
 
 configure_file(
   output: 'config.h',

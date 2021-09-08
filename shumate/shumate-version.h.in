@@ -53,41 +53,20 @@
 #define SHUMATE_MICRO_VERSION   (@SHUMATE_MICRO_VERSION@)
 
 /**
- * SHUMATE_VERSION:
- *
- * The full version of libshumate, like 1.2.3
- */
-#define SHUMATE_VERSION         @SHUMATE_VERSION@
-
-/**
- * SHUMATE_VERSION_S:
- *
- * The full version of libshumate, in string form (suited for
- * string concatenation)
- */
-#define SHUMATE_VERSION_S       "@SHUMATE_VERSION@"
-
-/**
- * SHUMATE_VERSION_HEX:
- *
- * Numerically encoded version of libshumate, like 0x010203
- */
-#define SHUMATE_VERSION_HEX     ((SHUMATE_MAJOR_VERSION << 24) | \
-                                 (SHUMATE_MINOR_VERSION << 16) | \
-                                 (SHUMATE_MICRO_VERSION << 8))
-
-/**
  * SHUMATE_CHECK_VERSION:
- * @major: major version, like 1 in 1.2.3
- * @minor: minor version, like 2 in 1.2.3
- * @micro: micro version, like 3 in 1.2.3
+ * @major: major version (e.g. 1 for version 1.2.5)
+ * @minor: minor version (e.g. 2 for version 1.2.5)
+ * @micro: micro version (e.g. 5 for version 1.2.5)
  *
- * Evaluates to %TRUE if the version of libshumate is greater or equal
- * than @major, @minor and @micro
+ * Returns %TRUE if the version of the Shumate header files
+ * is the same as or newer than the passed-in version.
+ *
+ * Returns: %TRUE if Shumate headers are new enough
  */
-#define SHUMATE_CHECK_VERSION(major,minor,micro) \
-        (SHUMATE_MAJOR_VERSION > (major) || \
-         (SHUMATE_MAJOR_VERSION == (major) && SHUMATE_MINOR_VERSION > (minor)) || \
-         (SHUMATE_MAJOR_VERSION == (major) && SHUMATE_MINOR_VERSION == (minor) && SHUMATE_MICRO_VERSION >= (micro)))
+#define SHUMATE_CHECK_VERSION(major,minor,micro)                              \
+    (SHUMATE_MAJOR_VERSION > (major) ||                                       \
+     (SHUMATE_MAJOR_VERSION == (major) && SHUMATE_MINOR_VERSION > (minor)) || \
+     (SHUMATE_MAJOR_VERSION == (major) && SHUMATE_MINOR_VERSION == (minor) && \
+      SHUMATE_MICRO_VERSION >= (micro)))
 
 #endif /* __SHUMATE_VERSION_H__ */
