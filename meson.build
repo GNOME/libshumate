@@ -60,6 +60,7 @@ libsoup_req = '>= 2.42'
 introspection_req = '>= 0.6.3'
 vala_req = '>= 0.11.0'
 gtk_doc_req = '>= 1.9'
+json_glib_req = '>= 1.6'
 
 glib_dep = dependency('glib-2.0', version: glib_req)
 gobject_dep = dependency('gobject-2.0', version: glib_req)
@@ -68,6 +69,7 @@ cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
 gtk_dep = dependency('gtk4')
+json_glib_dep = dependency('json-glib-1.0', version: json_glib_req)
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)

@@ -25,6 +25,8 @@ libshumate_public_h = [
 libshumate_private_h = [
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
+
+  'vector/shumate-vector-utils-private.h',
 ]
 
 libshumate_sources = [
@@ -49,6 +51,8 @@ libshumate_sources = [
   'shumate-tile.c',
   'shumate-vector-style.c',
   'shumate-viewport.c',
+
+  'vector/shumate-vector-utils.c',
 ]
 
 libshumate_deps = [
@@ -60,6 +64,7 @@ libshumate_deps = [
   cairo_dep,
   sqlite_dep,
   libsoup_dep,
+  json_glib_dep,
 ]
 
 libshumate_c_args = [
