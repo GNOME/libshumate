@@ -224,6 +224,9 @@ shumate_path_layer_dispose (GObject *object)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
   ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+
+  g_signal_handlers_disconnect_by_data (viewport, self);
 
   if (priv->nodes)
     shumate_path_layer_remove_all (SHUMATE_PATH_LAYER (object));

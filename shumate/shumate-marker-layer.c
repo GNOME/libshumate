@@ -290,7 +290,11 @@ shumate_marker_layer_set_property (GObject *object,
 static void
 shumate_marker_layer_dispose (GObject *object)
 {
+  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (object);
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   GtkWidget *child;
+
+  g_signal_handlers_disconnect_by_data (viewport, self);
 
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
