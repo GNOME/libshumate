@@ -196,10 +196,12 @@ shumate_license_init (ShumateLicense *self)
                 "orientation", GTK_ORIENTATION_VERTICAL,
                 NULL);
   g_object_set (self->license_label,
+                "wrap",   TRUE,
                 "xalign", 1.0f,
                 NULL);
   g_object_set (self->extra_text_label,
                 "visible", FALSE,
+                "wrap",   TRUE,
                 "xalign", 1.0f,
                 NULL);
 
