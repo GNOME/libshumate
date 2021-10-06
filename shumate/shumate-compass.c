@@ -18,20 +18,19 @@
  */
 
 /**
- * SECTION:shumate-compass
- * @short_description: A widget displaying a compass.
+ * ShumateCompass:
  *
  * A widget displaying a compass.
  *
  * # CSS nodes
  *
- * |[<!-- language="plain" -->
+ * ```
  * map-compass
  * ├── revealer
  * ├──── image
- * ]|
+ * ```
  *
- * ShumateCompass uses a single CSS node with name map-compass. It also uses an
+ * `ShumateCompass` uses a single CSS node with name map-compass. It also uses an
  * image named "map-compass".
  */
 

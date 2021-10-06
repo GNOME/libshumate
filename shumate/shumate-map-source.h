@@ -42,13 +42,6 @@ typedef enum
   SHUMATE_MAP_PROJECTION_MERCATOR
 } ShumateMapProjection;
 
-/**
- * ShumateMapSource:
- *
- * The #ShumateMapSource structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateMapSourceClass
 {
   GObjectClass parent_class;

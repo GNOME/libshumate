@@ -18,14 +18,13 @@
  */
 
 /**
- * SECTION:shumate-map-source
- * @short_description: A base class for map sources
+ * ShumateMapSource:
  *
- * #ShumateMapSource is the base class for all map sources. Map sources fill
- * #ShumateTile objects with images from various sources: a web API, for
- * example, or a test pattern generated on demand.
+ * The base class for all map sources. Map sources fill [class@Tile] objects
+ * with images from various sources: a web API, for example, or a test pattern
+ * generated on demand.
  *
- * The most common map source is #ShumateNetworkTileSource, which fetches tiles
+ * The most common map source is [class@NetworkTileSource], which fetches tiles
  * from an API.
  */
 

@@ -18,13 +18,11 @@
  */
 
 /**
- * SECTION:shumate-memory-cache
- * @short_description: Stores and loads cached tiles from the memory
+ * ShumateMemoryCache:
  *
- * #ShumateMemoryCache is a cache that stores and retrieves tiles from the
- * memory. The cache contents is not preserved between application restarts
- * so this cache serves mostly as a quick access temporary cache to the
- * most recently used tiles.
+ * A cache that stores and retrieves tiles from the memory. The cache contents
+ * is not preserved between application restarts so this cache serves mostly as
+ * a quick access temporary cache to the most recently used tiles.
  */
 
 #include "shumate-memory-cache.h"

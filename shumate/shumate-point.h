@@ -34,13 +34,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_POINT shumate_point_get_type ()
 G_DECLARE_FINAL_TYPE (ShumatePoint, shumate_point, SHUMATE, POINT, ShumateMarker)
 
-/**
- * ShumatePoint:
- *
- * The #ShumatePoint structure contains only private data
- * and should be accessed using the provided API
- */
-
 ShumateMarker *shumate_point_new (void);
 
 G_END_DECLS

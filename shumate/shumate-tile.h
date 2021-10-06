@@ -48,14 +48,6 @@ typedef enum
   SHUMATE_STATE_DONE
 } ShumateState;
 
-
-/**
- * ShumateTile:
- *
- * The #ShumateTile structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateTileClass
 {
   GtkWidgetClass parent_class;

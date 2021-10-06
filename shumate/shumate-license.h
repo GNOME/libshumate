@@ -34,13 +34,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_LICENSE shumate_license_get_type ()
 G_DECLARE_FINAL_TYPE (ShumateLicense, shumate_license, SHUMATE, LICENSE, GtkWidget)
 
-/**
- * ShumateLicense:
- *
- * The #ShumateLicense structure contains only private data
- * and should be accessed using the provided API
- */
-
 ShumateLicense *shumate_license_new (void);
 
 void shumate_license_set_extra_text (ShumateLicense *license,

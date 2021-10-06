@@ -62,13 +62,6 @@ typedef enum {
 #define SHUMATE_TYPE_NETWORK_TILE_SOURCE shumate_network_tile_source_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateNetworkTileSource, shumate_network_tile_source, SHUMATE, NETWORK_TILE_SOURCE, ShumateMapSource)
 
-/**
- * ShumateNetworkTileSource:
- *
- * The #ShumateNetworkTileSource structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateNetworkTileSourceClass
 {
   ShumateMapSourceClass parent_class;

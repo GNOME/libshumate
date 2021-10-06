@@ -18,10 +18,9 @@
  */
 
 /**
- * SECTION:shumate-coordinate
- * @short_description: The simplest implementation of #ShumateLocation
+ * ShumateCoordinate:
  *
- * #ShumateCoordinate is a simple object implementing #ShumateLocation.
+ * A simple object implementing [iface@Location].
  */
 
 #include "shumate-coordinate.h"

@@ -6,7 +6,7 @@ option('vapi',
        description: 'Generate vapi data (requires vapigen)')
 
 option('gtk_doc',
-       type: 'boolean', value: false,
+       type: 'boolean', value: true,
        description: 'Build reference manual (requires gi-docgen installed and gir enabled)')
 
 option('demos',

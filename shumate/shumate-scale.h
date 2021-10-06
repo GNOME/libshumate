@@ -51,13 +51,6 @@ typedef enum
   SHUMATE_UNIT_IMPERIAL,
 } ShumateUnit;
 
-/**
- * ShumateScale:
- *
- * The #ShumateScale structure contains only private data
- * and should be accessed using the provided API
- */
-
 ShumateScale *shumate_scale_new (ShumateViewport *viewport);
 
 guint shumate_scale_get_max_width (ShumateScale *scale);

@@ -19,11 +19,10 @@
  */
 
 /**
- * SECTION:shumate-marker-layer
- * @short_description: A container for #ShumateMarker
+ * ShumateMarkerLayer:
  *
- * A ShumateMarkerLayer displays markers on the map. It is responsible for
- * positioning markers correctly, marker selections and group marker operations.
+ * Displays markers on the map. It is responsible for positioning markers
+ * correctly, marker selections and group marker operations.
  */
 
 #include "shumate-marker-layer.h"

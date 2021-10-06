@@ -36,13 +36,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_PATH_LAYER shumate_path_layer_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE, PATH_LAYER, ShumateLayer)
 
-/**
- * ShumatePathLayer:
- *
- * The #ShumatePathLayer structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumatePathLayerClass
 {
   ShumateLayerClass parent_class;

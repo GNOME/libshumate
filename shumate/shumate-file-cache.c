@@ -19,12 +19,11 @@
  */
 
 /**
- * SECTION:shumate-file-cache
- * @short_description: Caches tiles on the filesystem
+ * ShumateFileCache:
  *
- * #ShumateFileCache is a cache that stores and retrieves tiles from the
- * file system. It is mainly used by #ShumateNetworkTileSource, but can also
- * be used by custom map sources.
+ * A cache that stores and retrieves tiles from the file system. It is mainly
+ * used by [class@NetworkTileSource], but can also be used by custom map
+ * sources.
  *
  * The cache will be filled up to a certain size limit. When this limit is
  * reached, the cache can be purged, and the tiles that are accessed least are

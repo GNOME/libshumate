@@ -18,10 +18,9 @@
  */
 
 /**
- * SECTION:shumate-license
- * @short_description: An actor that displays license text.
+ * ShumateLicense:
  *
- * An actor that displays license text.
+ * A widget that displays license text.
  */
 
 #include "shumate-license.h"

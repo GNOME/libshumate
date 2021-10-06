@@ -60,12 +60,6 @@ G_BEGIN_DECLS
 G_DECLARE_INTERFACE (ShumateLocation, shumate_location, SHUMATE, LOCATION, GObject)
 
 /**
- * ShumateLocation:
- *
- * An interface common to objects having latitude and longitude.
- */
-
-/**
  * ShumateLocationInterface:
  * @get_latitude: virtual function for obtaining latitude.
  * @get_longitude: virtual function for obtaining longitude.

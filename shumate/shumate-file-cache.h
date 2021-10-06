@@ -53,13 +53,6 @@ typedef enum {
 #define SHUMATE_TYPE_FILE_CACHE shumate_file_cache_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, GObject)
 
-/**
- * ShumateFileCache:
- *
- * The #ShumateFileCache structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateFileCacheClass
 {
   GObjectClass parent_class;

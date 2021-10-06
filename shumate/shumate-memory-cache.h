@@ -32,13 +32,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_MEMORY_CACHE shumate_memory_cache_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, GObject)
 
-/**
- * ShumateMemoryCache:
- *
- * The #ShumateMemoryCache structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateMemoryCacheClass
 {
   GObjectClass parent_class;

@@ -20,6 +20,11 @@
 #include "shumate-map-layer.h"
 #include "shumate-memory-cache.h"
 
+/**
+ * ShumateMapLayer:
+ *
+ */
+
 struct _ShumateMapLayer
 {
   ShumateLayer parent_instance;

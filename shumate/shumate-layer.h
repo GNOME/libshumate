@@ -32,13 +32,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_LAYER shumate_layer_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GtkWidget)
 
-/**
- * ShumateLayer:
- *
- * The #ShumateLayer structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateLayerClass
 {
   GtkWidgetClass parent_class;

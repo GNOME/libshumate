@@ -28,9 +28,9 @@
 #include "shumate-location.h"
 
 /**
- * SECTION:shumate-viewport
- * @short_description: The Object holding the coordinate and zoom-level state of
- * the current view.
+ * ShumateViewport:
+ *
+ * The object holding the coordinate and zoom-level state of the current view.
  */
 
 struct _ShumateViewport

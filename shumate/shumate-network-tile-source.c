@@ -19,15 +19,14 @@
  */
 
 /**
- * SECTION:shumate-network-tile-source
- * @short_description: A map source that downloads tile data from a web server
+ * ShumateNetworkTileSource:
  *
- * #ShumateNetworkTileSource fetches raster (that is, image) tiles from a
- * web API such as Mapbox or OpenStreetMap. It has a built-in #ShumateFileCache
- * to avoid repeated downloads.
+ * Fetches raster (that is, image) tiles from a web API such as Mapbox or
+ * OpenStreetMap. It has a built-in [class@FileCache] to avoid repeated
+ * downloads.
  *
  * Some preconfigured network map sources are built-in this library,
- * see #ShumateMapSourceFactory.
+ * see [class@MapSourceRegistry].
  */
 
 #include "shumate-network-tile-source.h"
@@ -383,7 +382,7 @@ shumate_network_tile_source_new_full (const char *id,
  * Default constructor of #ShumateNetworkTileSource.
  *
  * Returns: A URI format used for URI creation when downloading tiles. See
- * shumate_network_tile_source_set_uri_format() for more information.
+ * [method@NetworkTileSource.set_uri_format] for more information.
  */
 const char *
 shumate_network_tile_source_get_uri_format (ShumateNetworkTileSource *tile_source)

@@ -37,13 +37,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_MARKER_LAYER shumate_marker_layer_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE, MARKER_LAYER, ShumateLayer)
 
-/**
- * ShumateMarkerLayer:
- *
- * The #ShumateMarkerLayer structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateMarkerLayerClass
 {
   ShumateLayerClass parent_class;

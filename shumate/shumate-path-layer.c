@@ -19,13 +19,13 @@
  */
 
 /**
- * SECTION:shumate-path-layer
- * @short_description: A layer displaying line path between inserted #ShumateLocation
- * objects
+ * ShumatePathLayer:
+ *
+ * A layer displaying line path between inserted [iface@Location] objects
  *
  * This layer shows a connection between inserted objects implementing the
- * #ShumateLocation interface. This means that both #ShumateMarker
- * objects and #ShumateCoordinate objects can be inserted into the layer.
+ * [iface@Location] interface. This means that both #ShumateMarker
+ * objects and [class@Coordinate] objects can be inserted into the layer.
  * Of course, custom objects implementing the #ShumateLocation interface
  * can be used as well.
  */

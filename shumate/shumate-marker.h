@@ -36,13 +36,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_MARKER shumate_marker_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateMarker, shumate_marker, SHUMATE, MARKER, GtkWidget)
 
-/**
- * ShumateMarker:
- *
- * The #ShumateMarker structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateMarkerClass
 {
   GtkWidgetClass parent_class;

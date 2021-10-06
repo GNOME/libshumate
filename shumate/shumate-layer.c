@@ -18,11 +18,14 @@
  */
 
 /**
- * SECTION:shumate-layer
- * @short_description: Base class of libshumate layers
+ * ShumateLayer:
  *
  * Every layer (overlay that moves together with the map) has to inherit this
  * class and implement its virtual methods.
+ *
+ * You can use the same layer to display many types of maps.  In Shumate they
+ * are called map sources.  You can change the [property@MapLayer:map-source]
+ * property at any time to replace the current displayed map.
  */
 
 #include "shumate-layer.h"

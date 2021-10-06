@@ -32,13 +32,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_MAP_LAYER shumate_map_layer_get_type ()
 G_DECLARE_FINAL_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE, MAP_LAYER, ShumateLayer)
 
-/**
- * ShumateMapLayer:
- *
- * The #ShumateMapLayer structure contains only private data
- * and should be accessed using the provided API
- */
-
 ShumateMapLayer *shumate_map_layer_new (ShumateMapSource *map_source,
                                         ShumateViewport  *viewport);
 

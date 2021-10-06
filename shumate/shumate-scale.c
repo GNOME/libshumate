@@ -20,21 +20,19 @@
  */
 
 /**
- * SECTION:shumate-scale
- * @short_description: A widget displaying a scale.
+ * ShumateScale:
  *
  * A widget displaying a scale.
  *
  * # CSS nodes
  *
- * |[<!-- language="plain" -->
+ * ```
  * map-scale
  * ├── label[.metric][.imperial]
- * ]|
+ * ```
  *
- * ShumateScale uses a single CSS node with name map-scale, it has up to two
+ * `ShumateScale` uses a single CSS node with name map-scale, it has up to two
  * childs different labels.
-
  */
 
 #include "shumate-scale.h"

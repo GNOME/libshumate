@@ -18,11 +18,10 @@
  */
 
 /**
- * SECTION:shumate-point
- * @short_description: A simple point to mark a coordinate
+ * ShumatePoint:
  *
- * #ShumatePoint is a simple variant of #ShumateMarker showing the location of
- * the point as a circle on the map.
+ * A simple variant of [class@Marker] showing the location of the point as a
+ * circle on the map.
  */
 
 #include "shumate-point.h"

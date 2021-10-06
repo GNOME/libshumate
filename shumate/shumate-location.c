@@ -16,9 +16,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 /**
- * SECTION:shumate-location
- * @short_description: An interface common to objects having latitude and longitude
+ * ShumateLocation:
+ *
+ * An interface common to objects having latitude and longitude
  *
  * By implementing #ShumateLocation the object declares that it has latitude
  * and longitude and can be used to specify location on the map.

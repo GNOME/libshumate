@@ -33,13 +33,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_COORDINATE shumate_coordinate_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateCoordinate, shumate_coordinate, SHUMATE, COORDINATE, GInitiallyUnowned)
 
-/**
- * ShumateCoordinate:
- *
- * The #ShumateCoordinate structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateCoordinateClass
 {
   GInitiallyUnownedClass parent_class;

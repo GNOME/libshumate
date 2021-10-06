@@ -21,13 +21,12 @@
  */
 
 /**
- * SECTION:shumate-map-source-registry
- * @short_description: An object holding #ShumateMapSource
+ * ShumateMapSourceRegistry:
  *
- * This object allows you to hold #ShumateMapSource instances, you can access a
- * default set of sources with shumate_map_source_registry_populate_defaults().
+ * This object allows you to hold [class@MapSource] instances, you can access a
+ * default set of sources with [method@MapSourceRegistry.populate_defaults].
  *
- * It conveniently implements #GListModel to easily integrate with it.
+ * It conveniently implements [iface@Gio.ListModel] to easily integrate with it.
  */
 
 #include "shumate-map-source-registry.h"
@@ -130,7 +129,7 @@ shumate_map_source_registry_new (void)
  * shumate_map_source_registry_new_with_defaults:
  *
  * Create a new #ShumateMapSourceRegistry with defaults map sources.
- * This is identical to calling shumate_map_source_registry_populate_defaults()
+ * This is identical to calling [method@MapSourceRegistry.populate_defaults]
  * after shumate_map_source_registry_new().
  *
  * Returns: (transfer full): a newly created #ShumateMapSourceRegistry

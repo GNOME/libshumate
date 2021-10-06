@@ -38,13 +38,6 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_MAP shumate_map_get_type ()
 G_DECLARE_DERIVABLE_TYPE (ShumateMap, shumate_map, SHUMATE, MAP, GtkWidget)
 
-/**
- * ShumateMap:
- *
- * The #ShumateMap structure contains only private data
- * and should be accessed using the provided API
- */
-
 struct _ShumateMapClass
 {
   GtkWidgetClass parent_class;

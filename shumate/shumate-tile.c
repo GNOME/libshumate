@@ -19,11 +19,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 /**
- * SECTION:shumate-tile
- * @short_description: An object that represent map tiles
+ * ShumateTile:
  *
- * This object represents map tiles. Tiles are loaded by #ShumateMapSource.
+ * An object that represents map tiles. Tiles are loaded by a [class@MapSource].
  */
 
 #include "shumate-tile.h"

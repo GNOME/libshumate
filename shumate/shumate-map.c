@@ -22,26 +22,18 @@
  */
 
 /**
- * SECTION:shumate-view
- * @short_description: A #GtkWidget to display maps
+ * ShumateMap:
  *
- * The #ShumateMap is a #GtkWidget to display maps.  It supports two modes
- * of scrolling:
- * <itemizedlist>
- *   <listitem><para>Push: the normal behavior where the maps don't move
- *   after the user stopped scrolling;</para></listitem>
- *   <listitem><para>Kinetic: the behavior where the maps decelerate after
- *   the user stopped scrolling.</para></listitem>
- * </itemizedlist>
+ * A [class@Gtk.Widget] to display maps. It supports two modes of scrolling:
  *
- * You can use the same #ShumateMap to display many types of maps.  In
- * Shumate they are called map sources.  You can change the #map-source
- * property at anytime to replace the current displayed map.
+ * - Push: the normal behavior where the maps don't move after the user stopped
+ *   scrolling;
+ * - Kinetic: the behavior where the maps decelerate after the user stopped
+ *   scrolling.
  *
  * The maps are downloaded from Internet from open maps sources (like
- * <ulink role="online-location"
- * url="http://www.openstreetmap.org">OpenStreetMap</ulink>).  Maps are divided
- * in tiles for each zoom level.  When a tile is requested, #ShumateMap will
+ * [OpenStreetMap](http://www.openstreetmap.org")). Maps are divided
+ * in tiles for each zoom level. When a tile is requested, `ShumateMap` will
  * first check if it is in cache (in the user's cache dir under shumate). If
  * an error occurs during download, an error tile will be displayed.
  */
@@ -1001,7 +993,7 @@ shumate_map_go_to (ShumateMap *self,
  *
  * Get the 'go-to-duration' property.
  *
- * Returns: the animation duration when calling shumate_map_go_to(),
+ * Returns: the animation duration when calling [method@Map.go_to],
  *   in milliseconds.
  */
 guint
@@ -1019,7 +1011,7 @@ shumate_map_get_go_to_duration (ShumateMap *self)
  * @self: a #ShumateMap
  * @duration: the animation duration, in milliseconds
  *
- * Set the duration of the transition of shumate_map_go_to().
+ * Set the duration of the transition of [method@Map.go_to].
  */
 void
 shumate_map_set_go_to_duration (ShumateMap *self,
