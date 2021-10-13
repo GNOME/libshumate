@@ -35,8 +35,6 @@ struct _ShumateDemoWindow
   ShumateMapLayer *tile_layer;
   ShumateMarkerLayer *marker_layer;
   ShumatePathLayer *path_layer;
-
-  ShumateMapSource *current_source;
 };
 
 G_DEFINE_TYPE (ShumateDemoWindow, shumate_demo_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -71,12 +69,6 @@ set_map_source (ShumateDemoWindow *self, ShumateMapSource *new_source)
   ShumateViewport *viewport = shumate_map_get_viewport (self->map);
   ShumateMapLayer *tile_layer;
 
-  if (self->current_source) {
-    shumate_license_remove_map_source (self->license, self->current_source);
-  }
-
-  g_set_object (&self->current_source, new_source);
-
   shumate_viewport_set_reference_map_source (viewport, new_source);
   shumate_map_set_map_source (self->map, new_source);
 
@@ -86,8 +78,6 @@ set_map_source (ShumateDemoWindow *self, ShumateMapSource *new_source)
     shumate_map_remove_layer (self->map, SHUMATE_LAYER (self->tile_layer));
   }
   self->tile_layer = tile_layer;
-
-  shumate_license_append_map_source (self->license, new_source);
 }
 
 static void
@@ -102,7 +92,6 @@ shumate_demo_window_dispose (GObject *object)
 {
   ShumateDemoWindow *self = SHUMATE_DEMO_WINDOW (object);
 
-  g_clear_object (&self->current_source);
   g_clear_object (&self->registry);
 
   G_OBJECT_CLASS (shumate_demo_window_parent_class)->dispose (object);

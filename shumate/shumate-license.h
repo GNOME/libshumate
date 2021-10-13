@@ -25,6 +25,7 @@
 #define SHUMATE_LICENSE_H
 
 #include <shumate/shumate-map-source.h>
+#include <shumate/shumate-map.h>
 
 #include <glib-object.h>
 #include <gtk/gtk.h>
@@ -44,12 +45,9 @@ void shumate_license_set_xalign (ShumateLicense *license,
                                  float           xalign);
 float shumate_license_get_xalign (ShumateLicense *license);
 
-void shumate_license_append_map_source (ShumateLicense   *license,
-                                        ShumateMapSource *map_source);
-void shumate_license_prepend_map_source (ShumateLicense   *license,
-                                         ShumateMapSource *map_source);
-void shumate_license_remove_map_source (ShumateLicense   *license,
-                                        ShumateMapSource *map_source);
+ShumateMap *shumate_license_get_map (ShumateLicense *self);
+void        shumate_license_set_map (ShumateLicense *self,
+                                     ShumateMap     *map);
 
 G_END_DECLS
 

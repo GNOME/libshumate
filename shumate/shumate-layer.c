@@ -33,6 +33,8 @@
 enum
 {
   PROP_VIEWPORT = 1,
+  PROP_LICENSE,
+  PROP_LICENSE_URI,
   N_PROPERTIES
 };
 
@@ -80,6 +82,14 @@ shumate_layer_get_property (GObject    *object,
       g_value_set_object (value, priv->viewport);
       break;
 
+    case PROP_LICENSE:
+      g_value_set_string (value, shumate_layer_get_license (self));
+      break;
+
+    case PROP_LICENSE_URI:
+      g_value_set_string (value, shumate_layer_get_license (self));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -107,16 +117,32 @@ shumate_layer_constructed (GObject *object)
   G_OBJECT_CLASS (shumate_layer_parent_class)->constructed (object);
 }
 
+static const char *
+shumate_layer_real_get_license (ShumateLayer *self)
+{
+  return NULL;
+}
+
+static const char *
+shumate_layer_real_get_license_uri (ShumateLayer *self)
+{
+  return NULL;
+}
+
 static void
 shumate_layer_class_init (ShumateLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->set_property = shumate_layer_set_property;
   object_class->get_property = shumate_layer_get_property;
   object_class->dispose = shumate_layer_dispose;
   object_class->constructed = shumate_layer_constructed;
+
+  layer_class->get_license = shumate_layer_real_get_license;
+  layer_class->get_license_uri = shumate_layer_real_get_license_uri;
 
   obj_properties[PROP_VIEWPORT] =
     g_param_spec_object ("viewport",
@@ -124,6 +150,20 @@ shumate_layer_class_init (ShumateLayerClass *klass)
                          "The viewport used to display the layer",
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
+
+  obj_properties[PROP_LICENSE] =
+    g_param_spec_string ("license",
+                         "License",
+                         "License",
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  obj_properties[PROP_LICENSE_URI] =
+    g_param_spec_string ("license-uri",
+                         "License URI",
+                         "License URI",
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
@@ -157,4 +197,36 @@ shumate_layer_get_viewport (ShumateLayer *self)
   g_return_val_if_fail (SHUMATE_IS_LAYER (self), NULL);
 
   return priv->viewport;
+}
+
+
+/**
+ * shumate_layer_get_license:
+ * @self: a [class@Layer]
+ *
+ * Gets the license text to show on the map for this layer.
+ *
+ * Returns: (nullable): the license text
+ */
+const char *
+shumate_layer_get_license (ShumateLayer *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_LAYER (self), NULL);
+  return SHUMATE_LAYER_GET_CLASS (self)->get_license (self);
+}
+
+
+/**
+ * shumate_layer_get_license_uri:
+ * @self: a [class@Layer]
+ *
+ * Gets a link to view more information about the layer's license, if available.
+ *
+ * Returns: (nullable): a URI
+ */
+const char *
+shumate_layer_get_license_uri (ShumateLayer *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_LAYER (self), NULL);
+  return SHUMATE_LAYER_GET_CLASS (self)->get_license_uri (self);
 }

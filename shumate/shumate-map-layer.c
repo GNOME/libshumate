@@ -541,11 +541,34 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   GTK_WIDGET_CLASS (shumate_map_layer_parent_class)->snapshot (widget, snapshot);
 }
 
+static const char *
+shumate_map_layer_get_license (ShumateLayer *layer)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (layer);
+
+  if (self->map_source == NULL)
+    return NULL;
+
+  return shumate_map_source_get_license (self->map_source);
+}
+
+static const char *
+shumate_map_layer_get_license_uri (ShumateLayer *layer)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (layer);
+
+  if (self->map_source == NULL)
+    return NULL;
+
+  return shumate_map_source_get_license_uri (self->map_source);
+}
+
 static void
 shumate_map_layer_class_init (ShumateMapLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->set_property = shumate_map_layer_set_property;
   object_class->get_property = shumate_map_layer_get_property;
@@ -555,6 +578,9 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
   widget_class->size_allocate = shumate_map_layer_size_allocate;
   widget_class->snapshot = shumate_map_layer_snapshot;
   widget_class->measure = shumate_map_layer_measure;
+
+  layer_class->get_license = shumate_map_layer_get_license;
+  layer_class->get_license_uri = shumate_map_layer_get_license_uri;
 
   obj_properties[PROP_MAP_SOURCE] =
     g_param_spec_object ("map-source",
