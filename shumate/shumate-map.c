@@ -72,6 +72,7 @@ enum
   PROP_ANIMATE_ZOOM,
   PROP_STATE,
   PROP_GO_TO_DURATION,
+  PROP_VIEWPORT,
   N_PROPERTIES
 };
 
@@ -656,6 +657,10 @@ shumate_map_get_property (GObject    *object,
       g_value_set_uint (value, priv->go_to_duration);
       break;
 
+    case PROP_VIEWPORT:
+      g_value_set_object (value, priv->viewport);
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -773,6 +778,19 @@ shumate_map_class_init (ShumateMapClass *klass)
                        "The duration of an animation when going to a location",
                        0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateMap:viewport:
+   *
+   * The viewport, which contains information about the center, rotation, zoom,
+   * etc. of the map.
+   */
+  obj_properties[PROP_VIEWPORT] =
+    g_param_spec_object ("viewport",
+                         "Viewport",
+                         "Viewport",
+                         SHUMATE_TYPE_VIEWPORT,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
