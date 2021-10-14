@@ -827,10 +827,6 @@ shumate_map_init (ShumateMap *self)
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
-  /* Setup viewport */
-  priv->viewport = shumate_viewport_new ();
-
-  /* Setup license */
   drag_gesture = gtk_gesture_drag_new ();
   g_signal_connect_swapped (drag_gesture, "drag-begin", G_CALLBACK (on_drag_gesture_drag_begin), self);
   g_signal_connect_swapped (drag_gesture, "drag-update", G_CALLBACK (on_drag_gesture_drag_update), self);
