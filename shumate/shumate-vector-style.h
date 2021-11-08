@@ -37,6 +37,7 @@ GQuark shumate_style_error_quark (void);
  * @SHUMATE_STYLE_ERROR_MALFORMED_STYLE: A JSON node in the style has the wrong type (e.g. an object where there should be an array).
  * @SHUMATE_STYLE_ERROR_UNSUPPORTED_LAYER: An unsupported layer type was encountered.
  * @SHUMATE_STYLE_ERROR_INVALID_EXPRESSION: An invalid or unrecognized expression was encountered.
+ * @SHUMATE_STYLE_ERROR_SUPPORT_OMITTED: Libshumate was compiled without vector tile support.
  *
  * Error codes in the [error@StyleError] domain.
  */
@@ -45,6 +46,7 @@ typedef enum {
   SHUMATE_STYLE_ERROR_MALFORMED_STYLE,
   SHUMATE_STYLE_ERROR_UNSUPPORTED_LAYER,
   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+  SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
 } ShumateStyleError;
 
 
@@ -52,10 +54,12 @@ typedef enum {
 
 G_DECLARE_FINAL_TYPE (ShumateVectorStyle, shumate_vector_style, SHUMATE, VECTOR_STYLE, GObject)
 
+gboolean shumate_vector_style_is_supported ();
 ShumateVectorStyle *shumate_vector_style_create (const char *style_json, GError **error);
 
 const char *shumate_vector_style_get_style_json (ShumateVectorStyle *self);
 
 GdkTexture *shumate_vector_style_render (ShumateVectorStyle *self, int texture_size, GBytes *tile_data, double zoom_level);
+
 
 G_END_DECLS

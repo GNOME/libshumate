@@ -15,12 +15,17 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+
+#ifdef SHUMATE_VECTOR_RENDERER
 #include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
 
 #include "vector/shumate-vector-render-scope-private.h"
 #include "vector/shumate-vector-utils-private.h"
 #include "vector/shumate-vector-layer-private.h"
+#endif
+
+#include <glib-object.h>
 #include "shumate-vector-style.h"
 
 struct _ShumateVectorStyle
@@ -64,6 +69,26 @@ shumate_vector_style_create (const char *style_json, GError **error)
   return g_initable_new (SHUMATE_TYPE_VECTOR_STYLE, NULL, error,
                          "style-json", style_json,
                          NULL);
+}
+
+
+/**
+ * shumate_vector_style_is_supported:
+ *
+ * Checks whether libshumate was compiled with vector tile support. If it was
+ * not, vector styles cannot be created or used.
+ *
+ * Returns: %TRUE if libshumate was compiled with `-Dvector_renderer=true` or
+ * %FALSE if it was not
+ */
+gboolean
+shumate_vector_style_is_supported ()
+{
+#ifdef SHUMATE_VECTOR_RENDERER
+  return TRUE;
+#else
+  return FALSE;
+#endif
 }
 
 
@@ -141,6 +166,7 @@ shumate_vector_style_initable_init (GInitable     *initable,
                                     GCancellable  *cancellable,
                                     GError       **error)
 {
+#ifdef SHUMATE_VECTOR_RENDERER
   ShumateVectorStyle *self = (ShumateVectorStyle *)initable;
   g_autoptr(JsonNode) node = NULL;
   JsonNode *layers_node;
@@ -183,6 +209,17 @@ shumate_vector_style_initable_init (GInitable     *initable,
     }
 
   return TRUE;
+#else
+  g_set_error (error,
+               SHUMATE_STYLE_ERROR,
+               SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
+               "Libshumate was compiled without support for vector tiles, so a "
+               "ShumateVectorStyle may not be constructed. You can fix this "
+               "by compiling libshumate with `-Dvector_renderer=true` or by "
+               "checking `shumate_vector_style_is_supported ()` before trying "
+               "to construct a ShumateVectorStyle.");
+  return FALSE;
+#endif
 }
 
 
@@ -216,6 +253,7 @@ shumate_vector_style_get_style_json (ShumateVectorStyle *self)
 }
 
 
+#ifdef SHUMATE_VECTOR_RENDERER
 static GdkTexture *
 texture_new_for_surface (cairo_surface_t *surface)
 {
@@ -240,6 +278,7 @@ texture_new_for_surface (cairo_surface_t *surface)
 
   return texture;
 }
+#endif
 
 
 /**
@@ -253,6 +292,7 @@ texture_new_for_surface (cairo_surface_t *surface)
 GdkTexture *
 shumate_vector_style_render (ShumateVectorStyle *self, int texture_size, GBytes *tile_data, double zoom_level)
 {
+#ifdef SHUMATE_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
   GdkTexture *texture;
   cairo_surface_t *surface;
@@ -281,6 +321,9 @@ shumate_vector_style_render (ShumateVectorStyle *self, int texture_size, GBytes 
   vector_tile__tile__free_unpacked (scope.tile, NULL);
 
   return texture;
+#else
+  g_return_val_if_reached (NULL);
+#endif
 }
 
 /**

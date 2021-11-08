@@ -62,19 +62,6 @@ libshumate_sources = [
   'shumate-tile.c',
   'shumate-vector-style.c',
   'shumate-viewport.c',
-
-  'vector/shumate-vector-background-layer.c',
-  'vector/shumate-vector-expression.c',
-  'vector/shumate-vector-expression-interpolate.c',
-  'vector/shumate-vector-expression-filter.c',
-  'vector/shumate-vector-expression-literal.c',
-  'vector/shumate-vector-fill-layer.c',
-  'vector/shumate-vector-layer.c',
-  'vector/shumate-vector-line-layer.c',
-  'vector/shumate-vector-render-scope.c',
-  'vector/shumate-vector-utils.c',
-  'vector/shumate-vector-value.c',
-  'vector/vector_tile.pb-c.c',
 ]
 
 libshumate_deps = [
@@ -86,8 +73,6 @@ libshumate_deps = [
   cairo_dep,
   sqlite_dep,
   libsoup_dep,
-  json_glib_dep,
-  protobuf_c_dep,
 ]
 
 libshumate_c_args = [
@@ -155,6 +140,32 @@ install_headers(
     'shumate',
   )
 )
+
+if get_option('vector_renderer')
+  libshumate_sources += [
+    'vector/shumate-vector-background-layer.c',
+    'vector/shumate-vector-expression.c',
+    'vector/shumate-vector-expression-interpolate.c',
+    'vector/shumate-vector-expression-filter.c',
+    'vector/shumate-vector-expression-literal.c',
+    'vector/shumate-vector-fill-layer.c',
+    'vector/shumate-vector-layer.c',
+    'vector/shumate-vector-line-layer.c',
+    'vector/shumate-vector-render-scope.c',
+    'vector/shumate-vector-utils.c',
+    'vector/shumate-vector-value.c',
+    'vector/vector_tile.pb-c.c',
+  ]
+
+  libshumate_deps += [
+    dependency('json-glib-1.0', version: json_glib_req),
+    dependency('libprotobuf-c'),
+  ]
+
+  libshumate_c_args += [
+    '-DSHUMATE_VECTOR_RENDERER',
+  ]
+endif
 
 libshumate_lib = library(
   package_string,

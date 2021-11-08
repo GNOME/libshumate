@@ -69,8 +69,6 @@ cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
 gtk_dep = dependency('gtk4')
-json_glib_dep = dependency('json-glib-1.0', version: json_glib_req)
-protobuf_c_dep = dependency('libprotobuf-c')
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)

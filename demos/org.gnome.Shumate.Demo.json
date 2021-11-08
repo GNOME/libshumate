@@ -55,7 +55,8 @@
             "buildsystem" : "meson",
             "config-opts" : [
                 "-Ddemos=true",
-                "-Dgtk_doc=false"
+                "-Dgtk_doc=false",
+                "-Dvector_renderer=true"
             ],
             "builddir" : true,
             "sources" : [

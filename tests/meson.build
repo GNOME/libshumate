@@ -15,11 +15,16 @@ tests = [
   'marker-layer',
   'memory-cache',
   'network-tile-source',
-  'vector-expression',
-  'vector-style',
-  'vector-value',
   'viewport',
 ]
+
+if get_option('vector_renderer')
+  tests += [
+    'vector-expression',
+    'vector-style',
+    'vector-value',
+  ]
+endif
 
 subdir('data')
 

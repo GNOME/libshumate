@@ -12,3 +12,7 @@ option('gtk_doc',
 option('demos',
        type: 'boolean', value: false,
        description: 'Build demonstration programs')
+
+option('vector_renderer',
+       type: 'boolean', value: false,
+       description: 'Build the experimental vector tile renderer')
