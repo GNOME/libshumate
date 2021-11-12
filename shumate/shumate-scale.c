@@ -93,7 +93,7 @@ shumate_scale_compute_length (ShumateScale *self,
   float base;
   float factor;
   gboolean is_small_unit = TRUE;
-  float m_per_pixel;
+  double m_per_pixel;
 
   g_assert (SHUMATE_IS_SCALE (self));
 
