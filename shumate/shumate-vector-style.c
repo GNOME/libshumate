@@ -265,8 +265,8 @@ texture_new_for_surface (cairo_surface_t *surface)
   g_return_val_if_fail (cairo_image_surface_get_height (surface) > 0, NULL);
 
   bytes = g_bytes_new_with_free_func (cairo_image_surface_get_data (surface),
-                                      cairo_image_surface_get_height (surface)
-                                      * cairo_image_surface_get_stride (surface),
+                                      (gsize) cairo_image_surface_get_height (surface)
+                                      * (gsize) cairo_image_surface_get_stride (surface),
                                       (GDestroyNotify) cairo_surface_destroy,
                                       cairo_surface_reference (surface));
 
