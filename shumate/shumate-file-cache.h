@@ -26,7 +26,7 @@
 #define _SHUMATE_FILE_CACHE_H_
 
 #include <glib-object.h>
-#include <shumate/shumate-tile.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -77,30 +77,36 @@ gboolean shumate_file_cache_purge_cache_finish (ShumateFileCache *self,
                                                 GAsyncResult *result,
                                                 GError **error);
 
-void shumate_file_cache_get_tile_async (ShumateFileCache *self,
-                                        ShumateTile *tile,
-                                        GCancellable *cancellable,
-                                        GAsyncReadyCallback callback,
-                                        gpointer user_data);
-GBytes *shumate_file_cache_get_tile_finish (ShumateFileCache *self,
-                                            char **etag,
-                                            GDateTime **modtime,
-                                            GAsyncResult *result,
-                                            GError **error);
+void shumate_file_cache_get_tile_async (ShumateFileCache    *self,
+                                        int                  x,
+                                        int                  y,
+                                        int                  zoom_level,
+                                        GCancellable        *cancellable,
+                                        GAsyncReadyCallback  callback,
+                                        gpointer             user_data);
+GBytes *shumate_file_cache_get_tile_finish (ShumateFileCache  *self,
+                                            char             **etag,
+                                            GDateTime        **modtime,
+                                            GAsyncResult      *result,
+                                            GError           **error);
 
-void shumate_file_cache_store_tile_async (ShumateFileCache *self,
-                                          ShumateTile *tile,
-                                          GBytes *bytes,
-                                          const char *etag,
-                                          GCancellable *cancellable,
-                                          GAsyncReadyCallback callback,
-                                          gpointer user_data);
+void shumate_file_cache_store_tile_async (ShumateFileCache    *self,
+                                          int                  x,
+                                          int                  y,
+                                          int                  zoom_level,
+                                          GBytes              *bytes,
+                                          const char          *etag,
+                                          GCancellable        *cancellable,
+                                          GAsyncReadyCallback  callback,
+                                          gpointer             user_data);
 gboolean shumate_file_cache_store_tile_finish (ShumateFileCache *self,
                                                GAsyncResult *result,
                                                GError **error);
 
 void shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
-                                         ShumateTile *tile);
+                                         int               x,
+                                         int               y,
+                                         int               zoom_level);
 
 G_END_DECLS
 

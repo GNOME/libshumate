@@ -33,7 +33,8 @@
 
 #include <gio/gio.h>
 
-#include "shumate-network-tile-source.h"
+#include "shumate-raster-renderer.h"
+#include "shumate-tile-downloader.h"
 
 struct _ShumateMapSourceRegistry
 {
@@ -162,7 +163,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OSM_MAPNIK))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OSM_MAPNIK,
           "OpenStreetMap Mapnik",
           "Map Data ODBL OpenStreetMap Contributors, Map Imagery CC-BY-SA 2.0 OpenStreetMap",
@@ -179,7 +180,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OSM_CYCLE_MAP))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OSM_CYCLE_MAP,
           "OpenStreetMap Cycle Map",
           "Map data is CC-BY-SA 2.0 OpenStreetMap contributors",
@@ -196,7 +197,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OSM_TRANSPORT_MAP))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OSM_TRANSPORT_MAP,
           "OpenStreetMap Transport Map",
           "Map data is CC-BY-SA 2.0 OpenStreetMap contributors",
@@ -213,7 +214,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_MFF_RELIEF))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_MFF_RELIEF,
           "Maps for Free Relief",
           "Map data available under GNU Free Documentation license, Version 1.2 or later",
@@ -230,7 +231,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OWM_CLOUDS))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OWM_CLOUDS,
           "OpenWeatherMap cloud layer",
           "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -247,7 +248,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OWM_WIND))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OWM_WIND,
           "OpenWeatherMap wind layer",
           "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -264,7 +265,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OWM_TEMPERATURE))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OWM_TEMPERATURE,
           "OpenWeatherMap temperature layer",
           "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -281,7 +282,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OWM_PRECIPITATION))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OWM_PRECIPITATION,
           "OpenWeatherMap precipitation layer",
           "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",
@@ -298,7 +299,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
   if (!shumate_map_source_registry_get_by_id (self, SHUMATE_MAP_SOURCE_OWM_PRESSURE))
     {
       g_ptr_array_add (self->map_sources,
-        shumate_network_tile_source_new_full (
+        shumate_raster_renderer_new_full_from_url (
           SHUMATE_MAP_SOURCE_OWM_PRESSURE,
           "OpenWeatherMap sea level pressure layer",
           "Map data is CC-BY-SA 2.0 OpenWeatherMap contributors",

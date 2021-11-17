@@ -79,13 +79,17 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (sqlite3_stmt, sqlite3_finalize);
 static void finalize_sql (ShumateFileCache *file_cache);
 static void init_cache (ShumateFileCache *file_cache);
 static char *get_filename (ShumateFileCache *file_cache,
-    ShumateTile *tile);
+                           int               x,
+                           int               y,
+                           int               zoom_level);
 static void delete_tile (ShumateFileCache *file_cache,
-    const char *filename);
+                         const char       *filename);
 static gboolean create_cache_dir (const char *dir_name);
 
 static void on_tile_filled (ShumateFileCache *self,
-    ShumateTile *tile);
+                            int               x,
+                            int               y,
+                            int               zoom_level);
 
 static void
 shumate_file_cache_get_property (GObject *object,
@@ -470,36 +474,37 @@ shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
 
 static char *
 get_filename (ShumateFileCache *file_cache,
-    ShumateTile *tile)
+              int               x,
+              int               y,
+              int               zoom_level)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   const char *cache_key;
 
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
-  g_return_val_if_fail (SHUMATE_IS_TILE (tile), NULL);
   g_return_val_if_fail (priv->cache_dir, NULL);
 
   cache_key = shumate_file_cache_get_cache_key (file_cache);
 
   char *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
-        "%s" G_DIR_SEPARATOR_S
-        "%d" G_DIR_SEPARATOR_S
-        "%d" G_DIR_SEPARATOR_S "%d.png",
-        priv->cache_dir,
-        cache_key,
-        shumate_tile_get_zoom_level (tile),
-        shumate_tile_get_x (tile),
-        shumate_tile_get_y (tile));
+                                    "%s" G_DIR_SEPARATOR_S
+                                    "%d" G_DIR_SEPARATOR_S
+                                    "%d" G_DIR_SEPARATOR_S "%d.png",
+                                    priv->cache_dir,
+                                    cache_key,
+                                    zoom_level,
+                                    x,
+                                    y);
   return filename;
 }
 
 
 static char *
-db_get_etag (ShumateFileCache *self, ShumateTile *tile)
+db_get_etag (ShumateFileCache *self, int x, int y, int zoom_level)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   int sql_rc = SQLITE_OK;
-  g_autofree char *filename = get_filename (self, tile);
+  g_autofree char *filename = get_filename (self, x, y, zoom_level);
 
   sqlite3_reset (priv->stmt_select);
   sql_rc = sqlite3_bind_text (priv->stmt_select, 1, filename, -1, SQLITE_STATIC);
@@ -534,7 +539,9 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
 /**
  * shumate_file_cache_mark_up_to_date:
  * @self: a #ShumateFileCache
- * @tile: a #ShumateTile
+ * @x: the X coordinate of the tile
+ * @y: the Y coordinate of the tile
+ * @zoom_level: the zoom level of the tile
  *
  * Marks a tile in the cache as being up to date, without changing its data.
  *
@@ -543,16 +550,17 @@ db_get_etag (ShumateFileCache *self, ShumateTile *tile)
  */
 void
 shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
-                                    ShumateTile *tile)
+                                    int               x,
+                                    int               y,
+                                    int               zoom_level)
 {
   g_autofree char *filename = NULL;
   g_autoptr(GFile) file = NULL;
   g_autoptr(GFileInfo) info = NULL;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
-  g_return_if_fail (SHUMATE_IS_TILE (tile));
 
-  filename = get_filename (self, tile);
+  filename = get_filename (self, x, y, zoom_level);
   file = g_file_new_for_path (filename);
 
   info = g_file_query_info (file, G_FILE_ATTRIBUTE_TIME_MODIFIED,
@@ -570,13 +578,13 @@ shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
 
 static void
 on_tile_filled (ShumateFileCache *self,
-    ShumateTile *tile)
+                int x, int y, int zoom_level)
 {
   ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   int sql_rc = SQLITE_OK;
   g_autofree char *filename = NULL;
 
-  filename = get_filename (self, tile);
+  filename = get_filename (self, x, y, zoom_level);
 
   g_debug ("popularity of %s", filename);
 
@@ -793,7 +801,9 @@ static void on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, 
 /**
  * shumate_file_cache_get_tile_async:
  * @self: a #ShumateFileCache
- * @tile: a #ShumateTile
+ * @x: the X coordinate of the tile
+ * @y: the Y coordinate of the tile
+ * @zoom_level: the zoom level of the tile
  * @cancellable: (nullable): a #GCancellable
  * @callback: a #GAsyncReadyCallback to execute upon completion
  * @user_data: closure data for @callback
@@ -801,11 +811,13 @@ static void on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, 
  * Gets tile data from the cache, if it is available.
  */
 void
-shumate_file_cache_get_tile_async (ShumateFileCache *self,
-                                   ShumateTile *tile,
-                                   GCancellable *cancellable,
-                                   GAsyncReadyCallback callback,
-                                   gpointer user_data)
+shumate_file_cache_get_tile_async (ShumateFileCache    *self,
+                                   int                  x,
+                                   int                  y,
+                                   int                  zoom_level,
+                                   GCancellable        *cancellable,
+                                   GAsyncReadyCallback  callback,
+                                   gpointer             user_data)
 {
   g_autoptr(GTask) task = NULL;
   g_autoptr(GFile) file = NULL;
@@ -815,7 +827,6 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
   GetTileData *task_data = NULL;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
-  g_return_if_fail (SHUMATE_IS_TILE (tile));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
 
   task = g_task_new (self, cancellable, callback, user_data);
@@ -824,7 +835,7 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
   task_data = g_new0 (GetTileData, 1);
   g_task_set_task_data (task, task_data, (GDestroyNotify) get_tile_data_free);
 
-  filename = get_filename (self, tile);
+  filename = get_filename (self, x, y, zoom_level);
   file = g_file_new_for_path (filename);
 
   /* Retrieve modification time */
@@ -842,10 +853,10 @@ shumate_file_cache_get_tile_async (ShumateFileCache *self,
     }
 
   task_data->modtime = g_file_info_get_modification_date_time (info);
-  task_data->etag = db_get_etag (self, tile);
+  task_data->etag = db_get_etag (self, x, y, zoom_level);
 
   /* update tile popularity */
-  on_tile_filled (self, tile);
+  on_tile_filled (self, x, y, zoom_level);
 
   g_file_load_bytes_async (file, cancellable, on_get_tile_file_loaded, g_object_ref (task));
 }
@@ -940,7 +951,9 @@ static void on_file_written (GObject *object, GAsyncResult *result, gpointer use
 /**
  * shumate_file_cache_store_tile_async:
  * @self: an #ShumateFileCache
- * @tile: a #ShumateTile
+ * @x: the X coordinate of the tile
+ * @y: the Y coordinate of the tile
+ * @zoom_level: the zoom level of the tile
  * @bytes: a #GBytes
  * @etag: (nullable): an ETag string, or %NULL
  * @cancellable: (nullable): a #GCancellable
@@ -951,7 +964,9 @@ static void on_file_written (GObject *object, GAsyncResult *result, gpointer use
  */
 void
 shumate_file_cache_store_tile_async (ShumateFileCache *self,
-                                     ShumateTile *tile,
+                                     int x,
+                                     int y,
+                                     int zoom_level,
                                      GBytes *bytes,
                                      const char *etag,
                                      GCancellable *cancellable,
@@ -965,17 +980,16 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
   StoreTileData *data;
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
-  g_return_if_fail (SHUMATE_IS_TILE (tile));
   g_return_if_fail (bytes != NULL);
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
 
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_file_cache_store_tile_async);
 
-  filename = get_filename (self, tile);
+  filename = get_filename (self, x, y, zoom_level);
   file = g_file_new_for_path (filename);
 
-  g_debug ("Update of %p", tile);
+  g_debug ("Update of tile (%d %d zoom %d)", x, y, zoom_level);
 
   /* If needed, create the cache's dirs */
   path = g_path_get_dirname (filename);

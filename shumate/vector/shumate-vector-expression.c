@@ -16,7 +16,7 @@
  */
 
 
-#include "shumate-vector-style.h"
+#include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-private.h"
 #include "shumate-vector-expression-filter-private.h"
 #include "shumate-vector-expression-interpolate-private.h"

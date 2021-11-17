@@ -129,7 +129,6 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   GtkExpression *expression;
   g_autoptr(GBytes) bytes = NULL;
   const char *style_json;
-  g_autoptr(ShumateVectorStyle) style = NULL;
   GError *error = NULL;
 
   gtk_widget_init_template (GTK_WIDGET (self));
@@ -144,25 +143,25 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/styles/map-style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   style_json = g_bytes_get_data (bytes, NULL);
 
-  if (shumate_vector_style_is_supported ())
+  if (shumate_vector_renderer_is_supported ())
     {
-      if (!(style = shumate_vector_style_create (style_json, &error)))
+      ShumateVectorRenderer *renderer = shumate_vector_renderer_new_full_from_url (
+        "vector-tiles",
+        "Vector Tiles",
+        "© OpenStreetMap contributors", NULL, 0, 5, 512,
+        SHUMATE_MAP_PROJECTION_MERCATOR,
+        "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/#Z#/#X#/#Y#.pbf",
+        style_json,
+        &error
+      );
+
+      if (error)
         {
           g_warning ("Failed to create vector map style: %s", error->message);
           g_clear_error (&error);
         }
       else
-        {
-          ShumateMapSource *map_source = SHUMATE_MAP_SOURCE (shumate_network_tile_source_new_vector_full (
-            "vector-tiles",
-            "Vector Tiles",
-            "© OpenStreetMap contributors", NULL, 0, 5, 512,
-            SHUMATE_MAP_PROJECTION_MERCATOR,
-            "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/#Z#/#X#/#Y#.pbf",
-            style
-          ));
-          shumate_map_source_registry_add (self->registry, map_source);
-        }
+        shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
     }
 
   viewport = shumate_map_get_viewport (self->map);

@@ -44,21 +44,18 @@ static void
 test_file_cache_store_retrieve ()
 {
   g_autoptr(ShumateFileCache) cache = shumate_file_cache_new_full (100000000, "test", NULL);
-  g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GBytes) bytes = g_bytes_new_static (TEST_DATA, sizeof TEST_DATA);
   g_autoptr(GMainLoop) loop = NULL;
 
-  g_object_ref_sink (tile);
-
   /* Store the tile */
   loop = g_main_loop_new (NULL, TRUE);
-  shumate_file_cache_store_tile_async (cache, tile, bytes, TEST_ETAG, NULL, on_tile_stored, loop);
+  shumate_file_cache_store_tile_async (cache, 0, 0, 256, bytes, TEST_ETAG, NULL, on_tile_stored, loop);
   g_main_loop_run (loop);
 
   /* Now retrieve it */
   g_main_loop_unref (loop);
   loop = g_main_loop_new (NULL, TRUE);
-  shumate_file_cache_get_tile_async (cache, tile, NULL, on_tile_retrieved, loop);
+  shumate_file_cache_get_tile_async (cache, 0, 0, 256, NULL, on_tile_retrieved, loop);
   g_main_loop_run (loop);
 }
 
@@ -87,13 +84,10 @@ static void
 test_file_cache_miss ()
 {
   g_autoptr(ShumateFileCache) cache = shumate_file_cache_new_full (100000000, "test", NULL);
-  g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GMainLoop) loop = NULL;
 
-  g_object_ref_sink (tile);
-
   loop = g_main_loop_new (NULL, TRUE);
-  shumate_file_cache_get_tile_async (cache, tile, NULL, on_no_tile_retrieved, loop);
+  shumate_file_cache_get_tile_async (cache, 0, 0, 256, NULL, on_no_tile_retrieved, loop);
   g_main_loop_run (loop);
 }
 

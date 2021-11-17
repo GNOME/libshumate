@@ -15,7 +15,7 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "shumate-vector-style.h"
+#include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-literal-private.h"
 #include "shumate-vector-utils-private.h"

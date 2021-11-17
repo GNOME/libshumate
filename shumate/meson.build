@@ -1,6 +1,7 @@
 libshumate_public_h = [
   'shumate-coordinate.h',
   'shumate-compass.h',
+  'shumate-data-source.h',
   'shumate-file-cache.h',
   'shumate-layer.h',
   'shumate-license.h',
@@ -12,12 +13,13 @@ libshumate_public_h = [
   'shumate-marker-layer.h',
   'shumate-marker.h',
   'shumate-memory-cache.h',
-  'shumate-network-tile-source.h',
   'shumate-path-layer.h',
   'shumate-point.h',
   'shumate-scale.h',
+  'shumate-raster-renderer.h',
   'shumate-tile.h',
-  'shumate-vector-style.h',
+  'shumate-tile-downloader.h',
+  'shumate-vector-renderer.h',
   'shumate-viewport.h',
   'shumate.h',
 ]
@@ -42,6 +44,7 @@ libshumate_private_h = [
 
 libshumate_sources = [
   'shumate-coordinate.c',
+  'shumate-data-source.c',
   'shumate-compass.c',
   'shumate-file-cache.c',
   'shumate-kinetic-scrolling.c',
@@ -55,12 +58,13 @@ libshumate_sources = [
   'shumate-marker-layer.c',
   'shumate-marker.c',
   'shumate-memory-cache.c',
-  'shumate-network-tile-source.c',
   'shumate-path-layer.c',
   'shumate-point.c',
   'shumate-scale.c',
+  'shumate-raster-renderer.c',
   'shumate-tile.c',
-  'shumate-vector-style.c',
+  'shumate-tile-downloader.c',
+  'shumate-vector-renderer.c',
   'shumate-viewport.c',
 ]
 
@@ -163,7 +167,7 @@ if get_option('vector_renderer')
   ]
 
   libshumate_c_args += [
-    '-DSHUMATE_VECTOR_RENDERER',
+    '-DSHUMATE_HAS_VECTOR_RENDERER',
   ]
 endif
 

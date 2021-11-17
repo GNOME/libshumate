@@ -18,7 +18,7 @@
 #pragma once
 
 #include <json-glib/json-glib.h>
-#include "shumate-vector-style.h"
+#include "shumate-vector-renderer.h"
 
 
 gboolean shumate_vector_json_get_object (JsonNode *node, JsonObject **dest, GError **error);
