@@ -18,12 +18,14 @@
     "cleanup" : [
         "/include",
         "/lib/pkgconfig",
+        "/lib/girepository-1.0",
         "/share/pkgconfig",
         "/share/aclocal",
         "/man",
         "/share/man",
         "/share/gtk-doc",
         "/share/vala",
+        "/share/gir-1.0",
         "*.la",
         "*.a"
     ],
@@ -31,6 +33,12 @@
         {
             "name" : "protobuf",
             "buildsystem" : "autotools",
+            "config-opts": [ "DIST_LANG=cpp" ],
+            "cleanup" : [
+                "/bin/protoc*",
+                "/lib/libprotoc*",
+                "/lib/libprotobuf-lite*"
+            ],
             "sources" : [
                 {
                     "type" : "archive",
@@ -62,7 +70,8 @@
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "https://gitlab.gnome.org/GNOME/libshumate.git"
+                    "url" : "https://gitlab.gnome.org/GNOME/libshumate.git",
+                    "branch" : "main"
                 }
             ]
         }
