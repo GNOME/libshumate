@@ -19,6 +19,9 @@ Building is done with meson.
 The official website is:
    https://wiki.gnome.org/Projects/libshumate
 
+Documentation:
+   https://gnome.pages.gitlab.gnome.org/libshumate/
+
 Bugtracker:
    https://gitlab.gnome.org/GNOME/libshumate/-/issues
 
