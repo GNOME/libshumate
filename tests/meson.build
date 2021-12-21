@@ -9,7 +9,6 @@ test_env = [
 tests = [
   'coordinate',
   'file-cache',
-  'license',
   'marker',
   'map',
   'marker-layer',

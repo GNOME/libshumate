@@ -35,15 +35,9 @@ G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GtkWidget
 struct _ShumateLayerClass
 {
   GtkWidgetClass parent_class;
-
-  const char *(*get_license)     (ShumateLayer *self);
-  const char *(*get_license_uri) (ShumateLayer *self);
 };
 
 ShumateViewport *shumate_layer_get_viewport (ShumateLayer *self);
-
-const char *shumate_layer_get_license     (ShumateLayer *self);
-const char *shumate_layer_get_license_uri (ShumateLayer *self);
 
 G_END_DECLS
 

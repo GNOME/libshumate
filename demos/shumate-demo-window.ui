@@ -41,7 +41,6 @@
             <child>
               <object class="ShumateLicense" id="license">
                 <property name="halign">end</property>
-                <property name="map">map</property>
               </object>
             </child>
           </object>

@@ -72,9 +72,6 @@ void shumate_map_insert_layer_behind (ShumateMap   *self,
 void shumate_map_insert_layer_above (ShumateMap   *self,
                                      ShumateLayer *layer,
                                      ShumateLayer *next_sibling);
-
-GList *shumate_map_get_layers (ShumateMap *self);
-
 gboolean shumate_map_get_zoom_on_double_click (ShumateMap *self);
 gboolean shumate_map_get_animate_zoom (ShumateMap *self);
 ShumateState shumate_map_get_state (ShumateMap *self);

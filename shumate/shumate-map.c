@@ -63,7 +63,6 @@ enum
 {
   /* normal signals */
   ANIMATION_COMPLETED,
-  LAYERS_CHANGED,
   LAST_SIGNAL
 };
 
@@ -814,20 +813,6 @@ shumate_map_class_init (ShumateMapClass *klass)
                   G_TYPE_NONE,
                   0);
 
-  /**
-   * ShumateMap::layers-changed:
-   *
-   * Emitted when the list of layers changes.
-   */
-  signals[LAYERS_CHANGED] =
-    g_signal_new ("layers-changed",
-                  G_OBJECT_CLASS_TYPE (object_class),
-                  G_SIGNAL_RUN_LAST | G_SIGNAL_DETAILED,
-                  0, NULL, NULL,
-                  NULL,
-                  G_TYPE_NONE,
-                  0);
-
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-view"));
 
@@ -1072,7 +1057,6 @@ shumate_map_add_layer (ShumateMap   *self,
   g_return_if_fail (SHUMATE_IS_LAYER (layer));
 
   gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (self), NULL);
-  g_signal_emit (G_OBJECT (self), signals[LAYERS_CHANGED], 0);
 }
 
 
@@ -1096,7 +1080,6 @@ shumate_map_insert_layer_behind (ShumateMap   *self,
   g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (self));
 
   gtk_widget_insert_before (GTK_WIDGET (layer), GTK_WIDGET (self), GTK_WIDGET (next_sibling));
-  g_signal_emit (G_OBJECT (self), signals[LAYERS_CHANGED], 0);
 }
 
 
@@ -1120,7 +1103,6 @@ shumate_map_insert_layer_above (ShumateMap   *self,
   g_return_if_fail (next_sibling == NULL || gtk_widget_get_parent (GTK_WIDGET (next_sibling)) == GTK_WIDGET (self));
 
   gtk_widget_insert_after (GTK_WIDGET (layer), GTK_WIDGET (self), GTK_WIDGET (next_sibling));
-  g_signal_emit (G_OBJECT (self), signals[LAYERS_CHANGED], 0);
 }
 
 
@@ -1145,31 +1127,6 @@ shumate_map_remove_layer (ShumateMap  *self,
     }
 
   gtk_widget_unparent (GTK_WIDGET (layer));
-  g_signal_emit (G_OBJECT (self), signals[LAYERS_CHANGED], 0);
-}
-
-/**
- * shumate_map_get_layers:
- * @self: a [class@Map]
- *
- * Gets a list of the layers in the map.
- *
- * Returns: (transfer container)(element-type ShumateLayer): a list of layers in the map
- */
-GList *
-shumate_map_get_layers (ShumateMap *self)
-{
-  GList *list = NULL;
-  GtkWidget *child;
-
-  g_return_val_if_fail (SHUMATE_IS_MAP (self), NULL);
-
-  for (child = gtk_widget_get_first_child (GTK_WIDGET (self));
-       child != NULL;
-       child = gtk_widget_get_next_sibling (child))
-    list = g_list_prepend (list, child);
-
-  return g_list_reverse (list);
 }
 
 /**
