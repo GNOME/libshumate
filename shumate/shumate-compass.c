@@ -218,8 +218,8 @@ shumate_compass_new (ShumateViewport *viewport)
 
 /**
  * shumate_compass_set_viewport:
- * @compass: a #ShumateCompass
- * @viewport: (nullable): a #ShumateViewport
+ * @compass: a [class@Compass]
+ * @viewport: (nullable): a [class@Viewport]
  *
  * Sets the compass viewport.
  */
@@ -228,19 +228,23 @@ shumate_compass_set_viewport (ShumateCompass  *compass,
                               ShumateViewport *viewport)
 {
   g_return_if_fail (SHUMATE_IS_COMPASS (compass));
+  g_return_if_fail (viewport == NULL || SHUMATE_IS_VIEWPORT (viewport));
+
+  if (compass->viewport == viewport)
+    return;
 
   if (compass->viewport)
     g_signal_handlers_disconnect_by_data (compass->viewport, compass);
 
-  if (g_set_object (&compass->viewport, viewport))
+  g_set_object (&compass->viewport, viewport);
+
+  if (compass->viewport)
     {
-      g_object_notify_by_pspec(G_OBJECT (compass), obj_properties[PROP_VIEWPORT]);
-      if (compass->viewport)
-        {
-          g_signal_connect_swapped (compass->viewport, "notify::rotation", G_CALLBACK (on_viewport_props_changed), compass);
-          shumate_compass_on_rotation_changed (compass);
-        }
+      g_signal_connect_swapped (compass->viewport, "notify::rotation", G_CALLBACK (on_viewport_props_changed), compass);
+      shumate_compass_on_rotation_changed (compass);
     }
+
+  g_object_notify_by_pspec (G_OBJECT (compass), obj_properties[PROP_VIEWPORT]);
 }
 
 /**
