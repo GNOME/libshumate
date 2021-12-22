@@ -24,19 +24,13 @@ struct _ShumateDemoWindow
 {
   GtkApplicationWindow parent_instance;
 
-  ShumateMap *map;
-  GtkOverlay *overlay;
-  ShumateScale *scale;
-  ShumateLicense *license;
-  ShumateCompass *compass;
+  ShumateSimpleMap *map;
   GtkDropDown *layers_dropdown;
   ShumateMapSourceRegistry *registry;
 
   ShumateMapLayer *tile_layer;
   ShumateMarkerLayer *marker_layer;
   ShumatePathLayer *path_layer;
-
-  ShumateMapSource *current_source;
 };
 
 G_DEFINE_TYPE (ShumateDemoWindow, shumate_demo_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -66,43 +60,10 @@ create_marker (ShumateDemoWindow *self, double lat, double lng)
 
 
 static void
-set_map_source (ShumateDemoWindow *self, ShumateMapSource *new_source)
-{
-  ShumateViewport *viewport = shumate_map_get_viewport (self->map);
-  ShumateMapLayer *tile_layer;
-
-  if (self->current_source) {
-    shumate_license_remove_map_source (self->license, self->current_source);
-  }
-
-  g_set_object (&self->current_source, new_source);
-
-  shumate_viewport_set_reference_map_source (viewport, new_source);
-  shumate_map_set_map_source (self->map, new_source);
-
-  tile_layer = shumate_map_layer_new (new_source, viewport);
-  shumate_map_insert_layer_behind (self->map, SHUMATE_LAYER (tile_layer), SHUMATE_LAYER (self->tile_layer));
-  if (self->tile_layer) {
-    shumate_map_remove_layer (self->map, SHUMATE_LAYER (self->tile_layer));
-  }
-  self->tile_layer = tile_layer;
-
-  shumate_license_append_map_source (self->license, new_source);
-}
-
-static void
-on_layers_dropdown_notify_selected (ShumateDemoWindow *self, GParamSpec *pspec, GtkDropDown *dropdown)
-{
-  set_map_source (self, gtk_drop_down_get_selected_item (dropdown));
-}
-
-
-static void
 shumate_demo_window_dispose (GObject *object)
 {
   ShumateDemoWindow *self = SHUMATE_DEMO_WINDOW (object);
 
-  g_clear_object (&self->current_source);
   g_clear_object (&self->registry);
 
   G_OBJECT_CLASS (shumate_demo_window_parent_class)->dispose (object);
@@ -119,12 +80,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/ui/shumate-demo-window.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, map);
-  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, overlay);
-  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, scale);
-  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, license);
-  gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, compass);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
-  gtk_widget_class_bind_template_callback (widget_class, on_layers_dropdown_notify_selected);
 }
 
 static gchar *
@@ -175,19 +131,13 @@ shumate_demo_window_init (ShumateDemoWindow *self)
         shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
     }
 
-  viewport = shumate_map_get_viewport (self->map);
-
-  /* Set the map source */
-  on_layers_dropdown_notify_selected (self, NULL, self->layers_dropdown);
-
-  shumate_scale_set_viewport (self->scale, viewport);
-  shumate_compass_set_viewport (self->compass, viewport);
+  viewport = shumate_simple_map_get_viewport (self->map);
 
   /* Add the marker layers */
   self->marker_layer = shumate_marker_layer_new (viewport);
-  shumate_map_add_layer (self->map, SHUMATE_LAYER (self->marker_layer));
+  shumate_simple_map_add_overlay_layer (self->map, SHUMATE_LAYER (self->marker_layer));
   self->path_layer = shumate_path_layer_new (viewport);
-  shumate_map_add_layer (self->map, SHUMATE_LAYER (self->path_layer));
+  shumate_simple_map_add_overlay_layer (self->map, SHUMATE_LAYER (self->path_layer));
 
   create_marker (self, 35.426667, -116.89);
   create_marker (self, 40.431389, -4.248056);

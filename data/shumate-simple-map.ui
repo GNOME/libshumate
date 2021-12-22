@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <template class="ShumateSimpleMap" parent="GtkWidget">
+    <child>
+      <object class="ShumateMap" id="map"></object>
+    </child>
+    <child>
+      <object class="ShumateLicense" id="license">
+        <property name="halign">end</property>
+        <property name="valign">end</property>
+      </object>
+    </child>
+    <child>
+      <object class="ShumateScale" id="scale">
+        <property name="halign">start</property>
+        <property name="valign">end</property>
+        <property name="viewport" bind-source="map" bind-property="viewport" bind-flags="sync-create"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="halign">end</property>
+        <property name="valign">start</property>
+        <property name="orientation">vertical</property>
+        <property name="margin-top">6</property>
+        <property name="margin-bottom">6</property>
+        <property name="margin-start">6</property>
+        <property name="margin-end">6</property>
+        <property name="spacing">6</property>
+        <child>
+          <object class="GtkBox" id="zoom_buttons">
+            <style>
+              <class name="linked"/>
+            </style>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkButton">
+                <property name="tooltip-text">Zoom In</property>
+                <signal name="clicked" handler="on_zoom_in_clicked" swapped="true"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">zoom-in-symbolic</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton">
+                <property name="tooltip-text">Zoom Out</property>
+                <signal name="clicked" handler="on_zoom_out_clicked" swapped="true"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="icon-name">zoom-out-symbolic</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="ShumateCompass" id="compass">
+            <property name="viewport" bind-source="map" bind-property="viewport" bind-flags="sync-create"/>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/org/gnome/shumate/">
-    <file compressed="true">compass.css</file>
     <file compressed="true">scale.css</file>
     <file compressed="true">license.css</file>
     <file compressed="true">point.css</file>
     <file preprocess="xml-stripblanks">icons/32x32/status/map-compass.svg</file>
+    <file preprocess="xml-stripblanks">shumate-simple-map.ui</file>
   </gresource>
 </gresources>

@@ -179,13 +179,7 @@ shumate_compass_class_init (ShumateCompassClass *klass)
   display = gdk_display_get_default ();
   if (display)
     {
-      GtkIconTheme *icon_theme;
-      g_autoptr(GtkCssProvider) provider = gtk_css_provider_new ();
-      gtk_css_provider_load_from_resource (provider, "/org/gnome/shumate/compass.css");
-      gtk_style_context_add_provider_for_display (display,
-                                                  GTK_STYLE_PROVIDER (provider),
-                                                  GTK_STYLE_PROVIDER_PRIORITY_FALLBACK);
-      icon_theme = gtk_icon_theme_get_for_display (display);
+      GtkIconTheme *icon_theme = gtk_icon_theme_get_for_display (display);
       gtk_icon_theme_add_resource_path (icon_theme, "/org/gnome/shumate/icons");
     }
 }
@@ -197,6 +191,7 @@ shumate_compass_init (ShumateCompass *self)
   gtk_revealer_set_transition_type (GTK_REVEALER (self->revealer), GTK_REVEALER_TRANSITION_TYPE_CROSSFADE);
   gtk_widget_insert_after (self->revealer, GTK_WIDGET (self), NULL);
   self->image = gtk_image_new_from_icon_name ("map-compass");
+  gtk_image_set_icon_size (GTK_IMAGE (self->image), GTK_ICON_SIZE_LARGE);
   gtk_revealer_set_child (GTK_REVEALER (self->revealer), self->image);
 }
 

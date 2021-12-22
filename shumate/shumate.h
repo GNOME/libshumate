@@ -43,6 +43,7 @@
 #include "shumate/shumate-raster-renderer.h"
 #include "shumate/shumate-viewport.h"
 #include "shumate/shumate-scale.h"
+#include "shumate/shumate-simple-map.h"
 #include "shumate/shumate-map-source.h"
 #include "shumate/shumate-map-source-registry.h"
 #include "shumate/shumate-tile-downloader.h"

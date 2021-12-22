@@ -10,41 +10,13 @@
       <object class="GtkHeaderBar">
         <child>
           <object class="GtkDropDown" id="layers_dropdown">
-            <signal name="notify::selected" handler="on_layers_dropdown_notify_selected" swapped="true" />
           </object>
         </child>
       </object>
     </child>
     <child>
-      <object class="GtkOverlay" id="overlay">
-        <property name="vexpand">True</property>
-        <child>
-          <object class="ShumateMap" id="map">
-          </object>
-        </child>
-        <child type="overlay">
-          <object class="ShumateScale" id="scale">
-            <property name="halign">start</property>
-            <property name="valign">end</property>
-          </object>
-        </child>
-        <child type="overlay">
-          <object class="GtkBox">
-            <property name="orientation">vertical</property>
-            <property name="halign">end</property>
-            <property name="valign">end</property>
-            <child>
-              <object class="ShumateCompass" id="compass">
-                <property name="halign">end</property>
-              </object>
-            </child>
-            <child>
-              <object class="ShumateLicense" id="license">
-                <property name="halign">end</property>
-              </object>
-            </child>
-          </object>
-        </child>
+      <object class="ShumateSimpleMap" id="map">
+        <property name="map-source" bind-source="layers_dropdown" bind-property="selected-item" bind-flags="sync-create"/>
       </object>
     </child>
   </template>
