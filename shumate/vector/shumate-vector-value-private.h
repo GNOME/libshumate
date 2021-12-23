@@ -61,3 +61,5 @@ void shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color);
 gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color);
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
+
+char *shumate_vector_value_as_string (ShumateVectorValue *self);

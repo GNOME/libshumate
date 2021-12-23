@@ -224,6 +224,36 @@ test_vector_expression_filter_errors (void)
 }
 
 
+static void
+test_vector_expression_format ()
+{
+  GError *error = NULL;
+  g_autoptr(GBytes) vector_data = NULL;
+  gconstpointer data;
+  gsize len;
+  ShumateVectorRenderScope scope;
+  g_autoptr(JsonNode) node = json_from_string ("\"{name}\"", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+
+  vector_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  g_assert_no_error (error);
+
+  data = g_bytes_get_data (vector_data, &len);
+  scope.tile = vector_tile__tile__unpack (NULL, len, data);
+  g_assert_nonnull (scope.tile);
+
+  scope.zoom_level = 10;
+
+  g_assert_true (shumate_vector_render_scope_find_layer (&scope, "helloworld"));
+  scope.feature = scope.layer->features[0];
+
+  g_assert_cmpstr (shumate_vector_expression_eval_string (expression, &scope, NULL), ==, "Hello, world!");
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -236,6 +266,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
   g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
+  g_test_add_func ("/vector/expression/format", test_vector_expression_format);
 
   return g_test_run ();
 }

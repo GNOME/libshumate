@@ -19,6 +19,7 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-private.h"
 #include "shumate-vector-expression-filter-private.h"
+#include "shumate-vector-expression-format-private.h"
 #include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-literal-private.h"
 #include "shumate-vector-value-private.h"
@@ -36,6 +37,7 @@ shumate_vector_expression_from_json (JsonNode *json, GError **error)
     {
       g_auto(GValue) gvalue = G_VALUE_INIT;
       g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      const char *string;
 
       json_node_get_value (json, &gvalue);
       if (!shumate_vector_value_set_from_g_value (&value, &gvalue))
@@ -47,7 +49,10 @@ shumate_vector_expression_from_json (JsonNode *json, GError **error)
           return NULL;
         }
 
-      return shumate_vector_expression_literal_new (&value);
+      if (shumate_vector_value_get_string (&value, &string))
+        return shumate_vector_expression_format_new (string, error);
+      else
+        return shumate_vector_expression_literal_new (&value);
     }
   else if (JSON_NODE_HOLDS_OBJECT (json))
     return shumate_vector_expression_interpolate_from_json_obj (json_node_get_object (json), error);

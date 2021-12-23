@@ -234,3 +234,24 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
       g_assert_not_reached ();
     }
 }
+
+
+char *
+shumate_vector_value_as_string (ShumateVectorValue *self)
+{
+  switch (self->type)
+    {
+    case TYPE_NULL:
+      return g_strdup ("");
+    case TYPE_NUMBER:
+      return g_strdup_printf ("%f", self->number);
+    case TYPE_BOOLEAN:
+      return g_strdup (self->boolean ? "true" : "false");
+    case TYPE_STRING:
+      return g_strdup (self->string);
+    case TYPE_COLOR:
+      return gdk_rgba_to_string (&self->color);
+    default:
+      g_assert_not_reached ();
+    }
+}
