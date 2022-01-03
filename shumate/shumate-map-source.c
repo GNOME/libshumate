@@ -701,9 +701,9 @@ shumate_map_source_fill_tile_finish (ShumateMapSource  *self,
                                      GError           **error)
 {
   g_return_val_if_fail (SHUMATE_IS_MAP_SOURCE (self), FALSE);
-  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+  g_return_val_if_fail (G_IS_ASYNC_RESULT (result), FALSE);
 
-  return g_task_propagate_boolean (G_TASK (result), error);
+  return SHUMATE_MAP_SOURCE_GET_CLASS (self)->fill_tile_finish (self, result, error);
 }
 
 /**

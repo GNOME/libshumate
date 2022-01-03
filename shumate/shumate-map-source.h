@@ -51,6 +51,9 @@ struct _ShumateMapSourceClass
                             GCancellable         *cancellable,
                             GAsyncReadyCallback   callback,
                             gpointer              user_data);
+  gboolean (*fill_tile_finish) (ShumateMapSource  *self,
+                                GAsyncResult      *result,
+                                GError           **error);
 };
 
 const char *shumate_map_source_get_id (ShumateMapSource *map_source);

@@ -309,6 +309,10 @@ static void shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_so
                                                      GAsyncReadyCallback  callback,
                                                      gpointer             user_data);
 
+static gboolean shumate_vector_renderer_fill_tile_finish (ShumateMapSource  *map_source,
+                                                          GAsyncResult      *result,
+                                                          GError           **error);
+
 static void
 shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
 {
@@ -321,6 +325,7 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
   object_class->set_property = shumate_vector_renderer_set_property;
 
   map_source_class->fill_tile_async = shumate_vector_renderer_fill_tile_async;
+  map_source_class->fill_tile_finish = shumate_vector_renderer_fill_tile_finish;
 
   /**
    * ShumateVectorRenderer:data-source:
@@ -524,6 +529,19 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
                                            cancellable,
                                            on_data_source_done,
                                            g_steal_pointer (&task));
+}
+
+static gboolean
+shumate_vector_renderer_fill_tile_finish (ShumateMapSource  *map_source,
+                                          GAsyncResult      *result,
+                                          GError           **error)
+{
+  ShumateVectorRenderer *self = (ShumateVectorRenderer *)map_source;
+
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), FALSE);
+  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+
+  return g_task_propagate_boolean (G_TASK (result), error);
 }
 
 static void
