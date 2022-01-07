@@ -26,6 +26,7 @@
  */
 
 #include "shumate-memory-cache.h"
+#include "shumate-tile-private.h"
 
 #include <glib.h>
 #include <string.h>
@@ -49,6 +50,7 @@ typedef struct
 {
   char *key;
   GdkTexture *texture;
+  GPtrArray *symbols;
 } QueueMember;
 
 
@@ -145,8 +147,8 @@ shumate_memory_cache_new_full (guint size_limit)
   ShumateMemoryCache *cache;
 
   cache = g_object_new (SHUMATE_TYPE_MEMORY_CACHE,
-        "size-limit", size_limit,
-        NULL);
+                        "size-limit", size_limit,
+                        NULL);
 
   return cache;
 }
@@ -234,7 +236,8 @@ delete_queue_member (QueueMember *member, gpointer user_data)
   if (member)
     {
       g_clear_object (&member->texture);
-      g_free (member->key);
+      g_clear_pointer (&member->symbols, g_ptr_array_unref);
+      g_clear_pointer (&member->key, g_free);
       g_free (member);
     }
 }
@@ -259,7 +262,9 @@ shumate_memory_cache_clean (ShumateMemoryCache *memory_cache)
 
 
 gboolean
-shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self, ShumateTile *tile, const char *source_id)
+shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self,
+                                    ShumateTile        *tile,
+                                    const char         *source_id)
 {
   ShumateMemoryCache *memory_cache = (ShumateMemoryCache *) self;
   ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (memory_cache);
@@ -280,17 +285,17 @@ shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self, ShumateTile *tile,
 
   move_queue_member_to_head (priv->queue, link);
 
-  if (!member->texture)
-    return FALSE;
-
   shumate_tile_set_texture (tile, member->texture);
+  shumate_tile_set_symbols (tile, member->symbols);
   shumate_tile_set_fade_in (tile, FALSE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
   return TRUE;
 }
 
 void
-shumate_memory_cache_store_texture (ShumateMemoryCache *self, ShumateTile *tile, GdkTexture *texture, const char *source_id)
+shumate_memory_cache_store_tile (ShumateMemoryCache *self,
+                                 ShumateTile        *tile,
+                                 const char         *source_id)
 {
   ShumateMemoryCachePrivate *priv = shumate_memory_cache_get_instance_private (self);
   GList *link;
@@ -309,6 +314,8 @@ shumate_memory_cache_store_texture (ShumateMemoryCache *self, ShumateTile *tile,
   else
     {
       QueueMember *member;
+      GdkTexture *texture;
+      GPtrArray *symbols;
 
       if (priv->queue->length >= priv->size_limit)
         {
@@ -319,7 +326,10 @@ shumate_memory_cache_store_texture (ShumateMemoryCache *self, ShumateTile *tile,
 
       member = g_new0 (QueueMember, 1);
       member->key = key;
-      member->texture = g_object_ref (texture);
+      if ((texture = shumate_tile_get_texture (tile)))
+        member->texture = g_object_ref (texture);
+      if ((symbols = shumate_tile_get_symbols (tile)))
+        member->symbols = g_ptr_array_ref (symbols);
 
       g_queue_push_head (priv->queue, member);
       g_hash_table_insert (priv->hash_table, g_strdup (key), g_queue_peek_head_link (priv->queue));

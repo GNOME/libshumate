@@ -46,6 +46,7 @@ typedef struct
   gboolean fade_in;
 
   GdkTexture *texture;
+  GPtrArray *symbols;
 } ShumateTilePrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (ShumateTile, shumate_tile, GTK_TYPE_WIDGET);
@@ -204,6 +205,7 @@ shumate_tile_dispose (GObject *object)
   ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   g_clear_object (&priv->texture);
+  g_clear_pointer (&priv->symbols, g_ptr_array_unref);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
 }
@@ -661,4 +663,28 @@ shumate_tile_set_texture (ShumateTile *self,
       g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_TEXTURE]);
       gtk_widget_queue_draw (GTK_WIDGET (self));
     }
+}
+
+
+void
+shumate_tile_set_symbols (ShumateTile *self, GPtrArray *symbols)
+{
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
+  g_return_if_fail (SHUMATE_IS_TILE (self));
+
+  g_clear_pointer (&priv->symbols, g_ptr_array_unref);
+  if (symbols != NULL)
+    priv->symbols = g_ptr_array_ref (symbols);
+}
+
+
+GPtrArray *
+shumate_tile_get_symbols (ShumateTile *self)
+{
+  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
+
+  g_return_val_if_fail (SHUMATE_IS_TILE (self), NULL);
+
+  return priv->symbols;
 }

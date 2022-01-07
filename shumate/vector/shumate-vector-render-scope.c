@@ -88,6 +88,70 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
 
 
 void
+shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
+                                        double                   *min_x,
+                                        double                   *min_y,
+                                        double                   *max_x,
+                                        double                   *max_y)
+{
+  double x = 0, y = 0;
+
+  *min_x = self->layer->extent;
+  *min_y = self->layer->extent;
+  *max_x = 0;
+  *max_y = 0;
+
+  g_return_if_fail (self->feature != NULL);
+
+  for (int i = 0; i < self->feature->n_geometry; i ++)
+    {
+      int cmd = self->feature->geometry[i];
+
+      /* See https://github.com/mapbox/vector-tile-spec/tree/master/2.1#43-geometry-encoding */
+      int op = cmd & 0x7;
+      int repeat = cmd >> 3;
+
+      for (int j = 0; j < repeat; j ++)
+        {
+          switch (op) {
+          case 1:
+            g_return_if_fail (i + 2 < self->feature->n_geometry);
+            x += zigzag (self->feature->geometry[++i]);
+            y += zigzag (self->feature->geometry[++i]);
+            break;
+          case 2:
+            g_return_if_fail (i + 2 < self->feature->n_geometry);
+            x += zigzag (self->feature->geometry[++i]);
+            y += zigzag (self->feature->geometry[++i]);
+            break;
+          case 7:
+            break;
+          default:
+            g_assert_not_reached ();
+          }
+
+          *min_x = MIN (*min_x, x);
+          *min_y = MIN (*min_y, y);
+          *max_x = MAX (*max_x, x);
+          *max_y = MAX (*max_y, y);
+        }
+    }
+}
+
+
+void
+shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
+                                                 double                   *x,
+                                                 double                   *y)
+{
+  double min_x, min_y, max_x, max_y;
+  shumate_vector_render_scope_get_bounds (self, &min_x, &min_y, &max_x, &max_y);
+  *x = (min_x + max_x) / 2.0 / self->layer->extent;
+  *y = (min_y + max_y) / 2.0 / self->layer->extent;
+}
+
+
+void
 shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value)
 {
   shumate_vector_value_unset (value);

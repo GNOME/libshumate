@@ -19,6 +19,11 @@
 
 #include "shumate-map-layer.h"
 #include "shumate-memory-cache.h"
+#include "shumate-tile-private.h"
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+#  include "vector/shumate-vector-symbol-container-private.h"
+#endif
 
 /**
  * ShumateMapLayer:
@@ -43,6 +48,10 @@ struct _ShumateMapLayer
   guint recompute_grid_idle_id;
 
   ShumateMemoryCache *memcache;
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  ShumateVectorSymbolContainer *symbols;
+#endif
 };
 
 G_DEFINE_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE_TYPE_LAYER)
@@ -127,6 +136,7 @@ typedef struct {
   ShumateMapLayer *self;
   ShumateTile *tile;
   char *source_id;
+  TileGridPosition pos;
 } TileFilledData;
 
 static void
@@ -139,8 +149,31 @@ tile_filled_data_free (TileFilledData *data)
 }
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileFilledData, tile_filled_data_free);
 
+
 static void
-on_tile_filled (GObject *source_object, GAsyncResult *res, gpointer user_data)
+add_symbols (ShumateMapLayer  *self,
+             ShumateTile      *tile,
+             TileGridPosition *pos)
+{
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  GPtrArray *symbols;
+
+  g_assert (SHUMATE_IS_MAP_LAYER (self));
+  g_assert (SHUMATE_IS_TILE (tile));
+
+  if ((symbols = shumate_tile_get_symbols (tile)))
+    shumate_vector_symbol_container_add_symbols (self->symbols,
+                                                 symbols,
+                                                 pos->x,
+                                                 pos->y,
+                                                 pos->zoom);
+#endif
+}
+
+static void
+on_tile_filled (GObject      *source_object,
+                GAsyncResult *res,
+                gpointer      user_data)
 {
   g_autoptr(TileFilledData) data = user_data;
   g_autoptr(GError) error = NULL;
@@ -152,25 +185,32 @@ on_tile_filled (GObject *source_object, GAsyncResult *res, gpointer user_data)
   if (!success)
     return;
 
-  shumate_memory_cache_store_texture (data->self->memcache,
-                                      data->tile,
-                                      shumate_tile_get_texture (data->tile),
-                                      data->source_id);
+  add_symbols (data->self, data->tile, &data->pos);
+
+  shumate_memory_cache_store_tile (data->self->memcache,
+                                   data->tile,
+                                   data->source_id);
 }
 
 static void
-add_tile (ShumateMapLayer *self,
-          ShumateTile     *tile)
+add_tile (ShumateMapLayer  *self,
+          ShumateTile      *tile,
+          TileGridPosition *pos)
 {
   const char *source_id = shumate_map_source_get_id (self->map_source);
 
-  if (!shumate_memory_cache_try_fill_tile (self->memcache, tile, source_id))
+  if (shumate_memory_cache_try_fill_tile (self->memcache, tile, source_id))
+    {
+      add_symbols (self, tile, pos);
+    }
+  else
     {
       GCancellable *cancellable = g_cancellable_new ();
       TileFilledData *data = g_new0 (TileFilledData, 1);
       data->self = g_object_ref (self);
       data->tile = g_object_ref (tile);
       data->source_id = g_strdup (source_id);
+      data->pos = *pos;
 
       shumate_tile_set_texture (tile, NULL);
       shumate_map_source_fill_tile_async (self->map_source, tile, cancellable, on_tile_filled, data);
@@ -178,11 +218,13 @@ add_tile (ShumateMapLayer *self,
     }
 
   gtk_widget_insert_before (GTK_WIDGET (tile), GTK_WIDGET (self), NULL);
+  g_hash_table_insert (self->tile_children, pos, g_object_ref (tile));
 }
 
 static void
-remove_tile (ShumateMapLayer *self,
-             ShumateTile     *tile)
+remove_tile (ShumateMapLayer  *self,
+             ShumateTile      *tile,
+             TileGridPosition *pos)
 {
   GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, tile);
   if (cancellable)
@@ -190,6 +232,10 @@ remove_tile (ShumateMapLayer *self,
       g_cancellable_cancel (cancellable);
       g_hash_table_remove (self->tile_fill, tile);
     }
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  shumate_vector_symbol_container_remove_symbols (self->symbols, pos->x, pos->y, pos->zoom);
+#endif
 
   gtk_widget_unparent (GTK_WIDGET (tile));
 }
@@ -251,7 +297,7 @@ recompute_grid (ShumateMapLayer *self)
           || pos->y >= tile_initial_row + required_rows)
           && pos->zoom == zoom_level)
         {
-          remove_tile (self, tile);
+          remove_tile (self, tile, pos);
           g_hash_table_iter_remove (&iter);
         }
     }
@@ -268,8 +314,7 @@ recompute_grid (ShumateMapLayer *self)
           if (!tile)
             {
               tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
-              g_hash_table_insert (self->tile_children, g_steal_pointer (&pos), g_object_ref (tile));
-              add_tile (self, tile);
+              add_tile (self, tile, g_steal_pointer (&pos));
             }
 
           if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
@@ -289,7 +334,7 @@ recompute_grid (ShumateMapLayer *self)
 
           if (pos->zoom != zoom_level)
             {
-              remove_tile (self, tile);
+              remove_tile (self, tile, pos);
               g_hash_table_iter_remove (&iter);
             }
         }
@@ -444,6 +489,10 @@ shumate_map_layer_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
   g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
 
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  self->symbols = shumate_vector_symbol_container_new (self->map_source, viewport);
+  gtk_widget_set_parent (GTK_WIDGET (self->symbols), GTK_WIDGET (self));
+#endif
 }
 
 static void
@@ -483,6 +532,14 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
       child_allocation.y = -(latitude_y - height/2) + child_allocation.height * pos->y;
       gtk_widget_size_allocate (GTK_WIDGET (tile), &child_allocation, baseline);
     }
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  child_allocation.x = 0;
+  child_allocation.y = 0;
+  child_allocation.width = width;
+  child_allocation.height = height;
+  gtk_widget_size_allocate (GTK_WIDGET (self->symbols), &child_allocation, baseline);
+#endif
 
   /* We can't recompute while allocating, so queue an idle callback to run
    * the recomputation outside the allocation cycle.
@@ -533,14 +590,28 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   int width = gtk_widget_get_width (GTK_WIDGET (self));
   int height = gtk_widget_get_height (GTK_WIDGET (self));
   double rotation = shumate_viewport_get_rotation (viewport);
+  GtkWidget *child;
 
   /* Scale and rotate around the center of the view */
+  gtk_snapshot_save (snapshot);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
   gtk_snapshot_scale (snapshot, extra_zoom, extra_zoom);
   gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
 
-  GTK_WIDGET_CLASS (shumate_map_layer_parent_class)->snapshot (widget, snapshot);
+  for (child = gtk_widget_get_first_child (widget);
+       child != NULL;
+       child = gtk_widget_get_next_sibling (child))
+    {
+      if (SHUMATE_IS_TILE (child))
+        gtk_widget_snapshot_child (widget, child, snapshot);
+    }
+
+  gtk_snapshot_restore (snapshot);
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  gtk_widget_snapshot_child (widget, GTK_WIDGET (self->symbols), snapshot);
+#endif
 }
 
 static void

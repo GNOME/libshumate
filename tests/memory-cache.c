@@ -20,7 +20,8 @@ test_memory_cache_store_retrieve ()
   g_object_ref_sink (tile);
 
   /* Store the tile */
-  shumate_memory_cache_store_texture (cache, tile, texture, "A");
+  shumate_tile_set_texture (tile, texture);
+  shumate_memory_cache_store_tile (cache, tile, "A");
 
   /* Now retrieve it */
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "A"));
@@ -41,7 +42,8 @@ test_memory_cache_miss ()
   g_object_ref_sink (tile2);
 
   /* Store a tile */
-  shumate_memory_cache_store_texture (cache, tile1, texture, "A");
+  shumate_tile_set_texture (tile1, texture);
+  shumate_memory_cache_store_tile (cache, tile1, "A");
 
   /* Now retrieve a different one */
   g_assert_false (shumate_memory_cache_try_fill_tile (cache, tile2, "A"));
@@ -54,22 +56,26 @@ static void
 test_memory_cache_source_id ()
 {
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
-  g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
+  g_autoptr(ShumateTile) tile1 = shumate_tile_new_full (0, 0, 256, 0);
+  g_autoptr(ShumateTile) tile2 = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GdkTexture) texture1 = create_texture ();
   g_autoptr(GdkTexture) texture2 = create_texture ();
 
-  g_object_ref_sink (tile);
+  g_object_ref_sink (tile1);
+  g_object_ref_sink (tile2);
 
   /* Store the tiles */
-  shumate_memory_cache_store_texture (cache, tile, texture1, "A");
-  shumate_memory_cache_store_texture (cache, tile, texture2, "B");
+  shumate_tile_set_texture (tile1, texture1);
+  shumate_tile_set_texture (tile2, texture2);
+  shumate_memory_cache_store_tile (cache, tile1, "A");
+  shumate_memory_cache_store_tile (cache, tile2, "B");
 
   /* Now retrieve them */
-  g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "A"));
-  g_assert_true (texture1 == shumate_tile_get_texture (tile));
+  g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile1, "A"));
+  g_assert_true (texture1 == shumate_tile_get_texture (tile1));
 
-  g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "B"));
-  g_assert_true (texture2 == shumate_tile_get_texture (tile));
+  g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile2, "B"));
+  g_assert_true (texture2 == shumate_tile_get_texture (tile2));
 }
 
 
@@ -79,14 +85,13 @@ test_memory_cache_purge ()
 {
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (3);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
-  g_autoptr(GdkTexture) texture = create_texture ();
 
   g_object_ref_sink (tile);
 
   /* Store a few tiles */
-  shumate_memory_cache_store_texture (cache, tile, texture, "A");
-  shumate_memory_cache_store_texture (cache, tile, texture, "B");
-  shumate_memory_cache_store_texture (cache, tile, texture, "C");
+  shumate_memory_cache_store_tile (cache, tile, "A");
+  shumate_memory_cache_store_tile (cache, tile, "B");
+  shumate_memory_cache_store_tile (cache, tile, "C");
 
   /* Make sure they're all still cached */
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "B"));
@@ -94,7 +99,7 @@ test_memory_cache_purge ()
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "C"));
 
   /* Store another one */
-  shumate_memory_cache_store_texture (cache, tile, texture, "D");
+  shumate_memory_cache_store_tile (cache, tile, "D");
 
   /* Since B was the least recently accessed, it should be the one that was
    * dropped */
@@ -111,12 +116,11 @@ test_memory_cache_clean ()
 {
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
-  g_autoptr(GdkTexture) texture = create_texture ();
 
   g_object_ref_sink (tile);
 
   /* Store a tile */
-  shumate_memory_cache_store_texture (cache, tile, texture, "A");
+  shumate_memory_cache_store_tile (cache, tile, "A");
 
   /* Clean the cache */
   shumate_memory_cache_clean (cache);

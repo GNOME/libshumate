@@ -53,6 +53,17 @@
         "line-opacity": 0.5,
         "line-width": 0.9
       }
+    },
+    {
+      "id": "cities",
+      "type": "symbol",
+      "source-layer": "city",
+      "layout": {
+        "text-field": "{name}"
+      },
+      "paint": {
+        "text-color": "#000000"
+      }
     }
   ]
 }

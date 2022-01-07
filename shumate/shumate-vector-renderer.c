@@ -17,6 +17,7 @@
 
 #include "shumate-vector-renderer.h"
 #include "shumate-tile-downloader.h"
+#include "shumate-tile-private.h"
 
 /**
  * ShumateVectorRenderer:
@@ -517,20 +518,28 @@ on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
     }
 }
 
-static GdkTexture *
-render (ShumateVectorRenderer *self, int texture_size, GBytes *tile_data, double zoom_level)
+static void
+render (ShumateVectorRenderer *self,
+        ShumateTile           *tile,
+        GBytes                *tile_data,
+        double                 zoom_level)
 {
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
-  GdkTexture *texture;
+  g_autoptr(GdkTexture) texture = NULL;
   cairo_surface_t *surface;
   gconstpointer data;
   gsize len;
+  g_autoptr(GPtrArray) symbols = g_ptr_array_new ();
+  int texture_size;
 
-  g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), NULL);
+  g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_assert (SHUMATE_IS_TILE (tile));
 
+  texture_size = shumate_tile_get_size (tile);
   scope.target_size = texture_size;
   scope.zoom_level = zoom_level;
+  scope.symbols = symbols;
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
   scope.cr = cairo_create (surface);
@@ -543,14 +552,14 @@ render (ShumateVectorRenderer *self, int texture_size, GBytes *tile_data, double
       shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], &scope);
 
   texture = texture_new_for_surface (surface);
+  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_symbols (tile, symbols);
 
   cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
   vector_tile__tile__free_unpacked (scope.tile, NULL);
-
-  return texture;
 #else
-  g_return_val_if_reached (NULL);
+  g_return_if_reached ();
 #endif
 }
 
@@ -575,10 +584,7 @@ on_data_source_received_data (ShumateVectorRenderer *self,
       if (shumate_tile_get_x (tile) == x
           && shumate_tile_get_y (tile) == y
           && shumate_tile_get_zoom_level (tile) == zoom_level)
-        {
-          g_autoptr(GdkTexture) texture = render (self, shumate_tile_get_size (tile), bytes, zoom_level);
-          shumate_tile_set_texture (tile, texture);
-        }
+          render (self, tile, bytes, zoom_level);
     }
 }
 

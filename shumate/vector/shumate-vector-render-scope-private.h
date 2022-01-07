@@ -28,6 +28,8 @@ typedef struct {
   double scale;
   double zoom_level;
 
+  GPtrArray *symbols;
+
   VectorTile__Tile *tile;
   VectorTile__Tile__Layer *layer;
   VectorTile__Tile__Feature *feature;
@@ -36,4 +38,11 @@ typedef struct {
 
 gboolean shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name);
 void shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self);
+void shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self, double *x, double *y);
+void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
+                                             double                   *min_x,
+                                             double                   *min_y,
+                                             double                   *max_x,
+                                             double                   *max_y);
+
 void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value);

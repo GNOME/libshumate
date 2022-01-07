@@ -48,10 +48,9 @@ void shumate_memory_cache_clean (ShumateMemoryCache *memory_cache);
 gboolean shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self,
                                              ShumateTile        *tile,
                                              const char         *source_id);
-void shumate_memory_cache_store_texture (ShumateMemoryCache *self,
-                                         ShumateTile        *tile,
-                                         GdkTexture         *texture,
-                                         const char         *source_id);
+void shumate_memory_cache_store_tile (ShumateMemoryCache *self,
+                                      ShumateTile        *tile,
+                                      const char         *source_id);
 
 G_END_DECLS
 
