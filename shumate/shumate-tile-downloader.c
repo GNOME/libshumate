@@ -331,6 +331,7 @@ fetch_from_network (GTask *task)
   GCancellable *cancellable = g_task_get_cancellable (task);
   g_autofree char *uri = NULL;
   g_autofree char *modtime_string = NULL;
+  SoupMessageHeaders *headers;
 
   uri = get_tile_uri (data->self, data->x, data->y, data->z);
 
@@ -345,6 +346,11 @@ fetch_from_network (GTask *task)
     }
 
   modtime_string = get_modified_time_string (data->modtime);
+#ifdef SHUMATE_LIBSOUP_3
+  headers = soup_message_get_request_headers (data->msg);
+#else
+  headers = data->msg->request_headers;
+#endif
 
   /* If an etag is available, only use it.
    * OSM servers seems to send now as the modified time for all tiles
@@ -353,18 +359,23 @@ fetch_from_network (GTask *task)
   if (data->etag)
     {
       g_debug ("If-None-Match: %s", data->etag);
-      soup_message_headers_append (data->msg->request_headers,
-          "If-None-Match", data->etag);
+      soup_message_headers_append (headers, "If-None-Match", data->etag);
     }
   else if (modtime_string)
     {
       g_debug ("If-Modified-Since %s", modtime_string);
-      soup_message_headers_append (data->msg->request_headers,
-          "If-Modified-Since", modtime_string);
+      soup_message_headers_append (headers, "If-Modified-Since", modtime_string);
     }
 
   if (data->self->soup_session == NULL)
     {
+#ifdef SHUMATE_LIBSOUP_3
+      data->self->soup_session =
+        soup_session_new_with_options ("user-agent", "libshumate/" SHUMATE_VERSION,
+                                       "max-conns-per-host", MAX_CONNS_DEFAULT,
+                                       "max-conns", MAX_CONNS_DEFAULT,
+                                       NULL);
+#else
       data->self->soup_session
         = soup_session_new_with_options ("proxy-uri", NULL,
                                          "ssl-strict", FALSE,
@@ -380,9 +391,18 @@ fetch_from_network (GTask *task)
                     "max-conns-per-host", MAX_CONNS_DEFAULT,
                     "max-conns", MAX_CONNS_DEFAULT,
                     NULL);
+
+#endif
     }
 
-  soup_session_send_async (data->self->soup_session, data->msg, cancellable, on_message_sent, g_object_ref (task));
+  soup_session_send_async (data->self->soup_session,
+                           data->msg,
+#ifdef SHUMATE_LIBSOUP_3
+                           G_PRIORITY_DEFAULT,
+#endif
+                           cancellable,
+                           on_message_sent,
+                           g_object_ref (task));
 }
 
 /* Receive the response from the network. If the tile hasn't been modified,
@@ -396,6 +416,8 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   g_autoptr(GInputStream) input_stream = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GOutputStream) output_stream = NULL;
+  SoupStatus status;
+  SoupMessageHeaders *headers;
 
   input_stream = soup_session_send_finish (data->self->soup_session, res, &error);
   if (error != NULL)
@@ -413,9 +435,17 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
       return;
     }
 
-  g_debug ("Got reply %d", data->msg->status_code);
+#ifdef SHUMATE_LIBSOUP_3
+  status = soup_message_get_status (data->msg);
+  headers = soup_message_get_response_headers (data->msg);
+#else
+  status = data->msg->status_code;
+  headers = data->msg->response_headers;
+#endif
 
-  if (data->msg->status_code == SOUP_STATUS_NOT_MODIFIED)
+  g_debug ("Got reply %d", status);
+
+  if (status == SOUP_STATUS_NOT_MODIFIED)
     {
       /* The tile has already been filled from the cache, and the server says
        * it doesn't have a newer one. Just update the cache, mark the tile as
@@ -426,12 +456,12 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
       return;
     }
 
-  if (!SOUP_STATUS_IS_SUCCESSFUL (data->msg->status_code))
+  if (!SOUP_STATUS_IS_SUCCESSFUL (status))
     {
       if (data->bytes)
         {
           g_debug ("Fetching tile failed, but there is a cached version (HTTP %s)",
-                   soup_status_get_phrase (data->msg->status_code));
+                   soup_status_get_phrase (status));
           g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
         }
       else
@@ -439,7 +469,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
           g_task_return_new_error (task, SHUMATE_TILE_DOWNLOADER_ERROR,
                                    SHUMATE_TILE_DOWNLOADER_ERROR_BAD_RESPONSE,
                                    "Unable to download tile: HTTP %s",
-                                   soup_status_get_phrase (data->msg->status_code));
+                                   soup_status_get_phrase (status));
         }
 
       return;
@@ -447,7 +477,7 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
 
   /* Verify if the server sent an etag and save it */
   g_clear_pointer (&data->etag, g_free);
-  data->etag = g_strdup (soup_message_headers_get_one (data->msg->response_headers, "ETag"));
+  data->etag = g_strdup (soup_message_headers_get_one (headers, "ETag"));
   g_debug ("Received ETag %s", data->etag);
 
   output_stream = g_memory_output_stream_new_resizable ();

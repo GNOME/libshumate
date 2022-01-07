@@ -56,7 +56,6 @@ libm_dep = cc.find_library('m', required: true)
 glib_req = '>= 2.16.0'
 cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
-libsoup_req = '>= 2.42'
 introspection_req = '>= 0.6.3'
 vala_req = '>= 0.11.0'
 gtk_doc_req = '>= 1.9'
@@ -67,8 +66,12 @@ gobject_dep = dependency('gobject-2.0', version: glib_req)
 gio_dep = dependency('gio-2.0', version: glib_req)
 cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
-libsoup_dep = dependency('libsoup-2.4', version: libsoup_req)
 gtk_dep = dependency('gtk4')
+if get_option('libsoup3')
+  libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
+else
+  libsoup_dep = dependency('libsoup-2.4', version: '>= 2.42')
+endif
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)

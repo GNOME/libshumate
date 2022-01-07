@@ -171,6 +171,12 @@ if get_option('vector_renderer')
   ]
 endif
 
+if get_option('libsoup3')
+  libshumate_c_args += [
+    '-DSHUMATE_LIBSOUP_3',
+  ]
+endif
+
 libshumate_lib = library(
   package_string,
   libshumate_sources,

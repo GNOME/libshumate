@@ -16,3 +16,7 @@ option('demos',
 option('vector_renderer',
        type: 'boolean', value: false,
        description: 'Build the experimental vector tile renderer')
+
+option('libsoup3',
+       type: 'boolean', value: false,
+       description: 'Use libsoup 3.0')
