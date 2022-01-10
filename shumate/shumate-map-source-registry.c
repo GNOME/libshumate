@@ -154,7 +154,7 @@ shumate_map_source_registry_new_with_defaults (void)
 void
 shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
 {
-  uint n_items;
+  guint n_items;
 
   g_return_if_fail (SHUMATE_IS_MAP_SOURCE_REGISTRY (self));
 
