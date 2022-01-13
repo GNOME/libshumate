@@ -1,6 +1,6 @@
 project(
   'libshumate', 'c',
-  version: '0.0.0',
+  version: '1.0.0.alpha',
   license: 'LGPLv2.1+',
   meson_version: '>= 0.53.0',
   default_options: [
@@ -24,7 +24,7 @@ else
   api_version = '.'.join([version_major, version_minor])
 endif
 
-lib_version = '0.0'
+lib_version = '1.0'
 
 package_name = meson.project_name().strip('lib')
 package_string = '@0@-@1@'.format(package_name, api_version)
