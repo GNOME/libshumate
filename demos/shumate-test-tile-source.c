@@ -110,6 +110,18 @@ shumate_test_tile_source_fill_tile_async (ShumateMapSource *map_source,
   g_task_return_boolean (task, TRUE);
 }
 
+static gboolean
+shumate_test_tile_source_fill_tile_finish (ShumateMapSource *map_source,
+                                           GAsyncResult *result,
+                                           GError **error)
+{
+  ShumateTestTileSource *self = (ShumateTestTileSource *)map_source;
+
+  g_return_val_if_fail (SHUMATE_IS_TEST_TILE_SOURCE (self), FALSE);
+  g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
+
+  return g_task_propagate_boolean (G_TASK (result), error);
+}
 
 static void
 shumate_test_tile_source_class_init (ShumateTestTileSourceClass *klass)
@@ -117,6 +129,7 @@ shumate_test_tile_source_class_init (ShumateTestTileSourceClass *klass)
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
   map_source_class->fill_tile_async = shumate_test_tile_source_fill_tile_async;
+  map_source_class->fill_tile_finish = shumate_test_tile_source_fill_tile_finish;
 }
 
 
