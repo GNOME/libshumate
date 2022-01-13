@@ -88,8 +88,8 @@ shumate_data_source_init (ShumateDataSource *self)
  *
  * Some data sources may return data multiple times. For example,
  * [class@TileDownloader] may return data from a cache, then return updated
- * data from the network. [signal@received-data] is emitted each time
- * data is received, then @callback is called after the last update.
+ * data from the network. [signal@ShumateDataSource::received-data] is emitted
+ * each time data is received, then @callback is called after the last update.
  */
 void
 shumate_data_source_get_tile_data_async (ShumateDataSource   *self,
@@ -116,7 +116,8 @@ shumate_data_source_get_tile_data_async (ShumateDataSource   *self,
  * Gets the final result of a request started with
  * shumate_data_source_get_tile_data_async().
  *
- * Returns: (transfer full)(nullable): The requested data, or %NULL if an error occurred
+ * Returns: (transfer full) (nullable): The requested data, or %NULL if an
+ * error occurred
  */
 GBytes *
 shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,

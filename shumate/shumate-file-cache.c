@@ -22,7 +22,7 @@
  * ShumateFileCache:
  *
  * A cache that stores and retrieves tiles from the file system. It is mainly
- * used by [class@NetworkTileSource], but can also be used by custom map
+ * used by [class@TileDownloader], but can also be used by custom data
  * sources.
  *
  * The cache will be filled up to a certain size limit. When this limit is

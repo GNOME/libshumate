@@ -66,7 +66,7 @@ ShumateVectorRenderer *shumate_vector_renderer_new_full_from_url (const char    
  * SHUMATE_STYLE_ERROR:
  *
  * Error domain for errors that may occur when parsing a map style. Errors in
- * this domain will be from the [enum@StyleError] enum.
+ * this domain will be from the [error@StyleError] enum.
  */
 #define SHUMATE_STYLE_ERROR shumate_style_error_quark ()
 GQuark shumate_style_error_quark (void);
@@ -79,7 +79,7 @@ GQuark shumate_style_error_quark (void);
  * @SHUMATE_STYLE_ERROR_INVALID_EXPRESSION: An invalid or unrecognized expression was encountered.
  * @SHUMATE_STYLE_ERROR_SUPPORT_OMITTED: Libshumate was compiled without vector tile support.
  *
- * Error codes in the [error@StyleError] domain.
+ * Error codes that occurs while parsing the style in [class@VectorRenderer].
  */
 typedef enum {
   SHUMATE_STYLE_ERROR_FAILED,

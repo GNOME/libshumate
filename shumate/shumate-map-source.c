@@ -24,8 +24,8 @@
  * with images from various sources: a web API, for example, or a test pattern
  * generated on demand.
  *
- * The most common map source is [class@NetworkTileSource], which fetches tiles
- * from an API.
+ * The most common map source is [class@RasterRenderer], which fetches tiles
+ * using a [class@TileDownloader].
  */
 
 #include "shumate-map-source.h"

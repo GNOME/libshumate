@@ -52,7 +52,7 @@ static GParamSpec *properties [N_PROPS];
  * Creates a new [class@TileDownloader] that fetches tiles from an API and
  * caches them on disk.
  *
- * See [property@url-template] for the format of the URL template.
+ * See [property@TileDownloader:url-template] for the format of the URL template.
  *
  * Returns: (transfer full): a newly constructed [class@TileDownloader]
  */
