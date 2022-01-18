@@ -78,11 +78,14 @@ typedef struct
 } ShumateMarkerPrivate;
 
 static void location_interface_init (ShumateLocationInterface *iface);
+static void buildable_interface_init (GtkBuildableIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumateMarker, shumate_marker, GTK_TYPE_WIDGET,
     G_ADD_PRIVATE (ShumateMarker)
-    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init));
+    G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, location_interface_init)
+    G_IMPLEMENT_INTERFACE (GTK_TYPE_BUILDABLE, buildable_interface_init));
 
+static GtkBuildableIface *parent_buildable_iface;
 
 static void
 shumate_marker_set_location (ShumateLocation *location,
@@ -123,6 +126,18 @@ shumate_marker_get_longitude (ShumateLocation *location)
   g_assert (SHUMATE_IS_MARKER (location));
 
   return priv->lon;
+}
+
+static void
+shumate_marker_add_child (GtkBuildable *buildable,
+                          GtkBuilder   *builder,
+                          GObject      *child,
+                          const char   *type)
+{
+  if (GTK_IS_WIDGET (child))
+    shumate_marker_set_child (SHUMATE_MARKER (buildable), GTK_WIDGET (child));
+  else
+    parent_buildable_iface->add_child (buildable, builder, child, type);
 }
 
 static void
@@ -301,6 +316,13 @@ location_interface_init (ShumateLocationInterface *iface)
   iface->get_latitude = shumate_marker_get_latitude;
   iface->get_longitude = shumate_marker_get_longitude;
   iface->set_location = shumate_marker_set_location;
+}
+
+static void
+buildable_interface_init (GtkBuildableIface *iface)
+{
+  parent_buildable_iface = g_type_interface_peek_parent (iface);
+  iface->add_child = shumate_marker_add_child;
 }
 
 /**
