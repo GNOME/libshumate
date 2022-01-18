@@ -18,6 +18,7 @@ tests = [
 
 if get_option('vector_renderer')
   tests += [
+    'vector-collision',
     'vector-expression',
     'vector-style',
     'vector-value',

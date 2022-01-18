@@ -33,6 +33,7 @@ libshumate_private_h = [
   'shumate-viewport-private.h',
 
   'vector/shumate-vector-background-layer-private.h',
+  'vector/shumate-vector-collision-private.h',
   'vector/shumate-vector-expression-private.h',
   'vector/shumate-vector-expression-filter-private.h',
   'vector/shumate-vector-expression-format-private.h',
@@ -159,6 +160,7 @@ install_headers(
 if get_option('vector_renderer')
   libshumate_sources += [
     'vector/shumate-vector-background-layer.c',
+    'vector/shumate-vector-collision.c',
     'vector/shumate-vector-expression.c',
     'vector/shumate-vector-expression-interpolate.c',
     'vector/shumate-vector-expression-filter.c',

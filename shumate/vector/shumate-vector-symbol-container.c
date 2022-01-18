@@ -17,6 +17,7 @@
 
 #include "shumate-vector-symbol-container-private.h"
 #include "shumate-vector-symbol-private.h"
+#include "shumate-vector-collision-private.h"
 
 
 struct _ShumateVectorSymbolContainer
@@ -26,6 +27,7 @@ struct _ShumateVectorSymbolContainer
   ShumateMapSource *map_source;
 
   GList *children;
+  ShumateVectorCollision *collision;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbolContainer, shumate_vector_symbol_container, SHUMATE_TYPE_LAYER)
@@ -42,6 +44,8 @@ static GParamSpec *obj_properties[N_PROPS] = { NULL, };
 typedef struct {
   // does not need to be freed because it's owned by the widget
   ShumateVectorSymbol *symbol;
+
+  ShumateVectorCollisionMarker *marker;
 
   // These are coordinates [0, 1) within the tile
   float x;
@@ -101,6 +105,7 @@ shumate_vector_symbol_container_finalize (GObject *object)
   ShumateVectorSymbolContainer *self = (ShumateVectorSymbolContainer *)object;
 
   g_list_free_full (self->children, (GDestroyNotify) g_free);
+  g_clear_pointer (&self->collision, shumate_vector_collision_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_container_parent_class)->finalize (object);
 }
@@ -197,12 +202,18 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
   float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
 
+  shumate_vector_collision_recalc (self->collision, rotation, zoom_level);
+
   for (GList *l = self->children; l != NULL; l = l->next)
     {
       ChildInfo *child = l->data;
       float tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
       float x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
       float y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
+
+      gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), child->marker->visible);
+      if (!child->marker->visible)
+        continue;
 
       rotate_around_center (&x, &y, width, height, rotation);
       alloc.x = x - child->width/2.0;
@@ -262,6 +273,7 @@ shumate_vector_symbol_container_class_init (ShumateVectorSymbolContainerClass *k
 static void
 shumate_vector_symbol_container_init (ShumateVectorSymbolContainer *self)
 {
+  self->collision = shumate_vector_collision_new ();
 }
 
 
@@ -272,7 +284,11 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                              int                           tile_y,
                                              int                           zoom)
 {
+  double tile_size;
+
   g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
+
+  tile_size = shumate_map_source_get_tile_size (self->map_source);
 
   for (int i = 0; i < symbol_infos->len; i ++)
     {
@@ -288,6 +304,15 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->tile_x = tile_x;
       info->tile_y = tile_y;
       info->zoom = zoom;
+
+      info->marker = shumate_vector_collision_insert (self->collision,
+                                                      zoom,
+                                                      (tile_x + info->x) * tile_size,
+                                                      (tile_y + info->y) * tile_size,
+                                                      -info->width / 2,
+                                                      info->width / 2,
+                                                      -info->height / 2,
+                                                      info->height / 2);
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));
@@ -309,6 +334,8 @@ shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContainer *se
 
       if (info->tile_x != tile_x || info->tile_y != tile_y || info->zoom != zoom)
         continue;
+
+      shumate_vector_collision_remove (self->collision, info->marker);
 
       gtk_widget_unparent (GTK_WIDGET (info->symbol));
       g_clear_pointer (&l->data, g_free);

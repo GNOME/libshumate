@@ -18,7 +18,14 @@
 #pragma once
 
 #include <json-glib/json-glib.h>
-#include "shumate-vector-renderer.h"
+
+
+struct _ShumateVectorPoint {
+  float x;
+  float y;
+};
+
+typedef struct _ShumateVectorPoint ShumateVectorPoint;
 
 
 gboolean shumate_vector_json_get_object (JsonNode    *node,
