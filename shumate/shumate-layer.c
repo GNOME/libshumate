@@ -129,7 +129,7 @@ shumate_layer_class_init (ShumateLayerClass *klass)
                                      N_PROPERTIES,
                                      obj_properties);
 
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-layer"));
+  gtk_widget_class_set_css_name (widget_class, "map-layer");
 }
 
 static void

@@ -814,7 +814,7 @@ shumate_map_class_init (ShumateMapClass *klass)
                   0);
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-view"));
+  gtk_widget_class_set_css_name (widget_class, "map-view");
 
   go_to_quark = g_quark_from_static_string ("go-to");
 }
@@ -826,6 +826,7 @@ shumate_map_init (ShumateMap *self)
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
   GtkEventController *motion_controller;
+  GtkEventController *key_controller;
   GtkGesture *swipe_gesture;
   GtkGesture *zoom_gesture;
   GtkGesture *rotate_gesture;
@@ -874,6 +875,9 @@ shumate_map_init (ShumateMap *self)
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (rotate_gesture));
 
   gtk_gesture_group (zoom_gesture, rotate_gesture);
+
+  key_controller = gtk_event_controller_key_new ();
+  gtk_widget_add_controller (GTK_WIDGET (self), key_controller);
 
   gtk_widget_set_overflow (GTK_WIDGET (self), GTK_OVERFLOW_HIDDEN);
 }

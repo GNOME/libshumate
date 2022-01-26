@@ -169,7 +169,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-license"));
+  gtk_widget_class_set_css_name (widget_class, "map-license");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
 
   display = gdk_display_get_default ();

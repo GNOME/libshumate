@@ -320,7 +320,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
                                      N_PROPERTIES,
                                      obj_properties);
 
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-tile"));
+  gtk_widget_class_set_css_name (widget_class, "map-tile");
 }
 
 

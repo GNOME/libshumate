@@ -334,7 +334,7 @@ shumate_scale_class_init (ShumateScaleClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-scale"));
+  gtk_widget_class_set_css_name (widget_class, "map-scale");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
 
   display = gdk_display_get_default ();

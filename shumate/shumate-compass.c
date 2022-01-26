@@ -173,7 +173,7 @@ shumate_compass_class_init (ShumateCompassClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-compass"));
+  gtk_widget_class_set_css_name (widget_class, "map-compass");
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
 
   display = gdk_display_get_default ();

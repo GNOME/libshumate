@@ -280,7 +280,7 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
       "latitude");
 
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
-  gtk_widget_class_set_css_name (widget_class, g_intern_static_string ("map-marker"));
+  gtk_widget_class_set_css_name (widget_class, "map-marker");
 }
 
 static void
