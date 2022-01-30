@@ -513,8 +513,8 @@ on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
     g_task_return_error (task, error);
   else
     {
-      g_task_return_boolean (task, TRUE);
       shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+      g_task_return_boolean (task, TRUE);
     }
 }
 

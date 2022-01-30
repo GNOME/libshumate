@@ -170,6 +170,8 @@ add_symbols (ShumateMapLayer  *self,
 #endif
 }
 
+static void recompute_grid (ShumateMapLayer *self);
+
 static void
 on_tile_filled (GObject      *source_object,
                 GAsyncResult *res,
@@ -190,6 +192,8 @@ on_tile_filled (GObject      *source_object,
   shumate_memory_cache_store_tile (data->self->memcache,
                                    data->tile,
                                    data->source_id);
+
+  recompute_grid (data->self);
 }
 
 static void
