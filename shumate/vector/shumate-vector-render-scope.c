@@ -88,6 +88,67 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
 
 
 void
+shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
+                                          ShumateVectorLineString  *linestring)
+{
+  ShumateVectorPoint *points = NULL;
+  gsize point_index = 0;
+  double x = 0, y = 0;
+
+  g_return_if_fail (self->feature != NULL);
+
+  for (int i = 0; i < self->feature->n_geometry; i ++)
+    {
+      int cmd = self->feature->geometry[i];
+      double start_x = 0, start_y = 0;
+
+      int op = cmd & 0x7;
+      int repeat = cmd >> 3;
+
+      points = g_realloc (points, (repeat + point_index) * sizeof (ShumateVectorPoint));
+      g_return_if_fail (points != NULL);
+
+      for (int j = 0; j < repeat; j ++)
+        {
+          switch (op) {
+          case 1:
+            g_return_if_fail (i + 2 < self->feature->n_geometry);
+            x += zigzag (self->feature->geometry[++i]);
+            y += zigzag (self->feature->geometry[++i]);
+            start_x = x;
+            start_y = y;
+            points[point_index++] = (ShumateVectorPoint) {
+              .x = x / self->layer->extent,
+              .y = y / self->layer->extent,
+            };
+            break;
+          case 2:
+            g_return_if_fail (i + 2 < self->feature->n_geometry);
+            x += zigzag (self->feature->geometry[++i]);
+            y += zigzag (self->feature->geometry[++i]);
+            points[point_index++] = (ShumateVectorPoint) {
+              .x = x / self->layer->extent,
+              .y = y / self->layer->extent,
+            };
+            break;
+          case 7:
+            points[point_index++] = (ShumateVectorPoint) {
+              .x = start_x / self->layer->extent,
+              .y = start_y / self->layer->extent,
+            };
+            break;
+          default:
+            g_assert_not_reached ();
+          }
+        }
+    }
+
+  linestring->n_points = point_index;
+  linestring->points = points;
+}
+
+
+void
 shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
                                         double                   *min_x,
                                         double                   *min_y,

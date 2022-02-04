@@ -21,6 +21,7 @@
 #include <cairo/cairo.h>
 #include "vector_tile.pb-c.h"
 #include "shumate-vector-value-private.h"
+#include "shumate-vector-utils-private.h"
 
 typedef struct {
   cairo_t *cr;
@@ -44,5 +45,8 @@ void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
                                              double                   *min_y,
                                              double                   *max_x,
                                              double                   *max_y);
+
+void shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
+                                               ShumateVectorLineString  *linestring);
 
 void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value);

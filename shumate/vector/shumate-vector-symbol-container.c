@@ -42,8 +42,9 @@ static GParamSpec *obj_properties[N_PROPS] = { NULL, };
 
 
 typedef struct {
-  // does not need to be freed because it's owned by the widget
+  // do not need to be freed because they're owned by the widget
   ShumateVectorSymbol *symbol;
+  ShumateVectorSymbolInfo *symbol_info;
 
   ShumateVectorCollisionMarker *marker;
 
@@ -223,6 +224,8 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       alloc.height = child->height;
 
       gtk_widget_size_allocate (GTK_WIDGET (child->symbol), &alloc, -1);
+      if (child->symbol_info->line_placement)
+        gtk_widget_queue_draw (GTK_WIDGET (child->symbol));
     }
 }
 
@@ -297,6 +300,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       ShumateVectorSymbol *symbol = shumate_vector_symbol_new (symbol_info);
 
       info->symbol = symbol;
+      info->symbol_info = symbol_info;
       gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
       gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &info->height, NULL, NULL);
       info->x = symbol_info->x;
@@ -342,4 +346,12 @@ shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContainer *se
     }
 
   self->children = g_list_remove_all (self->children, NULL);
+}
+
+
+ShumateMapSource *
+shumate_vector_symbol_container_get_map_source (ShumateVectorSymbolContainer *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self), NULL);
+  return self->map_source;
 }

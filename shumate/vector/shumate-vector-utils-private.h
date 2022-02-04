@@ -19,14 +19,26 @@
 
 #include <json-glib/json-glib.h>
 
+typedef struct _ShumateVectorPoint ShumateVectorPoint;
+typedef struct _ShumateVectorLineString ShumateVectorLineString;
+typedef struct _ShumateVectorPointIter ShumateVectorPointIter;
 
 struct _ShumateVectorPoint {
   float x;
   float y;
 };
 
-typedef struct _ShumateVectorPoint ShumateVectorPoint;
+struct _ShumateVectorLineString {
+  gsize n_points;
+  ShumateVectorPoint *points;
+};
 
+struct _ShumateVectorPointIter {
+  gsize num_points;
+  ShumateVectorPoint *points;
+  gsize current_point;
+  float distance;
+};
 
 gboolean shumate_vector_json_get_object (JsonNode    *node,
                                          JsonObject **dest,
@@ -60,3 +72,25 @@ gboolean shumate_vector_json_read_int_member (JsonReader *reader,
 gboolean shumate_vector_json_read_double_member (JsonReader *reader,
                                                  const char *name,
                                                  double     *dest);
+
+gboolean shumate_vector_json_get_object (JsonNode *node, JsonObject **dest, GError **error);
+gboolean shumate_vector_json_get_array (JsonNode *node, JsonArray **dest, GError **error);
+
+void   shumate_vector_point_iter_init                 (ShumateVectorPointIter  *iter,
+                                                       ShumateVectorLineString *linestring);
+double shumate_vector_point_iter_next_segment         (ShumateVectorPointIter *iter);
+double shumate_vector_point_iter_get_segment_length   (ShumateVectorPointIter *iter);
+void   shumate_vector_point_iter_get_segment_center   (ShumateVectorPointIter *iter,
+                                                       double                  remaining_distance,
+                                                       ShumateVectorPoint     *result);
+void   shumate_vector_point_iter_get_current_point    (ShumateVectorPointIter *iter,
+                                                       ShumateVectorPoint     *result);
+double shumate_vector_point_iter_get_average_angle    (ShumateVectorPointIter *iter,
+                                                       double                  remaining_distance);
+void   shumate_vector_point_iter_advance              (ShumateVectorPointIter *iter,
+                                                       double                  distance);
+double shumate_vector_point_iter_get_current_angle    (ShumateVectorPointIter *iter);
+
+
+void shumate_vector_line_string_clear                 (ShumateVectorLineString *linestring);
+double shumate_vector_line_string_length              (ShumateVectorLineString *linestring);

@@ -30,6 +30,7 @@ shumate_vector_symbol_info_free (ShumateVectorSymbolInfo *self)
 
   g_clear_pointer (&self->text, g_free);
   g_clear_pointer (&self->text_font, g_free);
+  shumate_vector_line_string_clear (&self->line);
 
   g_free (self);
 }
@@ -83,3 +84,11 @@ shumate_vector_symbol_info_new (const char    *text,
   return self;
 }
 
+
+void
+shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
+                                            ShumateVectorLineString *linestring)
+{
+  shumate_vector_line_string_clear (&self->line);
+  self->line = *linestring;
+}

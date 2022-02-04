@@ -40,4 +40,5 @@ void shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContaine
                                                      int                           tile_y,
                                                      int                           zoom);
 
+ShumateMapSource *shumate_vector_symbol_container_get_map_source (ShumateVectorSymbolContainer *self);
 G_END_DECLS

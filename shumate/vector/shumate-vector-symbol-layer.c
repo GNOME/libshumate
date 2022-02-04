@@ -130,6 +130,14 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                                                 self->line_placement,
                                                 x,
                                                 y);
+
+  if (self->line_placement)
+    {
+      ShumateVectorLineString linestring;
+      shumate_vector_render_scope_get_geometry (scope, &linestring);
+      shumate_vector_symbol_info_set_line_points (symbol_info, &linestring);
+    }
+
   g_ptr_array_add (scope->symbols, symbol_info);
 }
 

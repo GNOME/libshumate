@@ -64,6 +64,20 @@
       "paint": {
         "text-color": "#000000"
       }
+    },
+    {
+      "id": "waterway",
+      "type": "symbol",
+      "source-layer": "waterway",
+      "layout": {
+        "text-field": "{name}",
+        "symbol-placement": "line",
+        "font-family": "Cantarell 16"
+      },
+      "paint": {
+        "text-color": "#000000"
+      }
     }
   ]
 }
+
