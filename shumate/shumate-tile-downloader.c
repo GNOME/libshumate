@@ -18,6 +18,7 @@
 #include <libsoup/soup.h>
 #include "shumate-tile-downloader.h"
 #include "shumate-file-cache.h"
+#include "shumate-user-agent.h"
 
 struct _ShumateTileDownloader
 {
@@ -386,8 +387,7 @@ fetch_from_network (GTask *task)
                                          NULL);
 
       g_object_set (G_OBJECT (data->self->soup_session),
-                    "user-agent",
-                    "libshumate/" SHUMATE_VERSION,
+                    "user-agent", shumate_get_user_agent (),
                     "max-conns-per-host", MAX_CONNS_DEFAULT,
                     "max-conns", MAX_CONNS_DEFAULT,
                     NULL);

@@ -20,6 +20,7 @@ libshumate_public_h = [
   'shumate-raster-renderer.h',
   'shumate-tile.h',
   'shumate-tile-downloader.h',
+  'shumate-user-agent.h',
   'shumate-vector-renderer.h',
   'shumate-viewport.h',
   'shumate.h',
@@ -66,6 +67,7 @@ libshumate_sources = [
   'shumate-raster-renderer.c',
   'shumate-tile.c',
   'shumate-tile-downloader.c',
+  'shumate-user-agent.c',
   'shumate-vector-renderer.c',
   'shumate-viewport.c',
 ]
