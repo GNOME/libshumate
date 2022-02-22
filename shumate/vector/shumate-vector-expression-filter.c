@@ -55,6 +55,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
   g_autoptr(ShumateVectorExpressionFilter) self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
   JsonNode *op_node;
   const char *op;
+  gboolean lookup_first_arg = TRUE;
   int expect_exprs = -1;
   int expect_ge_exprs = -1;
 
@@ -94,11 +95,13 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
     {
       self->type = EXPR_HAS;
       expect_exprs = 1;
+      lookup_first_arg = FALSE;
     }
   else if (g_strcmp0 ("!has", op) == 0)
     {
       self->type = EXPR_NOT_HAS;
       expect_exprs = 1;
+      lookup_first_arg = FALSE;
     }
   else if (g_strcmp0 ("in", op) == 0)
     {
@@ -175,11 +178,11 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       g_autoptr(ShumateVectorExpression) expr = NULL;
 
       if (i == 1
-          && expect_exprs == 2
+          && lookup_first_arg
           && JSON_NODE_HOLDS_VALUE (arg)
           && json_node_get_value_type (arg) == G_TYPE_STRING)
         {
-          /* If the first argument of 2-argument function is a string,
+          /* If the first argument of a function is a string,
            * convert it to a GET expression so we can do things like
            * ["==", "admin_level", 2] */
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
