@@ -68,7 +68,7 @@ shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
 
   shumate_vector_render_scope_exec_geometry (scope);
 
-  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, opacity);
+  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, color.alpha * opacity);
   cairo_fill (scope->cr);
 }
 

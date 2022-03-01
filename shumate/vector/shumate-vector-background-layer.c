@@ -77,8 +77,8 @@ shumate_vector_background_layer_render (ShumateVectorLayer *layer, ShumateVector
   shumate_vector_expression_eval_color (self->color, scope, &color);
   opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
 
-  gdk_cairo_set_source_rgba (scope->cr, &color);
-  cairo_paint_with_alpha (scope->cr, opacity);
+  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, color.alpha * opacity);
+  cairo_paint (scope->cr);
 }
 
 

@@ -87,7 +87,7 @@ shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
 
   shumate_vector_render_scope_exec_geometry (scope);
 
-  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, opacity);
+  cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, color.alpha * opacity);
   cairo_set_line_width (scope->cr, width * scope->scale);
   cairo_stroke (scope->cr);
 }
