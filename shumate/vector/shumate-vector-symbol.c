@@ -147,6 +147,11 @@ shumate_vector_symbol_constructed (GObject *object)
       gtk_widget_set_parent (label, GTK_WIDGET (self));
     }
 
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL,
+                                  self->symbol_info->text,
+                                  -1);
+
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->constructed (object);
 }
 
@@ -289,8 +294,10 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
                         SHUMATE_TYPE_VECTOR_SYMBOL_INFO,
                         G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
-  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
   g_object_class_install_properties (object_class, N_PROPS, obj_properties);
+
+  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
+  gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_LABEL);
 }
 
 
