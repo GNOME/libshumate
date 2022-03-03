@@ -53,7 +53,7 @@ cc = meson.get_compiler('c')
 
 libm_dep = cc.find_library('m', required: true)
 
-glib_req = '>= 2.16.0'
+glib_req = '>= 2.68.0'
 cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
 introspection_req = '>= 0.6.3'

@@ -172,7 +172,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "https://tile.openstreetmap.org/#Z#/#X#/#Y#.png"
+          "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         )
       );
     }
@@ -189,7 +189,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.opencyclemap.org/cycle/#Z#/#X#/#Y#.png"
+          "http://tile.opencyclemap.org/cycle/{z}/{x}/{y}.png"
         )
       );
     }
@@ -206,7 +206,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.xn--pnvkarte-m4a.de/tilegen/#Z#/#X#/#Y#.png"
+          "http://tile.xn--pnvkarte-m4a.de/tilegen/{z}/{x}/{y}.png"
         )
       );
     }
@@ -223,7 +223,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           11,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://maps-for-free.com/layer/relief/z#Z#/row#Y#/#Z#_#X#-#Y#.jpg"
+          "http://maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg"
         )
       );
     }
@@ -240,7 +240,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.openweathermap.org/map/clouds/#Z#/#X#/#Y#.png"
+          "http://tile.openweathermap.org/map/clouds/{z}/{x}/{y}.png"
         )
       );
     }
@@ -257,7 +257,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.openweathermap.org/map/wind/#Z#/#X#/#Y#.png"
+          "http://tile.openweathermap.org/map/wind/{z}/{x}/{y}.png"
         )
       );
     }
@@ -274,7 +274,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.openweathermap.org/map/temp/#Z#/#X#/#Y#.png"
+          "http://tile.openweathermap.org/map/temp/{z}/{x}/{y}.png"
         )
       );
     }
@@ -291,7 +291,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.openweathermap.org/map/precipitation/#Z#/#X#/#Y#.png"
+          "http://tile.openweathermap.org/map/precipitation/{z}/{x}/{y}.png"
         )
       );
     }
@@ -308,7 +308,7 @@ shumate_map_source_registry_populate_defaults (ShumateMapSourceRegistry *self)
           18,
           256,
           SHUMATE_MAP_PROJECTION_MERCATOR,
-          "http://tile.openweathermap.org/map/pressure/#Z#/#X#/#Y#.png"
+          "http://tile.openweathermap.org/map/pressure/{z}/{x}/{y}.png"
         )
       );
     }

@@ -229,47 +229,18 @@ get_tile_uri (ShumateTileDownloader *self,
               int                    y,
               int                    z)
 {
-  char **tokens;
-  char *token;
-  GString *ret = NULL;
-  int i = 0;
+  GString *string = g_string_new (self->url_template);
+  g_autofree char *x_str = g_strdup_printf("%d", x);
+  g_autofree char *y_str = g_strdup_printf("%d", y);
+  g_autofree char *z_str = g_strdup_printf("%d", z);
+  g_autofree char *tmsy_str = g_strdup_printf("%d", (1 << z) - y - 1);
 
-  tokens = g_strsplit (self->url_template, "#", 20);
-  token = tokens[i];
-  ret = g_string_sized_new (strlen (self->url_template));
+  g_string_replace (string, "{x}", x_str, 0);
+  g_string_replace (string, "{y}", y_str, 0);
+  g_string_replace (string, "{z}", z_str, 0);
+  g_string_replace (string, "{tmsy}", tmsy_str, 0);
 
-  while (token != NULL)
-    {
-      int number = G_MAXINT;
-      char value[SIZE];
-
-      if (strcmp (token, "X") == 0)
-        number = x;
-      if (strcmp (token, "Y") == 0)
-        number = y;
-      if (strcmp (token, "TMSY") == 0){
-        int ymax = 1 << z;
-        number = ymax - y - 1;
-      }
-      if (strcmp (token, "Z") == 0)
-        number = z;
-
-      if (number != G_MAXINT)
-        {
-          g_snprintf (value, SIZE, "%d", number);
-          g_string_append (ret, value);
-        }
-      else
-        g_string_append (ret, token);
-
-      token = tokens[++i];
-    }
-
-  token = ret->str;
-  g_strfreev (tokens);
-  g_string_free (ret, FALSE);
-
-  return token;
+  return g_string_free (string, FALSE);
 }
 
 

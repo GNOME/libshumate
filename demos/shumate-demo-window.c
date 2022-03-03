@@ -117,7 +117,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
         "Vector Tiles",
         "© OpenStreetMap contributors", NULL, 0, 5, 512,
         SHUMATE_MAP_PROJECTION_MERCATOR,
-        "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/#Z#/#X#/#Y#.pbf",
+        "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/{z}/{x}/{y}.pbf",
         style_json,
         &error
       );
