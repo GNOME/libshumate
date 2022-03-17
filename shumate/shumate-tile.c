@@ -312,7 +312,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
   obj_properties[PROP_TEXTURE] =
     g_param_spec_object ("texture",
                          "Texture",
-                         "Gdk Texture representaion",
+                         "Gdk Texture representation",
                          GDK_TYPE_TEXTURE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
