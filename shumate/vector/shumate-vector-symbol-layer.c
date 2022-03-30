@@ -109,12 +109,15 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   double text_size;
   ShumateVectorSymbolInfo *symbol_info;
   double x, y;
+  double min_x, min_y, max_x, max_y;
 
   shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
   if (x < 0 || x >= 1 || y < 0 || y >= 1)
     /* Tiles usually include a bit of margin. Don't include symbols that are
      * covered by a different tile. */
     return;
+
+  shumate_vector_render_scope_get_bounds (scope, &min_x, &min_y, &max_x, &max_y);
 
   shumate_vector_expression_eval_color (self->text_color, scope, &text_color);
   text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);

@@ -52,31 +52,31 @@ struct ShumateVectorCollision {
 
 typedef struct {
   GPtrArray *markers;
-  ShumateVectorCollisionRect rect;
+  ShumateVectorCollisionBBox bbox;
 } RTreeCol;
 
 typedef struct {
   RTreeCol cols[NODES];
-  ShumateVectorCollisionRect rect;
+  ShumateVectorCollisionBBox bbox;
 } RTreeRow;
 
 typedef struct {
   RTreeRow rows[NODES];
-  ShumateVectorCollisionRect rect;
+  ShumateVectorCollisionBBox bbox;
   int n_markers;
 } RTreeTileCol;
 
 typedef struct {
   GHashTable *tile_cols;
-  ShumateVectorCollisionRect rect;
+  ShumateVectorCollisionBBox bbox;
 } RTreeTileRow;
 
 
 static RTreeTileCol *
-tile_col_new (ShumateVectorCollisionRect *rect)
+tile_col_new (ShumateVectorCollisionBBox *bbox)
 {
   RTreeTileCol *tile_col = g_new0 (RTreeTileCol, 1);
-  tile_col->rect = *rect;
+  tile_col->bbox = *bbox;
   return tile_col;
 }
 
@@ -93,11 +93,11 @@ tile_col_free (RTreeTileCol *tile_col)
 
 
 static RTreeTileRow *
-tile_row_new (ShumateVectorCollisionRect *rect)
+tile_row_new (ShumateVectorCollisionBBox *bbox)
 {
   RTreeTileRow *tile_row = g_new0 (RTreeTileRow, 1);
   tile_row->tile_cols = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) tile_col_free);
-  tile_row->rect = *rect;
+  tile_row->bbox = *bbox;
   return tile_row;
 }
 
@@ -136,63 +136,148 @@ shumate_vector_collision_free (ShumateVectorCollision *self)
 }
 
 
-static gboolean
-rects_intersect (ShumateVectorCollisionRect *a,
-                 ShumateVectorCollisionRect *b)
+static float
+dot (ShumateVectorPoint *a,
+     ShumateVectorPoint *b)
 {
-  g_assert (a->left <= a->right);
-  g_assert (a->top <= a->bottom);
-  g_assert (b->left <= b->right);
-  g_assert (b->top <= b->bottom);
+  return a->x * b->x + a->y * b->y;
+}
 
-  return !(a->left >= b->right
-           || a->right <= b->left
-           || a->top >= b->bottom
-           || a->bottom <= b->top);
+
+static float
+project (ShumateVectorPoint *point,
+         ShumateVectorPoint *axis)
+{
+  ShumateVectorPoint tmp;
+  float s = dot (point, axis) / LEN_SQ (axis->x, axis->y);
+  tmp = *axis;
+  tmp.x *= s;
+  tmp.y *= s;
+  return dot (&tmp, axis);
+}
+
+
+static ShumateVectorPoint
+corner (float x,
+        float y,
+        float xextent,
+        float yextent,
+        float rot_cos,
+        float rot_sin)
+{
+  return (ShumateVectorPoint) {
+    .x = xextent * rot_cos - yextent * rot_sin + x,
+    .y = xextent * rot_sin + yextent * rot_cos + y,
+  };
+}
+
+
+static gboolean
+rects_intersect (ShumateVectorCollisionBBox *a,
+                 ShumateVectorCollisionBBox *b)
+{
+  float cos_a, sin_a, cos_b, sin_b;
+  ShumateVectorPoint axes[4], corners_a[4], corners_b[4];
+
+  if (a->rotation == 0 && b->rotation == 0)
+    {
+      return !((a->x + a->xextent < b->x - b->xextent)
+                || (b->x + b->xextent < a->x - a->xextent)
+                || (a->y + a->yextent < b->y - b->yextent)
+                || (b->y + b->yextent < a->y - a->yextent));
+    }
+
+  /* See <https://www.gamedev.net/articles/programming/general-and-gameplay-programming/2d-rotated-rectangle-collision-r2604/> */
+
+  cos_a = cosf (a->rotation);
+  sin_a = sinf (a->rotation);
+  cos_b = cosf (b->rotation);
+  sin_b = sinf (b->rotation);
+
+  /* Calculate the four axes of the two rectangles */
+  axes[0] = (ShumateVectorPoint) { cos_a, sin_a };
+  axes[1] = (ShumateVectorPoint) { -sin_a, cos_a };
+  axes[2] = (ShumateVectorPoint) { cos_b, sin_b };
+  axes[3] = (ShumateVectorPoint) { -sin_b, cos_b };
+
+  corners_a[0] = corner (a->x, a->y, a->xextent, a->yextent, cos_a, sin_a);
+  corners_a[1] = corner (a->x, a->y, -a->xextent, a->yextent, cos_a, sin_a);
+  corners_a[2] = corner (a->x, a->y, a->xextent, -a->yextent, cos_a, sin_a);
+  corners_a[3] = corner (a->x, a->y, -a->xextent, -a->yextent, cos_a, sin_a);
+
+  corners_b[0] = corner (b->x, b->y, b->xextent, b->yextent, cos_b, sin_b);
+  corners_b[1] = corner (b->x, b->y, -b->xextent, b->yextent, cos_b, sin_b);
+  corners_b[2] = corner (b->x, b->y, b->xextent, -b->yextent, cos_b, sin_b);
+  corners_b[3] = corner (b->x, b->y, -b->xextent, -b->yextent, cos_b, sin_b);
+
+  for (int i = 0; i < 4; i ++)
+    {
+      ShumateVectorPoint *axis = &axes[i];
+
+      float proj_a[4], proj_b[4];
+
+      /* Project the corners of the rectangles onto the axis */
+      for (int j = 0; j < 4; j ++)
+        {
+          proj_a[j] = project (&corners_a[j], axis);
+          proj_b[j] = project (&corners_b[j], axis);
+        }
+
+      /* If the projected points don't overlap, the rectangles don't overlap
+       * (i.e. either every item in proj_a is greater than or is less than every
+       * item in proj_b). */
+      float min_a = MIN4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
+      float max_a = MAX4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
+      float min_b = MIN4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
+      float max_b = MAX4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
+
+      if (min_a >= max_b || min_b >= max_a)
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 
 static void
-expand_rect (ShumateVectorCollisionRect       *a,
-             const ShumateVectorCollisionRect *b)
+expand_rect (ShumateVectorCollisionBBox       *a,
+             const ShumateVectorCollisionBBox *b)
 {
-  if (a->left == 0 && a->right == 0 && a->top == 0 && a->bottom == 0)
+  g_assert (a->rotation == 0);
+  g_assert (b->rotation == 0);
+
+  if (a->x == 0 && a->y == 0 && a->xextent == 0 && a->yextent == 0)
     *a = *b;
   else
     {
-      a->left = MIN (a->left, b->left);
-      a->right = MAX (a->right, b->right);
-      a->top = MIN (a->top, b->top);
-      a->bottom = MAX (a->bottom, b->bottom);
+      float left = MIN (a->x - a->xextent, b->x - b->xextent);
+      float right = MAX (a->x + a->xextent, b->x + b->xextent);
+      float top = MIN (a->y - a->yextent, b->y - b->yextent);
+      float bottom = MAX (a->y + a->yextent, b->y + b->yextent);
+      a->x = (left + right) / 2.0;
+      a->y = (top + bottom) / 2.0;
+      a->xextent = (right - left) / 2.0;
+      a->yextent = (bottom - top) / 2.0;
     }
 }
 
 
 static void
-rotate_point (ShumateVectorPoint *point,
-              float               radians)
+get_marker_full_rot_bbox (ShumateVectorCollisionMarker *marker,
+                          ShumateVectorCollisionBBox   *bbox_out)
 {
-  float x, y, s, c;
+  float radius = sqrt (LEN_SQ (marker->bbox.xextent, marker->bbox.yextent));
 
-  if (radians == 0)
-    return;
-
-  x = point->x;
-  y = point->y;
-  s = sin (-radians);
-  c = cos (-radians);
-
-  point->x = x * c - y * s;
-  point->y = x * s + y * c;
-}
-
-
-static void
-scale_point (ShumateVectorPoint *point,
-             float               scale)
-{
-  point->x *= scale;
-  point->y *= scale;
+  if (marker->rotates)
+    {
+      bbox_out->x = marker->bbox.x;
+      bbox_out->y = marker->bbox.y;
+      bbox_out->xextent = radius;
+      bbox_out->yextent = radius;
+      bbox_out->rotation = 0;
+    }
+  else
+    *bbox_out = marker->bbox;
 }
 
 
@@ -200,40 +285,15 @@ static void
 get_marker_bbox (ShumateVectorCollisionMarker *marker,
                  float                         rot,
                  float                         zoom,
-                 ShumateVectorCollisionRect   *rect_out)
+                 ShumateVectorCollisionBBox   *bbox)
 {
-  ShumateVectorPoint top_left = { marker->rect.left, marker->rect.top };
-  ShumateVectorPoint top_right = { marker->rect.right, marker->rect.top };
-  ShumateVectorPoint bottom_left = { marker->rect.left, marker->rect.bottom };
-  ShumateVectorPoint bottom_right = { marker->rect.right, marker->rect.bottom };
+  float scale = powf (2, zoom - marker->zoom);
 
-  rotate_point (&top_left, rot);
-  rotate_point (&top_right, rot);
-  rotate_point (&bottom_left, rot);
-  rotate_point (&bottom_right, rot);
-
-  rect_out->left = MIN4 (top_left.x, top_right.x, bottom_left.x, bottom_right.x) + marker->center.x;
-  rect_out->right = MAX4 (top_left.x, top_right.x, bottom_left.x, bottom_right.x) + marker->center.x;
-  rect_out->top = MIN4 (top_left.y, top_right.y, bottom_left.y, bottom_right.y) + marker->center.y;
-  rect_out->bottom = MAX4 (top_left.y, top_right.y, bottom_left.y, bottom_right.y) + marker->center.y;
-}
-
-
-static void
-get_marker_full_rot_bbox (ShumateVectorCollisionMarker *marker,
-                          ShumateVectorCollisionRect   *rect_out)
-{
-  float top_left = LEN_SQ (marker->rect.top, marker->rect.left);
-  float bottom_left = LEN_SQ (marker->rect.bottom, marker->rect.left);
-  float top_right = LEN_SQ (marker->rect.top, marker->rect.right);
-  float bottom_right = LEN_SQ (marker->rect.bottom, marker->rect.right);
-
-  float radius = sqrt (MAX4 (top_left, bottom_left, top_right, bottom_right));
-
-  rect_out->left = marker->center.x - radius;
-  rect_out->right = marker->center.x + radius;
-  rect_out->top = marker->center.y - radius;
-  rect_out->bottom = marker->center.y + radius;
+  *bbox = marker->bbox;
+  bbox->x *= scale;
+  bbox->y *= scale;
+  if (marker->rotates)
+    bbox->rotation -= rot;
 }
 
 
@@ -243,23 +303,12 @@ markers_intersect (ShumateVectorCollisionMarker *a,
                    float                         rot,
                    float                         zoom)
 {
-  ShumateVectorPoint a_center = a->center;
-  ShumateVectorPoint b_center = b->center;
+  ShumateVectorCollisionBBox a_bbox, b_bbox;
 
-  g_assert (a->rect.left <= a->rect.right);
-  g_assert (a->rect.top <= a->rect.bottom);
-  g_assert (b->rect.left <= b->rect.right);
-  g_assert (b->rect.top <= b->rect.bottom);
+  get_marker_bbox (a, rot, zoom, &a_bbox);
+  get_marker_bbox (b, rot, zoom, &b_bbox);
 
-  rotate_point (&a_center, -rot);
-  rotate_point (&b_center, -rot);
-  scale_point (&a_center, powf (2, zoom - a->zoom));
-  scale_point (&b_center, powf (2, zoom - b->zoom));
-
-  return !(a_center.x + a->rect.left >= b_center.x + b->rect.right
-           || a_center.x + a->rect.right <= b_center.x + b->rect.left
-           || a_center.y + a->rect.top >= b_center.y + b->rect.bottom
-           || a_center.y + a->rect.bottom <= b_center.y + b->rect.top);
+  return rects_intersect (&a_bbox, &b_bbox);
 }
 
 
@@ -282,17 +331,16 @@ shumate_vector_collision_insert (ShumateVectorCollision *self,
                                  int                     zoom,
                                  float                   x,
                                  float                   y,
-                                 float                   left,
-                                 float                   right,
-                                 float                   top,
-                                 float                   bottom)
+                                 float                   xextent,
+                                 float                   yextent,
+                                 guint                   rotates)
 {
   RTreeTileRow *tile_row;
   RTreeTileCol *tile_col;
   RTreeRow *row;
   RTreeCol *col;
+  ShumateVectorCollisionBBox bbox;
   ShumateVectorCollisionMarker *marker;
-  ShumateVectorCollisionRect bbox;
   gint64 tile_x = floor (x / TILE_SIZE);
   gint64 tile_y = floor (y / TILE_SIZE);
 
@@ -301,12 +349,11 @@ shumate_vector_collision_insert (ShumateVectorCollision *self,
   zoom = CLAMP (zoom, 0, ZOOM_LAYERS - 1);
 
   marker = g_new0 (ShumateVectorCollisionMarker, 1);
-  marker->center.x = x;
-  marker->center.y = y;
-  marker->rect.left = left;
-  marker->rect.right = right;
-  marker->rect.top = top;
-  marker->rect.bottom = bottom;
+  marker->bbox.x = x;
+  marker->bbox.y = y;
+  marker->bbox.xextent = xextent;
+  marker->bbox.yextent = yextent;
+  marker->rotates = !!rotates;
   marker->zoom = zoom;
   marker->seq = self->seq;
 
@@ -339,10 +386,10 @@ shumate_vector_collision_insert (ShumateVectorCollision *self,
   tile_col->n_markers ++;
 
   /* Expand the parents to fit the new marker */
-  expand_rect (&tile_row->rect, &bbox);
-  expand_rect (&tile_col->rect, &bbox);
-  expand_rect (&row->rect, &bbox);
-  expand_rect (&col->rect, &bbox);
+  expand_rect (&tile_row->bbox, &bbox);
+  expand_rect (&tile_col->bbox, &bbox);
+  expand_rect (&row->bbox, &bbox);
+  expand_rect (&col->bbox, &bbox);
 
   self->dirty = TRUE;
   return marker;
@@ -357,8 +404,8 @@ shumate_vector_collision_remove (ShumateVectorCollision       *self,
   RTreeTileCol *tile_col;
   RTreeRow *row;
   RTreeCol *col;
-  gint64 tile_x = floor (marker->center.x / TILE_SIZE);
-  gint64 tile_y = floor (marker->center.y / TILE_SIZE);
+  gint64 tile_x = floor (marker->bbox.x / TILE_SIZE);
+  gint64 tile_y = floor (marker->bbox.y / TILE_SIZE);
 
   g_assert (self != NULL);
   g_assert (marker != NULL);
@@ -369,8 +416,8 @@ shumate_vector_collision_remove (ShumateVectorCollision       *self,
   tile_col = g_hash_table_lookup (tile_row->tile_cols, (gpointer) tile_x);
   g_assert (tile_col != NULL);
 
-  row = &tile_col->rows[row_for_position (marker->center.y)];
-  col = &row->cols[row_for_position (marker->center.x)];
+  row = &tile_col->rows[row_for_position (marker->bbox.y)];
+  col = &row->cols[row_for_position (marker->bbox.x)];
 
   self->markers = g_list_remove_link (self->markers, marker->list_link);
   g_list_free (marker->list_link);
@@ -395,7 +442,7 @@ detect_collision (ShumateVectorCollision       *self,
                   float                         rot,
                   float                         zoom)
 {
-  ShumateVectorCollisionRect bbox;
+  ShumateVectorCollisionBBox bbox;
 
   for (int z = 0; z < ZOOM_LAYERS; z ++)
     {
@@ -411,28 +458,28 @@ detect_collision (ShumateVectorCollision       *self,
           GHashTableIter tile_cols;
           RTreeTileCol *tile_col;
 
-          if (!rects_intersect (&bbox, &tile_row->rect))
+          if (!rects_intersect (&bbox, &tile_row->bbox))
             continue;
 
           g_hash_table_iter_init (&tile_cols, tile_row->tile_cols);
 
           while (g_hash_table_iter_next (&tile_cols, NULL, (gpointer*) &tile_col))
             {
-              if (!rects_intersect (&bbox, &tile_col->rect))
+              if (!rects_intersect (&bbox, &tile_col->bbox))
                 continue;
 
               for (int y = 0; y < NODES; y ++)
                 {
                   RTreeRow *row = &tile_col->rows[y];
 
-                  if (!rects_intersect (&bbox, &row->rect))
+                  if (!rects_intersect (&bbox, &row->bbox))
                     continue;
 
                   for (int x = 0; x < NODES; x ++)
                     {
                       RTreeCol *col = &row->cols[x];
 
-                      if (col->markers == NULL || !rects_intersect (&bbox, &col->rect))
+                      if (col->markers == NULL || !rects_intersect (&bbox, &col->bbox))
                         continue;
 
                       for (int i = 0; i < col->markers->len; i ++)

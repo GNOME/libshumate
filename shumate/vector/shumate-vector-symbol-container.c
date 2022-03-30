@@ -301,22 +301,33 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
 
       info->symbol = symbol;
       info->symbol_info = symbol_info;
-      gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
-      gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &info->height, NULL, NULL);
       info->x = symbol_info->x;
       info->y = symbol_info->y;
       info->tile_x = tile_x;
       info->tile_y = tile_y;
       info->zoom = zoom;
 
+      if (symbol_info->line_placement)
+        {
+          /* Use the line geometry and font size to get an upper bound on the
+           * symbol size */
+          info->width = symbol_info->line_size.x * 2 * tile_size + symbol_info->text_size;
+          info->height = symbol_info->line_size.y * 2 * tile_size + symbol_info->text_size;
+        }
+      else
+        {
+          /* Measure the label widget to get the symbol size */
+          gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
+          gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &info->height, NULL, NULL);
+        }
+
       info->marker = shumate_vector_collision_insert (self->collision,
                                                       zoom,
                                                       (tile_x + info->x) * tile_size,
                                                       (tile_y + info->y) * tile_size,
-                                                      -info->width / 2,
                                                       info->width / 2,
-                                                      -info->height / 2,
-                                                      info->height / 2);
+                                                      info->height / 2,
+                                                      !symbol_info->line_placement);
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));

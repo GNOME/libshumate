@@ -238,6 +238,10 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       if (self->glyphs_length > self->line_length * scale)
         return;
 
+      gtk_snapshot_save (snapshot);
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (gtk_widget_get_allocated_width (widget) / 2,
+                                                              gtk_widget_get_allocated_height (widget) / 2));
+
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
       shumate_vector_point_iter_init (&iter, &self->symbol_info->line);
@@ -268,6 +272,8 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
           shumate_vector_point_iter_advance (&iter, glyph->width / scale);
         }
+
+      gtk_snapshot_restore (snapshot);
     }
   else
     GTK_WIDGET_CLASS (shumate_vector_symbol_parent_class)->snapshot (widget, snapshot);

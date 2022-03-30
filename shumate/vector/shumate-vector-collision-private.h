@@ -26,21 +26,22 @@ G_BEGIN_DECLS
 typedef struct ShumateVectorCollision ShumateVectorCollision;
 
 typedef struct {
-  float left;
-  float right;
-  float top;
-  float bottom;
-} ShumateVectorCollisionRect;
+  float x;
+  float y;
+  float xextent;
+  float yextent;
+  float rotation;
+} ShumateVectorCollisionBBox;
 
 typedef struct {
-  ShumateVectorCollisionRect rect;
-  ShumateVectorPoint center;
+  ShumateVectorCollisionBBox bbox;
   GList *list_link;
   float x;
   float y;
   int zoom;
   guint seq : 1;
   guint visible : 1;
+  guint rotates : 1;
 } ShumateVectorCollisionMarker;
 
 ShumateVectorCollision *shumate_vector_collision_new ();
@@ -50,10 +51,9 @@ ShumateVectorCollisionMarker *shumate_vector_collision_insert (ShumateVectorColl
                                                                int                     zoom,
                                                                float                   x,
                                                                float                   y,
-                                                               float                   left,
-                                                               float                   right,
-                                                               float                   top,
-                                                               float                   bottom);
+                                                               float                   xextent,
+                                                               float                   yextent,
+                                                               guint                   rotates);
 
 void shumate_vector_collision_remove (ShumateVectorCollision       *self,
                                       ShumateVectorCollisionMarker *marker);

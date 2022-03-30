@@ -89,6 +89,10 @@ void
 shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                             ShumateVectorLineString *linestring)
 {
+  ShumateVectorPoint center;
   shumate_vector_line_string_clear (&self->line);
   self->line = *linestring;
+  shumate_vector_line_string_bounds (&self->line, &self->line_size, &center);
+  self->x = center.x;
+  self->y = center.y;
 }

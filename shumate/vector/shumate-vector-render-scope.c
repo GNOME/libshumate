@@ -197,6 +197,11 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
           *max_y = MAX (*max_y, y);
         }
     }
+
+  *min_x /= self->layer->extent;
+  *min_y /= self->layer->extent;
+  *max_x /= self->layer->extent;
+  *max_y /= self->layer->extent;
 }
 
 
@@ -207,8 +212,8 @@ shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
 {
   double min_x, min_y, max_x, max_y;
   shumate_vector_render_scope_get_bounds (self, &min_x, &min_y, &max_x, &max_y);
-  *x = (min_x + max_x) / 2.0 / self->layer->extent;
-  *y = (min_y + max_y) / 2.0 / self->layer->extent;
+  *x = (min_x + max_x) / 2.0;
+  *y = (min_y + max_y) / 2.0;
 }
 
 

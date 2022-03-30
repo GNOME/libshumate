@@ -91,6 +91,8 @@ void   shumate_vector_point_iter_advance              (ShumateVectorPointIter *i
                                                        double                  distance);
 double shumate_vector_point_iter_get_current_angle    (ShumateVectorPointIter *iter);
 
-
 void shumate_vector_line_string_clear                 (ShumateVectorLineString *linestring);
 double shumate_vector_line_string_length              (ShumateVectorLineString *linestring);
+void   shumate_vector_line_string_bounds              (ShumateVectorLineString *linestring,
+                                                       ShumateVectorPoint      *radius_out,
+                                                       ShumateVectorPoint      *center_out);

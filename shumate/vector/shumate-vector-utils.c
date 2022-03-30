@@ -313,3 +313,31 @@ shumate_vector_line_string_length (ShumateVectorLineString *linestring)
 
   return sum;
 }
+
+
+void
+shumate_vector_line_string_bounds (ShumateVectorLineString *linestring,
+                                   ShumateVectorPoint      *radius_out,
+                                   ShumateVectorPoint      *center_out)
+{
+  guint i;
+  float min_x, max_x, min_y, max_y;
+
+  g_return_if_fail (linestring->n_points > 0);
+
+  min_x = max_x = linestring->points[0].x;
+  min_y = max_y = linestring->points[0].y;
+
+  for (i = 1; i < linestring->n_points; i ++)
+    {
+      min_x = MIN (min_x, linestring->points[i].x);
+      max_x = MAX (max_x, linestring->points[i].x);
+      min_y = MIN (min_y, linestring->points[i].y);
+      max_y = MAX (max_y, linestring->points[i].y);
+    }
+
+  radius_out->x = (max_x - min_x) / 2.0;
+  radius_out->y = (max_y - min_y) / 2.0;
+  center_out->x = (max_x + min_x) / 2.0;
+  center_out->y = (max_y + min_y) / 2.0;
+}
