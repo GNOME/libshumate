@@ -88,8 +88,12 @@ shumate_vector_symbol_container_constructed (GObject *object)
 {
   ShumateVectorSymbolContainer *self = (ShumateVectorSymbolContainer *)object;
   ShumateViewport *viewport;
+  guint tile_size;
 
   G_OBJECT_CLASS (shumate_vector_symbol_container_parent_class)->constructed (object);
+
+  tile_size = shumate_map_source_get_tile_size (self->map_source);
+  self->collision = shumate_vector_collision_new (tile_size);
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
 
@@ -276,7 +280,6 @@ shumate_vector_symbol_container_class_init (ShumateVectorSymbolContainerClass *k
 static void
 shumate_vector_symbol_container_init (ShumateVectorSymbolContainer *self)
 {
-  self->collision = shumate_vector_collision_new ();
 }
 
 
@@ -287,11 +290,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                              int                           tile_y,
                                              int                           zoom)
 {
-  double tile_size;
-
   g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
-
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
 
   for (int i = 0; i < symbol_infos->len; i ++)
     {
@@ -307,14 +306,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->tile_y = tile_y;
       info->zoom = zoom;
 
-      if (symbol_info->line_placement)
-        {
-          /* Use the line geometry and font size to get an upper bound on the
-           * symbol size */
-          info->width = symbol_info->line_size.x * 2 * tile_size + symbol_info->text_size;
-          info->height = symbol_info->line_size.y * 2 * tile_size + symbol_info->text_size;
-        }
-      else
+      if (!symbol_info->line_placement)
         {
           /* Measure the label widget to get the symbol size */
           gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
@@ -323,11 +315,10 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
 
       info->marker = shumate_vector_collision_insert (self->collision,
                                                       zoom,
-                                                      (tile_x + info->x) * tile_size,
-                                                      (tile_y + info->y) * tile_size,
-                                                      info->width / 2,
-                                                      info->height / 2,
-                                                      !symbol_info->line_placement);
+                                                      symbol_info,
+                                                      shumate_vector_symbol_get_text_length (symbol),
+                                                      tile_x,
+                                                      tile_y);
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));

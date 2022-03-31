@@ -29,7 +29,7 @@
 
 #define NODES 4
 /* Doesn't need to match the actual tile size */
-#define TILE_SIZE 256
+#define BUCKET_SIZE 256
 
 #define ZOOM_LAYERS 15
 
@@ -40,12 +40,14 @@
 
 struct ShumateVectorCollision {
   /* one set of rows per zoom layer */
-  GHashTable *tile_rows[ZOOM_LAYERS];
+  GHashTable *bucket_rows[ZOOM_LAYERS];
   guint seq : 1;
 
   guint dirty : 1;
   float last_rot;
   float last_zoom;
+
+  int tile_size;
 
   GList *markers;
 };
@@ -64,25 +66,25 @@ typedef struct {
   RTreeRow rows[NODES];
   ShumateVectorCollisionBBox bbox;
   int n_markers;
-} RTreeTileCol;
+} RTreeBucketCol;
 
 typedef struct {
-  GHashTable *tile_cols;
+  GHashTable *bucket_cols;
   ShumateVectorCollisionBBox bbox;
-} RTreeTileRow;
+} RTreeBucketRow;
 
 
-static RTreeTileCol *
-tile_col_new (ShumateVectorCollisionBBox *bbox)
+static RTreeBucketCol *
+bucket_col_new (ShumateVectorCollisionBBox *bbox)
 {
-  RTreeTileCol *tile_col = g_new0 (RTreeTileCol, 1);
-  tile_col->bbox = *bbox;
-  return tile_col;
+  RTreeBucketCol *bucket_col = g_new0 (RTreeBucketCol, 1);
+  bucket_col->bbox = *bbox;
+  return bucket_col;
 }
 
 
 static void
-tile_col_free (RTreeTileCol *tile_col)
+bucket_col_free (RTreeBucketCol *tile_col)
 {
   for (int x = 0; x < NODES; x ++)
     for (int y = 0; y < NODES; y ++)
@@ -92,35 +94,36 @@ tile_col_free (RTreeTileCol *tile_col)
 }
 
 
-static RTreeTileRow *
+static RTreeBucketRow *
 tile_row_new (ShumateVectorCollisionBBox *bbox)
 {
-  RTreeTileRow *tile_row = g_new0 (RTreeTileRow, 1);
-  tile_row->tile_cols = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) tile_col_free);
-  tile_row->bbox = *bbox;
-  return tile_row;
+  RTreeBucketRow *bucket_row = g_new0 (RTreeBucketRow, 1);
+  bucket_row->bucket_cols = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) bucket_col_free);
+  bucket_row->bbox = *bbox;
+  return bucket_row;
 }
 
 
 static void
-tile_row_free (RTreeTileRow *tile_row)
+bucket_row_free (RTreeBucketRow *bucket_row)
 {
-  g_hash_table_unref (tile_row->tile_cols);
-  g_free (tile_row);
+  g_hash_table_unref (bucket_row->bucket_cols);
+  g_free (bucket_row);
 }
 
 
 ShumateVectorCollision *
-shumate_vector_collision_new (void)
+shumate_vector_collision_new (int tile_size)
 {
-  ShumateVectorCollision *tree = g_new0 (ShumateVectorCollision, 1);
+  ShumateVectorCollision *self = g_new0 (ShumateVectorCollision, 1);
+  self->tile_size = tile_size;
 
   for (int i = 0; i < ZOOM_LAYERS; i ++)
-    tree->tile_rows[i] = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) tile_row_free);
+    self->bucket_rows[i] = g_hash_table_new_full (g_direct_hash, g_direct_equal, NULL, (GDestroyNotify) bucket_row_free);
 
-  tree->dirty = TRUE;
+  self->dirty = TRUE;
 
-  return tree;
+  return self;
 }
 
 
@@ -128,7 +131,7 @@ void
 shumate_vector_collision_free (ShumateVectorCollision *self)
 {
   for (int i = 0; i < ZOOM_LAYERS; i ++)
-    g_hash_table_unref (self->tile_rows[i]);
+    g_hash_table_unref (self->bucket_rows[i]);
 
   g_list_free (self->markers);
 
@@ -268,7 +271,7 @@ get_marker_full_rot_bbox (ShumateVectorCollisionMarker *marker,
 {
   float radius = sqrt (LEN_SQ (marker->bbox.xextent, marker->bbox.yextent));
 
-  if (marker->rotates)
+  if (!marker->symbol_info->line_placement)
     {
       bbox_out->x = marker->bbox.x;
       bbox_out->y = marker->bbox.y;
@@ -292,13 +295,14 @@ get_marker_bbox (ShumateVectorCollisionMarker *marker,
   *bbox = marker->bbox;
   bbox->x *= scale;
   bbox->y *= scale;
-  if (marker->rotates)
+  if (!marker->symbol_info->line_placement)
     bbox->rotation -= rot;
 }
 
 
 static gboolean
-markers_intersect (ShumateVectorCollisionMarker *a,
+markers_intersect (ShumateVectorCollision       *self,
+                   ShumateVectorCollisionMarker *a,
                    ShumateVectorCollisionMarker *b,
                    float                         rot,
                    float                         zoom)
@@ -308,7 +312,103 @@ markers_intersect (ShumateVectorCollisionMarker *a,
   get_marker_bbox (a, rot, zoom, &a_bbox);
   get_marker_bbox (b, rot, zoom, &b_bbox);
 
-  return rects_intersect (&a_bbox, &b_bbox);
+  if (!rects_intersect (&a_bbox, &b_bbox))
+    return FALSE;
+
+  /* If neither marker is a line label, there's no further checks to do */
+  if (!a->symbol_info->line_placement && !b->symbol_info->line_placement)
+    return TRUE;
+
+  /* If one marker is a line label and the other is not, make sure 'a' is the
+   * line label */
+  if (!a->symbol_info->line_placement && b->symbol_info->line_placement)
+    {
+      ShumateVectorCollisionMarker *tmp = a;
+      ShumateVectorCollisionBBox tmp_bbox = a_bbox;
+      a = b;
+      a_bbox = b_bbox;
+      b = tmp;
+      b_bbox = tmp_bbox;
+    }
+
+  if (a->symbol_info->line_placement && !b->symbol_info->line_placement)
+    {
+      ShumateVectorPointIter iter;
+      float scale = powf (2, zoom - a->zoom) * self->tile_size;
+      float text_length = MIN (a->symbol_info->line_length, a->text_length / (float) self->tile_size);
+
+      shumate_vector_point_iter_init (&iter, &a->symbol_info->line);
+      shumate_vector_point_iter_advance (&iter, (a->symbol_info->line_length - text_length) / 2.0);
+
+      do
+        {
+          ShumateVectorPoint current_point;
+          shumate_vector_point_iter_get_segment_center (&iter, text_length, &current_point);
+          a_bbox.x = (current_point.x + a->tile_x) * scale;
+          a_bbox.y = (current_point.y + a->tile_y) * scale;
+          a_bbox.xextent = MIN (text_length, shumate_vector_point_iter_get_segment_length (&iter)) * scale / 2;
+          a_bbox.yextent = a->symbol_info->text_size / 2.0;
+          a_bbox.rotation = shumate_vector_point_iter_get_current_angle (&iter);
+
+          if (rects_intersect (&a_bbox, &b_bbox))
+            return TRUE;
+        }
+      while ((text_length -= shumate_vector_point_iter_next_segment (&iter)) > 0);
+
+      return FALSE;
+    }
+  else
+    {
+      /* Both are line labels */
+      ShumateVectorPointIter a_iter;
+      float a_scale = powf (2, zoom - a->zoom) * self->tile_size;
+      float b_scale = powf (2, zoom - b->zoom) * self->tile_size;
+      float a_text_length = MIN (a->symbol_info->line_length, a->text_length / (float) self->tile_size);
+
+      shumate_vector_point_iter_init (&a_iter, &a->symbol_info->line);
+      shumate_vector_point_iter_advance (&a_iter, (a->symbol_info->line_length - a_text_length) / 2.0);
+
+      do
+        {
+          ShumateVectorPointIter b_iter;
+          ShumateVectorPoint a_current_point;
+          ShumateVectorCollisionBBox a_segment_bbox;
+          float b_text_length = MIN (b->symbol_info->line_length, b->text_length / (float) self->tile_size);
+
+          shumate_vector_point_iter_get_segment_center (&a_iter, a_text_length, &a_current_point);
+          a_segment_bbox.x = (a->tile_x + a_current_point.x) * a_scale;
+          a_segment_bbox.y = (a->tile_y + a_current_point.y) * a_scale;
+          a_segment_bbox.xextent = MIN (b_text_length, shumate_vector_point_iter_get_segment_length (&a_iter)) * a_scale / 2;
+          a_segment_bbox.yextent = a->symbol_info->text_size / 2.0;
+          a_segment_bbox.rotation = shumate_vector_point_iter_get_current_angle (&a_iter);
+
+          shumate_vector_point_iter_init (&b_iter, &b->symbol_info->line);
+          shumate_vector_point_iter_advance (&b_iter, (b->symbol_info->line_length - b_text_length) / 2.0);
+
+          if (!rects_intersect (&a_segment_bbox, &b_bbox))
+            continue;
+
+          do
+            {
+              ShumateVectorPoint b_current_point;
+              ShumateVectorCollisionBBox b_segment_bbox;
+
+              shumate_vector_point_iter_get_segment_center (&b_iter, b_text_length, &b_current_point);
+              b_segment_bbox.x = (b->tile_x + b_current_point.x) * b_scale;
+              b_segment_bbox.y = (b->tile_y + b_current_point.y) * b_scale;
+              b_segment_bbox.xextent = MIN (b_text_length, shumate_vector_point_iter_get_segment_length (&b_iter)) * b_scale / 2;
+              b_segment_bbox.yextent = b->symbol_info->text_size / 2.0;
+              b_segment_bbox.rotation = shumate_vector_point_iter_get_current_angle (&b_iter);
+
+              if (rects_intersect (&a_segment_bbox, &b_segment_bbox))
+                return TRUE;
+            }
+          while ((b_text_length -= shumate_vector_point_iter_next_segment (&b_iter)) > 0);
+        }
+      while ((a_text_length -= shumate_vector_point_iter_next_segment (&a_iter)) > 0);
+
+      return FALSE;
+    }
 }
 
 
@@ -322,72 +422,85 @@ positive_mod (int i, int n)
 static int
 row_for_position (float coordinate)
 {
-  return positive_mod (coordinate, TILE_SIZE) * NODES / TILE_SIZE;
+  return positive_mod (coordinate, BUCKET_SIZE) * NODES / BUCKET_SIZE;
 }
 
 
 ShumateVectorCollisionMarker *
-shumate_vector_collision_insert (ShumateVectorCollision *self,
-                                 int                     zoom,
-                                 float                   x,
-                                 float                   y,
-                                 float                   xextent,
-                                 float                   yextent,
-                                 guint                   rotates)
+shumate_vector_collision_insert (ShumateVectorCollision  *self,
+                                 int                      zoom,
+                                 ShumateVectorSymbolInfo *symbol_info,
+                                 float                    text_length,
+                                 int                      tile_x,
+                                 int                      tile_y)
 {
-  RTreeTileRow *tile_row;
-  RTreeTileCol *tile_col;
+  RTreeBucketRow *bucket_row;
+  RTreeBucketCol *bucket_col;
   RTreeRow *row;
   RTreeCol *col;
   ShumateVectorCollisionBBox bbox;
   ShumateVectorCollisionMarker *marker;
-  gint64 tile_x = floor (x / TILE_SIZE);
-  gint64 tile_y = floor (y / TILE_SIZE);
+  float x = (tile_x + symbol_info->x) * self->tile_size;
+  float y = (tile_y + symbol_info->y) * self->tile_size;
+  gint64 bucket_x = floor (x / BUCKET_SIZE);
+  gint64 bucket_y = floor (y / BUCKET_SIZE);
 
   g_assert (self != NULL);
 
   zoom = CLAMP (zoom, 0, ZOOM_LAYERS - 1);
 
   marker = g_new0 (ShumateVectorCollisionMarker, 1);
+  marker->symbol_info = symbol_info;
+  marker->tile_x = tile_x;
+  marker->tile_y = tile_y;
+  marker->text_length = text_length;
   marker->bbox.x = x;
   marker->bbox.y = y;
-  marker->bbox.xextent = xextent;
-  marker->bbox.yextent = yextent;
-  marker->rotates = !!rotates;
   marker->zoom = zoom;
   marker->seq = self->seq;
+
+  if (symbol_info->line_placement)
+    {
+      marker->bbox.xextent = symbol_info->line_size.x * self->tile_size + symbol_info->text_size;
+      marker->bbox.yextent = symbol_info->line_size.y * self->tile_size + symbol_info->text_size;
+    }
+  else
+    {
+      marker->bbox.xextent = text_length / 2;
+      marker->bbox.yextent = symbol_info->text_size / 2;
+    }
 
   self->markers = g_list_prepend (self->markers, marker);
   marker->list_link = g_list_first (self->markers);
 
   get_marker_full_rot_bbox (marker, &bbox);
 
-  tile_row = g_hash_table_lookup (self->tile_rows[zoom], (gpointer) tile_y);
-  if (tile_row == NULL)
+  bucket_row = g_hash_table_lookup (self->bucket_rows[zoom], (gpointer) bucket_y);
+  if (bucket_row == NULL)
     {
-      tile_row = tile_row_new (&bbox);
-      g_hash_table_insert (self->tile_rows[zoom], (gpointer) tile_y, tile_row);
+      bucket_row = tile_row_new (&bbox);
+      g_hash_table_insert (self->bucket_rows[zoom], (gpointer) bucket_y, bucket_row);
     }
 
-  tile_col = g_hash_table_lookup (tile_row->tile_cols, (gpointer) tile_x);
-  if (tile_col == NULL)
+  bucket_col = g_hash_table_lookup (bucket_row->bucket_cols, (gpointer) bucket_x);
+  if (bucket_col == NULL)
     {
-      tile_col = tile_col_new (&bbox);
-      g_hash_table_insert (tile_row->tile_cols, (gpointer) tile_x, tile_col);
+      bucket_col = bucket_col_new (&bbox);
+      g_hash_table_insert (bucket_row->bucket_cols, (gpointer) bucket_x, bucket_col);
     }
 
-  row = &tile_col->rows[row_for_position (y)];
+  row = &bucket_col->rows[row_for_position (y)];
   col = &row->cols[row_for_position (x)];
 
   if (col->markers == NULL)
     col->markers = g_ptr_array_new_full (8, g_free);
   g_ptr_array_add (col->markers, marker);
 
-  tile_col->n_markers ++;
+  bucket_col->n_markers ++;
 
   /* Expand the parents to fit the new marker */
-  expand_rect (&tile_row->bbox, &bbox);
-  expand_rect (&tile_col->bbox, &bbox);
+  expand_rect (&bucket_row->bbox, &bbox);
+  expand_rect (&bucket_col->bbox, &bbox);
   expand_rect (&row->bbox, &bbox);
   expand_rect (&col->bbox, &bbox);
 
@@ -400,37 +513,37 @@ void
 shumate_vector_collision_remove (ShumateVectorCollision       *self,
                                  ShumateVectorCollisionMarker *marker)
 {
-  RTreeTileRow *tile_row;
-  RTreeTileCol *tile_col;
+  RTreeBucketRow *bucket_row;
+  RTreeBucketCol *bucket_col;
   RTreeRow *row;
   RTreeCol *col;
-  gint64 tile_x = floor (marker->bbox.x / TILE_SIZE);
-  gint64 tile_y = floor (marker->bbox.y / TILE_SIZE);
+  gint64 tile_x = floor (marker->bbox.x / BUCKET_SIZE);
+  gint64 tile_y = floor (marker->bbox.y / BUCKET_SIZE);
 
   g_assert (self != NULL);
   g_assert (marker != NULL);
 
-  tile_row = g_hash_table_lookup (self->tile_rows[marker->zoom], (gpointer) tile_y);
-  g_assert (tile_row != NULL);
+  bucket_row = g_hash_table_lookup (self->bucket_rows[marker->zoom], (gpointer) tile_y);
+  g_assert (bucket_row != NULL);
 
-  tile_col = g_hash_table_lookup (tile_row->tile_cols, (gpointer) tile_x);
-  g_assert (tile_col != NULL);
+  bucket_col = g_hash_table_lookup (bucket_row->bucket_cols, (gpointer) tile_x);
+  g_assert (bucket_col != NULL);
 
-  row = &tile_col->rows[row_for_position (marker->bbox.y)];
+  row = &bucket_col->rows[row_for_position (marker->bbox.y)];
   col = &row->cols[row_for_position (marker->bbox.x)];
 
   self->markers = g_list_remove_link (self->markers, marker->list_link);
   g_list_free (marker->list_link);
   g_ptr_array_remove_fast (col->markers, marker);
 
-  g_assert (tile_col->n_markers > 0);
-  tile_col->n_markers --;
+  g_assert (bucket_col->n_markers > 0);
+  bucket_col->n_markers --;
 
-  if (tile_col->n_markers == 0)
-    g_hash_table_remove (tile_row->tile_cols, (gpointer) tile_x);
+  if (bucket_col->n_markers == 0)
+    g_hash_table_remove (bucket_row->bucket_cols, (gpointer) tile_x);
 
-  if (g_hash_table_size (tile_row->tile_cols) == 0)
-    g_hash_table_remove (self->tile_rows[marker->zoom], (gpointer) tile_y);
+  if (g_hash_table_size (bucket_row->bucket_cols) == 0)
+    g_hash_table_remove (self->bucket_rows[marker->zoom], (gpointer) tile_y);
 
   self->dirty = TRUE;
 }
@@ -446,31 +559,31 @@ detect_collision (ShumateVectorCollision       *self,
 
   for (int z = 0; z < ZOOM_LAYERS; z ++)
     {
-      GHashTableIter tile_rows;
-      RTreeTileRow *tile_row;
+      GHashTableIter bucket_rows;
+      RTreeBucketRow *bucket_row;
 
       get_marker_bbox (marker, rot, z, &bbox);
 
-      g_hash_table_iter_init (&tile_rows, self->tile_rows[z]);
+      g_hash_table_iter_init (&bucket_rows, self->bucket_rows[z]);
 
-      while (g_hash_table_iter_next (&tile_rows, NULL, (gpointer*) &tile_row))
+      while (g_hash_table_iter_next (&bucket_rows, NULL, (gpointer*) &bucket_row))
         {
           GHashTableIter tile_cols;
-          RTreeTileCol *tile_col;
+          RTreeBucketCol *bucket_col;
 
-          if (!rects_intersect (&bbox, &tile_row->bbox))
+          if (!rects_intersect (&bbox, &bucket_row->bbox))
             continue;
 
-          g_hash_table_iter_init (&tile_cols, tile_row->tile_cols);
+          g_hash_table_iter_init (&tile_cols, bucket_row->bucket_cols);
 
-          while (g_hash_table_iter_next (&tile_cols, NULL, (gpointer*) &tile_col))
+          while (g_hash_table_iter_next (&tile_cols, NULL, (gpointer*) &bucket_col))
             {
-              if (!rects_intersect (&bbox, &tile_col->bbox))
+              if (!rects_intersect (&bbox, &bucket_col->bbox))
                 continue;
 
               for (int y = 0; y < NODES; y ++)
                 {
-                  RTreeRow *row = &tile_col->rows[y];
+                  RTreeRow *row = &bucket_col->rows[y];
 
                   if (!rects_intersect (&bbox, &row->bbox))
                     continue;
@@ -489,7 +602,7 @@ detect_collision (ShumateVectorCollision       *self,
                           if (m == marker || !m->visible || m->seq != self->seq)
                             continue;
 
-                          if (markers_intersect (m, marker, rot, zoom))
+                          if (markers_intersect (self, m, marker, rot, zoom))
                             return TRUE;
                         }
                     }

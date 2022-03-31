@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include "shumate-vector-utils-private.h"
+#include "shumate-vector-symbol-info-private.h"
 
 G_BEGIN_DECLS
 
@@ -35,25 +36,25 @@ typedef struct {
 
 typedef struct {
   ShumateVectorCollisionBBox bbox;
+  ShumateVectorSymbolInfo *symbol_info;
   GList *list_link;
-  float x;
-  float y;
+  int text_length;
+  int tile_x;
+  int tile_y;
   int zoom;
   guint seq : 1;
   guint visible : 1;
-  guint rotates : 1;
 } ShumateVectorCollisionMarker;
 
-ShumateVectorCollision *shumate_vector_collision_new ();
+ShumateVectorCollision *shumate_vector_collision_new (int tile_size);
 void shumate_vector_collision_free (ShumateVectorCollision *self);
 
-ShumateVectorCollisionMarker *shumate_vector_collision_insert (ShumateVectorCollision *self,
-                                                               int                     zoom,
-                                                               float                   x,
-                                                               float                   y,
-                                                               float                   xextent,
-                                                               float                   yextent,
-                                                               guint                   rotates);
+ShumateVectorCollisionMarker *shumate_vector_collision_insert (ShumateVectorCollision  *self,
+                                                               int                      zoom,
+                                                               ShumateVectorSymbolInfo *symbol_info,
+                                                               float                    text_length,
+                                                               int                      tile_x,
+                                                               int                      tile_y);
 
 void shumate_vector_collision_remove (ShumateVectorCollision       *self,
                                       ShumateVectorCollisionMarker *marker);

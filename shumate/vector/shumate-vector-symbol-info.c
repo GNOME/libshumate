@@ -95,4 +95,5 @@ shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
   shumate_vector_line_string_bounds (&self->line, &self->line_size, &center);
   self->x = center.x;
   self->y = center.y;
+  self->line_length = shumate_vector_line_string_length (&self->line);
 }

@@ -320,3 +320,17 @@ shumate_vector_symbol_get_symbol_info (ShumateVectorSymbol *self)
 
   return self->symbol_info;
 }
+
+
+int
+shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self)
+{
+  if (self->symbol_info->line_placement)
+    return self->glyphs_length;
+  else
+    {
+      int natural;
+      gtk_widget_measure (GTK_WIDGET (self), GTK_ORIENTATION_HORIZONTAL, 0, NULL, &natural, NULL, NULL);
+      return natural;
+    }
+}

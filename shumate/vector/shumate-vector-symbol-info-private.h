@@ -41,6 +41,7 @@ struct _ShumateVectorSymbolInfo
 
   ShumateVectorLineString line;
   ShumateVectorPoint line_size;
+  float line_length;
 
   /*< private >*/
   guint ref_count;

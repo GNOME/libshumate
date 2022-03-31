@@ -227,6 +227,27 @@ shumate_vector_point_iter_get_segment_length (ShumateVectorPointIter *iter)
 
 
 void
+shumate_vector_point_iter_get_segment_center (ShumateVectorPointIter *iter,
+                                              double                  remaining_distance,
+                                              ShumateVectorPoint     *result)
+{
+  /* Gets the center point of the rest of the current segment, up to the given remaining distance. */
+
+  ShumateVectorPoint *prev = get_prev_point (iter), *next = get_next_point (iter);
+  float distance = MIN (remaining_distance, point_distance (prev, next) - iter->distance) / 2 + iter->distance;
+
+  result->x = next->x - prev->x;
+  result->y = next->y - prev->y;
+  normalize (result);
+
+  result->x *= distance;
+  result->y *= distance;
+  result->x += prev->x;
+  result->y += prev->y;
+}
+
+
+void
 shumate_vector_point_iter_get_current_point (ShumateVectorPointIter *iter,
                                              ShumateVectorPoint     *result)
 {
