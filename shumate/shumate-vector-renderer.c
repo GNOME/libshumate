@@ -490,19 +490,6 @@ static void on_data_source_done (GObject      *object,
                                  GAsyncResult *res,
                                  gpointer      user_data);
 
-typedef struct {
-  ShumateVectorRenderer *self;
-  ShumateTile *tile;
-} FillTileData;
-
-static void
-fill_tile_data_free (FillTileData *data)
-{
-  g_clear_object (&data->self);
-  g_clear_object (&data->tile);
-  g_free (data);
-}
-
 static void
 shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
                                          ShumateTile         *tile,
@@ -512,7 +499,6 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
 {
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)map_source;
   g_autoptr(GTask) task = NULL;
-  FillTileData *data;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -520,11 +506,7 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
 
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_vector_renderer_fill_tile_async);
-
-  data = g_new0 (FillTileData, 1);
-  data->self = g_object_ref (self);
-  data->tile = g_object_ref (tile);
-  g_task_set_task_data (task, data, (GDestroyNotify)fill_tile_data_free);
+  g_task_set_task_data (task, g_object_ref (tile), (GDestroyNotify)g_object_unref);
 
   g_ptr_array_add (self->tiles, g_object_ref (tile));
 
@@ -555,17 +537,18 @@ on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
 {
   ShumateDataSource *data_source = SHUMATE_DATA_SOURCE (object);
   g_autoptr(GTask) task = G_TASK (user_data);
-  FillTileData *data = g_task_get_task_data (task);
+  ShumateVectorRenderer *self = g_task_get_source_object (task);
+  ShumateTile *tile = g_task_get_task_data (task);
   GError *error = NULL;
 
-  g_ptr_array_remove_fast (data->self->tiles, data->tile);
+  g_ptr_array_remove_fast (self->tiles, tile);
 
   if (!shumate_data_source_get_tile_data_finish (data_source, res, &error))
     g_task_return_error (task, error);
   else
     {
       g_task_return_boolean (task, TRUE);
-      shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
     }
 }
 
