@@ -20,6 +20,15 @@
 #include "shumate-file-cache.h"
 #include "shumate-user-agent.h"
 
+/**
+ * ShumateTileDownloader:
+ *
+ * A [class@Shumate.DataSource] that asynchronously downloads tiles from an online
+ * service using a given template.
+ *
+ * It contains an internal [class@Shumate.FileCache] to cache the tiles on the system.
+ */
+
 struct _ShumateTileDownloader
 {
   ShumateDataSource parent_instance;

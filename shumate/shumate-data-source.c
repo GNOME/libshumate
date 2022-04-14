@@ -17,6 +17,12 @@
 
 #include "shumate-data-source.h"
 
+/**
+ * ShumateDataSource:
+ *
+ * The base class used to retrieve tiles as [class@GLib.Bytes].
+ */
+
 G_DEFINE_TYPE (ShumateDataSource, shumate_data_source, G_TYPE_OBJECT)
 
 

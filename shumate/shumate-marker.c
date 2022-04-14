@@ -29,8 +29,10 @@
  * it what ever you want. Set the marker's position on the map using
  * [method@Location.set_location].
  *
- * This is a base class of all markers. libshumate has a more evoluted
- * type of markers with text and image support.
+ * This is a base class of all markers. A typical usage of a marker is for
+ * instance to add a [class@Gtk.Image] with a pin image and add the
+ * [class@Gtk.GestureClick] controller to listen to click events and show
+ * a [class@Gtk.Popover] with the description of the marker.
  */
 
 #include "shumate-marker.h"
@@ -42,10 +44,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gdk/gdk.h>
 #include <gtk/gtk.h>
-#include <cairo.h>
-#include <math.h>
 
 enum
 {

@@ -19,6 +19,16 @@
 #include "shumate-map.h"
 #include "shumate-map-layer.h"
 
+/**
+ * ShumateSimpleMap:
+ *
+ * A ready-to-use map [class@Gtk.Widget].If you want to use your own implementation,
+ * you can look at the [class@Shumate.Map] widget.
+ *
+ * The simple map contains a zoom widget, a [class@Shumate.License] at the bottom,
+ * a [class@Shumate.Scale] and a [class@Shumate.Compass].
+ */
+
 struct _ShumateSimpleMap
 {
   GtkWidget parent_instance;

@@ -23,6 +23,8 @@
 /**
  * ShumateMapLayer:
  *
+ * A [class@Shumate.Layer] implementation that fetches tiles from a [class@Shumate.MapSource]
+ * and draws them as a grid.
  */
 
 struct _ShumateMapLayer

@@ -18,6 +18,12 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-tile-downloader.h"
 
+/**
+ * ShumateVectorRenderer:
+ *
+ * A [class@Shumate.MapSource] that renders tiles from a given vector data source.
+ */
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
