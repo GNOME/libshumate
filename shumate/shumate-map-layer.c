@@ -219,12 +219,12 @@ recompute_grid (ShumateMapLayer *self)
   double rotation = shumate_viewport_get_rotation (viewport);
 
   int size_x = MAX (
-    abs (cos (rotation) *  width/2.0 - sin (rotation) * height/2.0),
-    abs (cos (rotation) * -width/2.0 - sin (rotation) * height/2.0)
+    abs ((int) (cos (rotation) *  width/2.0 - sin (rotation) * height/2.0)),
+    abs ((int) (cos (rotation) * -width/2.0 - sin (rotation) * height/2.0))
   );
   int size_y = MAX (
-    abs (sin (rotation) *  width/2.0 + cos (rotation) * height/2.0),
-    abs (sin (rotation) * -width/2.0 + cos (rotation) * height/2.0)
+    abs ((int) (sin (rotation) *  width/2.0 + cos (rotation) * height/2.0)),
+    abs ((int) (sin (rotation) * -width/2.0 + cos (rotation) * height/2.0))
   );
 
   // This is the (column, row) of the top left tile
