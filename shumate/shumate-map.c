@@ -30,7 +30,7 @@
  * This is the base widget and doesn't have advanced features. You can check the
  * [class@Shumate.SimpleMap] for a ready-to-use widget.
  *
- * By default, a [class@Shumate.ViewPort] is created and can be accessed with
+ * By default, a [class@Shumate.Viewport] is created and can be accessed with
  * [method@Shumate.Map.get_viewport].
  *
  * Unless created with [ctor@Shumate.Map.new_simple], the widget doesn't hold any
