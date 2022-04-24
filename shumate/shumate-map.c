@@ -85,13 +85,14 @@ static GQuark go_to_quark;
 /* Between state values for go_to */
 typedef struct
 {
-  ShumateMap *map;
   int64_t duration_us;
   int64_t start_us;
   double to_latitude;
   double to_longitude;
+  double to_zoom;
   double from_latitude;
   double from_longitude;
+  double from_zoom;
   guint tick_id;
 } GoToContext;
 
@@ -125,7 +126,6 @@ typedef struct
 
   ShumateState state; /* View's global state */
 
-  // shumate_map_go_to's context, kept for stop_go_to
   GoToContext *goto_context;
 
   guint deceleration_tick_id;
@@ -372,24 +372,31 @@ go_to_tick_cb (GtkWidget     *widget,
                GdkFrameClock *frame_clock,
                gpointer       user_data)
 {
-  GoToContext *ctx = user_data;
-  ShumateMapPrivate *priv = shumate_map_get_instance_private (ctx->map);
+  GoToContext *ctx;
+  ShumateMapPrivate *priv;
   int64_t now_us;
   double latitude, longitude;
   double progress;
+  double current_zoom;
 
-  g_assert (SHUMATE_IS_MAP (ctx->map));
+  g_assert (SHUMATE_IS_MAP (widget));
+  g_assert (user_data == NULL);
+
+  priv = shumate_map_get_instance_private (SHUMATE_MAP (widget));
+  ctx = priv->goto_context;
+
+  g_assert (ctx != NULL);
   g_assert (ctx->duration_us >= 0);
 
   now_us = g_get_monotonic_time ();
-  gtk_widget_queue_allocate (widget);
 
   if (now_us >= ctx->start_us + ctx->duration_us)
     {
       shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
                                      ctx->to_latitude,
                                      ctx->to_longitude);
-      shumate_map_stop_go_to (ctx->map);
+      shumate_viewport_set_zoom_level (priv->viewport, ctx->to_zoom);
+      shumate_map_stop_go_to (SHUMATE_MAP (widget));
       return G_SOURCE_REMOVE;
     }
 
@@ -398,6 +405,16 @@ go_to_tick_cb (GtkWidget     *widget,
 
   /* Apply the ease function to the progress itself */
   progress = ease_in_out_quad (progress);
+
+  /* Interpolate zoom level */
+  current_zoom = ctx->from_zoom + (ctx->to_zoom - ctx->from_zoom) * progress;
+  shumate_viewport_set_zoom_level (priv->viewport, current_zoom);
+
+  /* If we're zooming, we need to adjust for that in the progress, otherwise
+   * the animation will speed up at higher zoom levels. */
+  if (ctx->to_zoom != ctx->from_zoom)
+    progress = (pow (2, -ctx->from_zoom) - pow (2, -current_zoom))
+                / (pow (2, -ctx->from_zoom) - pow (2, -ctx->to_zoom));
 
   /* Since progress already follows the easing curve, a simple LERP is guaranteed
    * to follow it too.
@@ -597,38 +614,6 @@ on_motion_controller_motion (ShumateMap               *self,
 
   priv->current_x = x;
   priv->current_y = y;
-}
-
-static void
-shumate_map_go_to_with_duration (ShumateMap *self,
-                                 double      latitude,
-                                 double      longitude,
-                                 guint       duration_ms)
-{
-  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
-  GoToContext *ctx;
-
-  if (duration_ms == 0)
-    {
-      shumate_map_center_on (self, latitude, longitude);
-      return;
-    }
-
-  shumate_map_stop_go_to (self);
-
-  ctx = g_new (GoToContext, 1);
-  ctx->start_us = g_get_monotonic_time ();
-  ctx->duration_us = ms_to_us (duration_ms);
-  ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
-  ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
-  ctx->to_latitude = latitude;
-  ctx->to_longitude = longitude;
-  ctx->map = self;
-
-  /* We keep a reference for stop */
-  priv->goto_context = ctx;
-
-  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (self), go_to_tick_cb, ctx, NULL);
 }
 
 static void
@@ -993,6 +978,35 @@ shumate_map_go_to (ShumateMap *self,
                    double      longitude)
 {
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  double zoom_level;
+
+  g_return_if_fail (SHUMATE_IS_MAP (self));
+  g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
+  g_return_if_fail (longitude >= SHUMATE_MIN_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
+
+  zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+
+  shumate_map_go_to_full (self, latitude, longitude, zoom_level);
+}
+
+
+/**
+ * shumate_map_go_to_full:
+ * @self: a #ShumateMap
+ * @latitude: the longitude to center the map at
+ * @longitude: the longitude to center the map at
+ * @zoom_level: the zoom level to end at
+ *
+ * Move from the current position to these coordinates and zoom to the given
+ * zoom level. All tiles in the intermediate view WILL be loaded!
+ */
+void
+shumate_map_go_to_full (ShumateMap *self,
+                        double      latitude,
+                        double      longitude,
+                        double      zoom_level)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   guint duration;
 
   g_return_if_fail (SHUMATE_IS_MAP (self));
@@ -1001,10 +1015,66 @@ shumate_map_go_to (ShumateMap *self,
 
   duration = priv->go_to_duration;
   if (duration == 0) /* calculate duration from zoom level */
-      duration = 500 * shumate_viewport_get_zoom_level (priv->viewport) / 2.0;
+    duration = 500 * zoom_level / 2.0;
 
-  shumate_map_go_to_with_duration (self, latitude, longitude, duration);
+  shumate_map_go_to_full_with_duration (self, latitude, longitude, zoom_level, duration);
 }
+
+
+/**
+ * shumate_map_go_to_full_with_duration:
+ * @self: a #ShumateMap
+ * @latitude: the longitude to center the map at
+ * @longitude: the longitude to center the map at
+ * @zoom_level: the zoom level to end at
+ * @duration_ms: animation duration in milliseconds
+ *
+ * Move from the current position to these coordinates and zoom to the given
+ * zoom level. The given duration is used instead of the map's default [property@Map:go-to-duration].
+ * All tiles in the intermediate view WILL be loaded!
+ */
+void
+shumate_map_go_to_full_with_duration (ShumateMap *self,
+                                      double      latitude,
+                                      double      longitude,
+                                      double      zoom_level,
+                                      guint       duration_ms)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  double min_zoom, max_zoom;
+  GoToContext *ctx;
+
+  g_return_if_fail (SHUMATE_IS_MAP (self));
+  g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
+  g_return_if_fail (longitude >= SHUMATE_MIN_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
+
+  if (duration_ms == 0)
+    {
+      shumate_map_center_on (self, latitude, longitude);
+      shumate_viewport_set_zoom_level (priv->viewport, zoom_level);
+      return;
+    }
+
+  shumate_map_stop_go_to (self);
+
+  min_zoom = shumate_viewport_get_min_zoom_level (priv->viewport);
+  max_zoom = shumate_viewport_get_max_zoom_level (priv->viewport);
+
+  ctx = g_new (GoToContext, 1);
+  ctx->start_us = g_get_monotonic_time ();
+  ctx->duration_us = ms_to_us (duration_ms);
+  ctx->from_latitude = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->from_longitude = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  ctx->from_zoom = CLAMP (shumate_viewport_get_zoom_level (priv->viewport), min_zoom, max_zoom);
+  ctx->to_latitude = latitude;
+  ctx->to_longitude = longitude;
+  ctx->to_zoom = CLAMP (zoom_level, min_zoom, max_zoom);
+
+  priv->goto_context = ctx;
+
+  ctx->tick_id = gtk_widget_add_tick_callback (GTK_WIDGET (self), go_to_tick_cb, NULL, NULL);
+}
+
 
 /**
  * shumate_map_get_go_to_duration:

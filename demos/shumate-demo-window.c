@@ -94,7 +94,7 @@ activate_goto_europe (GSimpleAction *simple,
                       GVariant      *parameter,
                       gpointer       user_data)
 {
-  shumate_map_go_to (SHUMATE_MAP (user_data), 49.531565, 17.532806);
+  shumate_map_go_to_full (SHUMATE_MAP (user_data), 49.531565, 17.532806, 4.5);
 }
 
 static void
@@ -102,7 +102,7 @@ activate_goto_nyc (GSimpleAction *simple,
                    GVariant      *parameter,
                    gpointer       user_data)
 {
-  shumate_map_go_to (SHUMATE_MAP (user_data), 40.718820, -74.001605);
+  shumate_map_go_to_full (SHUMATE_MAP (user_data), 40.718820, -74.001605, 9);
 }
 
 static void
@@ -110,7 +110,7 @@ activate_goto_eiffel_tower (GSimpleAction *simple,
                             GVariant      *parameter,
                             gpointer       user_data)
 {
-  shumate_map_go_to (SHUMATE_MAP (user_data), 48.858279, 2.294486);
+  shumate_map_go_to_full (SHUMATE_MAP (user_data), 48.858279, 2.294486, 18);
 }
 
 static void

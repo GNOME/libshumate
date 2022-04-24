@@ -52,6 +52,16 @@ void shumate_map_center_on (ShumateMap *self,
 void shumate_map_go_to (ShumateMap *self,
                         double      latitude,
                         double      longitude);
+void shumate_map_go_to_full (ShumateMap *self,
+                             double      latitude,
+                             double      longitude,
+                             double      zoom_level);
+void shumate_map_go_to_full_with_duration (ShumateMap *self,
+                                           double      latitude,
+                                           double      longitude,
+                                           double      zoom_level,
+                                           guint       duration_ms);
+
 void shumate_map_stop_go_to (ShumateMap *self);
 guint shumate_map_get_go_to_duration (ShumateMap *self);
 void shumate_map_set_go_to_duration (ShumateMap *self,
