@@ -12,6 +12,16 @@
           <object class="GtkDropDown" id="layers_dropdown">
           </object>
         </child>
+        <child type="end">
+          <object class="GtkMenuButton">
+            <property name="label" translatable="true">Go To</property>
+            <property name="popover">
+              <object class="GtkPopoverMenu">
+                <property name="menu-model">goto_menu</property>
+              </object>
+            </property>
+          </object>
+        </child>
       </object>
     </child>
     <child>
@@ -20,4 +30,18 @@
       </object>
     </child>
   </template>
+  <menu id="goto_menu">
+    <item>
+      <attribute name="label" translatable="true">Europe</attribute>
+      <attribute name="action">win.goto-europe</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="true">New York City</attribute>
+      <attribute name="action">win.goto-nyc</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="true">Eiffel Tower</attribute>
+      <attribute name="action">win.goto-eiffel-tower</attribute>
+    </item>
+  </menu>
 </interface>

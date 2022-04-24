@@ -90,15 +90,52 @@ get_map_source_name (ShumateMapSource *map_source)
 }
 
 static void
+activate_goto_europe (GSimpleAction *simple,
+                      GVariant      *parameter,
+                      gpointer       user_data)
+{
+  shumate_map_go_to (SHUMATE_MAP (user_data), 49.531565, 17.532806);
+}
+
+static void
+activate_goto_nyc (GSimpleAction *simple,
+                   GVariant      *parameter,
+                   gpointer       user_data)
+{
+  shumate_map_go_to (SHUMATE_MAP (user_data), 40.718820, -74.001605);
+}
+
+static void
+activate_goto_eiffel_tower (GSimpleAction *simple,
+                            GVariant      *parameter,
+                            gpointer       user_data)
+{
+  shumate_map_go_to (SHUMATE_MAP (user_data), 48.858279, 2.294486);
+}
+
+static void
 shumate_demo_window_init (ShumateDemoWindow *self)
 {
   ShumateViewport *viewport;
   GtkExpression *expression;
   g_autoptr(GBytes) bytes = NULL;
+  g_autoptr(GSimpleActionGroup) action_map = NULL;
   const char *style_json;
   GError *error = NULL;
+  const GActionEntry action_entries[] = {
+    { "goto-europe", activate_goto_europe },
+    { "goto-nyc", activate_goto_nyc },
+    { "goto-eiffel-tower", activate_goto_eiffel_tower },
+  };
 
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  action_map = g_simple_action_group_new ();
+  g_action_map_add_action_entries (G_ACTION_MAP (action_map),
+                                   action_entries,
+                                   G_N_ELEMENTS (action_entries),
+                                   shumate_simple_map_get_map (self->map));
+  gtk_widget_insert_action_group (GTK_WIDGET (self), "win", G_ACTION_GROUP (action_map));
 
   self->registry = shumate_map_source_registry_new_with_defaults ();
   shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));
