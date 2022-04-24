@@ -60,6 +60,7 @@ enum {
   PROP_LICENSE,
   PROP_SCALE,
   PROP_SHOW_ZOOM_BUTTONS,
+  PROP_MAP,
   N_PROPS
 };
 
@@ -116,6 +117,10 @@ shumate_simple_map_get_property (GObject    *object,
 
     case PROP_SHOW_ZOOM_BUTTONS:
       g_value_set_boolean (value, shumate_simple_map_get_show_zoom_buttons (self));
+      break;
+
+    case PROP_MAP:
+      g_value_set_object (value, shumate_simple_map_get_map (self));
       break;
 
     default:
@@ -240,6 +245,13 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
                          "Scale",
                          "Scale",
                          SHUMATE_TYPE_SCALE,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_MAP] =
+    g_param_spec_object ("map",
+                         "Map",
+                         "Map",
+                         SHUMATE_TYPE_MAP,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_SHOW_ZOOM_BUTTONS] =
@@ -508,6 +520,23 @@ shumate_simple_map_get_show_zoom_buttons (ShumateSimpleMap *self)
 {
   g_return_val_if_fail (SHUMATE_IS_SIMPLE_MAP (self), FALSE);
   return gtk_widget_is_visible (GTK_WIDGET (self->zoom_buttons));
+}
+
+
+/**
+ * shumate_simple_map_get_map:
+ * @self: a [class@SimpleMap]
+ *
+ * Gets the [class@SimpleMap]'s underlying [class@Map].
+ *
+ * Returns: (transfer none): a [class@Map]
+ */
+ShumateMap *
+shumate_simple_map_get_map (ShumateSimpleMap *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_SIMPLE_MAP (self), NULL);
+
+  return self->map;
 }
 
 
