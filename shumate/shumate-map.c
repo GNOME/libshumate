@@ -112,17 +112,6 @@ typedef struct
 {
   ShumateViewport *viewport;
 
-  /* There are num_right_clones clones on the right, and one extra on the left */
-  int num_right_clones;
-  GList *map_clones;
-  /* There are num_right_clones + 2 user layer slots, overlayed on the map clones.
-   * Initially, the first slot contains the left clone, the second slot
-   * contains the real user layer, and the rest contain the right clones.
-   * Whenever the cursor enters a clone slot, its content
-   * is swapped with the real one so as to ensure reactiveness to events.
-   */
-  GList *user_layer_slots;
-
   gboolean zoom_on_double_click;
   gboolean animate_zoom;
 
@@ -132,17 +121,9 @@ typedef struct
 
   guint deceleration_tick_id;
 
-  int tiles_loading;
-
   guint zoom_timeout;
 
   guint go_to_duration;
-
-  gboolean animating_zoom;
-  guint anim_start_zoom_level;
-  double zoom_actor_viewport_x;
-  double zoom_actor_viewport_y;
-  guint zoom_actor_timeout;
 
   double current_x;
   double current_y;
@@ -150,9 +131,6 @@ typedef struct
   double zoom_level_begin;
   double rotate_begin;
 
-  double focus_lat;
-  double focus_lon;
-  double accumulated_scroll_dy;
   double gesture_begin_lat;
   double gesture_begin_lon;
   double drag_begin_x;
@@ -852,13 +830,7 @@ shumate_map_init (ShumateMap *self)
   priv->animate_zoom = TRUE;
   priv->state = SHUMATE_STATE_NONE;
   priv->goto_context = NULL;
-  priv->tiles_loading = 0;
-  priv->animating_zoom = FALSE;
-  priv->zoom_actor_timeout = 0;
   priv->go_to_duration = 0;
-  priv->num_right_clones = 0;
-  priv->map_clones = NULL;
-  priv->user_layer_slots = NULL;
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 
