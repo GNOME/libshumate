@@ -1043,12 +1043,17 @@ shumate_map_go_to_full_with_duration (ShumateMap *self,
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double min_zoom, max_zoom;
   GoToContext *ctx;
+  gboolean enable_animations;
 
   g_return_if_fail (SHUMATE_IS_MAP (self));
   g_return_if_fail (latitude >= SHUMATE_MIN_LATITUDE && latitude <= SHUMATE_MAX_LATITUDE);
   g_return_if_fail (longitude >= SHUMATE_MIN_LONGITUDE && longitude <= SHUMATE_MAX_LONGITUDE);
 
-  if (duration_ms == 0)
+  g_object_get (gtk_widget_get_settings (GTK_WIDGET (self)),
+                "gtk-enable-animations", &enable_animations,
+                NULL);
+
+  if (!enable_animations || duration_ms == 0)
     {
       shumate_map_center_on (self, latitude, longitude);
       shumate_viewport_set_zoom_level (priv->viewport, zoom_level);
