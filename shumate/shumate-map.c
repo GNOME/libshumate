@@ -51,7 +51,7 @@
 #include "shumate-tile.h"
 #include "shumate-license.h"
 #include "shumate-location.h"
-#include "shumate-viewport.h"
+#include "shumate-viewport-private.h"
 
 #include <glib.h>
 #include <glib-object.h>

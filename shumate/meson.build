@@ -29,6 +29,7 @@ libshumate_public_h = [
 libshumate_private_h = [
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
+  'shumate-viewport-private.h',
 
   'vector/shumate-vector-background-layer-private.h',
   'vector/shumate-vector-expression-private.h',

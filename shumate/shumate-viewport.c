@@ -56,6 +56,7 @@ static void shumate_viewport_shumate_location_interface_init (ShumateLocationInt
 G_DEFINE_TYPE_WITH_CODE (ShumateViewport, shumate_viewport, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (SHUMATE_TYPE_LOCATION, shumate_viewport_shumate_location_interface_init));
 
+/* Remember to update shumate_viewport_copy() when adding properties */
 enum
 {
   PROP_ZOOM_LEVEL = 1,
@@ -274,7 +275,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
                          "The rotation of the map view in radians",
                          0, G_PI * 2.0, 0,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
-  
+
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
@@ -341,7 +342,7 @@ shumate_viewport_set_zoom_level (ShumateViewport *self,
  * @self: a #ShumateViewport
  *
  * Get the current zoom level
- * 
+ *
  * Returns: the current zoom level
  */
 double
@@ -381,7 +382,7 @@ shumate_viewport_set_max_zoom_level (ShumateViewport *self,
  * @self: a #ShumateViewport
  *
  * Get the maximal zoom level
- * 
+ *
  * Returns: the maximal zoom level
  */
 guint
@@ -421,7 +422,7 @@ shumate_viewport_set_min_zoom_level (ShumateViewport *self,
  * @self: a #ShumateViewport
  *
  * Get the minimal zoom level
- * 
+ *
  * Returns: the minimal zoom level
  */
 guint
@@ -492,7 +493,7 @@ shumate_viewport_set_reference_map_source (ShumateViewport  *self,
  * @self: a #ShumateViewport
  *
  * Get the reference map source
- * 
+ *
  * Returns: (transfer none) (nullable): the reference #ShumateMapSource or %NULL
  * when none has been set.
  */
@@ -661,4 +662,28 @@ shumate_viewport_location_to_widget_coords (ShumateViewport *self,
   *y -= shumate_map_source_get_y (self->ref_map_source, self->zoom_level, center_latitude) - height/2;
 
   rotate_around_center (x, y, width, height, self->rotation);
+}
+
+/**
+ * shumate_viewport_copy:
+ * @self: a [class@Viewport]
+ *
+ * Creates a copy of the viewport.
+ *
+ * Returns: (transfer full): a [class@Viewport] with the same values as @self
+ */
+ShumateViewport *
+shumate_viewport_copy (ShumateViewport *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VIEWPORT (self), NULL);
+
+  return g_object_new (SHUMATE_TYPE_VIEWPORT,
+                       "latitude", self->lat,
+                       "longitude", self->lon,
+                       "min-zoom-level", self->min_zoom_level,
+                       "max-zoom-level", self->max_zoom_level,
+                       "rotation", self->rotation,
+                       "reference-map-source", self->ref_map_source,
+                       "zoom-level", self->zoom_level,
+                       NULL);
 }
