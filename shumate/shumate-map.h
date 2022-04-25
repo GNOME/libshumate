@@ -46,9 +46,11 @@ struct _ShumateMapClass
 ShumateMap *shumate_map_new (void);
 ShumateMap *shumate_map_new_simple (void);
 ShumateViewport *shumate_map_get_viewport (ShumateMap *self);
+
 void shumate_map_center_on (ShumateMap *self,
                             double      latitude,
                             double      longitude);
+
 void shumate_map_go_to (ShumateMap *self,
                         double      latitude,
                         double      longitude);
@@ -61,6 +63,9 @@ void shumate_map_go_to_full_with_duration (ShumateMap *self,
                                            double      longitude,
                                            double      zoom_level,
                                            guint       duration_ms);
+
+void shumate_map_zoom_in (ShumateMap *self);
+void shumate_map_zoom_out (ShumateMap *self);
 
 void shumate_map_stop_go_to (ShumateMap *self);
 guint shumate_map_get_go_to_duration (ShumateMap *self);

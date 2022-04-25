@@ -169,7 +169,7 @@ static void
 on_zoom_in_clicked (ShumateSimpleMap *self,
                     GtkButton        *button)
 {
-  shumate_viewport_zoom_in (shumate_map_get_viewport (self->map));
+  shumate_map_zoom_in (self->map);
 }
 
 
@@ -177,7 +177,7 @@ static void
 on_zoom_out_clicked (ShumateSimpleMap *self,
                      GtkButton        *button)
 {
-  shumate_viewport_zoom_out (shumate_map_get_viewport (self->map));
+  shumate_map_zoom_out (self->map);
 }
 
 

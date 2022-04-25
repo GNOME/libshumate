@@ -59,6 +59,7 @@
 #include <math.h>
 
 #define DECELERATION_FRICTION 4.0
+#define ZOOM_ANIMATION_MS 200
 
 enum
 {
@@ -94,6 +95,7 @@ typedef struct
   double from_longitude;
   double from_zoom;
   guint tick_id;
+  gboolean zoom_animation : 1;
 } GoToContext;
 
 typedef struct
@@ -166,15 +168,15 @@ positive_mod (double i, double n)
 }
 
 static void
-move_location_to_coords (ShumateMap *self,
-                         double lat,
-                         double lon,
-                         double x,
-                         double y)
+move_location_to_coords_calc (ShumateMap      *self,
+                              double          *lat,
+                              double          *lon,
+                              double           x,
+                              double           y,
+                              ShumateViewport *viewport)
 {
-  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
-  ShumateMapSource *map_source = shumate_viewport_get_reference_map_source (priv->viewport);
-  double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+  ShumateMapSource *map_source = shumate_viewport_get_reference_map_source (viewport);
+  double zoom_level = shumate_viewport_get_zoom_level (viewport);
   double tile_size, map_width, map_height;
   double map_x, map_y;
   double target_lat, target_lon;
@@ -190,24 +192,35 @@ move_location_to_coords (ShumateMap *self,
   map_width = tile_size * shumate_map_source_get_column_count (map_source, zoom_level);
   map_height = tile_size * shumate_map_source_get_row_count (map_source, zoom_level);
 
-  map_x = shumate_map_source_get_x (map_source, zoom_level, lon);
-  map_y = shumate_map_source_get_y (map_source, zoom_level, lat);
+  map_x = shumate_map_source_get_x (map_source, zoom_level, *lon);
+  map_y = shumate_map_source_get_y (map_source, zoom_level, *lat);
 
-  current_lat = shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport));
-  current_lon = shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport));
+  current_lat = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
+  current_lon = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
   current_map_x = shumate_map_source_get_x (map_source, zoom_level, current_lon);
   current_map_y = shumate_map_source_get_y (map_source, zoom_level, current_lat);
 
-  shumate_viewport_widget_coords_to_location (priv->viewport, GTK_WIDGET (self), x, y, &target_lat, &target_lon);
+  shumate_viewport_widget_coords_to_location (viewport, GTK_WIDGET (self), x, y, &target_lat, &target_lon);
   target_map_x = shumate_map_source_get_x (map_source, zoom_level, target_lon);
   target_map_y = shumate_map_source_get_y (map_source, zoom_level, target_lat);
 
   new_map_x = positive_mod (current_map_x - (target_map_x - map_x), map_width);
   new_map_y = positive_mod (current_map_y - (target_map_y - map_y), map_height);
 
-  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport),
-                                 shumate_map_source_get_latitude (map_source, zoom_level, new_map_y),
-                                 shumate_map_source_get_longitude (map_source, zoom_level, new_map_x));
+  *lat = shumate_map_source_get_latitude (map_source, zoom_level, new_map_y);
+  *lon = shumate_map_source_get_longitude (map_source, zoom_level, new_map_x);
+}
+
+static void
+move_location_to_coords (ShumateMap *self,
+                         double lat,
+                         double lon,
+                         double x,
+                         double y)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  move_location_to_coords_calc (self, &lat, &lon, x, y, priv->viewport);
+  shumate_location_set_location (SHUMATE_LOCATION (priv->viewport), lat, lon);
 }
 
 static void
@@ -404,7 +417,8 @@ go_to_tick_cb (GtkWidget     *widget,
   g_assert (progress >= 0.0 && progress <= 1.0);
 
   /* Apply the ease function to the progress itself */
-  progress = ease_in_out_quad (progress);
+  if (!ctx->zoom_animation)
+    progress = ease_in_out_quad (progress);
 
   /* Interpolate zoom level */
   current_zoom = ctx->from_zoom + (ctx->to_zoom - ctx->from_zoom) * progress;
@@ -507,10 +521,23 @@ set_zoom_level (ShumateMap *self,
                                                 priv->current_x, priv->current_y,
                                                 &lat, &lon);
 
-  shumate_viewport_set_zoom_level (priv->viewport, zoom_level);
-
   if (map_source)
-    move_location_to_coords (self, lat, lon, priv->current_x, priv->current_y);
+    {
+      g_autoptr(ShumateViewport) new_viewport = shumate_viewport_copy (priv->viewport);
+      shumate_viewport_set_zoom_level (new_viewport, zoom_level);
+      move_location_to_coords_calc (self, &lat, &lon, priv->current_x, priv->current_y, new_viewport);
+
+      shumate_map_go_to_full_with_duration (self,
+                                            lat,
+                                            lon,
+                                            zoom_level,
+                                            priv->animate_zoom ? ZOOM_ANIMATION_MS : 0);
+
+      if (priv->goto_context != NULL)
+        priv->goto_context->zoom_animation = TRUE;
+    }
+  else
+    shumate_viewport_set_zoom_level (priv->viewport, zoom_level);
 
   g_object_thaw_notify (G_OBJECT (priv->viewport));
 }
@@ -523,6 +550,9 @@ on_scroll_controller_scroll (ShumateMap               *self,
 {
   ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
   double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+
+  if (priv->goto_context != NULL && priv->goto_context->zoom_animation)
+    zoom_level = priv->goto_context->to_zoom;
 
   if (dy < 0)
     zoom_level += 0.2;
@@ -1074,6 +1104,7 @@ shumate_map_go_to_full_with_duration (ShumateMap *self,
   ctx->to_latitude = latitude;
   ctx->to_longitude = longitude;
   ctx->to_zoom = CLAMP (zoom_level, min_zoom, max_zoom);
+  ctx->zoom_animation = FALSE;
 
   priv->goto_context = ctx;
 
@@ -1329,4 +1360,60 @@ shumate_map_get_state (ShumateMap *self)
   g_return_val_if_fail (SHUMATE_IS_MAP (self), SHUMATE_STATE_NONE);
 
   return priv->state;
+}
+
+static void
+zoom (ShumateMap *self,
+      gboolean    zoom_out)
+{
+  ShumateMapPrivate *priv = shumate_map_get_instance_private (self);
+  double amount = (zoom_out ? -.2 : .2);
+
+  /* If there is an ongoing animation, add to it rather than starting a new animation from the current position */
+  if (priv->goto_context != NULL && priv->goto_context->zoom_animation)
+    {
+      shumate_map_go_to_full_with_duration (self,
+                                            priv->goto_context->to_latitude,
+                                            priv->goto_context->to_longitude,
+                                            priv->goto_context->to_zoom + amount,
+                                            ZOOM_ANIMATION_MS);
+    }
+  else
+    {
+      double zoom_level = shumate_viewport_get_zoom_level (priv->viewport);
+      shumate_map_go_to_full_with_duration (self,
+                                            shumate_location_get_latitude (SHUMATE_LOCATION (priv->viewport)),
+                                            shumate_location_get_longitude (SHUMATE_LOCATION (priv->viewport)),
+                                            roundf ((zoom_level + amount) * 5) / 5,
+                                            priv->animate_zoom ? ZOOM_ANIMATION_MS : 0);
+    }
+
+  if (priv->goto_context != NULL)
+    priv->goto_context->zoom_animation = TRUE;
+}
+
+/**
+ * shumate_map_zoom_in:
+ * @self: a [class@Map]
+ *
+ * Zooms the map in. If [property@Map:animate-zoom] is `TRUE`, the change will be animated.
+ */
+void
+shumate_map_zoom_in (ShumateMap *self)
+{
+  g_return_if_fail (SHUMATE_IS_MAP (self));
+  zoom (self, FALSE);
+}
+
+/**
+ * shumate_map_zoom_out:
+ * @self: a [class@Map]
+ *
+ * Zooms the map out. If [property@Map:animate-zoom] is `TRUE`, the change will be animated.
+ */
+void
+shumate_map_zoom_out (ShumateMap *self)
+{
+  g_return_if_fail (SHUMATE_IS_MAP (self));
+  zoom (self, TRUE);
 }
