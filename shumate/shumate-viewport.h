@@ -49,9 +49,6 @@ void shumate_viewport_set_min_zoom_level (ShumateViewport *self,
                                           guint            min_zoom_level);
 guint shumate_viewport_get_min_zoom_level (ShumateViewport *self);
 
-void shumate_viewport_zoom_in (ShumateViewport *self);
-void shumate_viewport_zoom_out (ShumateViewport *self);
-
 void shumate_viewport_set_reference_map_source (ShumateViewport  *self,
                                                 ShumateMapSource *map_source);
 ShumateMapSource *shumate_viewport_get_reference_map_source (ShumateViewport  *self);
