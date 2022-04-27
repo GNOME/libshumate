@@ -37,6 +37,7 @@ struct _ShumateVectorRenderer
 {
   ShumateMapSource parent_instance;
 
+  char *source_name;
   ShumateDataSource *data_source;
   GPtrArray *tiles;
 
@@ -52,7 +53,6 @@ G_DEFINE_TYPE_WITH_CODE (ShumateVectorRenderer, shumate_vector_renderer, SHUMATE
 
 enum {
   PROP_0,
-  PROP_DATA_SOURCE,
   PROP_STYLE_JSON,
   N_PROPS
 };
@@ -62,153 +62,31 @@ static GParamSpec *properties [N_PROPS];
 
 /**
  * shumate_vector_renderer_new:
- * @data_source: a [class@DataSource] to provide tile image data
+ * @id: an ID for the map source
  * @style_json: a vector style
  * @error: return location for a #GError, or %NULL
  *
- * Creates a new [class@VectorRenderer] to render vector tiles from @data_source.
+ * Creates a new [class@VectorRenderer] from the given JSON style.
  *
- * Returns: (transfer full): a newly constructed [class@VectorRenderer]
+ * The stylesheet should contain a list of tile sources. Tiles will be
+ * downloaded using [class@TileDownloader]s.
+ *
+ * See the [MapLibre Style Specification](https://maplibre.org/maplibre-gl-js-docs/style-spec/)
+ * for details on @style_json, but be aware that libshumate does not support
+ * every feature of the specification.
+ *
+ * Returns: (transfer full): a newly constructed [class@VectorRenderer], or %NULL if @error is set
  */
 ShumateVectorRenderer *
-shumate_vector_renderer_new (ShumateDataSource  *data_source,
-                             const char         *style_json,
-                             GError            **error)
+shumate_vector_renderer_new (const char  *id,
+                             const char  *style_json,
+                             GError     **error)
 {
-  g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (data_source), NULL);
-  return g_initable_new (SHUMATE_TYPE_VECTOR_RENDERER, NULL, error,
-                         "data-source", data_source,
-                         "style-json", style_json,
-                         NULL);
-}
-
-
-/**
- * shumate_vector_renderer_new_from_url:
- * @url_template: a URL template to fetch tiles from
- * @style_json: a vector style
- * @error: return location for a #GError, or %NULL
- *
- * Creates a new [class@VectorRenderer] that fetches tiles from the given URL
- * using a [class@TileDownloader] data source.
- *
- * Equivalent to:
- *
- * ```c
- * g_autoptr(ShumateTileDownloader) source = shumate_tile_downloader_new (url_template);
- * ShumateVectorRenderer *renderer = shumate_vector_renderer_new (source);
- * ```
- *
- * Returns: (transfer full): a newly constructed [class@VectorRenderer]
- */
-ShumateVectorRenderer *
-shumate_vector_renderer_new_from_url (const char  *url_template,
-                                      const char  *style_json,
-                                      GError     **error)
-{
-  g_autoptr(ShumateDataSource) data_source = NULL;
-
-  g_return_val_if_fail (url_template != NULL, NULL);
-
-  data_source = SHUMATE_DATA_SOURCE (shumate_tile_downloader_new (url_template));
-  return shumate_vector_renderer_new (data_source, style_json, error);
-}
-
-
-/**
- * shumate_vector_renderer_new_full:
- * @id: the map source's id
- * @name: the map source's name
- * @license: the map source's license
- * @license_uri: the map source's license URI
- * @min_zoom: the map source's minimum zoom level
- * @max_zoom: the map source's maximum zoom level
- * @tile_size: the map source's tile size (in pixels)
- * @projection: the map source's projection
- * @data_source: a [class@DataSource] to provide tile image data
- * @error: (nullable): a return location for a #GError, or %NULL
- *
- * Creates a new [class@VectorRenderer] to render vector tiles from @data_source.
- *
- * Returns: a newly constructed [class@VectorRenderer] object
- */
-ShumateVectorRenderer *
-shumate_vector_renderer_new_full (const char            *id,
-                                  const char            *name,
-                                  const char            *license,
-                                  const char            *license_uri,
-                                  guint                  min_zoom,
-                                  guint                  max_zoom,
-                                  guint                  tile_size,
-                                  ShumateMapProjection   projection,
-                                  ShumateDataSource     *data_source,
-                                  const char            *style_json,
-                                  GError               **error)
-{
-  g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (data_source), NULL);
+  g_return_val_if_fail (id != NULL, NULL);
+  g_return_val_if_fail (style_json != NULL, NULL);
 
   return g_initable_new (SHUMATE_TYPE_VECTOR_RENDERER, NULL, error,
                          "id", id,
-                         "name", name,
-                         "license", license,
-                         "license-uri", license_uri,
-                         "min-zoom-level", min_zoom,
-                         "max-zoom-level", max_zoom,
-                         "tile-size", tile_size,
-                         "projection", projection,
-                         "data-source", data_source,
-                         "style-json", style_json,
-                         NULL);
-}
-
-
-/**
- * shumate_vector_renderer_new_full_from_url:
- * @id: the map source's id
- * @name: the map source's name
- * @license: the map source's license
- * @license_uri: the map source's license URI
- * @min_zoom: the map source's minimum zoom level
- * @max_zoom: the map source's maximum zoom level
- * @tile_size: the map source's tile size (in pixels)
- * @projection: the map source's projection
- * @url_template: a template for the URL to fetch tiles from
- * @error: (nullable): a return location for a #GError, or %NULL
- *
- * Creates a new [class@VectorRenderer] that fetches tiles from the given URL
- * using a [class@TileDownloader] data source.
- *
- * Returns: a newly constructed [class@VectorRenderer] object
- */
-ShumateVectorRenderer *
-shumate_vector_renderer_new_full_from_url (const char            *id,
-                                           const char            *name,
-                                           const char            *license,
-                                           const char            *license_uri,
-                                           guint                  min_zoom,
-                                           guint                  max_zoom,
-                                           guint                  tile_size,
-                                           ShumateMapProjection   projection,
-                                           const char            *url_template,
-                                           const char            *style_json,
-                                           GError               **error)
-{
-  g_autoptr(ShumateTileDownloader) data_source = NULL;
-
-  g_return_val_if_fail (url_template != NULL, NULL);
-
-  data_source = shumate_tile_downloader_new (url_template);
-
-  return g_initable_new (SHUMATE_TYPE_VECTOR_RENDERER, NULL, error,
-                         "id", id,
-                         "name", name,
-                         "license", license,
-                         "license-uri", license_uri,
-                         "min-zoom-level", min_zoom,
-                         "max-zoom-level", max_zoom,
-                         "tile-size", tile_size,
-                         "projection", projection,
-                         "data-source", data_source,
                          "style-json", style_json,
                          NULL);
 }
@@ -244,21 +122,13 @@ on_data_source_received_data (ShumateVectorRenderer *self,
 
 
 static void
-shumate_vector_renderer_constructed (GObject *object)
-{
-  ShumateVectorRenderer *self = SHUMATE_VECTOR_RENDERER (object);
-
-  g_signal_connect_object (self->data_source, "received-data", (GCallback)on_data_source_received_data, self, G_CONNECT_SWAPPED);
-}
-
-
-static void
 shumate_vector_renderer_finalize (GObject *object)
 {
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)object;
 
   g_clear_pointer (&self->layers, g_ptr_array_unref);
   g_clear_pointer (&self->style_json, g_free);
+  g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
   g_clear_pointer (&self->tiles, g_ptr_array_unref);
 
@@ -275,9 +145,6 @@ shumate_vector_renderer_get_property (GObject    *object,
 
   switch (prop_id)
     {
-    case PROP_DATA_SOURCE:
-      g_value_set_object (value, self->data_source);
-      break;
     case PROP_STYLE_JSON:
       g_value_set_string (value, self->style_json);
       break;
@@ -296,9 +163,6 @@ shumate_vector_renderer_set_property (GObject      *object,
 
   switch (prop_id)
     {
-    case PROP_DATA_SOURCE:
-      g_set_object (&self->data_source, g_value_get_object (value));
-      break;
     case PROP_STYLE_JSON:
       /* Property is construct only, so it should only be set once */
       g_assert (self->style_json == NULL);
@@ -325,26 +189,12 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
-  object_class->constructed = shumate_vector_renderer_constructed;
   object_class->finalize = shumate_vector_renderer_finalize;
   object_class->get_property = shumate_vector_renderer_get_property;
   object_class->set_property = shumate_vector_renderer_set_property;
 
   map_source_class->fill_tile_async = shumate_vector_renderer_fill_tile_async;
   map_source_class->fill_tile_finish = shumate_vector_renderer_fill_tile_finish;
-
-  /**
-   * ShumateVectorRenderer:data-source:
-   *
-   * The data source that provides image tiles to display. In most cases,
-   * a [class@TileDownloader] is sufficient.
-   */
-  properties[PROP_DATA_SOURCE] =
-    g_param_spec_object ("data-source",
-                         "Data source",
-                         "Data source",
-                         SHUMATE_TYPE_DATA_SOURCE,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateVectorRenderer:style-json:
@@ -374,7 +224,9 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)initable;
   g_autoptr(JsonNode) node = NULL;
   JsonNode *layers_node;
+  JsonNode *sources_node;
   JsonObject *object;
+  const char *style_name;
 
   g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), FALSE);
   g_return_val_if_fail (self->style_json != NULL, FALSE);
@@ -384,6 +236,116 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
 
   if (!shumate_vector_json_get_object (node, &object, error))
     return FALSE;
+
+  if (!shumate_vector_json_get_string_member (object, "name", &style_name, error))
+    return FALSE;
+  if (style_name != NULL)
+    shumate_map_source_set_name (SHUMATE_MAP_SOURCE (self), style_name);
+
+  if ((sources_node = json_object_get_member (object, "sources")) == NULL)
+    {
+      g_set_error (error,
+                   SHUMATE_STYLE_ERROR,
+                   SHUMATE_STYLE_ERROR_UNSUPPORTED,
+                   "a data source is required");
+      return FALSE;
+    }
+  else
+    {
+      JsonObject *sources;
+      JsonObjectIter iter;
+      const char *source_name;
+      JsonNode *source_node;
+      int minzoom = 30, maxzoom = 0;
+
+      if (!shumate_vector_json_get_object (sources_node, &sources, error))
+        return FALSE;
+
+      if (json_object_get_size (sources) > 1)
+        {
+          /* TODO: Support multiple data sources */
+          g_set_error (error,
+                       SHUMATE_STYLE_ERROR,
+                       SHUMATE_STYLE_ERROR_UNSUPPORTED,
+                       "ShumateVectorRenderer does not currently support multiple data sources");
+          return FALSE;
+        }
+      else if (json_object_get_size (object) == 0)
+        {
+          g_set_error (error,
+                       SHUMATE_STYLE_ERROR,
+                       SHUMATE_STYLE_ERROR_UNSUPPORTED,
+                       "a data source is required");
+          return FALSE;
+        }
+
+      json_object_iter_init (&iter, sources);
+      while (json_object_iter_next (&iter, &source_name, &source_node))
+        {
+          JsonObject *source_object;
+          const char *source_type;
+          const char *url;
+          JsonArray *tiles;
+          const char *url_template;
+          ShumateDataSource *data_source;
+
+          if (!shumate_vector_json_get_object (source_node, &source_object, error))
+            return FALSE;
+
+          if (!shumate_vector_json_get_string_member (source_object, "type", &source_type, error)
+              || !shumate_vector_json_get_string_member (source_object, "url", &url, error)
+              || !shumate_vector_json_get_array_member (source_object, "tiles", &tiles, error))
+            return FALSE;
+
+          if (g_strcmp0 (source_type, "vector") != 0)
+            {
+              g_set_error (error,
+                           SHUMATE_STYLE_ERROR,
+                           SHUMATE_STYLE_ERROR_UNSUPPORTED,
+                           "ShumateVectorRenderer currently only supports vector sources.");
+              return FALSE;
+            }
+
+          if (url != NULL)
+            {
+              g_set_error (error,
+                           SHUMATE_STYLE_ERROR,
+                           SHUMATE_STYLE_ERROR_UNSUPPORTED,
+                           "ShumateVectorRenderer does not currently support TileJSON links. "
+                           "Please embed the TileJSON data directly into the style.");
+              return FALSE;
+            }
+
+          if (tiles == NULL || json_array_get_length (tiles) == 0)
+            {
+              g_set_error (error,
+                           SHUMATE_STYLE_ERROR,
+                           SHUMATE_STYLE_ERROR_MALFORMED_STYLE,
+                           "Expected 'tiles' array to contain at least one element");
+              return FALSE;
+            }
+
+          if (!shumate_vector_json_get_string (json_array_get_element (tiles, 0),
+                                               &url_template,
+                                               error))
+            return FALSE;
+
+          minzoom = MIN (minzoom, json_object_get_int_member_with_default (source_object, "minzoom", 0));
+          maxzoom = MAX (maxzoom, json_object_get_int_member_with_default (source_object, "maxzoom", 30));
+
+          data_source = SHUMATE_DATA_SOURCE (shumate_tile_downloader_new (url_template));
+          g_signal_connect_object (data_source, "received-data", (GCallback)on_data_source_received_data, self, G_CONNECT_SWAPPED);
+
+          self->source_name = g_strdup (source_name);
+          self->data_source = data_source;
+        }
+
+      if (minzoom < maxzoom)
+        {
+          shumate_map_source_set_min_zoom_level (SHUMATE_MAP_SOURCE (self), minzoom);
+          shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (self), maxzoom);
+        }
+    }
 
   self->layers = g_ptr_array_new_with_free_func (g_object_unref);
   if ((layers_node = json_object_get_member (object, "layers")))
@@ -411,6 +373,9 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
           g_ptr_array_add (self->layers, layer);
         }
     }
+
+  /* According to the style spec, this is not configurable for vector tiles */
+  shumate_map_source_set_tile_size (SHUMATE_MAP_SOURCE (self), 512);
 
   return TRUE;
 #else

@@ -1,4 +1,16 @@
 {
+  "version": 8,
+  "name": "Vector Tiles",
+  "sources": {
+    "vector-tiles": {
+      "type": "vector",
+      "tiles": [
+        "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/{z}/{x}/{y}.pbf"
+      ],
+      "minzoom": 0,
+      "maxzoom": 5
+    }
+  },
   "layers": [
     {
       "id": "background",

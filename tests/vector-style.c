@@ -11,7 +11,7 @@ test_vector_style_create (void)
   style_json = g_resources_lookup_data ("/org/gnome/shumate/Tests/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
 
-  renderer = shumate_vector_renderer_new_from_url ("", g_bytes_get_data (style_json, NULL), &error);
+  renderer = shumate_vector_renderer_new ("", g_bytes_get_data (style_json, NULL), &error);
   g_assert_no_error (error);
 }
 

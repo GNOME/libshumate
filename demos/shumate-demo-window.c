@@ -149,12 +149,8 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 
   if (shumate_vector_renderer_is_supported ())
     {
-      ShumateVectorRenderer *renderer = shumate_vector_renderer_new_full_from_url (
+      ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
         "vector-tiles",
-        "Vector Tiles",
-        "© OpenStreetMap contributors", NULL, 0, 5, 512,
-        SHUMATE_MAP_PROJECTION_MERCATOR,
-        "https://jwestman.pages.gitlab.gnome.org/vector-tile-test-data/world_overview/{z}/{x}/{y}.pbf",
         style_json,
         &error
       );
@@ -165,7 +161,10 @@ shumate_demo_window_init (ShumateDemoWindow *self)
           g_clear_error (&error);
         }
       else
-        shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
+        {
+          shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenStreetMap contributors");
+          shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
+        }
     }
 
   viewport = shumate_simple_map_get_viewport (self->map);

@@ -21,5 +21,35 @@
 #include "shumate-vector-renderer.h"
 
 
-gboolean shumate_vector_json_get_object (JsonNode *node, JsonObject **dest, GError **error);
-gboolean shumate_vector_json_get_array (JsonNode *node, JsonArray **dest, GError **error);
+gboolean shumate_vector_json_get_object (JsonNode    *node,
+                                         JsonObject **dest,
+                                         GError     **error);
+gboolean shumate_vector_json_get_array (JsonNode   *node,
+                                        JsonArray **dest,
+                                        GError    **error);
+gboolean shumate_vector_json_get_string (JsonNode    *node,
+                                         const char **dest,
+                                         GError     **error);
+
+gboolean shumate_vector_json_get_object_member (JsonObject  *object,
+                                                const char  *name,
+                                                JsonObject **dest,
+                                                GError     **error);
+gboolean shumate_vector_json_get_array_member (JsonObject  *object,
+                                               const char  *name,
+                                               JsonArray  **dest,
+                                               GError     **error);
+gboolean shumate_vector_json_get_string_member (JsonObject  *object,
+                                                const char  *name,
+                                                const char **dest,
+                                                GError     **error);
+
+const char *shumate_vector_json_read_string_member (JsonReader *reader,
+                                                    const char *name);
+
+gboolean shumate_vector_json_read_int_member (JsonReader *reader,
+                                              const char *name,
+                                              int        *dest);
+gboolean shumate_vector_json_read_double_member (JsonReader *reader,
+                                                 const char *name,
+                                                 double     *dest);
