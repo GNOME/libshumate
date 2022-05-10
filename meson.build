@@ -81,6 +81,7 @@ if get_option('gtk_doc')
   dependency('gi-docgen',
     version: '>= 2021.1',
     fallback: ['gi-docgen', 'dummy_dep'],
+    native : true,
   )
   gidocgen = find_program('gi-docgen')
 endif
