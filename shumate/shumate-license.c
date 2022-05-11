@@ -23,6 +23,8 @@
  * A widget that displays license text.
  */
 
+#include <glib/gi18n.h>
+
 #include "shumate-license.h"
 
 enum
@@ -38,8 +40,11 @@ struct _ShumateLicense
 {
   GtkWidget parent_instance;
 
+  GtkWidget *revealer;
+  GtkWidget *revealer_box;
   GtkWidget *extra_text_label;
   GtkWidget *license_label;
+  GtkWidget *info_toggle_button;
   GPtrArray *map_sources;
 };
 
@@ -124,8 +129,8 @@ shumate_license_dispose (GObject *object)
   ShumateLicense *self = SHUMATE_LICENSE (object);
 
   g_clear_pointer (&self->map_sources, g_ptr_array_unref);
-  g_clear_pointer (&self->extra_text_label, gtk_widget_unparent);
-  g_clear_pointer (&self->license_label, gtk_widget_unparent);
+  g_clear_pointer (&self->revealer, gtk_widget_unparent);
+  g_clear_pointer (&self->info_toggle_button, gtk_widget_unparent);
 
   G_OBJECT_CLASS (shumate_license_parent_class)->dispose (object);
 }
@@ -187,13 +192,11 @@ shumate_license_class_init (ShumateLicenseClass *klass)
 static void
 shumate_license_init (ShumateLicense *self)
 {
+  GtkWidget *info_image;
   self->map_sources = g_ptr_array_new_with_free_func (g_object_unref);
   self->license_label = gtk_label_new (NULL);
   self->extra_text_label = gtk_label_new (NULL);
 
-  g_object_set (gtk_widget_get_layout_manager (GTK_WIDGET (self)),
-                "orientation", GTK_ORIENTATION_VERTICAL,
-                NULL);
   g_object_set (self->license_label,
                 "wrap",   TRUE,
                 "xalign", 1.0f,
@@ -204,8 +207,27 @@ shumate_license_init (ShumateLicense *self)
                 "xalign", 1.0f,
                 NULL);
 
-  gtk_widget_insert_after (self->license_label, GTK_WIDGET (self), NULL);
-  gtk_widget_insert_after (self->extra_text_label, GTK_WIDGET (self), self->license_label);
+  self->revealer = gtk_revealer_new ();
+  gtk_widget_set_valign (self->revealer, GTK_ALIGN_CENTER);
+  gtk_revealer_set_transition_type (GTK_REVEALER (self->revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
+  gtk_widget_insert_after (self->revealer, GTK_WIDGET (self), NULL);
+  self->info_toggle_button = gtk_toggle_button_new ();
+  gtk_widget_set_tooltip_text (self->info_toggle_button, _("Attributions"));
+  gtk_widget_set_valign (self->info_toggle_button, GTK_ALIGN_CENTER);
+  info_image = gtk_image_new_from_icon_name ("dialog-information-symbolic");
+  gtk_button_set_child (GTK_BUTTON(self->info_toggle_button), info_image);
+  gtk_widget_add_css_class (self->info_toggle_button, "osd");
+  gtk_widget_insert_after (self->info_toggle_button, GTK_WIDGET (self), self->revealer);
+
+  self->revealer_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 6);
+  gtk_widget_set_margin_end (self->revealer_box, 6);
+  gtk_widget_set_hexpand (self->revealer_box, TRUE);
+  gtk_revealer_set_child (GTK_REVEALER (self->revealer), self->revealer_box);
+
+  gtk_box_append (GTK_BOX(self->revealer_box), self->license_label);
+  gtk_box_append (GTK_BOX(self->revealer_box), self->extra_text_label);
+
+  g_object_bind_property (self->info_toggle_button, "active", self->revealer, "reveal-child", G_BINDING_BIDIRECTIONAL|G_BINDING_SYNC_CREATE);
 }
 
 
