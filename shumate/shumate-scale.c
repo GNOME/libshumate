@@ -39,6 +39,7 @@
 #include "shumate-enum-types.h"
 
 #include <glib-object.h>
+#include <glib/gi18n.h>
 #include <math.h>
 #include <string.h>
 
@@ -192,16 +193,16 @@ shumate_scale_on_scale_changed (ShumateScale *self)
   gtk_widget_set_size_request (self->imperial_label, imperial_scale_width, -1);
 
   if (metric_is_small_unit)
-    metric_label = g_strdup_printf ("%d m", (int) metric_base);
+    metric_label = g_strdup_printf (_("%d m"), (int) metric_base);
   else
-    metric_label = g_strdup_printf ("%d km", (int) metric_base);
+    metric_label = g_strdup_printf (_("%d km"), (int) metric_base);
 
   gtk_label_set_label (GTK_LABEL (self->metric_label), metric_label);
 
   if (imperial_is_small_unit)
-    imperial_label = g_strdup_printf ("%d ft", (int) imperial_base);
+    imperial_label = g_strdup_printf (_("%d ft"), (int) imperial_base);
   else
-    imperial_label = g_strdup_printf ("%d mi", (int) imperial_base);
+    imperial_label = g_strdup_printf (_("%d mi"), (int) imperial_base);
 
   gtk_label_set_label (GTK_LABEL (self->imperial_label), imperial_label);
   gtk_widget_queue_resize (GTK_WIDGET (self));
