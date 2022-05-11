@@ -86,6 +86,7 @@ if get_option('gtk_doc')
 endif
 
 add_project_arguments('-DSHUMATE_VERSION="@0@"'.format(meson.project_version()), language: 'c')
+add_project_arguments('-DGETTEXT_PACKAGE="shumate1"', language: 'c')
 
 # Options
 build_demos = get_option('demos')
@@ -107,6 +108,8 @@ endif
 subdir('data')
 
 subdir('shumate')
+
+subdir('po')
 
 subdir('docs')
 
