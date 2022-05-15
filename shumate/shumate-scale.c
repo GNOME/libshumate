@@ -193,15 +193,19 @@ shumate_scale_on_scale_changed (ShumateScale *self)
   gtk_widget_set_size_request (self->imperial_label, imperial_scale_width, -1);
 
   if (metric_is_small_unit)
+    // m is the unit for meters
     metric_label = g_strdup_printf (_("%d m"), (int) metric_base);
   else
+    // km is the unit for kilometers
     metric_label = g_strdup_printf (_("%d km"), (int) metric_base);
 
   gtk_label_set_label (GTK_LABEL (self->metric_label), metric_label);
 
   if (imperial_is_small_unit)
+    // ft is the unit for feet
     imperial_label = g_strdup_printf (_("%d ft"), (int) imperial_base);
   else
+    // mi is the unit for miles
     imperial_label = g_strdup_printf (_("%d mi"), (int) imperial_base);
 
   gtk_label_set_label (GTK_LABEL (self->imperial_label), imperial_label);
