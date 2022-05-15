@@ -1,0 +1,36 @@
+# Basque translation for libshumate.
+# Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
+# This file is distributed under the same license as the libshumate package.
+# Asier Sarasua Garmendia <asiersarasua@ni.eus>, 2022.
+#
+msgid ""
+msgstr "Project-Id-Version: libshumate main\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
+"POT-Creation-Date: 2022-05-15 06:00+0000\n"
+"PO-Revision-Date: 2022-05-05 18:20+0000\n"
+"Last-Translator: Asier Sarasua Garmendia <asiersarasua@ni.eus>\n"
+"Language-Team: Basque <librezale@librezale.eus>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: shumate/shumate-scale.c:196
+#, c-format
+msgid "%d m"
+msgstr "%d m"
+
+#: shumate/shumate-scale.c:198
+#, c-format
+msgid "%d km"
+msgstr "%d km"
+
+#: shumate/shumate-scale.c:203
+#, c-format
+msgid "%d ft"
+msgstr "%d oin"
+
+#: shumate/shumate-scale.c:205
+#, c-format
+msgid "%d mi"
+msgstr "%d mi"
