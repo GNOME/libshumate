@@ -67,6 +67,20 @@
     },
     {
       "id": "waterway",
+      "type": "line",
+      "source-layer": "waterway",
+      "paint": {
+        "line-width": 0.5,
+        "line-color": {
+          "stops": [
+            [0, "#3584e4"],
+            [5, "#1a5fb4"]
+          ]
+        }
+      }
+    },
+    {
+      "id": "waterway_label",
       "type": "symbol",
       "source-layer": "waterway",
       "layout": {

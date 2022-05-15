@@ -179,11 +179,19 @@ shumate_vector_point_iter_next_segment (ShumateVectorPointIter *iter)
 
 
 static double
-point_distance (ShumateVectorPoint *a, ShumateVectorPoint *b)
+point_distance_sq (ShumateVectorPoint *a,
+                   ShumateVectorPoint *b)
 {
   double x = a->x - b->x;
   double y = a->y - b->y;
-  return sqrt (x*x + y*y);
+  return x * x + y * y;
+}
+
+static double
+point_distance (ShumateVectorPoint *a,
+                ShumateVectorPoint *b)
+{
+  return sqrt (point_distance_sq (a, b));
 }
 
 static ShumateVectorPoint *
@@ -297,19 +305,16 @@ shumate_vector_point_iter_get_average_angle (ShumateVectorPointIter *iter,
                                              double                  remaining_distance)
 {
   ShumateVectorPointIter iter2 = *iter;
-  double orig = shumate_vector_point_iter_get_current_angle (iter);
-  double orig_distance = remaining_distance;
-  double sum = 0.0;
+  double sum_x = 0.0, sum_y = 0.0;
 
   while (remaining_distance > 0)
     {
-      float angle = shumate_vector_point_iter_get_current_angle (&iter2);
-      float d = MIN (remaining_distance, shumate_vector_point_iter_next_segment (&iter2));
-      sum += d * (angle - orig);
-      remaining_distance -= d;
+      sum_x += get_next_point (iter)->x - get_prev_point (iter)->x;
+      sum_y += get_next_point (iter)->y - get_prev_point (iter)->y;
+      remaining_distance -= shumate_vector_point_iter_next_segment (&iter2);
     }
 
-  return sum / orig_distance;
+  return atan2 (sum_y, sum_x);
 }
 
 
@@ -361,4 +366,66 @@ shumate_vector_line_string_bounds (ShumateVectorLineString *linestring,
   radius_out->y = (max_y - min_y) / 2.0;
   center_out->x = (max_x + min_x) / 2.0;
   center_out->y = (max_y + min_y) / 2.0;
+}
+
+
+void
+shumate_vector_line_string_simplify (ShumateVectorLineString *linestring)
+{
+  gint i;
+
+  if (linestring->n_points <= 2)
+    return;
+
+  /* The glyph layout algorithm for line symbols does not handle high detail
+   * very well. Lots of short segments with different angles cause it to place
+   * glyphs too close together and with "random" rotations, which makes text
+   * illegible.
+   *
+   * I tried several solutions. Simplification (such as the Visvalingam-Whyatt
+   * algorithm) creates too many sharp angles, which produces poor results.
+   * I also tried a smoothing algorithm which averages each point with its
+   * neighbors, and while that produced good results with natural lines like
+   * rivers, it deformed street labels that already looked fine, causing them
+   * not to line up with the street anymore.
+   *
+   * The following algorithm reduces detail only where it exists. It works by
+   * repeatedly merging the closest pair of neighboring points until no two
+   * points in the line are closer than a threshold.
+   * */
+
+  while (TRUE)
+    {
+      gint min_idx = -1;
+
+      /* Square the threshold because we compare it to the square of the
+       * distance (saving a sqrt() call). The unit is the size of a tile. */
+      float min_distance = 0.025 * 0.025;
+
+      /* Find the closest pair of points, excepting the first and last pair
+       * because we don't want to change the endpoints */
+      for (i = 1; i < linestring->n_points - 2; i ++)
+        {
+          float distance = point_distance_sq (&linestring->points[i], &linestring->points[i + 1]);
+          if (distance < min_distance)
+            {
+              min_idx = i;
+              min_distance = distance;
+            }
+        }
+
+      if (min_idx == -1 || linestring->n_points <= 2)
+        break;
+
+      /* Set the first point in the pair to the average of the two */
+      linestring->points[min_idx] = (ShumateVectorPoint) {
+        (linestring->points[min_idx].x + linestring->points[min_idx + 1].x) / 2.0,
+        (linestring->points[min_idx].y + linestring->points[min_idx + 1].y) / 2.0,
+      };
+
+      /* Remove the second point by shifting everything after it */
+      linestring->n_points --;
+      for (i = min_idx + 1; i < linestring->n_points; i ++)
+        linestring->points[i] = linestring->points[i + 1];
+    }
 }

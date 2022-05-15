@@ -252,25 +252,28 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
           Glyph *glyph = &((Glyph *)self->glyphs->data)[i];
           ShumateVectorPoint point;
 
-          shumate_vector_point_iter_get_current_point (&iter, &point);
-
           /* Whitespace has no glyph, but still has a width that needs to be
            * advanced in the point iter */
           if (glyph->node != NULL)
             {
+              float average_angle = shumate_vector_point_iter_get_average_angle (&iter, glyph->width / scale);
+              shumate_vector_point_iter_advance (&iter, glyph->width / scale / 2.0);
+              shumate_vector_point_iter_get_current_point (&iter, &point);
+              shumate_vector_point_iter_advance (&iter, glyph->width / scale / 2.0);
+
               gtk_snapshot_save (snapshot);
               gtk_snapshot_translate (snapshot,
                                       &GRAPHENE_POINT_INIT (
                                         (point.x - self->symbol_info->x) * scale,
                                         (point.y - self->symbol_info->y) * scale
                                       ));
-              gtk_snapshot_rotate (snapshot, shumate_vector_point_iter_get_current_angle (&iter) * 180 / G_PI);
-              gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (0, self->symbol_info->text_size / 2));
+              gtk_snapshot_rotate (snapshot, average_angle * 180 / G_PI);
+              gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-glyph->width / 2.0, self->symbol_info->text_size / 2.0));
               gtk_snapshot_append_node (snapshot, glyph->node);
               gtk_snapshot_restore (snapshot);
             }
-
-          shumate_vector_point_iter_advance (&iter, glyph->width / scale);
+          else
+            shumate_vector_point_iter_advance (&iter, glyph->width / scale);
         }
 
       gtk_snapshot_restore (snapshot);
