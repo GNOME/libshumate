@@ -96,4 +96,4 @@ double shumate_vector_line_string_length              (ShumateVectorLineString *
 void   shumate_vector_line_string_bounds              (ShumateVectorLineString *linestring,
                                                        ShumateVectorPoint      *radius_out,
                                                        ShumateVectorPoint      *center_out);
-void   shumate_vector_line_string_simplify            (ShumateVectorLineString *linestring);
+GPtrArray *shumate_vector_line_string_simplify        (ShumateVectorLineString *linestring);

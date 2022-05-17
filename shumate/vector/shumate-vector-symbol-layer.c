@@ -126,47 +126,69 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   if (strlen (text_field) == 0)
     return;
 
-  symbol_info = shumate_vector_symbol_info_new (text_field,
-                                                &text_color,
-                                                text_size,
-                                                self->text_fonts,
-                                                self->line_placement,
-                                                x,
-                                                y);
-
   if (self->line_placement)
     {
-      ShumateVectorLineString linestring;
-      shumate_vector_render_scope_get_geometry (scope, &linestring);
-      shumate_vector_line_string_simplify (&linestring);
-      shumate_vector_symbol_info_set_line_points (symbol_info, &linestring);
+      g_autoptr(GPtrArray) lines = shumate_vector_render_scope_get_geometry (scope);
+      guint i, j;
+
+      for (i = 0; i < lines->len; i ++)
+        {
+          g_autoptr(GPtrArray) split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+
+          for (j = 0; j < split_lines->len; j ++)
+            {
+              ShumateVectorLineString *linestring = (ShumateVectorLineString *)split_lines->pdata[j];
+              shumate_vector_line_string_simplify (linestring);
 
 #if 0
-      /* visualize line simplification */
+              /* visualize line simplification */
 
-      line_points = shumate_vector_render_scope_get_geometry (scope, &num_points);
-      shumate_vector_line_simplify (line_points, &num_points);
+              if (linestring->n_points > 0)
+                {
+                  guint k;
+                  float scale = scope->scale * scope->target_size;
 
-      if (num_points > 0)
-        {
-          float scale = scope->scale * scope->target_size;
+                  cairo_set_source_rgb (scope->cr,
+                                        rand () % 255 / 255.0,
+                                        rand () % 255 / 255.0,
+                                        rand () % 255 / 255.0);
+                  cairo_set_line_width (scope->cr, scope->scale);
 
-          cairo_set_source_rgb (scope->cr,
-                                rand () % 255 / 255.0,
-                                rand () % 255 / 255.0,
-                                rand () % 255 / 255.0);
-          cairo_set_line_width (scope->cr, scope->scale);
+                  cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
+                  for (k = 1; k < linestring->n_points; k ++)
+                    cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
 
-          cairo_move_to (scope->cr, line_points[0].x * scale, line_points[0].y * scale);
-          for (gsize i = 1; i < num_points; i ++)
-            cairo_line_to (scope->cr, line_points[i].x * scale, line_points[i].y * scale);
-
-          cairo_stroke (scope->cr);
-        }
+                  cairo_stroke (scope->cr);
+                }
 #endif
-    }
 
-  g_ptr_array_add (scope->symbols, symbol_info);
+              symbol_info = shumate_vector_symbol_info_new (text_field,
+                                                            &text_color,
+                                                            text_size,
+                                                            self->text_fonts,
+                                                            TRUE,
+                                                            x,
+                                                            y);
+
+              shumate_vector_symbol_info_set_line_points (symbol_info,
+                                                          linestring);
+
+              g_ptr_array_add (scope->symbols, symbol_info);
+            }
+        }
+    }
+  else
+    {
+      symbol_info = shumate_vector_symbol_info_new (text_field,
+                                                    &text_color,
+                                                    text_size,
+                                                    self->text_fonts,
+                                                    FALSE,
+                                                    x,
+                                                    y);
+
+      g_ptr_array_add (scope->symbols, symbol_info);
+    }
 }
 
 

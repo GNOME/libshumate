@@ -369,13 +369,16 @@ shumate_vector_line_string_bounds (ShumateVectorLineString *linestring,
 }
 
 
-void
+GPtrArray *
 shumate_vector_line_string_simplify (ShumateVectorLineString *linestring)
 {
-  gint i;
+  gsize i;
+  GPtrArray *result = g_ptr_array_new ();
+
+  g_ptr_array_add (result, linestring);
 
   if (linestring->n_points <= 2)
-    return;
+    return result;
 
   /* The glyph layout algorithm for line symbols does not handle high detail
    * very well. Lots of short segments with different angles cause it to place
@@ -428,4 +431,38 @@ shumate_vector_line_string_simplify (ShumateVectorLineString *linestring)
       for (i = min_idx + 1; i < linestring->n_points; i ++)
         linestring->points[i] = linestring->points[i + 1];
     }
+
+  /* Line labels also don't look good if there's sharp angles. To fix that, we
+   * split the line wherever one occurs. */
+
+  for (i = linestring->n_points - 2; i >= 1; i --)
+    {
+      /* Angle between three points. See https://math.stackexchange.com/a/3427603 */
+
+      /* Dot product of points[i] to points[i - 1], and points[i] to points[i + 1] */
+      float dot = (linestring->points[i].x - linestring->points[i + 1].x)
+                    * (linestring->points[i].x - linestring->points[i - 1].x)
+                  + ((linestring->points[i].y - linestring->points[i + 1].y)
+                    * (linestring->points[i].y - linestring->points[i - 1].y));
+
+      float len = sqrt (point_distance_sq (&linestring->points[i], &linestring->points[i + 1])
+                        * point_distance_sq (&linestring->points[i], &linestring->points[i - 1]));
+
+      float angle = fabs (acos (dot / len));
+
+      if (angle < 120 * G_PI / 180)
+        {
+          ShumateVectorLineString *new_line = g_new (ShumateVectorLineString, 1);
+
+          /* Copy from the current point until the end of the line */
+          new_line->n_points = linestring->n_points - i;
+          new_line->points = g_memdup2 (&linestring->points[i], new_line->n_points * sizeof (ShumateVectorPoint));
+
+          linestring->n_points = i + 1;
+
+          g_ptr_array_add (result, new_line);
+        }
+    }
+
+  return result;
 }

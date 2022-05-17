@@ -46,7 +46,6 @@ void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
                                              double                   *max_x,
                                              double                   *max_y);
 
-void shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
-                                               ShumateVectorLineString  *linestring);
+GPtrArray *shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self);
 
 void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value);

@@ -17,6 +17,12 @@
 
 #include "shumate-vector-render-scope-private.h"
 
+enum {
+  MOVE_TO = 1,
+  LINE_TO = 2,
+  CLOSE_PATH = 7,
+};
+
 /* Sets the current layer by name. */
 gboolean
 shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name)
@@ -62,19 +68,19 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
       for (int j = 0; j < repeat; j ++)
         {
           switch (op) {
-          case 1:
+          case MOVE_TO:
             g_return_if_fail (i + 2 < self->feature->n_geometry);
             dx = zigzag (self->feature->geometry[++i]);
             dy = zigzag (self->feature->geometry[++i]);
             cairo_rel_move_to (self->cr, dx, dy);
             break;
-          case 2:
+          case LINE_TO:
             g_return_if_fail (i + 2 < self->feature->n_geometry);
             dx = zigzag (self->feature->geometry[++i]);
             dy = zigzag (self->feature->geometry[++i]);
             cairo_rel_line_to (self->cr, dx, dy);
             break;
-          case 7:
+          case CLOSE_PATH:
             cairo_get_current_point (self->cr, &dx, &dy);
             cairo_close_path (self->cr);
             cairo_move_to (self->cr, dx, dy);
@@ -87,15 +93,14 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
 }
 
 
-void
-shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
-                                          ShumateVectorLineString  *linestring)
+GPtrArray *
+shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 {
-  ShumateVectorPoint *points = NULL;
-  gsize point_index = 0;
+  GPtrArray *lines = g_ptr_array_new ();
+  ShumateVectorLineString *current_line = NULL;
   double x = 0, y = 0;
 
-  g_return_if_fail (self->feature != NULL);
+  g_return_val_if_fail (self->feature != NULL, NULL);
 
   for (int i = 0; i < self->feature->n_geometry; i ++)
     {
@@ -105,34 +110,47 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
       int op = cmd & 0x7;
       int repeat = cmd >> 3;
 
-      points = g_realloc (points, (repeat + point_index) * sizeof (ShumateVectorPoint));
-      g_return_if_fail (points != NULL);
+      if (current_line != NULL)
+        current_line->points = g_realloc (current_line->points, (repeat + current_line->n_points) * sizeof (ShumateVectorPoint));
 
       for (int j = 0; j < repeat; j ++)
         {
           switch (op) {
-          case 1:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
+          case MOVE_TO:
+            g_return_val_if_fail (i + 2 < self->feature->n_geometry, NULL);
+
+            if (current_line != NULL)
+              g_ptr_array_add (lines, current_line);
+
+            current_line = g_new (ShumateVectorLineString, 1);
+            current_line->points = g_new (ShumateVectorPoint, 1);
+            current_line->n_points = 1;
+
             x += zigzag (self->feature->geometry[++i]);
             y += zigzag (self->feature->geometry[++i]);
             start_x = x;
             start_y = y;
-            points[point_index++] = (ShumateVectorPoint) {
+
+            current_line->points[0] = (ShumateVectorPoint) {
               .x = x / self->layer->extent,
               .y = y / self->layer->extent,
             };
             break;
-          case 2:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
+          case LINE_TO:
+            g_return_val_if_fail (i + 2 < self->feature->n_geometry, NULL);
+            g_return_val_if_fail (current_line != NULL, NULL);
+
             x += zigzag (self->feature->geometry[++i]);
             y += zigzag (self->feature->geometry[++i]);
-            points[point_index++] = (ShumateVectorPoint) {
+            current_line->points[current_line->n_points++] = (ShumateVectorPoint) {
               .x = x / self->layer->extent,
               .y = y / self->layer->extent,
             };
             break;
-          case 7:
-            points[point_index++] = (ShumateVectorPoint) {
+          case CLOSE_PATH:
+            g_return_val_if_fail (current_line != NULL, NULL);
+
+            current_line->points[current_line->n_points++] = (ShumateVectorPoint) {
               .x = start_x / self->layer->extent,
               .y = start_y / self->layer->extent,
             };
@@ -143,8 +161,10 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self,
         }
     }
 
-  linestring->n_points = point_index;
-  linestring->points = points;
+  if (current_line != NULL)
+    g_ptr_array_add (lines, current_line);
+
+  return lines;
 }
 
 
@@ -265,3 +285,4 @@ shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const 
         }
     }
 }
+
