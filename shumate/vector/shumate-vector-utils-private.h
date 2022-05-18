@@ -38,6 +38,7 @@ struct _ShumateVectorPointIter {
   ShumateVectorPoint *points;
   gsize current_point;
   float distance;
+  guint reversed : 1;
 };
 
 gboolean shumate_vector_json_get_object (JsonNode    *node,

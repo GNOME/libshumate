@@ -213,6 +213,13 @@ shumate_vector_symbol_set_property (GObject      *object,
 }
 
 
+static double
+positive_mod (double i, double n)
+{
+  return fmod (fmod (i, n) + n, n);
+}
+
+
 static void
 shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 GtkSnapshot *snapshot)
@@ -226,6 +233,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       ShumateVectorPointIter iter;
       double rotation = 0.0;
       double scale = 512.0;
+      double avg_angle;
 
       if (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (parent))
         {
@@ -246,6 +254,17 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
       shumate_vector_point_iter_init (&iter, &self->symbol_info->line);
       shumate_vector_point_iter_advance (&iter, (self->line_length - self->glyphs_length / scale) / 2.0);
+
+      /* If the label is upside down on average, draw it the other way around */
+      avg_angle = shumate_vector_point_iter_get_average_angle (&iter, self->glyphs_length / scale);
+      avg_angle = positive_mod (avg_angle + rotation, G_PI * 2.0);
+      if (avg_angle > G_PI / 2.0 && avg_angle < 3.0 * G_PI / 2.0)
+        {
+          iter.reversed = TRUE;
+          iter.current_point = iter.num_points - 1;
+          iter.distance = 0;
+          shumate_vector_point_iter_advance (&iter, (self->line_length - self->glyphs_length / scale) / 2.0);
+        }
 
       for (i = 0; i < self->glyphs->len; i ++)
         {

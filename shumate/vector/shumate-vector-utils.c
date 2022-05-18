@@ -164,6 +164,7 @@ shumate_vector_point_iter_init (ShumateVectorPointIter  *iter,
     .points = linestring->points,
     .current_point = 0,
     .distance = 0,
+    .reversed = FALSE,
   };
 }
 
@@ -173,7 +174,12 @@ shumate_vector_point_iter_next_segment (ShumateVectorPointIter *iter)
 {
   double res = shumate_vector_point_iter_get_segment_length (iter) - iter->distance;
   iter->distance = 0;
-  iter->current_point ++;
+
+  if (iter->reversed)
+    iter->current_point --;
+  else
+    iter->current_point ++;
+
   return res;
 }
 
@@ -203,10 +209,20 @@ get_prev_point (ShumateVectorPointIter *iter)
 static ShumateVectorPoint *
 get_next_point (ShumateVectorPointIter *iter)
 {
-  if (iter->current_point >= iter->num_points - 1)
-    return &iter->points[iter->num_points - 1];
+  if (iter->reversed)
+    {
+      if (iter->current_point == 0)
+        return &iter->points[0];
+      else
+        return &iter->points[iter->current_point - 1];
+    }
   else
-    return &iter->points[iter->current_point + 1];
+    {
+      if (iter->current_point >= iter->num_points - 1)
+        return &iter->points[iter->num_points - 1];
+      else
+        return &iter->points[iter->current_point + 1];
+    }
 }
 
 static void
@@ -278,7 +294,8 @@ shumate_vector_point_iter_advance (ShumateVectorPointIter *iter,
 {
   while (distance > 0)
     {
-      if (iter->current_point >= iter->num_points - 1)
+      if ((iter->reversed && iter->current_point == 0)
+          || (!iter->reversed && iter->current_point >= iter->num_points - 1))
         return;
 
       if (iter->distance + distance > shumate_vector_point_iter_get_segment_length (iter))
