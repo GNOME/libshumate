@@ -221,6 +221,35 @@ positive_mod (double i, double n)
 
 
 static void
+shumate_vector_symbol_measure (GtkWidget      *widget,
+                               GtkOrientation  orientation,
+                               int             for_size,
+                               int            *minimum,
+                               int            *natural,
+                               int            *minimum_baseline,
+                               int            *natural_baseline)
+{
+  ShumateVectorSymbol *self = SHUMATE_VECTOR_SYMBOL (widget);
+
+  if (self->symbol_info->line_placement)
+    {
+      if (minimum)
+        *minimum = 0;
+      if (natural)
+        *natural = 0;
+    }
+  else
+    GTK_WIDGET_CLASS (shumate_vector_symbol_parent_class)->measure (widget,
+                                                                    orientation,
+                                                                    for_size,
+                                                                    minimum,
+                                                                    natural,
+                                                                    minimum_baseline,
+                                                                    natural_baseline);
+}
+
+
+static void
 shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 GtkSnapshot *snapshot)
 {
@@ -314,6 +343,7 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
   object_class->set_property = shumate_vector_symbol_set_property;
 
   widget_class->snapshot = shumate_vector_symbol_snapshot;
+  widget_class->measure = shumate_vector_symbol_measure;
 
   obj_properties[PROP_SYMBOL_INFO] =
     g_param_spec_boxed ("symbol-info",

@@ -538,6 +538,11 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
     }
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
+  /* gtk_widget_measure needs to be called during size_allocate, but we don't
+   * care about the result here--the symbol container always gets the same
+   * size as the map layer */
+  gtk_widget_measure (GTK_WIDGET (self->symbols), GTK_ORIENTATION_VERTICAL, -1, NULL, NULL, NULL, NULL);
+
   child_allocation.x = 0;
   child_allocation.y = 0;
   child_allocation.width = width;
