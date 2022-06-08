@@ -42,6 +42,10 @@ struct _ShumateVectorRenderer
   ShumateDataSource *data_source;
   GPtrArray *tiles;
 
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  ShumateVectorSpriteSheet *sprites;
+#endif
+
   char *style_json;
 
   GPtrArray *layers;
@@ -132,6 +136,9 @@ shumate_vector_renderer_finalize (GObject *object)
   g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
   g_clear_pointer (&self->tiles, g_ptr_array_unref);
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  g_clear_object (&self->sprites);
+#endif
 
   G_OBJECT_CLASS (shumate_vector_renderer_parent_class)->finalize (object);
 }
@@ -424,6 +431,42 @@ shumate_vector_renderer_get_style_json (ShumateVectorRenderer *self)
 }
 
 
+/**
+ * shumate_vector_renderer_set_sprite_sheet_data:
+ * @self: a [class@VectorRenderer]
+ * @sprites_pixbuf: a [class@Gdk.Pixbuf]
+ * @sprites_json: a JSON string
+ * @error: return location for a #GError, or %NULL
+ *
+ * Sets the sprite sheet used by the style JSON to render icons and textures.
+ *
+ * See <https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/> for
+ * details about the spritesheet format. Most stylesheets provide these files
+ * along with the main style JSON.
+ */
+void
+shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
+                                               GdkPixbuf              *sprites_pixbuf,
+                                               const char             *sprites_json,
+                                               GError                **error)
+{
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_return_if_fail (GDK_IS_PIXBUF (sprites_pixbuf));
+  g_return_if_fail (sprites_json != NULL);
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  g_clear_object (&self->sprites);
+  self->sprites = shumate_vector_sprite_sheet_new (sprites_pixbuf, sprites_json, NULL, error);
+#else
+  g_set_error (error,
+               SHUMATE_STYLE_ERROR,
+               SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
+               "Libshumate was compiled without support for vector tiles.");
+  return FALSE;
+#endif
+}
+
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 static GdkTexture *
 texture_new_for_surface (cairo_surface_t *surface)
@@ -540,6 +583,7 @@ render (ShumateVectorRenderer *self,
   scope.target_size = texture_size;
   scope.zoom_level = zoom_level;
   scope.symbols = symbols;
+  scope.sprites = self->sprites;
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
   scope.cr = cairo_create (surface);

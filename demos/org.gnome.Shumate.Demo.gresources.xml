@@ -8,5 +8,7 @@
   </gresource>
   <gresource prefix="/org/gnome/Shumate/Demo/styles">
     <file preprocess="json-stripblanks">map-style.json</file>
+    <file preprocess="json-stripblanks">sprites.json</file>
+    <file>sprites.svg</file>
   </gresource>
 </gresources>

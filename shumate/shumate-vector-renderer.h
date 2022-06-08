@@ -35,6 +35,10 @@ ShumateVectorRenderer *shumate_vector_renderer_new (const char  *id,
                                                     const char  *style_json,
                                                     GError     **error);
 
+void shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
+                                                    GdkPixbuf              *sprites_pixbuf,
+                                                    const char             *sprites_json,
+                                                    GError                **error);
 
 /**
  * SHUMATE_STYLE_ERROR:

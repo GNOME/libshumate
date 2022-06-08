@@ -33,6 +33,15 @@
       }
     },
     {
+      "id": "water-pattern",
+      "type": "fill",
+      "source-layer": "water",
+      "paint": {
+        "fill-pattern": "ocean",
+        "fill-opacity": 0.1
+      }
+    },
+    {
       "id": "country_boundary",
       "type": "line",
       "source-layer": "admin_boundary",

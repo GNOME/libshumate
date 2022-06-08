@@ -162,6 +162,23 @@ shumate_demo_window_init (ShumateDemoWindow *self)
         }
       else
         {
+          g_autoptr(GdkPixbuf) sprites_pixbuf = NULL;
+          g_autoptr(GBytes) sprites_json = NULL;
+
+          sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/styles/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+          sprites_pixbuf = gdk_pixbuf_new_from_resource ("/org/gnome/Shumate/Demo/styles/sprites.svg", NULL);
+
+          shumate_vector_renderer_set_sprite_sheet_data (renderer,
+                                                         sprites_pixbuf,
+                                                         g_bytes_get_data (sprites_json, NULL),
+                                                         &error);
+
+          if (error)
+            {
+              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
+              g_clear_error (&error);
+            }
+
           shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenStreetMap contributors");
           shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
         }

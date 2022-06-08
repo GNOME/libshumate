@@ -20,6 +20,7 @@
 #include <glib-object.h>
 #include <cairo/cairo.h>
 #include "vector_tile.pb-c.h"
+#include "shumate-vector-sprite-sheet-private.h"
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
 
@@ -30,6 +31,8 @@ typedef struct {
   double zoom_level;
 
   GPtrArray *symbols;
+
+  ShumateVectorSpriteSheet *sprites;
 
   VectorTile__Tile *tile;
   VectorTile__Tile__Layer *layer;
