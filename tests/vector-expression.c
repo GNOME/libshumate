@@ -192,6 +192,7 @@ test_vector_expression_feature_filter (void)
   scope.feature = scope.layer->features[0];
 
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"name\", \"Hello, world!\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"get\", \"name\"], \"Hello, world!\"]"));
   g_assert_false (filter_with_scope (&scope, "[\"==\", \"name\", \"Goodbye, world!\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"has\", \"name\"]"));
   g_assert_false (filter_with_scope (&scope, "[\"!has\", \"name\"]"));

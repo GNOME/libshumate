@@ -103,6 +103,12 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       expect_exprs = 1;
       lookup_first_arg = FALSE;
     }
+  else if (g_strcmp0 ("get", op) == 0)
+    {
+      self->type = EXPR_GET;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
   else if (g_strcmp0 ("in", op) == 0)
     {
       self->type = EXPR_IN;
