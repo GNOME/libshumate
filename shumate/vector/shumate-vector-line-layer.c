@@ -28,6 +28,8 @@ struct _ShumateVectorLineLayer
   ShumateVectorExpression *color;
   ShumateVectorExpression *opacity;
   ShumateVectorExpression *width;
+  ShumateVectorExpression *cap;
+  ShumateVectorExpression *join;
 };
 
 G_DEFINE_TYPE (ShumateVectorLineLayer, shumate_vector_line_layer, SHUMATE_TYPE_VECTOR_LAYER)
@@ -37,7 +39,7 @@ ShumateVectorLayer *
 shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
 {
   ShumateVectorLineLayer *layer = g_object_new (SHUMATE_TYPE_VECTOR_LINE_LAYER, NULL);
-  JsonNode *paint_node;
+  JsonNode *paint_node, *layout_node;
 
   if ((paint_node = json_object_get_member (object, "paint")))
     {
@@ -56,6 +58,20 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
         return NULL;
     }
 
+  if ((layout_node = json_object_get_member (object, "layout")))
+    {
+      JsonObject *layout;
+
+      if (!shumate_vector_json_get_object (layout_node, &layout, error))
+        return NULL;
+
+      if (!(layer->cap = shumate_vector_expression_from_json (json_object_get_member (layout, "line-cap"), error)))
+        return NULL;
+
+      if (!(layer->join = shumate_vector_expression_from_json (json_object_get_member (layout, "line-join"), error)))
+        return NULL;
+    }
+
   return (ShumateVectorLayer *)layer;
 }
 
@@ -68,6 +84,8 @@ shumate_vector_line_layer_finalize (GObject *object)
   g_clear_object (&self->color);
   g_clear_object (&self->opacity);
   g_clear_object (&self->width);
+  g_clear_object (&self->cap);
+  g_clear_object (&self->join);
 
   G_OBJECT_CLASS (shumate_vector_line_layer_parent_class)->finalize (object);
 }
@@ -80,15 +98,34 @@ shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
   GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
   double opacity;
   double width;
+  g_autofree char *cap = NULL;
+  g_autofree char *join = NULL;
 
   shumate_vector_expression_eval_color (self->color, scope, &color);
   opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
   width = shumate_vector_expression_eval_number (self->width, scope, 1.0);
+  cap = shumate_vector_expression_eval_string (self->cap, scope, NULL);
+  join = shumate_vector_expression_eval_string (self->join, scope, NULL);
 
   shumate_vector_render_scope_exec_geometry (scope);
 
   cairo_set_source_rgba (scope->cr, color.red, color.green, color.blue, color.alpha * opacity);
   cairo_set_line_width (scope->cr, width * scope->scale);
+
+  if (g_strcmp0 (cap, "round") == 0)
+    cairo_set_line_cap (scope->cr, CAIRO_LINE_CAP_ROUND);
+  else if (g_strcmp0 (cap, "square") == 0)
+    cairo_set_line_cap (scope->cr, CAIRO_LINE_CAP_SQUARE);
+  else
+    cairo_set_line_cap (scope->cr, CAIRO_LINE_CAP_BUTT);
+
+  if (g_strcmp0 (join, "bevel") == 0)
+    cairo_set_line_join (scope->cr, CAIRO_LINE_JOIN_BEVEL);
+  else if (g_strcmp0 (join, "round") == 0)
+    cairo_set_line_join (scope->cr, CAIRO_LINE_JOIN_ROUND);
+  else
+    cairo_set_line_join (scope->cr, CAIRO_LINE_JOIN_MITER);
+
   cairo_stroke (scope->cr);
 }
 
