@@ -30,6 +30,9 @@ struct _ShumateVectorLineLayer
   ShumateVectorExpression *width;
   ShumateVectorExpression *cap;
   ShumateVectorExpression *join;
+
+  double *dashes;
+  int num_dashes;
 };
 
 G_DEFINE_TYPE (ShumateVectorLineLayer, shumate_vector_line_layer, SHUMATE_TYPE_VECTOR_LAYER)
@@ -56,6 +59,22 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
 
       if (!(layer->width = shumate_vector_expression_from_json (json_object_get_member (paint, "line-width"), error)))
         return NULL;
+
+      {
+        JsonArray *dasharray;
+
+        if (!shumate_vector_json_get_array_member (paint, "line-dasharray", &dasharray, error))
+          return NULL;
+
+        if (dasharray != NULL)
+          {
+            int i;
+            layer->num_dashes = json_array_get_length (dasharray);
+            layer->dashes = g_new (double, layer->num_dashes);
+            for (i = 0; i < layer->num_dashes; i ++)
+              layer->dashes[i] = json_node_get_double (json_array_get_element (dasharray, i));
+          }
+      }
     }
 
   if ((layout_node = json_object_get_member (object, "layout")))
@@ -86,6 +105,8 @@ shumate_vector_line_layer_finalize (GObject *object)
   g_clear_object (&self->width);
   g_clear_object (&self->cap);
   g_clear_object (&self->join);
+
+  g_clear_pointer (&self->dashes, g_free);
 
   G_OBJECT_CLASS (shumate_vector_line_layer_parent_class)->finalize (object);
 }
@@ -125,6 +146,19 @@ shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
     cairo_set_line_join (scope->cr, CAIRO_LINE_JOIN_ROUND);
   else
     cairo_set_line_join (scope->cr, CAIRO_LINE_JOIN_MITER);
+
+  if (self->dashes == NULL)
+    cairo_set_dash (scope->cr, NULL, 0, 0);
+  else
+    {
+      int i;
+      g_autofree double *dasharray = g_new (double, self->num_dashes);
+
+      for (i = 0; i < self->num_dashes; i ++)
+        dasharray[i] = self->dashes[i] * width * scope->scale;
+
+      cairo_set_dash (scope->cr, dasharray, self->num_dashes, 0);
+    }
 
   cairo_stroke (scope->cr);
 }
