@@ -72,6 +72,9 @@
       },
       "paint": {
         "text-color": "#000000"
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {

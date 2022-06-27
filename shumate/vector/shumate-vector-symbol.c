@@ -147,6 +147,9 @@ shumate_vector_symbol_constructed (GObject *object)
       gtk_widget_set_parent (label, GTK_WIDGET (self));
     }
 
+  if (self->symbol_info->cursor != NULL)
+    gtk_widget_set_cursor_from_name (GTK_WIDGET (self), self->symbol_info->cursor);
+
   gtk_accessible_update_property (GTK_ACCESSIBLE (self),
                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
                                   self->symbol_info->text,

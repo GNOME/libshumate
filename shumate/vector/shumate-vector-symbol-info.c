@@ -32,6 +32,8 @@ shumate_vector_symbol_info_free (ShumateVectorSymbolInfo *self)
   g_clear_pointer (&self->text_font, g_free);
   shumate_vector_line_string_clear (&self->line);
 
+  g_clear_pointer (&self->cursor, g_free);
+
   g_free (self);
 }
 

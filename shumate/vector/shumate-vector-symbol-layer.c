@@ -28,6 +28,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *text_field;
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_size;
+  ShumateVectorExpression *cursor;
   gboolean line_placement;
   char *text_fonts;
 };
@@ -82,6 +83,21 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
         return NULL;
     }
 
+  /* libshumate-specific extensions to the MapLibre style format */
+  if (json_object_has_member (object, "metadata"))
+    {
+      JsonObject *metadata = json_object_get_object_member (object, "metadata");
+
+      /* Specifies the cursor to use when hovering over the symbol. In
+       * MapLibre GL JS, you would to this by listening to mouseenter and
+       * mouseleave and setting the cursor on the whole map via JS.
+       *
+       * See gdk_cursor_new_from_name for possible values. */
+      layer->cursor = shumate_vector_expression_from_json (json_object_get_member (metadata, "libshumate:cursor"), error);
+      if (layer->cursor == NULL)
+        return NULL;
+    }
+
   return (ShumateVectorLayer *)layer;
 }
 
@@ -94,6 +110,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_field);
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
+  g_clear_object (&self->cursor);
   g_clear_pointer (&self->text_fonts, g_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
@@ -105,6 +122,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (layer);
   g_autofree char *text_field = NULL;
+  g_autofree char *cursor = NULL;
   GdkRGBA text_color = SHUMATE_VECTOR_COLOR_BLACK;
   double text_size;
   ShumateVectorSymbolInfo *symbol_info;
@@ -125,6 +143,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
   if (strlen (text_field) == 0)
     return;
+
+  cursor = shumate_vector_expression_eval_string (self->cursor, scope, NULL);
 
   if (self->line_placement)
     {
@@ -170,6 +190,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                                                             x,
                                                             y);
 
+              symbol_info->cursor = g_strdup (cursor);
+
               shumate_vector_symbol_info_set_line_points (symbol_info,
                                                           linestring);
 
@@ -186,6 +208,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                                                     FALSE,
                                                     x,
                                                     y);
+
+      symbol_info->cursor = g_strdup (cursor);
 
       g_ptr_array_add (scope->symbols, symbol_info);
     }
