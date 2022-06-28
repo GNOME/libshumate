@@ -31,6 +31,9 @@ typedef struct _ShumateVectorSymbolInfo ShumateVectorSymbolInfo;
 
 struct _ShumateVectorSymbolInfo
 {
+  char *layer;
+  char *feature_id;
+
   char *text;
   GdkRGBA text_color;
   double text_size;
@@ -38,6 +41,9 @@ struct _ShumateVectorSymbolInfo
   guint line_placement : 1;
   double x;
   double y;
+  int tile_x;
+  int tile_y;
+  int tile_zoom_level;
 
   ShumateVectorLineString line;
   ShumateVectorPoint line_size;
@@ -45,17 +51,25 @@ struct _ShumateVectorSymbolInfo
 
   char *cursor;
 
+  GHashTable *tags;
+
   /*< private >*/
   guint ref_count;
 };
 
-ShumateVectorSymbolInfo *shumate_vector_symbol_info_new (const char               *text,
-                                                         const GdkRGBA            *text_color,
-                                                         double                    text_size,
-                                                         const char               *text_font,
-                                                         gboolean                  line_placement,
-                                                         double                    x,
-                                                         double                    y);
+ShumateVectorSymbolInfo *shumate_vector_symbol_info_new (const char    *layer,
+                                                         const char    *feature_id,
+                                                         GHashTable    *tags,
+                                                         const char    *text,
+                                                         const GdkRGBA *text_color,
+                                                         double         text_size,
+                                                         const char    *text_font,
+                                                         const char    *cursor,
+                                                         int            tile_x,
+                                                         int            tile_y,
+                                                         int            tile_zoom_level,
+                                                         double         x,
+                                                         double         y);
 
 void shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                                  ShumateVectorLineString *linestring);

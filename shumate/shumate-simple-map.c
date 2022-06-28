@@ -18,6 +18,7 @@
 #include "shumate-simple-map.h"
 #include "shumate-map.h"
 #include "shumate-map-layer.h"
+#include "shumate-symbol-event.h"
 
 /**
  * ShumateSimpleMap:
@@ -65,6 +66,13 @@ enum {
 };
 
 static GParamSpec *properties [N_PROPS];
+
+enum {
+  SYMBOL_CLICKED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
 
 ShumateSimpleMap *
 shumate_simple_map_new (void)
@@ -181,6 +189,15 @@ on_zoom_out_clicked (ShumateSimpleMap *self,
 }
 
 
+static void
+on_symbol_clicked (ShumateSimpleMap   *self,
+                   ShumateSymbolEvent *event,
+                   ShumateMapLayer    *map_layer)
+{
+  g_signal_emit (self, signals[SYMBOL_CLICKED], 0, event);
+}
+
+
 static GObject *
 shumate_simple_map_get_internal_child (GtkBuildable *buildable,
                                        GtkBuilder *builder,
@@ -262,6 +279,24 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
+
+  /**
+   * ShumateSimpleMap::symbol-clicked:
+   * @self: the [class@SimpleMap] emitting the signal
+   * @event: a [class@SymbolEvent] with details about the clicked symbol.
+   *
+   * Emitted when a symbol in the base map layer (not in overlay layers) is
+   * clicked.
+   */
+  signals[SYMBOL_CLICKED] =
+    g_signal_new ("symbol-clicked",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  SHUMATE_TYPE_SYMBOL_EVENT);
 
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/shumate/shumate-simple-map.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateSimpleMap, map);
@@ -353,7 +388,10 @@ shumate_simple_map_set_map_source (ShumateSimpleMap *self,
 
   map_layer = shumate_map_layer_new (map_source, viewport);
   shumate_map_insert_layer_behind (self->map, SHUMATE_LAYER (map_layer), SHUMATE_LAYER (self->map_layer));
+  g_signal_connect_object (map_layer, "symbol-clicked", (GCallback)on_symbol_clicked, self, G_CONNECT_SWAPPED);
+
   if (self->map_layer) {
+    g_signal_handlers_disconnect_by_func (self->map_layer, on_symbol_clicked, self);
     shumate_map_remove_layer (self->map, SHUMATE_LAYER (self->map_layer));
   }
   self->map_layer = map_layer;

@@ -18,6 +18,7 @@
 #include "shumate-vector-symbol-container-private.h"
 #include "shumate-vector-symbol-private.h"
 #include "shumate-vector-collision-private.h"
+#include "shumate-symbol-event-private.h"
 
 
 struct _ShumateVectorSymbolContainer
@@ -39,6 +40,14 @@ enum {
 };
 
 static GParamSpec *obj_properties[N_PROPS] = { NULL, };
+
+enum
+{
+  SYMBOL_CLICKED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
 
 
 typedef struct {
@@ -279,11 +288,41 @@ shumate_vector_symbol_container_class_init (ShumateVectorSymbolContainerClass *k
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (object_class, N_PROPS, obj_properties);
+
+  signals[SYMBOL_CLICKED] =
+    g_signal_new ("symbol-clicked",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  SHUMATE_TYPE_SYMBOL_EVENT);
 }
 
 static void
 shumate_vector_symbol_container_init (ShumateVectorSymbolContainer *self)
 {
+}
+
+static void
+on_symbol_clicked (ShumateVectorSymbolContainer *self,
+                   ShumateSymbolEvent           *event,
+                   ShumateVectorSymbol          *symbol)
+{
+  ShumateVectorSymbolInfo *symbol_info = shumate_vector_symbol_get_symbol_info (symbol);
+
+  double tile_size = shumate_map_source_get_tile_size (self->map_source);
+  double lat = shumate_map_source_get_latitude (self->map_source,
+                                                symbol_info->tile_zoom_level,
+                                                (symbol_info->tile_y + symbol_info->y) * tile_size);
+  double lon = shumate_map_source_get_longitude (self->map_source,
+                                                 symbol_info->tile_zoom_level,
+                                                 (symbol_info->tile_x + symbol_info->x) * tile_size);
+
+  shumate_symbol_event_set_lat_lon (event, lat, lon);
+
+  g_signal_emit (self, signals[SYMBOL_CLICKED], 0, event);
 }
 
 
@@ -326,6 +365,12 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));
+
+      g_signal_connect_object (info->symbol,
+                               "clicked",
+                               G_CALLBACK (on_symbol_clicked),
+                               self,
+                               G_CONNECT_SWAPPED);
     }
 }
 

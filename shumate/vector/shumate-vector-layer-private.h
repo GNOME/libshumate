@@ -38,6 +38,7 @@ struct _ShumateVectorLayerClass
 ShumateVectorLayer *shumate_vector_layer_create_from_json (JsonObject *object, GError **error);
 
 void shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
+const char *shumate_vector_layer_get_id (ShumateVectorLayer *self);
 const char *shumate_vector_layer_get_source_layer (ShumateVectorLayer *self);
 
 G_END_DECLS

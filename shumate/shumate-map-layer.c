@@ -20,6 +20,7 @@
 #include "shumate-map-layer.h"
 #include "shumate-memory-cache-private.h"
 #include "shumate-tile-private.h"
+#include "shumate-symbol-event.h"
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 #  include "vector/shumate-vector-symbol-container-private.h"
@@ -62,13 +63,20 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+enum
+{
+  SYMBOL_CLICKED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
+
 /* This struct represents the location of a tile on the screen. It is the key
  * for the hash table tile_children which stores all visible tiles.
  *
  * Note that, unlike the values given to ShumateTile, the x and y coordinates
  * here are *not* wrapped. For example, a ShumateTile at level 3 might have
  * coordinates of (7, 2) but have a TileGridPosition of (-1, 2). */
-
 typedef struct
 {
   int x;
@@ -460,6 +468,16 @@ shumate_map_layer_dispose (GObject *object)
   G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
 }
 
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+static void
+on_symbol_clicked (ShumateMapLayer              *self,
+                   ShumateSymbolEvent           *event,
+                   ShumateVectorSymbolContainer *container)
+{
+  g_signal_emit (self, signals[SYMBOL_CLICKED], 0, event);
+}
+#endif
+
 static void
 shumate_map_layer_constructed (GObject *object)
 {
@@ -473,6 +491,7 @@ shumate_map_layer_constructed (GObject *object)
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->symbols = shumate_vector_symbol_container_new (self->map_source, viewport);
+  g_signal_connect_object (self->symbols, "symbol-clicked", G_CALLBACK (on_symbol_clicked), self, G_CONNECT_SWAPPED);
   gtk_widget_set_parent (GTK_WIDGET (self->symbols), GTK_WIDGET (self));
 #endif
 }
@@ -668,6 +687,23 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
+
+  /**
+   * ShumateMapLayer::symbol-clicked:
+   * @self: the [class@MapLayer] emitting the signal
+   * @event: a [class@SymbolEvent] with details about the clicked symbol.
+   *
+   * Emitted when a symbol in the map layer is clicked.
+   */
+  signals[SYMBOL_CLICKED] =
+    g_signal_new ("symbol-clicked",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  SHUMATE_TYPE_SYMBOL_EVENT);
 }
 
 static void

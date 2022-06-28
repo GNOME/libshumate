@@ -123,6 +123,9 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (layer);
   g_autofree char *text_field = NULL;
   g_autofree char *cursor = NULL;
+  g_autofree char *feature_id = NULL;
+  g_autoptr(GHashTable) tags = NULL;
+  const char *layer_id = shumate_vector_layer_get_id (layer);
   GdkRGBA text_color = SHUMATE_VECTOR_COLOR_BLACK;
   double text_size;
   ShumateVectorSymbolInfo *symbol_info;
@@ -144,7 +147,10 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   if (strlen (text_field) == 0)
     return;
 
+  feature_id = g_strdup_printf ("%ld", scope->feature->id);
   cursor = shumate_vector_expression_eval_string (self->cursor, scope, NULL);
+
+  tags = shumate_vector_render_scope_create_tag_table (scope);
 
   if (self->line_placement)
     {
@@ -182,15 +188,19 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                 }
 #endif
 
-              symbol_info = shumate_vector_symbol_info_new (text_field,
+              symbol_info = shumate_vector_symbol_info_new (layer_id,
+                                                            feature_id,
+                                                            tags,
+                                                            text_field,
                                                             &text_color,
                                                             text_size,
                                                             self->text_fonts,
-                                                            TRUE,
+                                                            cursor,
+                                                            scope->tile_x,
+                                                            scope->tile_y,
+                                                            scope->zoom_level,
                                                             x,
                                                             y);
-
-              symbol_info->cursor = g_strdup (cursor);
 
               shumate_vector_symbol_info_set_line_points (symbol_info,
                                                           linestring);
@@ -201,15 +211,19 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     }
   else
     {
-      symbol_info = shumate_vector_symbol_info_new (text_field,
+      symbol_info = shumate_vector_symbol_info_new (layer_id,
+                                                    feature_id,
+                                                    tags,
+                                                    text_field,
                                                     &text_color,
                                                     text_size,
                                                     self->text_fonts,
-                                                    FALSE,
+                                                    cursor,
+                                                    scope->tile_x,
+                                                    scope->tile_y,
+                                                    scope->zoom_level,
                                                     x,
                                                     y);
-
-      symbol_info->cursor = g_strdup (cursor);
 
       g_ptr_array_add (scope->symbols, symbol_info);
     }

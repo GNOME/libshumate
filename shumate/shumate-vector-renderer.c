@@ -584,6 +584,8 @@ render (ShumateVectorRenderer *self,
 
   texture_size = shumate_tile_get_size (tile);
   scope.target_size = texture_size;
+  scope.tile_x = shumate_tile_get_x (tile);
+  scope.tile_y = shumate_tile_get_y (tile);
   scope.zoom_level = zoom_level;
   scope.symbols = symbols;
   scope.sprites = self->sprites;

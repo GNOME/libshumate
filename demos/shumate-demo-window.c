@@ -60,6 +60,29 @@ create_marker (ShumateDemoWindow *self, double lat, double lng)
 
 
 static void
+on_symbol_clicked (ShumateVectorRenderer *renderer,
+                   ShumateSymbolEvent *event,
+                   gpointer user_data)
+{
+  const char *name = shumate_symbol_event_get_tag (event, "name");
+
+  if (name != NULL)
+    g_print ("Symbol %s (%s) clicked in layer %s at (%f, %f)\n",
+             shumate_symbol_event_get_feature_id (event),
+             name,
+             shumate_symbol_event_get_layer (event),
+             shumate_location_get_latitude (SHUMATE_LOCATION (event)),
+             shumate_location_get_longitude (SHUMATE_LOCATION (event)));
+  else
+    g_print ("Symbol %s clicked in layer %s at (%f, %f)\n",
+             shumate_symbol_event_get_feature_id (event),
+             shumate_symbol_event_get_layer (event),
+             shumate_location_get_latitude (SHUMATE_LOCATION (event)),
+             shumate_location_get_longitude (SHUMATE_LOCATION (event)));
+}
+
+
+static void
 shumate_demo_window_dispose (GObject *object)
 {
   ShumateDemoWindow *self = SHUMATE_DEMO_WINDOW (object);
@@ -81,6 +104,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/ui/shumate-demo-window.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, map);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
+  gtk_widget_class_bind_template_callback (widget_class, on_symbol_clicked);
 }
 
 static gchar *

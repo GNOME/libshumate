@@ -29,6 +29,8 @@ typedef struct {
   int target_size;
   double scale;
   double zoom_level;
+  int tile_x;
+  int tile_y;
 
   GPtrArray *symbols;
 
@@ -52,3 +54,6 @@ void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
 GPtrArray *shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self);
 
 void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value);
+
+GHashTable *shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self);
+

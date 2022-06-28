@@ -21,6 +21,7 @@
 #include "shumate-vector-symbol-info-private.h"
 #include "shumate-vector-symbol-container-private.h"
 #include "shumate-layer.h"
+#include "shumate-symbol-event-private.h"
 
 
 struct _ShumateVectorSymbol
@@ -44,6 +45,13 @@ enum {
 };
 
 static GParamSpec *obj_properties[N_PROPS] = { NULL, };
+
+enum {
+  CLICKED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
 
 
 typedef struct {
@@ -357,14 +365,39 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
 
   g_object_class_install_properties (object_class, N_PROPS, obj_properties);
 
+  signals[CLICKED] =
+    g_signal_new ("clicked",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__OBJECT,
+                  G_TYPE_NONE,
+                  1,
+                  SHUMATE_TYPE_SYMBOL_EVENT);
+
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_LABEL);
 }
 
+static void
+on_clicked (ShumateVectorSymbol *self,
+            gint                 n_press,
+            double               x,
+            double               y,
+            GtkGestureClick     *click)
+{
+  g_autoptr(ShumateSymbolEvent) event = shumate_symbol_event_new (self->symbol_info->layer,
+                                                                  self->symbol_info->feature_id,
+                                                                  self->symbol_info->tags);
+  g_signal_emit (self, signals[CLICKED], 0, event);
+}
 
 static void
 shumate_vector_symbol_init (ShumateVectorSymbol *self)
 {
+  GtkGesture *click = gtk_gesture_click_new ();
+  g_signal_connect_object (click, "released", G_CALLBACK (on_clicked), self, G_CONNECT_SWAPPED);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click));
 }
 
 

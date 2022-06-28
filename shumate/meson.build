@@ -16,6 +16,7 @@ libshumate_public_h = [
   'shumate-point.h',
   'shumate-scale.h',
   'shumate-simple-map.h',
+  'shumate-symbol-event.h',
   'shumate-raster-renderer.h',
   'shumate-tile.h',
   'shumate-tile-downloader.h',
@@ -29,6 +30,7 @@ libshumate_private_h = [
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
   'shumate-memory-cache-private.h',
+  'shumate-symbol-event-private.h',
   'shumate-tile-private.h',
   'shumate-viewport-private.h',
 
@@ -73,6 +75,7 @@ libshumate_sources = [
   'shumate-point.c',
   'shumate-scale.c',
   'shumate-simple-map.c',
+  'shumate-symbol-event.c',
   'shumate-raster-renderer.c',
   'shumate-tile.c',
   'shumate-tile-downloader.c',

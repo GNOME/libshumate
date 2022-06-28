@@ -46,6 +46,7 @@
 #include "shumate/shumate-simple-map.h"
 #include "shumate/shumate-map-source.h"
 #include "shumate/shumate-map-source-registry.h"
+#include "shumate/shumate-symbol-event.h"
 #include "shumate/shumate-tile-downloader.h"
 #include "shumate/shumate-user-agent.h"
 

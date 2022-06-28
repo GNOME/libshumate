@@ -60,11 +60,17 @@ shumate_vector_symbol_info_unref (ShumateVectorSymbolInfo *self)
 
 
 ShumateVectorSymbolInfo *
-shumate_vector_symbol_info_new (const char    *text,
+shumate_vector_symbol_info_new (const char    *layer,
+                                const char    *feature_id,
+                                GHashTable    *tags,
+                                const char    *text,
                                 const GdkRGBA *text_color,
                                 double         text_size,
                                 const char    *text_font,
-                                gboolean       line_placement,
+                                const char    *cursor,
+                                int            tile_x,
+                                int            tile_y,
+                                int            tile_zoom_level,
                                 double         x,
                                 double         y)
 {
@@ -74,11 +80,18 @@ shumate_vector_symbol_info_new (const char    *text,
 
   *self = (ShumateVectorSymbolInfo) {
     .ref_count = 1,
+    .layer = g_strdup (layer),
+    .feature_id = g_strdup (feature_id),
+    .tags = g_hash_table_ref (tags),
     .text = g_strdup (text),
     .text_color = *text_color,
     .text_size = text_size,
     .text_font = g_strdup (text_font),
-    .line_placement = line_placement,
+    .cursor = g_strdup (cursor),
+    .line_placement = FALSE,
+    .tile_x = tile_x,
+    .tile_y = tile_y,
+    .tile_zoom_level = tile_zoom_level,
     .x = x,
     .y = y,
   };
@@ -98,4 +111,5 @@ shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
   self->x = center.x;
   self->y = center.y;
   self->line_length = shumate_vector_line_string_length (&self->line);
+  self->line_placement = TRUE;
 }

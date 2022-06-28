@@ -27,6 +27,8 @@ typedef struct
 {
   GObject parent_instance;
 
+  char *id;
+
   double minzoom;
   double maxzoom;
   char *source_layer;
@@ -71,6 +73,7 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
     return NULL;
 
   priv = shumate_vector_layer_get_instance_private (layer);
+  priv->id = g_strdup (json_object_get_string_member_with_default (object, "id", NULL));
   priv->minzoom = json_object_get_double_member_with_default (object, "minzoom", 0.0);
   priv->maxzoom = json_object_get_double_member_with_default (object, "maxzoom", 1000000000.0);
   priv->source_layer = g_strdup (json_object_get_string_member_with_default (object, "source-layer", NULL));
@@ -92,6 +95,7 @@ shumate_vector_layer_finalize (GObject *object)
   ShumateVectorLayer *self = (ShumateVectorLayer *)object;
   ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
 
+  g_clear_pointer (&priv->id, g_free);
   g_clear_pointer (&priv->source_layer, g_free);
   g_clear_object (&priv->filter);
 
@@ -156,6 +160,14 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
 
       cairo_restore (scope->cr);
     }
+}
+
+const char *
+shumate_vector_layer_get_id (ShumateVectorLayer *self)
+{
+  ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_LAYER (self), NULL);
+  return priv->id;
 }
 
 const char *

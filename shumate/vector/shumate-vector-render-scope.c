@@ -286,3 +286,25 @@ shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const 
     }
 }
 
+
+GHashTable *
+shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self)
+{
+  g_autoptr(GHashTable) tags = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+
+  for (int i = 1; i < self->feature->n_tags; i += 2)
+    {
+      int key = self->feature->tags[i - 1];
+      int val = self->feature->tags[i];
+
+      if (key >= self->layer->n_keys || val >= self->layer->n_values)
+        continue;
+
+      shumate_vector_value_set_from_feature_value (&value, self->layer->values[val]);
+      g_hash_table_insert (tags, g_strdup (self->layer->keys[key]), shumate_vector_value_as_string (&value));
+    }
+
+  return g_steal_pointer (&tags);
+}
+
