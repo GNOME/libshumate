@@ -86,9 +86,9 @@ gboolean shumate_tile_get_fade_in (ShumateTile *self);
 void shumate_tile_set_fade_in (ShumateTile *self,
                                gboolean     fade_in);
 
-GdkTexture *shumate_tile_get_texture (ShumateTile *self);
-void shumate_tile_set_texture (ShumateTile *self,
-                               GdkTexture  *texture);
+GdkPaintable *shumate_tile_get_paintable (ShumateTile *self);
+void shumate_tile_set_paintable (ShumateTile  *self,
+                                 GdkPaintable *paintable);
 G_END_DECLS
 
 #endif /* SHUMATE_MAP_TILE_H */

@@ -54,7 +54,7 @@ G_DEFINE_TYPE (ShumateMemoryCache, shumate_memory_cache, G_TYPE_OBJECT);
 typedef struct
 {
   char *key;
-  GdkTexture *texture;
+  GdkPaintable *paintable;
   GPtrArray *symbols;
 } QueueMember;
 
@@ -214,7 +214,7 @@ delete_queue_member (QueueMember *member, gpointer user_data)
 {
   if (member)
     {
-      g_clear_object (&member->texture);
+      g_clear_object (&member->paintable);
       g_clear_pointer (&member->symbols, g_ptr_array_unref);
       g_clear_pointer (&member->key, g_free);
       g_free (member);
@@ -255,7 +255,7 @@ shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self,
 
   move_queue_member_to_head (self->queue, link);
 
-  shumate_tile_set_texture (tile, member->texture);
+  shumate_tile_set_paintable (tile, member->paintable);
   shumate_tile_set_symbols (tile, member->symbols);
   shumate_tile_set_fade_in (tile, FALSE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
@@ -283,7 +283,7 @@ shumate_memory_cache_store_tile (ShumateMemoryCache *self,
   else
     {
       QueueMember *member;
-      GdkTexture *texture;
+      GdkPaintable *paintable;
       GPtrArray *symbols;
 
       if (self->queue->length >= self->size_limit)
@@ -295,8 +295,8 @@ shumate_memory_cache_store_tile (ShumateMemoryCache *self,
 
       member = g_new0 (QueueMember, 1);
       member->key = key;
-      if ((texture = shumate_tile_get_texture (tile)))
-        member->texture = g_object_ref (texture);
+      if ((paintable = shumate_tile_get_paintable (tile)))
+        member->paintable = g_object_ref (paintable);
       if ((symbols = shumate_tile_get_symbols (tile)))
         member->symbols = g_ptr_array_ref (symbols);
 

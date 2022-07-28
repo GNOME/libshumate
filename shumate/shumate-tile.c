@@ -47,7 +47,7 @@ struct _ShumateTile
   ShumateState state; /* The tile state: loading, validation, done */
   gboolean fade_in;
 
-  GdkTexture *texture;
+  GdkPaintable *paintable;
   GPtrArray *symbols;
 };
 
@@ -61,7 +61,7 @@ enum
   PROP_SIZE,
   PROP_STATE,
   PROP_FADE_IN,
-  PROP_TEXTURE,
+  PROP_PAINTABLE,
   N_PROPERTIES
 };
 
@@ -72,17 +72,14 @@ shumate_tile_snapshot (GtkWidget   *widget,
                        GtkSnapshot *snapshot)
 {
   ShumateTile *self = SHUMATE_TILE (widget);
-  GdkTexture *texture = self->texture;
+  GdkPaintable *paintable = self->paintable;
 
-  if (texture)
+  if (paintable)
     {
-      gtk_snapshot_append_texture (snapshot,
-                                   texture,
-                                   &GRAPHENE_RECT_INIT(
-                                     0, 0,
-                                     gtk_widget_get_width (widget),
-                                     gtk_widget_get_height (widget)
-                                   ));
+      gdk_paintable_snapshot (paintable,
+                              snapshot,
+                              gtk_widget_get_width (widget),
+                              gtk_widget_get_height (widget));
     }
 }
 
@@ -144,8 +141,8 @@ shumate_tile_get_property (GObject    *object,
       g_value_set_boolean (value, shumate_tile_get_fade_in (self));
       break;
 
-    case PROP_TEXTURE:
-      g_value_set_object (value, shumate_tile_get_texture (self));
+    case PROP_PAINTABLE:
+      g_value_set_object (value, shumate_tile_get_paintable (self));
       break;
 
     default:
@@ -188,8 +185,8 @@ shumate_tile_set_property (GObject      *object,
       shumate_tile_set_fade_in (self, g_value_get_boolean (value));
       break;
 
-    case PROP_TEXTURE:
-      shumate_tile_set_texture (self, g_value_get_object (value));
+    case PROP_PAINTABLE:
+      shumate_tile_set_paintable (self, g_value_get_object (value));
       break;
 
     default:
@@ -203,7 +200,7 @@ shumate_tile_dispose (GObject *object)
 {
   ShumateTile *self = SHUMATE_TILE (object);
 
-  g_clear_object (&self->texture);
+  g_clear_object (&self->paintable);
   g_clear_pointer (&self->symbols, g_ptr_array_unref);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
@@ -306,15 +303,15 @@ shumate_tile_class_init (ShumateTileClass *klass)
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
-   * ShumateTile:texture:
+   * ShumateTile:paintable:
    *
-   * The #GdkTexture backing the tile
+   * The #GdkPaintable backing the tile
    */
-  obj_properties[PROP_TEXTURE] =
-    g_param_spec_object ("texture",
-                         "Texture",
-                         "Gdk Texture representation",
-                         GDK_TYPE_TEXTURE,
+  obj_properties[PROP_PAINTABLE] =
+    g_param_spec_object ("paintable",
+                         "Paintable",
+                         "Paintable",
+                         GDK_TYPE_PAINTABLE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class,
@@ -599,37 +596,37 @@ shumate_tile_set_fade_in (ShumateTile *self,
 }
 
 /**
- * shumate_tile_get_texture:
+ * shumate_tile_get_paintable:
  * @self: the #ShumateTile
  *
- * Get the #GdkTexture representing this tile.
+ * Get the #GdkPaintable representing this tile.
  *
- * Returns: (transfer none) (nullable): A #GdkTexture
+ * Returns: (transfer none) (nullable): A #GdkPaintable
  */
-GdkTexture *
-shumate_tile_get_texture (ShumateTile *self)
+GdkPaintable *
+shumate_tile_get_paintable (ShumateTile *self)
 {
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
 
-  return self->texture;
+  return self->paintable;
 }
 
 /**
- * shumate_tile_set_texture:
+ * shumate_tile_set_paintable:
  * @self: the #ShumateTile
- * @texture: a #GdkTexture
+ * @paintable: a #GdkPaintable
  *
- * Sets the #GdkTexture representing this tile.
+ * Sets the #GdkPaintable representing this tile.
  */
 void
-shumate_tile_set_texture (ShumateTile *self,
-                          GdkTexture  *texture)
+shumate_tile_set_paintable (ShumateTile  *self,
+                            GdkPaintable *paintable)
 {
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (g_set_object (&self->texture, texture))
+  if (g_set_object (&self->paintable, paintable))
     {
-      g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_TEXTURE]);
+      g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_PAINTABLE]);
       gtk_widget_queue_draw (GTK_WIDGET (self));
     }
 }

@@ -1,11 +1,11 @@
 #include <shumate/shumate.h>
 #include "shumate/shumate-memory-cache-private.h"
 
-static GdkTexture *
-create_texture ()
+static GdkPaintable *
+create_paintable ()
 {
   g_autoptr(GdkPixbuf) pixbuf = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, 256, 256);
-  return gdk_texture_new_for_pixbuf (pixbuf);
+  return GDK_PAINTABLE (gdk_texture_new_for_pixbuf (pixbuf));
 }
 
 
@@ -15,17 +15,17 @@ test_memory_cache_store_retrieve ()
 {
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
-  g_autoptr(GdkTexture) texture = create_texture ();
+  g_autoptr(GdkPaintable) paintable = create_paintable ();
 
   g_object_ref_sink (tile);
 
   /* Store the tile */
-  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_paintable (tile, paintable);
   shumate_memory_cache_store_tile (cache, tile, "A");
 
   /* Now retrieve it */
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile, "A"));
-  g_assert_true (texture == shumate_tile_get_texture (tile));
+  g_assert_true (paintable == shumate_tile_get_paintable (tile));
 }
 
 
@@ -36,18 +36,18 @@ test_memory_cache_miss ()
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
   g_autoptr(ShumateTile) tile1 = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(ShumateTile) tile2 = shumate_tile_new_full (0, 0, 256, 1);
-  g_autoptr(GdkTexture) texture = create_texture ();
+  g_autoptr(GdkPaintable) paintable = create_paintable ();
 
   g_object_ref_sink (tile1);
   g_object_ref_sink (tile2);
 
   /* Store a tile */
-  shumate_tile_set_texture (tile1, texture);
+  shumate_tile_set_paintable (tile1, paintable);
   shumate_memory_cache_store_tile (cache, tile1, "A");
 
   /* Now retrieve a different one */
   g_assert_false (shumate_memory_cache_try_fill_tile (cache, tile2, "A"));
-  g_assert_null (shumate_tile_get_texture (tile2));
+  g_assert_null (shumate_tile_get_paintable (tile2));
 }
 
 
@@ -58,24 +58,24 @@ test_memory_cache_source_id ()
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
   g_autoptr(ShumateTile) tile1 = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(ShumateTile) tile2 = shumate_tile_new_full (0, 0, 256, 0);
-  g_autoptr(GdkTexture) texture1 = create_texture ();
-  g_autoptr(GdkTexture) texture2 = create_texture ();
+  g_autoptr(GdkPaintable) paintable1 = create_paintable ();
+  g_autoptr(GdkPaintable) paintable2 = create_paintable ();
 
   g_object_ref_sink (tile1);
   g_object_ref_sink (tile2);
 
   /* Store the tiles */
-  shumate_tile_set_texture (tile1, texture1);
-  shumate_tile_set_texture (tile2, texture2);
+  shumate_tile_set_paintable (tile1, paintable1);
+  shumate_tile_set_paintable (tile2, paintable2);
   shumate_memory_cache_store_tile (cache, tile1, "A");
   shumate_memory_cache_store_tile (cache, tile2, "B");
 
   /* Now retrieve them */
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile1, "A"));
-  g_assert_true (texture1 == shumate_tile_get_texture (tile1));
+  g_assert_true (paintable1 == shumate_tile_get_paintable (tile1));
 
   g_assert_true (shumate_memory_cache_try_fill_tile (cache, tile2, "B"));
-  g_assert_true (texture2 == shumate_tile_get_texture (tile2));
+  g_assert_true (paintable2 == shumate_tile_get_paintable (tile2));
 }
 
 

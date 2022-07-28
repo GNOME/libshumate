@@ -213,7 +213,7 @@ on_data_source_received_data (ShumateRasterRenderer *self,
       if (shumate_tile_get_x (tile) == x
           && shumate_tile_get_y (tile) == y
           && shumate_tile_get_zoom_level (tile) == zoom_level)
-        shumate_tile_set_texture (tile, texture);
+        shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
     }
 }
 

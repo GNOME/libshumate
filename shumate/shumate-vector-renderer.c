@@ -552,7 +552,7 @@ render (ShumateVectorRenderer *self,
       shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], &scope);
 
   texture = texture_new_for_surface (surface);
-  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
   shumate_tile_set_symbols (tile, symbols);
 
   cairo_destroy (scope.cr);

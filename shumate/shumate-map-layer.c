@@ -216,7 +216,7 @@ add_tile (ShumateMapLayer  *self,
       data->source_id = g_strdup (source_id);
       data->pos = *pos;
 
-      shumate_tile_set_texture (tile, NULL);
+      shumate_tile_set_paintable (tile, NULL);
       shumate_map_source_fill_tile_async (self->map_source, tile, cancellable, on_tile_filled, data);
       g_hash_table_insert (self->tile_fill, g_object_ref (tile), cancellable);
     }

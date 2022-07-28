@@ -101,7 +101,7 @@ shumate_test_tile_source_fill_tile_async (ShumateMapSource *map_source,
   cairo_surface_destroy (surface);
   cairo_destroy (cr);
 
-  shumate_tile_set_texture (tile, texture);
+  shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
   shumate_tile_set_fade_in (tile, TRUE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
 
