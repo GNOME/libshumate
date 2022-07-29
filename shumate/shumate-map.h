@@ -36,15 +36,11 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MAP shumate_map_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateMap, shumate_map, SHUMATE, MAP, GtkWidget)
-
-struct _ShumateMapClass
-{
-  GtkWidgetClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumateMap, shumate_map, SHUMATE, MAP, GtkWidget)
 
 ShumateMap *shumate_map_new (void);
 ShumateMap *shumate_map_new_simple (void);
+
 ShumateViewport *shumate_map_get_viewport (ShumateMap *self);
 
 void shumate_map_center_on (ShumateMap *self,
