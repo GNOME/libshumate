@@ -51,12 +51,7 @@ typedef enum {
 } ShumateFileCacheError;
 
 #define SHUMATE_TYPE_FILE_CACHE shumate_file_cache_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, GObject)
-
-struct _ShumateFileCacheClass
-{
-  GObjectClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumateFileCache, shumate_file_cache, SHUMATE, FILE_CACHE, GObject)
 
 ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
     const char *cache_key,

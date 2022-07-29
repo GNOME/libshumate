@@ -51,10 +51,15 @@ enum
   PROP_SIZE_LIMIT,
   PROP_CACHE_DIR,
   PROP_CACHE_KEY,
+  N_PROPS
 };
 
-typedef struct
+static GParamSpec *properties[N_PROPS];
+
+struct _ShumateFileCache
 {
+  GObject parent_instance;
+
   guint size_limit;
   char *cache_dir;
   char *cache_key;
@@ -66,9 +71,9 @@ typedef struct
   int size_estimate;
   gboolean have_size_estimate;
   gboolean purge_in_progress;
-} ShumateFileCachePrivate;
+};
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT);
+G_DEFINE_TYPE (ShumateFileCache, shumate_file_cache, G_TYPE_OBJECT);
 
 
 typedef char sqlite_str;
@@ -92,25 +97,25 @@ static void on_tile_filled (ShumateFileCache *self,
                             int               zoom_level);
 
 static void
-shumate_file_cache_get_property (GObject *object,
-    guint property_id,
-    GValue *value,
-    GParamSpec *pspec)
+shumate_file_cache_get_property (GObject    *object,
+                                 guint       property_id,
+                                 GValue     *value,
+                                 GParamSpec *pspec)
 {
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
+  ShumateFileCache *self = SHUMATE_FILE_CACHE (object);
 
   switch (property_id)
     {
     case PROP_SIZE_LIMIT:
-      g_value_set_uint (value, shumate_file_cache_get_size_limit (file_cache));
+      g_value_set_uint (value, shumate_file_cache_get_size_limit (self));
       break;
 
     case PROP_CACHE_DIR:
-      g_value_set_string (value, shumate_file_cache_get_cache_dir (file_cache));
+      g_value_set_string (value, shumate_file_cache_get_cache_dir (self));
       break;
 
     case PROP_CACHE_KEY:
-      g_value_set_string (value, shumate_file_cache_get_cache_key (file_cache));
+      g_value_set_string (value, shumate_file_cache_get_cache_key (self));
       break;
 
     default:
@@ -120,28 +125,27 @@ shumate_file_cache_get_property (GObject *object,
 
 
 static void
-shumate_file_cache_set_property (GObject *object,
-    guint property_id,
-    const GValue *value,
-    GParamSpec *pspec)
+shumate_file_cache_set_property (GObject      *object,
+                                 guint         property_id,
+                                 const GValue *value,
+                                 GParamSpec   *pspec)
 {
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  ShumateFileCache *self = SHUMATE_FILE_CACHE (object);
 
   switch (property_id)
     {
     case PROP_SIZE_LIMIT:
-      shumate_file_cache_set_size_limit (file_cache, g_value_get_uint (value));
+      shumate_file_cache_set_size_limit (self, g_value_get_uint (value));
       break;
 
     case PROP_CACHE_DIR:
-      g_free (priv->cache_dir);
-      priv->cache_dir = g_strdup (g_value_get_string (value));
+      g_free (self->cache_dir);
+      self->cache_dir = g_strdup (g_value_get_string (value));
       break;
 
     case PROP_CACHE_KEY:
-      g_free (priv->cache_key);
-      priv->cache_key = g_strdup (g_value_get_string (value));
+      g_free (self->cache_key);
+      self->cache_key = g_strdup (g_value_get_string (value));
       break;
 
     default:
@@ -150,19 +154,17 @@ shumate_file_cache_set_property (GObject *object,
 }
 
 static void
-finalize_sql (ShumateFileCache *file_cache)
+finalize_sql (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  g_clear_pointer (&self->stmt_select, sqlite3_finalize);
+  g_clear_pointer (&self->stmt_update, sqlite3_finalize);
 
-  g_clear_pointer (&priv->stmt_select, sqlite3_finalize);
-  g_clear_pointer (&priv->stmt_update, sqlite3_finalize);
-
-  if (priv->db)
+  if (self->db)
     {
-      int error = sqlite3_close (priv->db);
+      int error = sqlite3_close (self->db);
       if (error != SQLITE_OK)
         g_debug ("Sqlite returned error %d when closing cache.db", error);
-      priv->db = NULL;
+      self->db = NULL;
     }
 }
 
@@ -170,13 +172,12 @@ finalize_sql (ShumateFileCache *file_cache)
 static void
 shumate_file_cache_finalize (GObject *object)
 {
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  ShumateFileCache *self = SHUMATE_FILE_CACHE (object);
 
-  finalize_sql (file_cache);
+  finalize_sql (self);
 
-  g_clear_pointer (&priv->cache_dir, g_free);
-  g_clear_pointer (&priv->cache_key, g_free);
+  g_clear_pointer (&self->cache_dir, g_free);
+  g_clear_pointer (&self->cache_key, g_free);
 
   G_OBJECT_CLASS (shumate_file_cache_parent_class)->finalize (object);
 }
@@ -200,22 +201,21 @@ create_cache_dir (const char *dir_name)
 
 
 static void
-init_cache (ShumateFileCache *file_cache)
+init_cache (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   char *filename = NULL;
   char *error_msg = NULL;
   gint error;
 
-  g_return_if_fail (create_cache_dir (priv->cache_dir));
+  g_return_if_fail (create_cache_dir (self->cache_dir));
 
-  filename = g_build_filename (priv->cache_dir,
+  filename = g_build_filename (self->cache_dir,
         "cache.db", NULL);
 
   /* Make sure the database is opened in serialized mode (OPEN_FULLMUTEX)
    * because shumate_file_cache_purge_cache_async() runs in a separate thread.
    * See <https://sqlite.org/threadsafe.html> */
-  error = sqlite3_open_v2 (filename, &priv->db,
+  error = sqlite3_open_v2 (filename, &self->db,
         SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
   g_free (filename);
 
@@ -225,7 +225,7 @@ init_cache (ShumateFileCache *file_cache)
       return;
     }
 
-  sqlite3_exec (priv->db,
+  sqlite3_exec (self->db,
       "PRAGMA synchronous=OFF;"
       "PRAGMA auto_vacuum=INCREMENTAL;",
       NULL, NULL, &error_msg);
@@ -236,7 +236,7 @@ init_cache (ShumateFileCache *file_cache)
       return;
     }
 
-  sqlite3_exec (priv->db,
+  sqlite3_exec (self->db,
       "CREATE TABLE IF NOT EXISTS tiles ("
       "filename TEXT PRIMARY KEY, "
       "etag TEXT, "
@@ -250,46 +250,45 @@ init_cache (ShumateFileCache *file_cache)
       return;
     }
 
-  error = sqlite3_prepare_v2 (priv->db,
+  error = sqlite3_prepare_v2 (self->db,
         "SELECT etag FROM tiles WHERE filename = ?", -1,
-        &priv->stmt_select, NULL);
+        &self->stmt_select, NULL);
   if (error != SQLITE_OK)
     {
-      priv->stmt_select = NULL;
+      self->stmt_select = NULL;
       g_debug ("Failed to prepare the select Etag statement, error:%d: %s",
-          error, sqlite3_errmsg (priv->db));
+          error, sqlite3_errmsg (self->db));
       return;
     }
 
-  error = sqlite3_prepare_v2 (priv->db,
+  error = sqlite3_prepare_v2 (self->db,
         "UPDATE tiles SET popularity = popularity + 1 WHERE filename = ?", -1,
-        &priv->stmt_update, NULL);
+        &self->stmt_update, NULL);
   if (error != SQLITE_OK)
     {
-      priv->stmt_update = NULL;
+      self->stmt_update = NULL;
       g_debug ("Failed to prepare the update popularity statement, error: %s",
-          sqlite3_errmsg (priv->db));
+          sqlite3_errmsg (self->db));
       return;
     }
 
-  g_object_notify (G_OBJECT (file_cache), "cache-dir");
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_CACHE_DIR]);
 }
 
 
 static void
 shumate_file_cache_constructed (GObject *object)
 {
-  ShumateFileCache *file_cache = SHUMATE_FILE_CACHE (object);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  ShumateFileCache *self = SHUMATE_FILE_CACHE (object);
 
-  if (!priv->cache_dir)
+  if (!self->cache_dir)
     {
-      priv->cache_dir = g_build_path (G_DIR_SEPARATOR_S,
+      self->cache_dir = g_build_path (G_DIR_SEPARATOR_S,
             g_get_user_cache_dir (),
             "shumate", NULL);
     }
 
-  init_cache (file_cache);
+  init_cache (self);
 
   G_OBJECT_CLASS (shumate_file_cache_parent_class)->constructed (object);
 }
@@ -299,7 +298,6 @@ static void
 shumate_file_cache_class_init (ShumateFileCacheClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  GParamSpec *pspec;
 
   object_class->finalize = shumate_file_cache_finalize;
   object_class->get_property = shumate_file_cache_get_property;
@@ -313,26 +311,26 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    *
    * Note: this new value will not be applied until you call shumate_file_cache_purge()
    */
-  pspec = g_param_spec_uint ("size-limit",
-        "Size Limit",
-        "The cache's size limit (Mb)",
-        1,
-        G_MAXINT,
-        100000000,
-        G_PARAM_CONSTRUCT | G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_SIZE_LIMIT, pspec);
+  properties[PROP_SIZE_LIMIT] =
+    g_param_spec_uint ("size-limit",
+                       "Size Limit",
+                       "The cache's size limit (Mb)",
+                       1,
+                       G_MAXINT,
+                       100000000,
+                       G_PARAM_CONSTRUCT | G_PARAM_READWRITE);
 
   /**
    * ShumateFileCache:cache-dir:
    *
    * The directory where the tile database is stored.
    */
-  pspec = g_param_spec_string ("cache-dir",
-        "Cache Directory",
-        "The directory of the cache",
-        NULL,
-        G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
-  g_object_class_install_property (object_class, PROP_CACHE_DIR, pspec);
+  properties[PROP_CACHE_DIR] =
+    g_param_spec_string ("cache-dir",
+                         "Cache Directory",
+                         "The directory of the cache",
+                         NULL,
+                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
 
   /**
    * ShumateFileCache:cache-key:
@@ -340,28 +338,28 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * The key used to store and retrieve tiles from the cache. Different keys
    * can be used to store multiple tilesets in the same cache directory.
    */
-  pspec = g_param_spec_string ("cache-key",
-        "Cache Key",
-        "The key used when storing and retrieving tiles",
-        NULL,
-        G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-  g_object_class_install_property (object_class, PROP_CACHE_KEY, pspec);
+  properties[PROP_CACHE_KEY] =
+    g_param_spec_string ("cache-key",
+                         "Cache Key",
+                         "The key used when storing and retrieving tiles",
+                         NULL,
+                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  g_object_class_install_properties (object_class, N_PROPS, properties);
 }
 
 
 static void
-shumate_file_cache_init (ShumateFileCache *file_cache)
+shumate_file_cache_init (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
-
-  priv->cache_dir = NULL;
-  priv->size_limit = 100000000;
-  priv->size_estimate = 0;
-  priv->have_size_estimate = FALSE;
-  priv->cache_dir = NULL;
-  priv->db = NULL;
-  priv->stmt_select = NULL;
-  priv->stmt_update = NULL;
+  self->cache_dir = NULL;
+  self->size_limit = 100000000;
+  self->size_estimate = 0;
+  self->have_size_estimate = FALSE;
+  self->cache_dir = NULL;
+  self->db = NULL;
+  self->stmt_select = NULL;
+  self->stmt_update = NULL;
 }
 
 
@@ -377,9 +375,9 @@ shumate_file_cache_init (ShumateFileCache *file_cache)
  * Returns: a constructed #ShumateFileCache
  */
 ShumateFileCache *
-shumate_file_cache_new_full (guint size_limit,
-    const char *cache_key,
-    const char *cache_dir)
+shumate_file_cache_new_full (guint       size_limit,
+                             const char *cache_key,
+                             const char *cache_dir)
 {
   ShumateFileCache *cache;
 
@@ -396,45 +394,41 @@ shumate_file_cache_new_full (guint size_limit,
 
 /**
  * shumate_file_cache_get_size_limit:
- * @file_cache: a #ShumateFileCache
+ * @self: a #ShumateFileCache
  *
  * Gets the cache size limit in bytes.
  *
  * Returns: size limit
  */
 guint
-shumate_file_cache_get_size_limit (ShumateFileCache *file_cache)
+shumate_file_cache_get_size_limit (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), 0);
 
-  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), 0);
-
-  return priv->size_limit;
+  return self->size_limit;
 }
 
 
 /**
  * shumate_file_cache_get_cache_dir:
- * @file_cache: a #ShumateFileCache
+ * @self: a #ShumateFileCache
  *
  * Gets the directory where the cache database is stored.
  *
  * Returns: the directory
  */
 const char *
-shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
+shumate_file_cache_get_cache_dir (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
 
-  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
-
-  return priv->cache_dir;
+  return self->cache_dir;
 }
 
 
 /**
  * shumate_file_cache_get_cache_key:
- * @file_cache: a #ShumateFileCache
+ * @self: a #ShumateFileCache
  *
  * Gets the key used to store and retrieve tiles from the cache. Different keys
  * can be used to store multiple tilesets in the same cache directory.
@@ -442,55 +436,50 @@ shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache)
  * Returns: the cache key
  */
 const char *
-shumate_file_cache_get_cache_key (ShumateFileCache *file_cache)
+shumate_file_cache_get_cache_key (ShumateFileCache *self)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
 
-  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
-
-  return priv->cache_key;
+  return self->cache_key;
 }
 
 
 /**
  * shumate_file_cache_set_size_limit:
- * @file_cache: a #ShumateFileCache
+ * @self: a #ShumateFileCache
  * @size_limit: the cache limit in bytes
  *
  * Sets the cache size limit in bytes.
  */
 void
-shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
-    guint size_limit)
+shumate_file_cache_set_size_limit (ShumateFileCache *self,
+                                   guint             size_limit)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
 
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
-
-  priv->size_limit = size_limit;
-  g_object_notify (G_OBJECT (file_cache), "size-limit");
+  self->size_limit = size_limit;
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SIZE_LIMIT]);
 }
 
 
 static char *
-get_filename (ShumateFileCache *file_cache,
+get_filename (ShumateFileCache *self,
               int               x,
               int               y,
               int               zoom_level)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
   const char *cache_key;
 
-  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (file_cache), NULL);
-  g_return_val_if_fail (priv->cache_dir, NULL);
+  g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), NULL);
+  g_return_val_if_fail (self->cache_dir, NULL);
 
-  cache_key = shumate_file_cache_get_cache_key (file_cache);
+  cache_key = shumate_file_cache_get_cache_key (self);
 
   char *filename = g_strdup_printf ("%s" G_DIR_SEPARATOR_S
                                     "%s" G_DIR_SEPARATOR_S
                                     "%d" G_DIR_SEPARATOR_S
                                     "%d" G_DIR_SEPARATOR_S "%d.png",
-                                    priv->cache_dir,
+                                    self->cache_dir,
                                     cache_key,
                                     zoom_level,
                                     x,
@@ -500,25 +489,27 @@ get_filename (ShumateFileCache *file_cache,
 
 
 static char *
-db_get_etag (ShumateFileCache *self, int x, int y, int zoom_level)
+db_get_etag (ShumateFileCache *self,
+             int               x,
+             int               y,
+             int               zoom_level)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   int sql_rc = SQLITE_OK;
   g_autofree char *filename = get_filename (self, x, y, zoom_level);
 
-  sqlite3_reset (priv->stmt_select);
-  sql_rc = sqlite3_bind_text (priv->stmt_select, 1, filename, -1, SQLITE_STATIC);
+  sqlite3_reset (self->stmt_select);
+  sql_rc = sqlite3_bind_text (self->stmt_select, 1, filename, -1, SQLITE_STATIC);
   if (sql_rc == SQLITE_ERROR)
     {
       g_debug ("Failed to prepare the SQL query for finding the Etag of '%s', error: %s",
-          filename, sqlite3_errmsg (priv->db));
+          filename, sqlite3_errmsg (self->db));
       return NULL;
     }
 
-  sql_rc = sqlite3_step (priv->stmt_select);
+  sql_rc = sqlite3_step (self->stmt_select);
   if (sql_rc == SQLITE_ROW)
     {
-      const char *etag = (const char *) sqlite3_column_text (priv->stmt_select, 0);
+      const char *etag = (const char *) sqlite3_column_text (self->stmt_select, 0);
       return g_strdup (etag);
     }
   else if (sql_rc == SQLITE_DONE)
@@ -529,7 +520,7 @@ db_get_etag (ShumateFileCache *self, int x, int y, int zoom_level)
   else if (sql_rc == SQLITE_ERROR)
     {
       g_debug ("Failed to finding the Etag of '%s', %d error: %s",
-          filename, sql_rc, sqlite3_errmsg (priv->db));
+          filename, sql_rc, sqlite3_errmsg (self->db));
     }
 
   return NULL;
@@ -578,9 +569,10 @@ shumate_file_cache_mark_up_to_date (ShumateFileCache *self,
 
 static void
 on_tile_filled (ShumateFileCache *self,
-                int x, int y, int zoom_level)
+                int               x,
+                int               y,
+                int               zoom_level)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
   int sql_rc = SQLITE_OK;
   g_autofree char *filename = NULL;
 
@@ -588,16 +580,16 @@ on_tile_filled (ShumateFileCache *self,
 
   g_debug ("popularity of %s", filename);
 
-  sqlite3_reset (priv->stmt_update);
-  sql_rc = sqlite3_bind_text (priv->stmt_update, 1, filename, -1, SQLITE_STATIC);
+  sqlite3_reset (self->stmt_update);
+  sql_rc = sqlite3_bind_text (self->stmt_update, 1, filename, -1, SQLITE_STATIC);
   if (sql_rc != SQLITE_OK)
     {
       g_debug ("Failed to set values to the popularity query of '%s', error: %s",
-          filename, sqlite3_errmsg (priv->db));
+          filename, sqlite3_errmsg (self->db));
       return;
     }
 
-  sql_rc = sqlite3_step (priv->stmt_update);
+  sql_rc = sqlite3_step (self->stmt_update);
   if (sql_rc != SQLITE_DONE)
     {
       /* may not be present in this cache */
@@ -607,11 +599,10 @@ on_tile_filled (ShumateFileCache *self,
 
 
 static void
-delete_tile (ShumateFileCache *file_cache, const char *filename)
+delete_tile (ShumateFileCache *self,
+             const char       *filename)
 {
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (file_cache);
-
-  g_return_if_fail (SHUMATE_IS_FILE_CACHE (file_cache));
+  g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_autoptr(sqlite_str) query = NULL;
   g_autoptr(sqlite_str) sql_error = NULL;
   g_autoptr(GError) gerror = NULL;
@@ -624,7 +615,7 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
     }
 
   query = sqlite3_mprintf ("DELETE FROM tiles WHERE filename = %Q", filename);
-  sqlite3_exec (priv->db, query, NULL, NULL, &sql_error);
+  sqlite3_exec (self->db, query, NULL, NULL, &sql_error);
   if (sql_error != NULL)
     {
       g_debug ("Deleting tile from db failed: %s", sql_error);
@@ -633,13 +624,12 @@ delete_tile (ShumateFileCache *file_cache, const char *filename)
 
 
 static void
-purge_cache (GTask *task,
-             gpointer source_object,
-             gpointer _task_data,
+purge_cache (GTask        *task,
+             gpointer      source_object,
+             gpointer      _task_data,
              GCancellable *cancellable)
 {
   ShumateFileCache *self = (ShumateFileCache *) source_object;
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
 
   char *query;
   g_autoptr(sqlite3_stmt) stmt = NULL;
@@ -649,10 +639,10 @@ purge_cache (GTask *task,
   g_autoptr(sqlite_str) error = NULL;
 
   query = "SELECT SUM (size) FROM tiles";
-  rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
+  rc = sqlite3_prepare (self->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      g_warning ("Can't compute cache size %s", sqlite3_errmsg (priv->db));
+      g_warning ("Can't compute cache size %s", sqlite3_errmsg (self->db));
       g_task_return_boolean (task, FALSE);
       return;
     }
@@ -661,17 +651,17 @@ purge_cache (GTask *task,
   if (rc != SQLITE_ROW)
     {
       g_warning ("Failed to count the total cache consumption %s",
-          sqlite3_errmsg (priv->db));
+          sqlite3_errmsg (self->db));
       g_task_return_boolean (task, FALSE);
       return;
     }
 
   current_size = sqlite3_column_int (stmt, 0);
   original_size = current_size;
-  if (current_size < priv->size_limit)
+  if (current_size < self->size_limit)
     {
       g_debug ("Cache doesn't need to be purged at %d bytes", current_size);
-      priv->size_estimate = current_size;
+      self->size_estimate = current_size;
       g_task_return_boolean (task, FALSE);
       return;
     }
@@ -680,14 +670,14 @@ purge_cache (GTask *task,
 
   /* Ok, delete the less popular tiles until size_limit reached */
   query = "SELECT filename, size, popularity FROM tiles ORDER BY popularity";
-  rc = sqlite3_prepare (priv->db, query, strlen (query), &stmt, NULL);
+  rc = sqlite3_prepare (self->db, query, strlen (query), &stmt, NULL);
   if (rc != SQLITE_OK)
     {
-      g_warning ("Can't fetch tiles to delete: %s", sqlite3_errmsg (priv->db));
+      g_warning ("Can't fetch tiles to delete: %s", sqlite3_errmsg (self->db));
     }
 
   rc = sqlite3_step (stmt);
-  while (rc == SQLITE_ROW && current_size > priv->size_limit)
+  while (rc == SQLITE_ROW && current_size > self->size_limit)
     {
       const char *filename;
       guint size;
@@ -705,12 +695,12 @@ purge_cache (GTask *task,
     }
 
   g_debug ("Cache size is now %d bytes (reduced by %d bytes)", current_size, original_size - current_size);
-  priv->size_estimate = current_size;
-  priv->have_size_estimate = TRUE;
+  self->size_estimate = current_size;
+  self->have_size_estimate = TRUE;
 
   query = sqlite3_mprintf ("UPDATE tiles SET popularity = popularity - %d",
         highest_popularity);
-  sqlite3_exec (priv->db, query, NULL, NULL, &error);
+  sqlite3_exec (self->db, query, NULL, NULL, &error);
   if (error != NULL)
     {
       g_warning ("Updating popularity failed: %s", error);
@@ -718,9 +708,9 @@ purge_cache (GTask *task,
     }
   sqlite3_free (query);
 
-  sqlite3_exec (priv->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
+  sqlite3_exec (self->db, "PRAGMA incremental_vacuum;", NULL, NULL, &error);
 
-  priv->purge_in_progress = FALSE;
+  self->purge_in_progress = FALSE;
   g_task_return_boolean (task, TRUE);
 }
 
@@ -735,13 +725,12 @@ purge_cache (GTask *task,
  * the size limit.
  */
 void
-shumate_file_cache_purge_cache_async (ShumateFileCache *self,
-                                      GCancellable *cancellable,
-                                      GAsyncReadyCallback callback,
-                                      gpointer user_data)
+shumate_file_cache_purge_cache_async (ShumateFileCache    *self,
+                                      GCancellable        *cancellable,
+                                      GAsyncReadyCallback  callback,
+                                      gpointer             user_data)
 {
   g_autoptr(GTask) task = NULL;
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (self);
 
   g_return_if_fail (SHUMATE_IS_FILE_CACHE (self));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
@@ -749,13 +738,13 @@ shumate_file_cache_purge_cache_async (ShumateFileCache *self,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_file_cache_purge_cache_async);
 
-  if (priv->purge_in_progress)
+  if (self->purge_in_progress)
     {
       g_task_return_boolean (task, FALSE);
       return;
     }
 
-  priv->purge_in_progress = TRUE;
+  self->purge_in_progress = TRUE;
   g_task_run_in_thread (task, purge_cache);
 }
 
@@ -771,9 +760,9 @@ shumate_file_cache_purge_cache_async (ShumateFileCache *self,
  * Returns: %TRUE if any tiles were removed, otherwise %FALSE
  */
 gboolean
-shumate_file_cache_purge_cache_finish (ShumateFileCache *self,
-                                      GAsyncResult *result,
-                                      GError **error)
+shumate_file_cache_purge_cache_finish (ShumateFileCache  *self,
+                                       GAsyncResult      *result,
+                                       GError           **error)
 {
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), FALSE);
   g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
@@ -863,7 +852,9 @@ shumate_file_cache_get_tile_async (ShumateFileCache    *self,
 
 
 static void
-on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer user_data)
+on_get_tile_file_loaded (GObject      *source_object,
+                         GAsyncResult *res,
+                         gpointer      user_data)
 {
   g_autoptr(GTask) task = user_data;
   GFile *file = G_FILE (source_object);
@@ -907,11 +898,11 @@ on_get_tile_file_loaded (GObject *source_object, GAsyncResult *res, gpointer use
  * the cache or an error occurred
  */
 GBytes *
-shumate_file_cache_get_tile_finish (ShumateFileCache *self,
-                                    char **etag,
-                                    GDateTime **modtime,
-                                    GAsyncResult *result,
-                                    GError **error)
+shumate_file_cache_get_tile_finish (ShumateFileCache  *self,
+                                    char             **etag,
+                                    GDateTime        **modtime,
+                                    GAsyncResult      *result,
+                                    GError           **error)
 {
   GetTileData *data = g_task_get_task_data (G_TASK (result));
 
@@ -950,7 +941,7 @@ static void on_file_written (GObject *object, GAsyncResult *result, gpointer use
 
 /**
  * shumate_file_cache_store_tile_async:
- * @self: an #ShumateFileCache
+ * @self: a #ShumateFileCache
  * @x: the X coordinate of the tile
  * @y: the Y coordinate of the tile
  * @zoom_level: the zoom level of the tile
@@ -963,15 +954,15 @@ static void on_file_written (GObject *object, GAsyncResult *result, gpointer use
  * Stores a tile in the cache.
  */
 void
-shumate_file_cache_store_tile_async (ShumateFileCache *self,
-                                     int x,
-                                     int y,
-                                     int zoom_level,
-                                     GBytes *bytes,
-                                     const char *etag,
-                                     GCancellable *cancellable,
-                                     GAsyncReadyCallback callback,
-                                     gpointer user_data)
+shumate_file_cache_store_tile_async (ShumateFileCache    *self,
+                                     int                  x,
+                                     int                  y,
+                                     int                  zoom_level,
+                                     GBytes              *bytes,
+                                     const char          *etag,
+                                     GCancellable        *cancellable,
+                                     GAsyncReadyCallback  callback,
+                                     gpointer             user_data)
 {
   g_autoptr(GTask) task = NULL;
   g_autofree char *filename = NULL;
@@ -1016,7 +1007,9 @@ shumate_file_cache_store_tile_async (ShumateFileCache *self,
 }
 
 static void
-on_file_created (GObject *object, GAsyncResult *res, gpointer user_data)
+on_file_created (GObject      *object,
+                 GAsyncResult *res,
+                 gpointer      user_data)
 {
   g_autoptr(GTask) task = user_data;
   StoreTileData *data = g_task_get_task_data (task);
@@ -1041,11 +1034,12 @@ on_file_created (GObject *object, GAsyncResult *res, gpointer user_data)
 }
 
 static void
-on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
+on_file_written (GObject      *object,
+                 GAsyncResult *res,
+                 gpointer      user_data)
 {
   g_autoptr(GTask) task = user_data;
   StoreTileData *data = g_task_get_task_data (task);
-  ShumateFileCachePrivate *priv = shumate_file_cache_get_instance_private (data->self);
   g_autoptr(sqlite_str) query = NULL;
   g_autoptr(sqlite_str) sql_error = NULL;
   GError *error = NULL;
@@ -1060,7 +1054,7 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
 
   query = sqlite3_mprintf ("REPLACE INTO tiles (filename, etag, size) VALUES (%Q, %Q, %d)",
                            data->filename, data->etag, tile_size);
-  sqlite3_exec (priv->db, query, NULL, NULL, &sql_error);
+  sqlite3_exec (data->self->db, query, NULL, NULL, &sql_error);
   if (sql_error != NULL)
     {
       g_task_return_new_error (task, SHUMATE_FILE_CACHE_ERROR, SHUMATE_FILE_CACHE_ERROR_FAILED,
@@ -1068,8 +1062,8 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
       return;
     }
 
-  priv->size_estimate += tile_size;
-  if (!priv->have_size_estimate || priv->size_estimate > priv->size_limit + 5000000)
+  data->self->size_estimate += tile_size;
+  if (!data->self->have_size_estimate || data->self->size_estimate > data->self->size_limit + 5000000)
     {
       /* automatically purge the cache if the size estimate is 5MB over
        * the limit, or if there is no estimate of the cache size yet */
@@ -1094,9 +1088,9 @@ on_file_written (GObject *object, GAsyncResult *res, gpointer user_data)
  * Returns: %TRUE if the operation was successful, otherwise %FALSE
  */
 gboolean
-shumate_file_cache_store_tile_finish (ShumateFileCache *self,
-                                      GAsyncResult *result,
-                                      GError **error)
+shumate_file_cache_store_tile_finish (ShumateFileCache  *self,
+                                      GAsyncResult      *result,
+                                      GError           **error)
 {
   g_return_val_if_fail (SHUMATE_IS_FILE_CACHE (self), FALSE);
   g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
