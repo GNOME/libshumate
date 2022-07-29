@@ -18,7 +18,7 @@
  */
 
 #include "shumate-map-layer.h"
-#include "shumate-memory-cache.h"
+#include "shumate-memory-cache-private.h"
 #include "shumate-tile-private.h"
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER

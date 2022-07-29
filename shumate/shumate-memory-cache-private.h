@@ -17,12 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#if !defined (__SHUMATE_SHUMATE_H_INSIDE__) && !defined (SHUMATE_COMPILATION)
-#error "Only <shumate/shumate.h> can be included directly."
-#endif
-
-#ifndef _SHUMATE_MEMORY_CACHE_H_
-#define _SHUMATE_MEMORY_CACHE_H_
+#pragma once
 
 #include <glib-object.h>
 #include <shumate/shumate-tile.h>
@@ -30,12 +25,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MEMORY_CACHE shumate_memory_cache_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, GObject)
-
-struct _ShumateMemoryCacheClass
-{
-  GObjectClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumateMemoryCache, shumate_memory_cache, SHUMATE, MEMORY_CACHE, GObject)
 
 ShumateMemoryCache *shumate_memory_cache_new_full (guint size_limit);
 
@@ -54,4 +44,3 @@ void shumate_memory_cache_store_tile (ShumateMemoryCache *self,
 
 G_END_DECLS
 
-#endif /* _SHUMATE_MEMORY_CACHE_H_ */

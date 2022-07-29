@@ -1,5 +1,5 @@
 #include <shumate/shumate.h>
-
+#include "shumate/shumate-memory-cache-private.h"
 
 static GdkTexture *
 create_texture ()

@@ -49,7 +49,6 @@
 #include "shumate/shumate-tile-downloader.h"
 #include "shumate/shumate-user-agent.h"
 
-#include "shumate/shumate-memory-cache.h"
 #include "shumate/shumate-file-cache.h"
 
 #include "shumate/shumate-vector-renderer.h"
