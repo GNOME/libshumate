@@ -35,12 +35,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_MARKER_LAYER shumate_marker_layer_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE, MARKER_LAYER, ShumateLayer)
-
-struct _ShumateMarkerLayerClass
-{
-  ShumateLayerClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE, MARKER_LAYER, ShumateLayer)
 
 ShumateMarkerLayer *shumate_marker_layer_new (ShumateViewport *viewport);
 ShumateMarkerLayer *shumate_marker_layer_new_full (ShumateViewport *viewport,
