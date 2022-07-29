@@ -34,12 +34,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_PATH_LAYER shumate_path_layer_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE, PATH_LAYER, ShumateLayer)
-
-struct _ShumatePathLayerClass
-{
-  ShumateLayerClass parent_class;
-};
+G_DECLARE_FINAL_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE, PATH_LAYER, ShumateLayer)
 
 ShumatePathLayer *shumate_path_layer_new (ShumateViewport *viewport);
 

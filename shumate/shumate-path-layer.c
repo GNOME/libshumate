@@ -58,8 +58,10 @@ static GdkRGBA DEFAULT_FILL_COLOR = { 0.8, 0.0, 0.0, 0.67 };
 static GdkRGBA DEFAULT_STROKE_COLOR = { 0.64, 0.0, 0.0, 1.0 };
 static GdkRGBA DEFAULT_OUTLINE_COLOR = { 1.0, 0.8, 0.8, 1.0 };
 
-typedef struct
+struct _ShumatePathLayer
 {
+  ShumateLayer parent_instance;
+
   gboolean closed_path;
   GdkRGBA *stroke_color;
   gboolean fill;
@@ -71,9 +73,9 @@ typedef struct
   GArray *dashes; /* double */
 
   GList *nodes; /* ShumateLocation */
-} ShumatePathLayerPrivate;
+};
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER);
+G_DEFINE_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER);
 
 static void
 on_view_longitude_changed (ShumatePathLayer *self,
@@ -123,40 +125,39 @@ shumate_path_layer_get_property (GObject *object,
     GParamSpec *pspec)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
   switch (property_id)
     {
     case PROP_CLOSED_PATH:
-      g_value_set_boolean (value, priv->closed_path);
+      g_value_set_boolean (value, self->closed_path);
       break;
 
     case PROP_FILL:
-      g_value_set_boolean (value, priv->fill);
+      g_value_set_boolean (value, self->fill);
       break;
 
     case PROP_STROKE:
-      g_value_set_boolean (value, priv->stroke);
+      g_value_set_boolean (value, self->stroke);
       break;
 
     case PROP_FILL_COLOR:
-      g_value_set_boxed (value, priv->fill_color);
+      g_value_set_boxed (value, self->fill_color);
       break;
 
     case PROP_STROKE_COLOR:
-      g_value_set_boxed (value, priv->stroke_color);
+      g_value_set_boxed (value, self->stroke_color);
       break;
 
     case PROP_STROKE_WIDTH:
-      g_value_set_double (value, priv->stroke_width);
+      g_value_set_double (value, self->stroke_width);
       break;
 
     case PROP_OUTLINE_COLOR:
-      g_value_set_boxed (value, priv->outline_color);
+      g_value_set_boxed (value, self->outline_color);
       break;
 
     case PROP_OUTLINE_WIDTH:
-      g_value_set_double (value, priv->outline_width);
+      g_value_set_double (value, self->outline_width);
       break;
 
     default:
@@ -166,10 +167,10 @@ shumate_path_layer_get_property (GObject *object,
 
 
 static void
-shumate_path_layer_set_property (GObject *object,
-    guint property_id,
-    G_GNUC_UNUSED const GValue *value,
-    GParamSpec *pspec)
+shumate_path_layer_set_property (GObject      *object,
+                                 guint         property_id,
+                                 const GValue *value,
+                                 GParamSpec   *pspec)
 {
   switch (property_id)
     {
@@ -223,12 +224,11 @@ static void
 shumate_path_layer_dispose (GObject *object)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
 
   g_signal_handlers_disconnect_by_data (viewport, self);
 
-  if (priv->nodes)
+  if (self->nodes)
     shumate_path_layer_remove_all (SHUMATE_PATH_LAYER (object));
 
   G_OBJECT_CLASS (shumate_path_layer_parent_class)->dispose (object);
@@ -254,12 +254,11 @@ static void
 shumate_path_layer_finalize (GObject *object)
 {
   ShumatePathLayer *self = SHUMATE_PATH_LAYER (object);
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
 
-  g_clear_pointer (&priv->stroke_color, gdk_rgba_free);
-  g_clear_pointer (&priv->outline_color, gdk_rgba_free);
-  g_clear_pointer (&priv->fill_color, gdk_rgba_free);
-  g_clear_pointer (&priv->dashes, g_array_unref);
+  g_clear_pointer (&self->stroke_color, gdk_rgba_free);
+  g_clear_pointer (&self->outline_color, gdk_rgba_free);
+  g_clear_pointer (&self->fill_color, gdk_rgba_free);
+  g_clear_pointer (&self->dashes, g_array_unref);
 
   G_OBJECT_CLASS (shumate_path_layer_parent_class)->finalize (object);
 }
@@ -269,7 +268,6 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
                              GtkSnapshot *snapshot)
 {
   ShumatePathLayer *self = (ShumatePathLayer *)widget;
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
   ShumateViewport *viewport;
   int width, height;
   cairo_t *cr;
@@ -286,7 +284,7 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
 
   cairo_set_line_join (cr, CAIRO_LINE_JOIN_BEVEL);
 
-  for (elem = priv->nodes; elem != NULL; elem = elem->next)
+  for (elem = self->nodes; elem != NULL; elem = elem->next)
     {
       ShumateLocation *location = SHUMATE_LOCATION (elem->data);
       double x, y, lat, lon;
@@ -298,31 +296,31 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
       cairo_line_to (cr, x, y);
     }
 
-  if (priv->closed_path)
+  if (self->closed_path)
     cairo_close_path (cr);
 
-  gdk_cairo_set_source_rgba (cr, priv->fill_color);
+  gdk_cairo_set_source_rgba (cr, self->fill_color);
 
-  if (priv->fill)
+  if (self->fill)
     cairo_fill_preserve (cr);
 
-  if (priv->stroke)
+  if (self->stroke)
     {
       /* width of the backgroud-colored part of the stroke,
        * will be reduced by the outline, when that is set (non-zero)
        */
-      double inner_width = priv->stroke_width - 2 * priv->outline_width;
+      double inner_width = self->stroke_width - 2 * self->outline_width;
 
-      cairo_set_dash (cr, (const double *) priv->dashes->data, priv->dashes->len, 0);
+      cairo_set_dash (cr, (const double *) self->dashes->data, self->dashes->len, 0);
 
-      if (priv->outline_width > 0)
+      if (self->outline_width > 0)
         {
-          gdk_cairo_set_source_rgba (cr, priv->outline_color);
-          cairo_set_line_width (cr, priv->stroke_width);
+          gdk_cairo_set_source_rgba (cr, self->outline_color);
+          cairo_set_line_width (cr, self->stroke_width);
           cairo_stroke_preserve (cr);
         }
 
-      gdk_cairo_set_source_rgba (cr, priv->stroke_color);
+      gdk_cairo_set_source_rgba (cr, self->stroke_color);
       cairo_set_line_width (cr, inner_width);
       cairo_stroke (cr);
     }
@@ -453,18 +451,16 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
 static void
 shumate_path_layer_init (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (self);
+  self->fill = FALSE;
+  self->stroke = TRUE;
+  self->stroke_width = 2.0;
+  self->outline_width = 0.0;
+  self->nodes = NULL;
+  self->dashes = g_array_new (FALSE, TRUE, sizeof(double));
 
-  priv->fill = FALSE;
-  priv->stroke = TRUE;
-  priv->stroke_width = 2.0;
-  priv->outline_width = 0.0;
-  priv->nodes = NULL;
-  priv->dashes = g_array_new (FALSE, TRUE, sizeof(double));
-
-  priv->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
-  priv->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
-  priv->outline_color = gdk_rgba_copy (&DEFAULT_OUTLINE_COLOR);
+  self->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
+  self->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
+  self->outline_color = gdk_rgba_copy (&DEFAULT_OUTLINE_COLOR);
 }
 
 /**
@@ -486,81 +482,78 @@ shumate_path_layer_new (ShumateViewport *viewport)
 static void
 position_notify (ShumateLocation  *location,
                  GParamSpec       *pspec,
-                 ShumatePathLayer *layer)
+                 ShumatePathLayer *self)
 {
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 static void
-add_node (ShumatePathLayer *layer,
+add_node (ShumatePathLayer *self,
           ShumateLocation  *location,
           gboolean          prepend,
           guint             position)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
-
-  g_signal_connect (G_OBJECT (location), "notify::latitude", G_CALLBACK (position_notify), layer);
+  g_signal_connect (G_OBJECT (location), "notify::latitude", G_CALLBACK (position_notify), self);
 
   if (prepend)
-    priv->nodes = g_list_prepend (priv->nodes, g_object_ref_sink (location));
+    self->nodes = g_list_prepend (self->nodes, g_object_ref_sink (location));
   else
-    priv->nodes = g_list_insert (priv->nodes, g_object_ref_sink (location), position);
+    self->nodes = g_list_insert (self->nodes, g_object_ref_sink (location), position);
 
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_add_node:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @location: a #ShumateLocation
  *
  * Adds a #ShumateLocation object to the layer.
  * The node is prepended to the list.
  */
 void
-shumate_path_layer_add_node (ShumatePathLayer *layer,
-    ShumateLocation *location)
+shumate_path_layer_add_node (ShumatePathLayer *self,
+                             ShumateLocation  *location)
 {
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
   g_return_if_fail (SHUMATE_IS_LOCATION (location));
 
-  add_node (layer, location, TRUE, 0);
+  add_node (self, location, TRUE, 0);
 }
 
 
 /**
  * shumate_path_layer_remove_all:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Removes all #ShumateLocation objects from the layer.
  */
 void
-shumate_path_layer_remove_all (ShumatePathLayer *layer)
+shumate_path_layer_remove_all (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *elem;
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  for (elem = priv->nodes; elem != NULL; elem = elem->next)
+  for (elem = self->nodes; elem != NULL; elem = elem->next)
     {
       GObject *node = G_OBJECT (elem->data);
 
       g_signal_handlers_disconnect_by_func (node,
-          G_CALLBACK (position_notify), layer);
+          G_CALLBACK (position_notify), self);
 
       g_object_unref (node);
     }
 
-  g_clear_pointer (&priv->nodes, g_list_free);
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  g_clear_pointer (&self->nodes, g_list_free);
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_nodes:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets a copy of the list of all #ShumateLocation objects inserted into the layer. You should
  * free the list but not its contents.
@@ -568,406 +561,371 @@ shumate_path_layer_remove_all (ShumatePathLayer *layer)
  * Returns: (transfer container) (element-type ShumateLocation): the list
  */
 GList *
-shumate_path_layer_get_nodes (ShumatePathLayer *layer)
+shumate_path_layer_get_nodes (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *lst;
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  lst = g_list_copy (priv->nodes);
+  lst = g_list_copy (self->nodes);
   return g_list_reverse (lst);
 }
 
 /**
  * shumate_path_layer_remove_node:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @location: a #ShumateLocation
  *
  * Removes the #ShumateLocation object from the layer.
  */
 void
-shumate_path_layer_remove_node (ShumatePathLayer *layer,
-    ShumateLocation *location)
+shumate_path_layer_remove_node (ShumatePathLayer *self,
+                                ShumateLocation  *location)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
-
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
   g_return_if_fail (SHUMATE_IS_LOCATION (location));
 
-  g_signal_handlers_disconnect_by_func (G_OBJECT (location), G_CALLBACK (position_notify), layer);
+  g_signal_handlers_disconnect_by_func (G_OBJECT (location), G_CALLBACK (position_notify), self);
 
-  priv->nodes = g_list_remove (priv->nodes, location);
+  self->nodes = g_list_remove (self->nodes, location);
   g_object_unref (location);
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 /**
  * shumate_path_layer_insert_node:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @location: a #ShumateLocation
  * @position: position in the list where the #ShumateLocation object should be inserted
  *
  * Inserts a #ShumateLocation object to the specified position.
  */
 void
-shumate_path_layer_insert_node (ShumatePathLayer *layer,
-    ShumateLocation *location,
-    guint position)
+shumate_path_layer_insert_node (ShumatePathLayer *self,
+                                ShumateLocation  *location,
+                                guint             position)
 {
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
   g_return_if_fail (SHUMATE_IS_LOCATION (location));
 
-  add_node (layer, location, FALSE, position);
+  add_node (self, location, FALSE, position);
 }
 
 /**
  * shumate_path_layer_set_fill_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @color: (nullable): The path's fill color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
  * Set the path's fill color.
  */
 void
-shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
-    const GdkRGBA *color)
+shumate_path_layer_set_fill_color (ShumatePathLayer *self,
+                                   const GdkRGBA    *color)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
-
-  if (priv->fill_color != NULL)
-    gdk_rgba_free (priv->fill_color);
+  if (self->fill_color != NULL)
+    gdk_rgba_free (self->fill_color);
 
   if (color == NULL)
     color = &DEFAULT_FILL_COLOR;
 
-  priv->fill_color = gdk_rgba_copy (color);
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_FILL_COLOR]);
+  self->fill_color = gdk_rgba_copy (color);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_FILL_COLOR]);
 
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_fill_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets the path's fill color.
  *
  * Returns: the path's fill color.
  */
 GdkRGBA *
-shumate_path_layer_get_fill_color (ShumatePathLayer *layer)
+shumate_path_layer_get_fill_color (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
-
-  return priv->fill_color;
+  return self->fill_color;
 }
 
 
 /**
  * shumate_path_layer_set_stroke_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @color: (nullable): The path's stroke color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
  * Set the path's stroke color.
  */
 void
-shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
-    const GdkRGBA *color)
+shumate_path_layer_set_stroke_color (ShumatePathLayer *self,
+                                     const GdkRGBA    *color)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
-
-  if (priv->stroke_color != NULL)
-    gdk_rgba_free (priv->stroke_color);
+  if (self->stroke_color != NULL)
+    gdk_rgba_free (self->stroke_color);
 
   if (color == NULL)
     color = &DEFAULT_STROKE_COLOR;
 
-  priv->stroke_color = gdk_rgba_copy (color);
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_STROKE_COLOR]);
+  self->stroke_color = gdk_rgba_copy (color);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_STROKE_COLOR]);
 
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_stroke_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets the path's stroke color.
  *
  * Returns: the path's stroke color.
  */
 GdkRGBA *
-shumate_path_layer_get_stroke_color (ShumatePathLayer *layer)
+shumate_path_layer_get_stroke_color (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
-
-  return priv->stroke_color;
+  return self->stroke_color;
 }
 
 /**
  * shumate_path_layer_set_outline_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @color: (nullable): The path's outline color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
  * Set the path's outline color.
  */
 void
-shumate_path_layer_set_outline_color (ShumatePathLayer *layer,
-    const GdkRGBA *color)
+shumate_path_layer_set_outline_color (ShumatePathLayer *self,
+                                      const GdkRGBA    *color)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
-
-  if (priv->outline_color != NULL)
-    gdk_rgba_free (priv->outline_color);
+  if (self->outline_color != NULL)
+    gdk_rgba_free (self->outline_color);
 
   if (color == NULL)
     color = &DEFAULT_OUTLINE_COLOR;
 
-  priv->outline_color = gdk_rgba_copy (color);
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_OUTLINE_COLOR]);
+  self->outline_color = gdk_rgba_copy (color);
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_OUTLINE_COLOR]);
 
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 /**
  * shumate_path_layer_get_outline_color:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets the path's outline color.
  *
  * Returns: the path's outline color.
  */
 GdkRGBA *
-shumate_path_layer_get_outline_color (ShumatePathLayer *layer)
+shumate_path_layer_get_outline_color (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
-
-  return priv->outline_color;
+  return self->outline_color;
 }
 
 /**
  * shumate_path_layer_set_stroke:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @value: if the path is stroked
  *
  * Sets the path to be stroked
  */
 void
-shumate_path_layer_set_stroke (ShumatePathLayer *layer,
-    gboolean value)
+shumate_path_layer_set_stroke (ShumatePathLayer *self,
+                               gboolean          value)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  self->stroke = value;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_STROKE]);
 
-  priv->stroke = value;
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_STROKE]);
-
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_stroke:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Checks whether the path is stroked.
  *
  * Returns: %TRUE if the path is stroked, %FALSE otherwise.
  */
 gboolean
-shumate_path_layer_get_stroke (ShumatePathLayer *layer)
+shumate_path_layer_get_stroke (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), FALSE);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
-
-  return priv->stroke;
+  return self->stroke;
 }
 
 
 /**
  * shumate_path_layer_set_fill:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @value: if the path is filled
  *
  * Sets the path to be filled
  */
 void
-shumate_path_layer_set_fill (ShumatePathLayer *layer,
-    gboolean value)
+shumate_path_layer_set_fill (ShumatePathLayer *self,
+                             gboolean          value)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  self->fill = value;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_FILL]);
 
-  priv->fill = value;
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_FILL]);
-
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_fill:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Checks whether the path is filled.
  *
  * Returns: %TRUE if the path is filled, %FALSE otherwise.
  */
 gboolean
-shumate_path_layer_get_fill (ShumatePathLayer *layer)
+shumate_path_layer_get_fill (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), FALSE);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
-
-  return priv->fill;
+  return self->fill;
 }
 
 
 /**
  * shumate_path_layer_set_stroke_width:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @value: the width of the stroke (in pixels)
  *
  * Sets the width of the stroke
  */
 void
-shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
-    double value)
+shumate_path_layer_set_stroke_width (ShumatePathLayer *self,
+                                     double            value)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  self->stroke_width = value;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_STROKE_WIDTH]);
 
-  priv->stroke_width = value;
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_STROKE_WIDTH]);
-
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_stroke_width:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets the width of the stroke.
  *
  * Returns: the width of the stroke
  */
 double
-shumate_path_layer_get_stroke_width (ShumatePathLayer *layer)
+shumate_path_layer_get_stroke_width (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), 0);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), 0);
-
-  return priv->stroke_width;
+  return self->stroke_width;
 }
 
 /**
  * shumate_path_layer_set_outline_width:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @value: the width of the outline (in pixels)
  *
  * Sets the width of the outline
  */
 void
-shumate_path_layer_set_outline_width (ShumatePathLayer *layer,
-    double value)
+shumate_path_layer_set_outline_width (ShumatePathLayer *self,
+                                      double            value)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  self->outline_width = value;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_OUTLINE_WIDTH]);
 
-  priv->outline_width = value;
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_OUTLINE_WIDTH]);
-
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_outline_width:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets the width of the outline.
  *
  * Returns: the width of the outline
  */
 double
-shumate_path_layer_get_outline_width (ShumatePathLayer *layer)
+shumate_path_layer_get_outline_width (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), 0);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), 0);
-
-  return priv->outline_width;
+  return self->outline_width;
 }
 
 /**
  * shumate_path_layer_set_closed:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @value: %TRUE to make the path closed
  *
  * Makes the path closed.
  */
 void
-shumate_path_layer_set_closed (ShumatePathLayer *layer,
-    gboolean value)
+shumate_path_layer_set_closed (ShumatePathLayer *self,
+                               gboolean          value)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  self->closed_path = value;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_CLOSED_PATH]);
 
-  priv->closed_path = value;
-  g_object_notify_by_pspec (G_OBJECT (layer), obj_properties[PROP_CLOSED_PATH]);
-
-  gtk_widget_queue_draw (GTK_WIDGET (layer));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 
 /**
  * shumate_path_layer_get_closed:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Gets information whether the path is closed.
  *
  * Returns: %TRUE when the path is closed, %FALSE otherwise
  */
 gboolean
-shumate_path_layer_get_closed (ShumatePathLayer *layer)
+shumate_path_layer_get_closed (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), FALSE);
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), FALSE);
-
-  return priv->closed_path;
+  return self->closed_path;
 }
 
 
 /**
  * shumate_path_layer_set_dash:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  * @dash_pattern: (element-type guint): list of integer values representing lengths
  *     of dashes/spaces (see cairo documentation of cairo_set_dash())
  *
@@ -978,45 +936,43 @@ shumate_path_layer_get_closed (ShumatePathLayer *layer)
  * Pass %NULL to use solid line.
  */
 void
-shumate_path_layer_set_dash (ShumatePathLayer *layer,
-    GList *dash_pattern)
+shumate_path_layer_set_dash (ShumatePathLayer *self,
+                             GList            *dash_pattern)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *iter = NULL;
 
-  g_return_if_fail (SHUMATE_IS_PATH_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_PATH_LAYER (self));
 
-  g_array_set_size (priv->dashes, 0);
+  g_array_set_size (self->dashes, 0);
   if (dash_pattern == NULL)
     return;
 
   for (iter = dash_pattern; iter != NULL; iter = iter->next)
     {
       double val = (double) GPOINTER_TO_UINT (iter->data);
-      g_array_append_val (priv->dashes, val);
+      g_array_append_val (self->dashes, val);
     }
 }
 
 
 /**
  * shumate_path_layer_get_dash:
- * @layer: a #ShumatePathLayer
+ * @self: a #ShumatePathLayer
  *
  * Returns the list of dash segment lengths.
  *
  * Returns: (transfer full) (element-type guint): the list
  */
 GList *
-shumate_path_layer_get_dash (ShumatePathLayer *layer)
+shumate_path_layer_get_dash (ShumatePathLayer *self)
 {
-  ShumatePathLayerPrivate *priv = shumate_path_layer_get_instance_private (layer);
   GList *list = NULL;
   guint i;
 
-  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (layer), NULL);
+  g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  for (i = 0; i < priv->dashes->len; i++)
-    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (priv->dashes, double, i)));
+  for (i = 0; i < self->dashes->len; i++)
+    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (self->dashes, double, i)));
 
   return list;
 }
