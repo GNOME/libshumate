@@ -28,7 +28,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE shumate_tile_get_type ()
-G_DECLARE_DERIVABLE_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GtkWidget)
+G_DECLARE_FINAL_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GtkWidget)
 
 /**
  * ShumateState:
@@ -47,11 +47,6 @@ typedef enum
   SHUMATE_STATE_LOADED,
   SHUMATE_STATE_DONE
 } ShumateState;
-
-struct _ShumateTileClass
-{
-  GtkWidgetClass parent_class;
-};
 
 ShumateTile *shumate_tile_new (void);
 ShumateTile *shumate_tile_new_full (guint x,

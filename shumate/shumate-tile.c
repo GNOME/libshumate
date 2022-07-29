@@ -35,8 +35,10 @@
 #include <gdk/gdk.h>
 #include <gio/gio.h>
 
-typedef struct
+struct _ShumateTile
 {
+  GtkWidget parent_instance;
+
   guint x; /* The x position on the map (in pixels) */
   guint y; /* The y position on the map (in pixels) */
   guint size; /* The tile's width and height (only support square tiles */
@@ -47,9 +49,9 @@ typedef struct
 
   GdkTexture *texture;
   GPtrArray *symbols;
-} ShumateTilePrivate;
+};
 
-G_DEFINE_TYPE_WITH_PRIVATE (ShumateTile, shumate_tile, GTK_TYPE_WIDGET);
+G_DEFINE_TYPE (ShumateTile, shumate_tile, GTK_TYPE_WIDGET);
 
 enum
 {
@@ -70,8 +72,7 @@ shumate_tile_snapshot (GtkWidget   *widget,
                        GtkSnapshot *snapshot)
 {
   ShumateTile *self = SHUMATE_TILE (widget);
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-  GdkTexture *texture = priv->texture;
+  GdkTexture *texture = self->texture;
 
   if (texture)
     {
@@ -101,13 +102,12 @@ shumate_tile_measure (GtkWidget      *widget,
                       int            *natural_baseline)
 {
   ShumateTile *self = SHUMATE_TILE (widget);
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
   if (minimum)
     *minimum = 0;
 
   if (natural)
-    *natural = priv->size;
+    *natural = self->size;
 }
 
 static void
@@ -202,10 +202,9 @@ static void
 shumate_tile_dispose (GObject *object)
 {
   ShumateTile *self = SHUMATE_TILE (object);
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
 
-  g_clear_object (&priv->texture);
-  g_clear_pointer (&priv->symbols, g_ptr_array_unref);
+  g_clear_object (&self->texture);
+  g_clear_pointer (&self->symbols, g_ptr_array_unref);
 
   G_OBJECT_CLASS (shumate_tile_parent_class)->dispose (object);
 }
@@ -329,9 +328,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
 static void
 shumate_tile_init (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
-  priv->state = SHUMATE_STATE_NONE;
+  self->state = SHUMATE_STATE_NONE;
 }
 
 /**
@@ -385,11 +382,9 @@ shumate_tile_new_full (guint x,
 guint
 shumate_tile_get_x (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return priv->x;
+  return self->x;
 }
 
 
@@ -404,14 +399,12 @@ void
 shumate_tile_set_x (ShumateTile *self,
                     guint        x)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->x == x)
+  if (self->x == x)
     return;
 
-  priv->x = x;
+  self->x = x;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_X]);
 }
 
@@ -427,11 +420,9 @@ shumate_tile_set_x (ShumateTile *self,
 guint
 shumate_tile_get_y (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return priv->y;
+  return self->y;
 }
 
 
@@ -446,14 +437,12 @@ void
 shumate_tile_set_y (ShumateTile *self,
                     guint        y)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->y == y)
+  if (self->y == y)
     return;
 
-  priv->y = y;
+  self->y = y;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_Y]);
 }
 
@@ -469,11 +458,9 @@ shumate_tile_set_y (ShumateTile *self,
 guint
 shumate_tile_get_zoom_level (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return priv->zoom_level;
+  return self->zoom_level;
 }
 
 
@@ -488,14 +475,12 @@ void
 shumate_tile_set_zoom_level (ShumateTile *self,
                              guint        zoom_level)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->zoom_level == zoom_level)
+  if (self->zoom_level == zoom_level)
     return;
 
-  priv->zoom_level = zoom_level;
+  self->zoom_level = zoom_level;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ZOOM_LEVEL]);
 }
 
@@ -511,11 +496,9 @@ shumate_tile_set_zoom_level (ShumateTile *self,
 guint
 shumate_tile_get_size (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), 0);
 
-  return priv->size;
+  return self->size;
 }
 
 
@@ -530,14 +513,12 @@ void
 shumate_tile_set_size (ShumateTile *self,
                        guint        size)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->size == size)
+  if (self->size == size)
     return;
 
-  priv->size = size;
+  self->size = size;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_SIZE]);
 }
 
@@ -553,11 +534,9 @@ shumate_tile_set_size (ShumateTile *self,
 ShumateState
 shumate_tile_get_state (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), SHUMATE_STATE_NONE);
 
-  return priv->state;
+  return self->state;
 }
 
 
@@ -572,14 +551,12 @@ void
 shumate_tile_set_state (ShumateTile *self,
                         ShumateState state)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (state == priv->state)
+  if (state == self->state)
     return;
 
-  priv->state = state;
+  self->state = state;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_STATE]);
 }
 
@@ -595,11 +572,9 @@ shumate_tile_set_state (ShumateTile *self,
 gboolean
 shumate_tile_get_fade_in (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), FALSE);
 
-  return priv->fade_in;
+  return self->fade_in;
 }
 
 
@@ -614,14 +589,12 @@ void
 shumate_tile_set_fade_in (ShumateTile *self,
                           gboolean     fade_in)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (priv->fade_in == fade_in)
+  if (self->fade_in == fade_in)
     return;
 
-  priv->fade_in = fade_in;
+  self->fade_in = fade_in;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_FADE_IN]);
 }
 
@@ -636,11 +609,9 @@ shumate_tile_set_fade_in (ShumateTile *self,
 GdkTexture *
 shumate_tile_get_texture (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_TILE (self), NULL);
 
-  return priv->texture;
+  return self->texture;
 }
 
 /**
@@ -654,11 +625,9 @@ void
 shumate_tile_set_texture (ShumateTile *self,
                           GdkTexture  *texture)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_TILE (self));
 
-  if (g_set_object (&priv->texture, texture))
+  if (g_set_object (&self->texture, texture))
     {
       g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_TEXTURE]);
       gtk_widget_queue_draw (GTK_WIDGET (self));
@@ -669,22 +638,18 @@ shumate_tile_set_texture (ShumateTile *self,
 void
 shumate_tile_set_symbols (ShumateTile *self, GPtrArray *symbols)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_if_fail (SHUMATE_IS_TILE (self));
 
-  g_clear_pointer (&priv->symbols, g_ptr_array_unref);
+  g_clear_pointer (&self->symbols, g_ptr_array_unref);
   if (symbols != NULL)
-    priv->symbols = g_ptr_array_ref (symbols);
+    self->symbols = g_ptr_array_ref (symbols);
 }
 
 
 GPtrArray *
 shumate_tile_get_symbols (ShumateTile *self)
 {
-  ShumateTilePrivate *priv = shumate_tile_get_instance_private (self);
-
   g_return_val_if_fail (SHUMATE_IS_TILE (self), NULL);
 
-  return priv->symbols;
+  return self->symbols;
 }
