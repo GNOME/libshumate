@@ -39,6 +39,9 @@ G_DECLARE_DERIVABLE_TYPE (ShumateMarker, shumate_marker, SHUMATE, MARKER, GtkWid
 struct _ShumateMarkerClass
 {
   GtkWidgetClass parent_class;
+
+  /*< private >*/
+  gpointer padding[16];
 };
 
 ShumateMarker *shumate_marker_new (void);

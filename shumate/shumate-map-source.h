@@ -54,6 +54,9 @@ struct _ShumateMapSourceClass
   gboolean (*fill_tile_finish) (ShumateMapSource  *self,
                                 GAsyncResult      *result,
                                 GError           **error);
+
+  /*< private >*/
+  gpointer padding[16];
 };
 
 const char *shumate_map_source_get_id (ShumateMapSource *map_source);

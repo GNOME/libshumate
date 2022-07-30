@@ -40,6 +40,9 @@ struct _ShumateDataSourceClass
   GBytes *(*get_tile_data_finish) (ShumateDataSource  *self,
                                    GAsyncResult       *result,
                                    GError            **error);
+
+  /*< private >*/
+  gpointer padding[16];
 };
 
 

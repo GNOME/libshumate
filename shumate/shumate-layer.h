@@ -35,6 +35,9 @@ G_DECLARE_DERIVABLE_TYPE (ShumateLayer, shumate_layer, SHUMATE, LAYER, GtkWidget
 struct _ShumateLayerClass
 {
   GtkWidgetClass parent_class;
+
+  /*< private >*/
+  gpointer padding[16];
 };
 
 ShumateViewport *shumate_layer_get_viewport (ShumateLayer *self);

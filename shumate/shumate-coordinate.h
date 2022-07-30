@@ -36,6 +36,9 @@ G_DECLARE_DERIVABLE_TYPE (ShumateCoordinate, shumate_coordinate, SHUMATE, COORDI
 struct _ShumateCoordinateClass
 {
   GInitiallyUnownedClass parent_class;
+
+  /*< private >*/
+  gpointer padding[16];
 };
 
 ShumateCoordinate *shumate_coordinate_new (void);
