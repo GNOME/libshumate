@@ -597,6 +597,23 @@ on_rotate_gesture_update (ShumateMap *self,
 }
 
 static void
+on_click_gesture_pressed (ShumateMap      *self,
+                          gint             n_press,
+                          gdouble          x,
+                          gdouble          y,
+                          GtkGestureClick *click)
+{
+  guint current_button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (click));
+  if (current_button == GDK_BUTTON_PRIMARY && n_press == 2)
+    {
+      double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
+      self->current_x = x;
+      self->current_y = y;
+      set_zoom_level (self, zoom_level + 1);
+    }
+}
+
+static void
 on_motion_controller_motion (ShumateMap               *self,
                              double                    x,
                              double                    y,
@@ -804,6 +821,7 @@ shumate_map_init (ShumateMap *self)
   GtkGesture *swipe_gesture;
   GtkGesture *zoom_gesture;
   GtkGesture *rotate_gesture;
+  GtkGesture *click_gesture;
 
   self->viewport = shumate_viewport_new ();
   self->zoom_on_double_click = TRUE;
@@ -843,6 +861,10 @@ shumate_map_init (ShumateMap *self)
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (rotate_gesture));
 
   gtk_gesture_group (zoom_gesture, rotate_gesture);
+
+  click_gesture = gtk_gesture_click_new ();
+  g_signal_connect_swapped (click_gesture, "pressed", G_CALLBACK (on_click_gesture_pressed), self);
+  gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
 
   key_controller = gtk_event_controller_key_new ();
   gtk_widget_add_controller (GTK_WIDGET (self), key_controller);
