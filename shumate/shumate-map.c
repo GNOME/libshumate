@@ -598,13 +598,12 @@ on_rotate_gesture_update (ShumateMap *self,
 
 static void
 on_click_gesture_pressed (ShumateMap      *self,
-                          gint             n_press,
-                          gdouble          x,
-                          gdouble          y,
+                          int              n_press,
+                          double           x,
+                          double           y,
                           GtkGestureClick *click)
 {
-  guint current_button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (click));
-  if (current_button == GDK_BUTTON_PRIMARY && n_press == 2)
+  if (n_press == 2)
     {
       double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
       self->current_x = x;
@@ -863,6 +862,7 @@ shumate_map_init (ShumateMap *self)
   gtk_gesture_group (zoom_gesture, rotate_gesture);
 
   click_gesture = gtk_gesture_click_new ();
+  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (click_gesture), GDK_BUTTON_PRIMARY);
   g_signal_connect_swapped (click_gesture, "pressed", G_CALLBACK (on_click_gesture_pressed), self);
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
 
