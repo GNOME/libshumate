@@ -49,15 +49,6 @@ void shumate_marker_layer_remove_all (ShumateMarkerLayer *layer);
 GList *shumate_marker_layer_get_markers (ShumateMarkerLayer *layer);
 GList *shumate_marker_layer_get_selected (ShumateMarkerLayer *layer);
 
-void shumate_marker_layer_animate_in_all_markers (ShumateMarkerLayer *layer);
-void shumate_marker_layer_animate_out_all_markers (ShumateMarkerLayer *layer);
-
-void shumate_marker_layer_show_all_markers (ShumateMarkerLayer *layer);
-void shumate_marker_layer_hide_all_markers (ShumateMarkerLayer *layer);
-
-void shumate_marker_layer_set_all_markers_draggable (ShumateMarkerLayer *layer);
-void shumate_marker_layer_set_all_markers_undraggable (ShumateMarkerLayer *layer);
-
 gboolean shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
 void shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
 void shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer);
