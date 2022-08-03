@@ -107,6 +107,16 @@ shumate_layer_constructed (GObject *object)
   G_OBJECT_CLASS (shumate_layer_parent_class)->constructed (object);
 }
 
+static gboolean
+shumate_layer_contains (GtkWidget *widget,
+                        double     x,
+                        double     y)
+{
+  /* This allows mouse events on the empty space between markers in this layer
+   * to fall through to lower layers. */
+  return FALSE;
+}
+
 static void
 shumate_layer_class_init (ShumateLayerClass *klass)
 {
@@ -117,6 +127,8 @@ shumate_layer_class_init (ShumateLayerClass *klass)
   object_class->get_property = shumate_layer_get_property;
   object_class->dispose = shumate_layer_dispose;
   object_class->constructed = shumate_layer_constructed;
+
+  widget_class->contains = shumate_layer_contains;
 
   obj_properties[PROP_VIEWPORT] =
     g_param_spec_object ("viewport",
