@@ -49,7 +49,6 @@
 enum
 {
   PROP_SELECTABLE = 1,
-  PROP_DRAGGABLE,
   PROP_CHILD,
   N_PROPERTIES,
 
@@ -67,7 +66,6 @@ typedef struct
   gboolean selected;
 
   gboolean selectable;
-  gboolean draggable;
 
   float click_x;
   float click_y;
@@ -162,10 +160,6 @@ shumate_marker_get_property (GObject *object,
       g_value_set_boolean (value, priv->selectable);
       break;
 
-    case PROP_DRAGGABLE:
-      g_value_set_boolean (value, priv->draggable);
-      break;
-
     case PROP_CHILD:
       g_value_set_object (value, priv->child);
       break;
@@ -205,13 +199,6 @@ shumate_marker_set_property (GObject *object,
       {
         gboolean bvalue = g_value_get_boolean (value);
         shumate_marker_set_selectable (marker, bvalue);
-        break;
-      }
-
-    case PROP_DRAGGABLE:
-      {
-        gboolean bvalue = g_value_get_boolean (value);
-        shumate_marker_set_draggable (marker, bvalue);
         break;
       }
 
@@ -271,18 +258,6 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
-  /**
-   * ShumateMarker:draggable:
-   *
-   * The draggable state of the marker
-   */
-  obj_properties[PROP_DRAGGABLE] =
-    g_param_spec_boolean ("draggable",
-                          "Draggable",
-                          "The draggable state of the marker",
-                          FALSE,
-                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
-
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
   g_object_class_override_property (object_class,
@@ -306,7 +281,6 @@ shumate_marker_init (ShumateMarker *self)
   priv->lon = 0;
   priv->selected = FALSE;
   priv->selectable = TRUE;
-  priv->draggable = FALSE;
 }
 
 static void
@@ -393,46 +367,6 @@ shumate_marker_get_selectable (ShumateMarker *marker)
   g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
 
   return priv->selectable;
-}
-
-
-/**
- * shumate_marker_set_draggable:
- * @marker: a #ShumateMarker
- * @value: the draggable state
- *
- * Sets the marker as draggable or not.
- */
-void
-shumate_marker_set_draggable (ShumateMarker *marker,
-                              gboolean       value)
-{
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_if_fail (SHUMATE_IS_MARKER (marker));
-
-  priv->draggable = value;
-
-  g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_DRAGGABLE]);
-}
-
-
-/**
- * shumate_marker_get_draggable:
- * @marker: a #ShumateMarker
- *
- * Checks whether the marker is draggable.
- *
- * Returns: the draggable or not state of the marker.
- */
-gboolean
-shumate_marker_get_draggable (ShumateMarker *marker)
-{
-  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
-
-  g_return_val_if_fail (SHUMATE_IS_MARKER (marker), FALSE);
-
-  return priv->draggable;
 }
 
 /**
