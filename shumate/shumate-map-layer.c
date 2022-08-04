@@ -173,6 +173,14 @@ add_symbols (ShumateMapLayer  *self,
 static void recompute_grid (ShumateMapLayer *self);
 
 static void
+on_tile_notify_state (ShumateMapLayer          *self,
+                      G_GNUC_UNUSED GParamSpec *pspec,
+                      ShumateTile              *tile)
+{
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+}
+
+static void
 on_tile_filled (GObject      *source_object,
                 GAsyncResult *res,
                 gpointer      user_data)
@@ -221,8 +229,9 @@ add_tile (ShumateMapLayer  *self,
       g_hash_table_insert (self->tile_fill, g_object_ref (tile), cancellable);
     }
 
-  gtk_widget_insert_before (GTK_WIDGET (tile), GTK_WIDGET (self), NULL);
   g_hash_table_insert (self->tile_children, pos, g_object_ref (tile));
+  gtk_widget_queue_draw (GTK_WIDGET (self));
+  g_signal_connect_object (tile, "notify::state", (GCallback)on_tile_notify_state, self, G_CONNECT_SWAPPED);
 }
 
 static void
@@ -241,15 +250,14 @@ remove_tile (ShumateMapLayer  *self,
   shumate_vector_symbol_container_remove_symbols (self->symbols, pos->x, pos->y, pos->zoom);
 #endif
 
-  gtk_widget_unparent (GTK_WIDGET (tile));
+  g_signal_handlers_disconnect_by_func (tile, on_tile_notify_state, self);
 }
 
 static void
 recompute_grid (ShumateMapLayer *self)
 {
   /* Computes which tile positions are visible, ensures that all the right
-   * tiles are added to the ShumateMapLayer widget, and removes tiles which are
-   * no longer visible. */
+   * tiles are loaded, and removes tiles which are no longer visible. */
 
   GHashTableIter iter;
   gpointer key, value;
@@ -376,6 +384,7 @@ queue_recompute_grid_in_idle (ShumateMapLayer *self)
                            "[shumate] recompute_grid_in_idle_cb");
 }
 
+
 static void
 on_view_longitude_changed (ShumateMapLayer *self,
                            GParamSpec      *pspec,
@@ -384,7 +393,6 @@ on_view_longitude_changed (ShumateMapLayer *self,
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
   recompute_grid (self);
-  gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
 static void
@@ -395,7 +403,6 @@ on_view_latitude_changed (ShumateMapLayer *self,
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
   recompute_grid (self);
-  gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
 static void
@@ -406,7 +413,6 @@ on_view_zoom_level_changed (ShumateMapLayer *self,
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
   recompute_grid (self);
-  gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
 static void
@@ -416,7 +422,7 @@ on_view_rotation_changed (ShumateMapLayer *self,
 {
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  gtk_widget_queue_allocate (GTK_WIDGET (self));
+  recompute_grid (self);
 }
 
 static void
@@ -506,36 +512,7 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
                                  int        baseline)
 {
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
-  ShumateViewport *viewport;
   GtkAllocation child_allocation;
-  int tile_size;
-  int zoom_level;
-  double latitude, longitude;
-  int longitude_x, latitude_y;
-
-  GHashTableIter iter;
-  gpointer key, value;
-
-  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
-  zoom_level = (guint) shumate_viewport_get_zoom_level (viewport);
-  latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
-  longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
-  latitude_y = (guint) shumate_map_source_get_y (self->map_source, zoom_level, latitude);
-  longitude_x = (guint) shumate_map_source_get_x (self->map_source, zoom_level, longitude);
-
-  g_hash_table_iter_init (&iter, self->tile_children);
-  while (g_hash_table_iter_next (&iter, &key, &value))
-    {
-      TileGridPosition *pos = key;
-      ShumateTile *tile = value;
-
-      child_allocation.width = tile_size * pow (2, zoom_level - pos->zoom);
-      child_allocation.height = child_allocation.width;
-      child_allocation.x = -(longitude_x - width/2) + child_allocation.width * pos->x;
-      child_allocation.y = -(latitude_y - height/2) + child_allocation.height * pos->y;
-      gtk_widget_size_allocate (GTK_WIDGET (tile), &child_allocation, baseline);
-    }
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   /* gtk_widget_measure needs to be called during size_allocate, but we don't
@@ -550,10 +527,8 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   gtk_widget_size_allocate (GTK_WIDGET (self->symbols), &child_allocation, baseline);
 #endif
 
-  /* We can't recompute while allocating, so queue an idle callback to run
-   * the recomputation outside the allocation cycle.
-   */
-  queue_recompute_grid_in_idle (self);
+  /* Make sure the tile grid is up to date */
+  recompute_grid (self);
 }
 
 static void
@@ -595,25 +570,48 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   double zoom_level = shumate_viewport_get_zoom_level (viewport);
-  double extra_zoom = pow (2.0, fmod (zoom_level, 1.0));
   int width = gtk_widget_get_width (GTK_WIDGET (self));
   int height = gtk_widget_get_height (GTK_WIDGET (self));
   double rotation = shumate_viewport_get_rotation (viewport);
-  GtkWidget *child;
+  double latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
+  double longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
+  double latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
+  double longitude_x = shumate_map_source_get_x (self->map_source, zoom_level, longitude);
+  int tile_size = shumate_map_source_get_tile_size (self->map_source);
+
+  GHashTableIter iter;
+  gpointer key;
+  gpointer value;
 
   /* Scale and rotate around the center of the view */
   gtk_snapshot_save (snapshot);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
-  gtk_snapshot_scale (snapshot, extra_zoom, extra_zoom);
   gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
 
-  for (child = gtk_widget_get_first_child (widget);
-       child != NULL;
-       child = gtk_widget_get_next_sibling (child))
+  g_hash_table_iter_init (&iter, self->tile_children);
+
+  while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      if (SHUMATE_IS_TILE (child))
-        gtk_widget_snapshot_child (widget, child, snapshot);
+      TileGridPosition *pos = key;
+      ShumateTile *tile = value;
+      GdkPaintable *paintable = shumate_tile_get_paintable (tile);
+      double size = tile_size * pow (2, zoom_level - pos->zoom);
+
+      if (paintable == NULL)
+        continue;
+
+      gtk_snapshot_save (snapshot);
+
+      gtk_snapshot_translate (snapshot,
+                              &GRAPHENE_POINT_INIT (
+                                -(longitude_x - width/2.0) + size * pos->x,
+                                -(latitude_y - height/2.0) + size * pos->y
+                              ));
+
+      gdk_paintable_snapshot (paintable, snapshot, size, size);
+
+      gtk_snapshot_restore (snapshot);
     }
 
   gtk_snapshot_restore (snapshot);

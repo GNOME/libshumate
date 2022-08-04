@@ -28,7 +28,7 @@
 G_BEGIN_DECLS
 
 #define SHUMATE_TYPE_TILE shumate_tile_get_type ()
-G_DECLARE_FINAL_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GtkWidget)
+G_DECLARE_FINAL_TYPE (ShumateTile, shumate_tile, SHUMATE, TILE, GObject)
 
 /**
  * ShumateState:

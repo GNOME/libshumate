@@ -37,7 +37,7 @@
 
 struct _ShumateTile
 {
-  GtkWidget parent_instance;
+  GObject parent_instance;
 
   guint x; /* The x position on the map (in pixels) */
   guint y; /* The y position on the map (in pixels) */
@@ -51,7 +51,7 @@ struct _ShumateTile
   GPtrArray *symbols;
 };
 
-G_DEFINE_TYPE (ShumateTile, shumate_tile, GTK_TYPE_WIDGET);
+G_DEFINE_TYPE (ShumateTile, shumate_tile, G_TYPE_OBJECT);
 
 enum
 {
@@ -66,46 +66,6 @@ enum
 };
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
-
-static void
-shumate_tile_snapshot (GtkWidget   *widget,
-                       GtkSnapshot *snapshot)
-{
-  ShumateTile *self = SHUMATE_TILE (widget);
-  GdkPaintable *paintable = self->paintable;
-
-  if (paintable)
-    {
-      gdk_paintable_snapshot (paintable,
-                              snapshot,
-                              gtk_widget_get_width (widget),
-                              gtk_widget_get_height (widget));
-    }
-}
-
-static GtkSizeRequestMode 
-shumate_tile_get_request_mode (GtkWidget *widget)
-{
-  return GTK_SIZE_REQUEST_CONSTANT_SIZE;
-}
-
-static void
-shumate_tile_measure (GtkWidget      *widget,
-                      GtkOrientation  orientation,
-                      int             for_size,
-                      int            *minimum,
-                      int            *natural,
-                      int            *minimum_baseline,
-                      int            *natural_baseline)
-{
-  ShumateTile *self = SHUMATE_TILE (widget);
-
-  if (minimum)
-    *minimum = 0;
-
-  if (natural)
-    *natural = self->size;
-}
 
 static void
 shumate_tile_get_property (GObject    *object,
@@ -211,15 +171,10 @@ static void
 shumate_tile_class_init (ShumateTileClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
-  GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->get_property = shumate_tile_get_property;
   object_class->set_property = shumate_tile_set_property;
   object_class->dispose = shumate_tile_dispose;
-
-  widget_class->snapshot = shumate_tile_snapshot;
-  widget_class->measure = shumate_tile_measure;
-  widget_class->get_request_mode = shumate_tile_get_request_mode;
   
   /**
    * ShumateTile:x:
@@ -305,7 +260,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
   /**
    * ShumateTile:paintable:
    *
-   * The #GdkPaintable backing the tile
+   * The [class@Gdk.Paintable] backing the tile
    */
   obj_properties[PROP_PAINTABLE] =
     g_param_spec_object ("paintable",
@@ -317,8 +272,6 @@ shumate_tile_class_init (ShumateTileClass *klass)
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
-
-  gtk_widget_class_set_css_name (widget_class, "map-tile");
 }
 
 
@@ -597,11 +550,11 @@ shumate_tile_set_fade_in (ShumateTile *self,
 
 /**
  * shumate_tile_get_paintable:
- * @self: the #ShumateTile
+ * @self: the [class@Tile]
  *
- * Get the #GdkPaintable representing this tile.
+ * Get the [class@Gdk.Paintable] representing this tile.
  *
- * Returns: (transfer none) (nullable): A #GdkPaintable
+ * Returns: (transfer none) (nullable): A [class@Gdk.Paintable]
  */
 GdkPaintable *
 shumate_tile_get_paintable (ShumateTile *self)
@@ -613,10 +566,10 @@ shumate_tile_get_paintable (ShumateTile *self)
 
 /**
  * shumate_tile_set_paintable:
- * @self: the #ShumateTile
- * @paintable: a #GdkPaintable
+ * @self: the [class@Tile]
+ * @paintable: a [class@Gdk.Paintable]
  *
- * Sets the #GdkPaintable representing this tile.
+ * Sets the [class@Gdk.Paintable] representing this tile.
  */
 void
 shumate_tile_set_paintable (ShumateTile  *self,
@@ -625,10 +578,7 @@ shumate_tile_set_paintable (ShumateTile  *self,
   g_return_if_fail (SHUMATE_TILE (self));
 
   if (g_set_object (&self->paintable, paintable))
-    {
-      g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_PAINTABLE]);
-      gtk_widget_queue_draw (GTK_WIDGET (self));
-    }
+    g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_PAINTABLE]);
 }
 
 
