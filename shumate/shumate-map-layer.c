@@ -356,6 +356,8 @@ recompute_grid (ShumateMapLayer *self)
   self->tile_initial_row = tile_initial_row;
   self->required_tiles_columns = required_columns;
   self->required_tiles_rows = required_rows;
+
+  gtk_widget_queue_draw (GTK_WIDGET (self));
 }
 
 static gboolean
