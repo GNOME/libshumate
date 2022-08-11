@@ -6,7 +6,7 @@ fedora:
   stage: build
   image: registry.gitlab.gnome.org/gnome/gtk/fedora:v38
   script:
-    - sudo dnf install -y vala sqlite-devel libsoup-devel gtk4-devel protobuf-c-devel
+    - sudo dnf install -y vala sqlite-devel libsoup-devel gtk4-devel protobuf-c-devel gcovr
     - meson _build -Db_coverage=true -Dgtk_doc=true
     - xvfb-run ninja -C _build test
     - ninja -C _build coverage
@@ -17,6 +17,11 @@ fedora:
     paths:
     - docs
     - coverage
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: _build/meson-logs/coverage.xml
+
 
 pages:
   stage: pages
