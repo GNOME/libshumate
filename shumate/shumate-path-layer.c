@@ -78,39 +78,9 @@ struct _ShumatePathLayer
 G_DEFINE_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE_TYPE_LAYER);
 
 static void
-on_view_longitude_changed (ShumatePathLayer *self,
-                           GParamSpec       *pspec,
-                           ShumateViewport  *view)
-{
-  g_assert (SHUMATE_IS_PATH_LAYER (self));
-
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-on_view_latitude_changed (ShumatePathLayer *self,
-                          GParamSpec       *pspec,
-                          ShumateViewport  *view)
-{
-  g_assert (SHUMATE_IS_PATH_LAYER (self));
-
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-on_view_zoom_level_changed (ShumatePathLayer *self,
-                            GParamSpec       *pspec,
-                            ShumateViewport  *view)
-{
-  g_assert (SHUMATE_IS_PATH_LAYER (self));
-
-  gtk_widget_queue_draw (GTK_WIDGET (self));
-}
-
-static void
-on_view_rotation_changed (ShumatePathLayer *self,
-                          GParamSpec       *pspec,
-                          ShumateViewport  *view)
+on_viewport_changed (ShumatePathLayer *self,
+                     GParamSpec       *pspec,
+                     ShumateViewport  *view)
 {
   g_assert (SHUMATE_IS_PATH_LAYER (self));
 
@@ -243,10 +213,7 @@ shumate_path_layer_constructed (GObject *object)
   G_OBJECT_CLASS (shumate_path_layer_parent_class)->constructed (object);
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
+  g_signal_connect_swapped (viewport, "notify", G_CALLBACK (on_viewport_changed), self);
 }
 
 

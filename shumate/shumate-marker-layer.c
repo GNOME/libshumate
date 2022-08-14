@@ -156,39 +156,9 @@ shumate_marker_layer_reposition_markers (ShumateMarkerLayer *self)
 }
 
 static void
-on_view_longitude_changed (ShumateMarkerLayer *self,
-                           GParamSpec      *pspec,
-                           ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MARKER_LAYER (self));
-
-  shumate_marker_layer_reposition_markers (self);
-}
-
-static void
-on_view_latitude_changed (ShumateMarkerLayer *self,
-                          GParamSpec      *pspec,
-                          ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MARKER_LAYER (self));
-
-  shumate_marker_layer_reposition_markers (self);
-}
-
-static void
-on_view_zoom_level_changed (ShumateMarkerLayer *self,
-                            GParamSpec      *pspec,
-                            ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MARKER_LAYER (self));
-
-  shumate_marker_layer_reposition_markers (self);
-}
-
-static void
-on_view_rotation_changed (ShumateMarkerLayer *self,
-                          GParamSpec      *pspec,
-                          ShumateViewport *view)
+on_viewport_changed (ShumateMarkerLayer *self,
+                     GParamSpec         *pspec,
+                     ShumateViewport    *view)
 {
   g_assert (SHUMATE_IS_MARKER_LAYER (self));
 
@@ -321,10 +291,7 @@ shumate_marker_layer_constructed (GObject *object)
   G_OBJECT_CLASS (shumate_marker_layer_parent_class)->constructed (object);
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
+  g_signal_connect_swapped (viewport, "notify", G_CALLBACK (on_viewport_changed), self);
 
 }
 
