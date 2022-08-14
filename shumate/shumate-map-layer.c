@@ -376,6 +376,13 @@ recompute_grid_in_idle_cb (gpointer user_data)
 static void
 queue_recompute_grid_in_idle (ShumateMapLayer *self)
 {
+  /* recompute_grid might add symbols to the map, which we can't do during
+   * certain operations, like size_allocate. So, in most cases, we schedule
+   * it to run later (but before the next frame) instead.
+   * Also, since we make sure to only have one queued recompute_grid at once,
+   * it has a nice side effect of running the function only once even if
+   * several viewport properties change at once. */
+
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
   if (self->recompute_grid_idle_id > 0)
@@ -388,43 +395,13 @@ queue_recompute_grid_in_idle (ShumateMapLayer *self)
 
 
 static void
-on_view_longitude_changed (ShumateMapLayer *self,
-                           GParamSpec      *pspec,
-                           ShumateViewport *view)
+on_viewport_changed (ShumateMapLayer *self,
+                     GParamSpec      *pspec,
+                     ShumateViewport *view)
 {
   g_assert (SHUMATE_IS_MAP_LAYER (self));
 
-  recompute_grid (self);
-}
-
-static void
-on_view_latitude_changed (ShumateMapLayer *self,
-                          GParamSpec      *pspec,
-                          ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  recompute_grid (self);
-}
-
-static void
-on_view_zoom_level_changed (ShumateMapLayer *self,
-                            GParamSpec      *pspec,
-                            ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  recompute_grid (self);
-}
-
-static void
-on_view_rotation_changed (ShumateMapLayer *self,
-                          GParamSpec      *pspec,
-                          ShumateViewport *view)
-{
-  g_assert (SHUMATE_IS_MAP_LAYER (self));
-
-  recompute_grid (self);
+  queue_recompute_grid_in_idle (self);
 }
 
 static void
@@ -496,10 +473,7 @@ shumate_map_layer_constructed (GObject *object)
   G_OBJECT_CLASS (shumate_map_layer_parent_class)->constructed (object);
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_view_longitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_view_latitude_changed), self);
-  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_view_zoom_level_changed), self);
-  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_view_rotation_changed), self);
+  g_signal_connect_swapped (viewport, "notify", G_CALLBACK (on_viewport_changed), self);
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->symbols = shumate_vector_symbol_container_new (self->map_source, viewport);
@@ -530,7 +504,7 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
 #endif
 
   /* Make sure the tile grid is up to date */
-  recompute_grid (self);
+  queue_recompute_grid_in_idle (self);
 }
 
 static void
