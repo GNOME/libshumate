@@ -215,14 +215,14 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       float tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
       float x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
       float y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
-      int width, height;
+      int child_width, child_height;
 
       gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), child->marker->visible);
       if (!child->marker->visible)
         continue;
 
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &width, NULL, NULL);
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &height, NULL, NULL);
+      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &child_width, NULL, NULL);
+      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &child_height, NULL, NULL);
 
       rotate_around_center (&x, &y, width, height, rotation);
       alloc.x = x - child->width/2.0;
