@@ -484,6 +484,8 @@ shumate_viewport_set_rotation (ShumateViewport *self,
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
 
   rotation = fmod (rotation, G_PI * 2.0);
+  if (rotation < 0)
+    rotation += G_PI * 2.0;
 
   if (self->rotation == rotation)
     return;
