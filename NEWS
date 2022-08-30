@@ -1,4 +1,13 @@
 =====================
+Version 1.0.0.beta
+=====================
+
+- Finalized 1.0.0 API/ABI
+- Various code cleanups
+- Enabled localization support
+- Changed the URL template for map sources
+
+=====================
 Version 1.0.0.alpha.1
 =====================
 
