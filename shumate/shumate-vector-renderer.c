@@ -443,20 +443,23 @@ shumate_vector_renderer_get_style_json (ShumateVectorRenderer *self)
  * See <https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/> for
  * details about the spritesheet format. Most stylesheets provide these files
  * along with the main style JSON.
+ *
+ * Returns: whether the sprite sheet was loaded successfully
  */
-void
+gboolean
 shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
                                                GdkPixbuf              *sprites_pixbuf,
                                                const char             *sprites_json,
                                                GError                **error)
 {
-  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
-  g_return_if_fail (GDK_IS_PIXBUF (sprites_pixbuf));
-  g_return_if_fail (sprites_json != NULL);
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), FALSE);
+  g_return_val_if_fail (GDK_IS_PIXBUF (sprites_pixbuf), FALSE);
+  g_return_val_if_fail (sprites_json != NULL, FALSE);
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_clear_object (&self->sprites);
   self->sprites = shumate_vector_sprite_sheet_new (sprites_pixbuf, sprites_json, NULL, error);
+  return self->sprites != NULL;
 #else
   g_set_error (error,
                SHUMATE_STYLE_ERROR,
