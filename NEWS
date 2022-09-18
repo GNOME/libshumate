@@ -1,4 +1,10 @@
 =====================
+Version 1.0.1
+=====================
+
+ - Release 1.0.1 to avoud Meson considering 1.0.0 < 1.0.0.beta
+
+=====================
 Version 1.0.0
 
  - Fix build error with Clang
