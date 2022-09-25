@@ -37,6 +37,10 @@ typedef enum {
   EXPR_GE,
   EXPR_LE,
   EXPR_CASE,
+  EXPR_ADD,
+  EXPR_SUB,
+  EXPR_MUL,
+  EXPR_DIV,
 } ExpressionType;
 
 struct _ShumateVectorExpressionFilter
@@ -148,6 +152,26 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
   else if (g_strcmp0 ("<=", op) == 0)
     {
       self->type = EXPR_LE;
+      expect_exprs = 2;
+    }
+  else if (g_strcmp0 ("+", op) == 0)
+    {
+      self->type = EXPR_ADD;
+      expect_ge_exprs = 1;
+    }
+  else if (g_strcmp0 ("-", op) == 0)
+    {
+      self->type = EXPR_SUB;
+      expect_ge_exprs = 1;
+    }
+  else if (g_strcmp0 ("*", op) == 0)
+    {
+      self->type = EXPR_MUL;
+      expect_ge_exprs = 1;
+    }
+  else if (g_strcmp0 ("/", op) == 0)
+    {
+      self->type = EXPR_DIV;
       expect_exprs = 2;
     }
   else if (g_strcmp0 ("case", op) == 0)
@@ -380,6 +404,79 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         return FALSE;
 
       shumate_vector_value_set_boolean (out, (number < number2) ^ inverted);
+      return TRUE;
+
+    case EXPR_ADD:
+      number = 0;
+
+      for (int i = 0; i < n_expressions; i ++)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value, &number2))
+            return FALSE;
+
+          number += number2;
+        }
+
+      shumate_vector_value_set_number (out, number);
+      return TRUE;
+
+    case EXPR_SUB:
+      g_assert (n_expressions >= 1);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      if (n_expressions == 1)
+        shumate_vector_value_set_number (out, 0 - number);
+      else
+        {
+          if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value2, &number2))
+            return FALSE;
+
+          shumate_vector_value_set_number (out, number - number2);
+        }
+      return TRUE;
+
+    case EXPR_MUL:
+      g_assert (n_expressions >= 1);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      for (int i = 1; i < n_expressions; i ++)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value, &number2))
+            return FALSE;
+
+          number *= number2;
+        }
+
+      shumate_vector_value_set_number (out, number);
+      return TRUE;
+
+    case EXPR_DIV:
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+        return FALSE;
+
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value2, &number2))
+        return FALSE;
+
+      shumate_vector_value_set_number (out, number / number2);
+
       return TRUE;
 
     case EXPR_CASE:
