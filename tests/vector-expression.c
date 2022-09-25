@@ -167,6 +167,10 @@ test_vector_expression_basic_filter (void)
   g_assert_true  (filter ("[\"<=\", 10, 20]"));
   g_assert_true  (filter ("[\"<=\", 10, 10]"));
   g_assert_false (filter ("[\"<=\", 10, 5]"));
+
+  g_assert_true (filter ("[\"==\", [\"case\", true, 0, 1], 0]"));
+  g_assert_true (filter ("[\"==\", [\"case\", false, 0, 1], 1]"));
+  g_assert_true (filter ("[\"==\", [\"case\", false, 0, true, 2], 2]"));
 }
 
 

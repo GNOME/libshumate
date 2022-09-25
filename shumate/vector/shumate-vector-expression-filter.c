@@ -36,6 +36,7 @@ typedef enum {
   EXPR_LT,
   EXPR_GE,
   EXPR_LE,
+  EXPR_CASE,
 } ExpressionType;
 
 struct _ShumateVectorExpressionFilter
@@ -149,6 +150,8 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       self->type = EXPR_LE;
       expect_exprs = 2;
     }
+  else if (g_strcmp0 ("case", op) == 0)
+    self->type = EXPR_CASE;
   else
     {
       g_set_error (error,
@@ -378,6 +381,35 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
       shumate_vector_value_set_boolean (out, (number < number2) ^ inverted);
       return TRUE;
+
+    case EXPR_CASE:
+      for (int i = 0; i < n_expressions; i += 2)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            return FALSE;
+
+          if (i + 1 == n_expressions)
+            {
+              /* fallback value */
+              shumate_vector_value_copy (&value, out);
+              return TRUE;
+            }
+          else
+            {
+              gboolean bool_result;
+              shumate_vector_value_get_boolean (&value, &bool_result);
+              if (bool_result)
+                {
+                  if (!shumate_vector_expression_eval (expressions[i + 1], scope, &value))
+                    return FALSE;
+                  shumate_vector_value_copy (&value, out);
+                  return TRUE;
+                }
+            }
+        }
+
+      /* no case matched and there was no fallback */
+      return FALSE;
 
     default:
       g_assert_not_reached ();
