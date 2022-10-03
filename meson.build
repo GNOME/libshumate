@@ -18,11 +18,7 @@ version_major = version_arr[0]
 version_minor = version_arr[1]
 version_micro = version_arr[2]
 
-if version_minor.to_int().is_odd()
-  api_version = '.'.join([version_major, version_minor + 1])
-else
-  api_version = '.'.join([version_major, version_minor])
-endif
+api_version = '.'.join([version_major, version_minor])
 
 lib_version = '1.0'
 
