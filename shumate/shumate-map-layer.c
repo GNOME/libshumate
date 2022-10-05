@@ -563,6 +563,12 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   gtk_snapshot_save (snapshot);
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
   gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
+
+#define SHUMATE_DEBUG_MAP_LAYER 0
+#if SHUMATE_DEBUG_MAP_LAYER
+  gtk_snapshot_scale (snapshot, 0.5, 0.5);
+#endif
+
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
 
   g_hash_table_iter_init (&iter, self->tile_children);
@@ -591,6 +597,17 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
     }
 
   gtk_snapshot_restore (snapshot);
+
+#if SHUMATE_DEBUG_MAP_LAYER
+  float border_width[] = { 3, 3, 3, 3 };
+  GdkRGBA colors[4] = {
+    { 0, 0, 0, 1 },
+    { 0, 0, 0, 1 },
+    { 0, 0, 0, 1 },
+    { 0, 0, 0, 1 },
+  };
+  gtk_snapshot_append_border (snapshot, &GSK_ROUNDED_RECT_INIT (width * 0.25, height * 0.25, width * 0.5, height * 0.5), border_width, colors);
+#endif
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   gtk_widget_snapshot_child (widget, GTK_WIDGET (self->symbols), snapshot);
