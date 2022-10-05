@@ -39,13 +39,11 @@ struct _ShumateMapLayer
   ShumateMapSource *map_source;
 
   GHashTable *tile_children;
-  int tile_initial_row;
-  int tile_initial_column;
-  int required_tiles_rows;
-  int required_tiles_columns;
   GHashTable *tile_fill;
 
   guint recompute_grid_idle_id;
+
+  float last_recompute_x, last_recompute_y;
 
   ShumateMemoryCache *memcache;
 
@@ -352,10 +350,8 @@ recompute_grid (ShumateMapLayer *self)
         }
     }
 
-  self->tile_initial_column = tile_initial_column;
-  self->tile_initial_row = tile_initial_row;
-  self->required_tiles_columns = required_columns;
-  self->required_tiles_rows = required_rows;
+  self->last_recompute_y = latitude_y / (double) (tile_size * source_rows);
+  self->last_recompute_x = longitude_x / (double) (tile_size * source_columns);
 
   gtk_widget_queue_draw (GTK_WIDGET (self));
 }
@@ -540,6 +536,14 @@ shumate_map_layer_measure (GtkWidget      *widget,
     }
 }
 
+static double
+snap_coordinate (double point,
+                 double translate,
+                 double size)
+{
+  return round ((point - translate) / size) * size + translate;
+}
+
 static void
 shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 {
@@ -554,10 +558,35 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   double latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
   double longitude_x = shumate_map_source_get_x (self->map_source, zoom_level, longitude);
   int tile_size = shumate_map_source_get_tile_size (self->map_source);
+  double tile_size_for_zoom = shumate_map_source_get_tile_size_at_zoom (self->map_source, zoom_level);
+  double map_width = shumate_map_source_get_column_count (self->map_source, zoom_level)
+    * tile_size_for_zoom;
+  double map_height = shumate_map_source_get_row_count (self->map_source, zoom_level)
+    * tile_size_for_zoom;
 
   GHashTableIter iter;
   gpointer key;
   gpointer value;
+
+  /* Because Earth is round [citation needed], cylindrical projections like
+   * Mercator wrap around at the antimeridian. Moving across the antimeridian
+   * is the same as teleporting across the world: at one frame the longitude
+   * is just less than 180, and the next it's just more than -180.
+   *
+   * ShumateMapLayer doesn't handle teleportation well. Widgets can only be
+   * added/removed between frames, but animations are calculated during the
+   * frame. This means that by the time we know about the new viewport location,
+   * it's too late to move tiles around. recompute_grid(), which will fix the
+   * problem, won't be called until after the current frame.
+   *
+   * To fix this, recompute_grid() remembers the most recent location
+   * it saw. Then, to reduce "teleportation", here in snapshot() we render
+   * the "copy" of the new location that is closest to the one from
+   * recompute_grid(). This just means snapping the current location to a grid
+   * translated by the old location.
+   * */
+  longitude_x = snap_coordinate (self->last_recompute_x * map_width, longitude_x, map_width);
+  latitude_y = snap_coordinate (self->last_recompute_y * map_height, latitude_y, map_height);
 
   /* Scale and rotate around the center of the view */
   gtk_snapshot_save (snapshot);
