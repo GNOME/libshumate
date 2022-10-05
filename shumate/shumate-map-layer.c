@@ -284,11 +284,12 @@ recompute_grid (ShumateMapLayer *self)
   );
 
   // This is the (column, row) of the top left tile
-  int tile_initial_column = floor ((longitude_x - size_x) / (double) tile_size);
-  int tile_initial_row = floor ((latitude_y - size_y) / (double) tile_size);
-
-  int required_columns = (size_x * 2 / tile_size) + 2;
-  int required_rows = (size_y * 2 / tile_size) + 2;
+  int tile_initial_column = floor ((longitude_x - size_x) / (double) tile_size) - 1;
+  int tile_initial_row = floor ((latitude_y - size_y) / (double) tile_size) - 1;
+  int tile_final_column = ceil ((longitude_x + size_x) / (double) tile_size) + 1;
+  int tile_final_row = ceil ((latitude_y + size_y) / (double) tile_size) + 1;
+  int required_columns = tile_final_column - tile_initial_column;
+  int required_rows = tile_final_row - tile_initial_row;
 
   gboolean all_filled = TRUE;
 
@@ -312,8 +313,7 @@ recompute_grid (ShumateMapLayer *self)
         }
     }
 
-  /* Next, make sure every visible tile position has a matching ShumateTile
-   * widget. */
+  /* Next, make sure every visible tile position has a matching ShumateTile. */
   for (int x = tile_initial_column; x < tile_initial_column + required_columns; x ++)
     {
       for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
