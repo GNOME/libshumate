@@ -23,10 +23,10 @@
 /**
  * ShumateTileDownloader:
  *
- * A [class@Shumate.DataSource] that asynchronously downloads tiles from an online
+ * A [class@DataSource] that asynchronously downloads tiles from an online
  * service using a given template.
  *
- * It contains an internal [class@Shumate.FileCache] to cache the tiles on the system.
+ * It contains an internal [class@FileCache] to cache the tiles on the system.
  */
 
 struct _ShumateTileDownloader
@@ -163,10 +163,10 @@ shumate_tile_downloader_class_init (ShumateTileDownloaderClass *klass)
    * A template for construting the URL to download a tile from.
    *
    * The template has the following replacements:
-   * - "#X#": The X coordinate of the tile
-   * - "#Y#": The Y coordinate of the tile
-   * - "#Z#": The zoom level of the tile
-   * - "#TMSY#": The inverted Y coordinate (i.e. tile numbering starts with 0 at
+   * - "{x}": The X coordinate of the tile
+   * - "{y}": The Y coordinate of the tile
+   * - "{z}": The zoom level of the tile
+   * - "{tmsy}": The inverted Y coordinate (i.e. tile numbering starts with 0 at
    * the bottom, rather than top, of the map)
    */
   properties[PROP_URL_TEMPLATE] =
@@ -231,7 +231,6 @@ get_modified_time_string (GDateTime *modified_time)
 }
 
 
-#define SIZE 8
 static char *
 get_tile_uri (ShumateTileDownloader *self,
               int                    x,
