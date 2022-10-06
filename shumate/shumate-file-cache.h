@@ -57,12 +57,12 @@ ShumateFileCache *shumate_file_cache_new_full (guint size_limit,
     const char *cache_key,
     const char *cache_dir);
 
-guint shumate_file_cache_get_size_limit (ShumateFileCache *file_cache);
-void shumate_file_cache_set_size_limit (ShumateFileCache *file_cache,
+guint shumate_file_cache_get_size_limit (ShumateFileCache *self);
+void shumate_file_cache_set_size_limit (ShumateFileCache *self,
     guint size_limit);
 
-const char *shumate_file_cache_get_cache_dir (ShumateFileCache *file_cache);
-const char *shumate_file_cache_get_cache_key (ShumateFileCache *file_cache);
+const char *shumate_file_cache_get_cache_dir (ShumateFileCache *self);
+const char *shumate_file_cache_get_cache_key (ShumateFileCache *self);
 
 void shumate_file_cache_purge_cache_async (ShumateFileCache *self,
                                            GCancellable *cancellable,
