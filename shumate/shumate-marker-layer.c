@@ -372,9 +372,9 @@ shumate_marker_layer_init (ShumateMarkerLayer *self)
  * shumate_marker_layer_new:
  * @viewport: the @ShumateViewport
  *
- * Creates a new instance of #ShumateMarkerLayer.
+ * Creates a new instance of [class@MarkerLayer].
  *
- * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
+ * Returns: a new [class@MarkerLayer] ready to be used as a container for the markers.
  */
 ShumateMarkerLayer *
 shumate_marker_layer_new (ShumateViewport *viewport)
@@ -390,9 +390,9 @@ shumate_marker_layer_new (ShumateViewport *viewport)
  * @viewport: the @ShumateViewport
  * @mode: Selection mode
  *
- * Creates a new instance of #ShumateMarkerLayer with the specified selection mode.
+ * Creates a new instance of [class@MarkerLayer] with the specified selection mode.
  *
- * Returns: a new #ShumateMarkerLayer ready to be used as a container for the markers.
+ * Returns: a new [class@MarkerLayer] ready to be used as a container for the markers.
  */
 ShumateMarkerLayer *
 shumate_marker_layer_new_full (ShumateViewport *viewport,
@@ -440,52 +440,52 @@ marker_move_by_cb (ShumateMarker *marker,
 
 /**
  * shumate_marker_layer_add_marker:
- * @layer: a #ShumateMarkerLayer
- * @marker: a #ShumateMarker
+ * @self: a [class@MarkerLayer]
+ * @marker: a [class@Marker]
  *
  * Adds the marker to the layer.
  */
 void
-shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
+shumate_marker_layer_add_marker (ShumateMarkerLayer *self,
     ShumateMarker *marker)
 {
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
   g_return_if_fail (SHUMATE_IS_MARKER (marker));
 
   g_signal_connect_object (G_OBJECT (marker), "notify::latitude",
-      G_CALLBACK (marker_position_notify), layer, 0);
+      G_CALLBACK (marker_position_notify), self, 0);
   g_signal_connect_object (G_OBJECT (marker), "notify::longitude",
-      G_CALLBACK (marker_position_notify), layer, 0);
+      G_CALLBACK (marker_position_notify), self, 0);
 
   /*g_signal_connect (G_OBJECT (marker), "drag-motion",
       G_CALLBACK (marker_move_by_cb), layer);*/
 
   shumate_marker_set_selected (marker, FALSE);
 
-  gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (layer), NULL);
-  update_marker_visibility (layer, marker);
+  gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (self), NULL);
+  update_marker_visibility (self, marker);
 }
 
 
 /**
  * shumate_marker_layer_remove_all:
- * @layer: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Removes all markers from the layer.
  */
 void
-shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
+shumate_marker_layer_remove_all (ShumateMarkerLayer *self)
 {
   GtkWidget *child;
 
-  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (layer));
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
 
-  child = gtk_widget_get_first_child (GTK_WIDGET (layer));
+  child = gtk_widget_get_first_child (GTK_WIDGET (self));
   while (child)
     {
       GtkWidget *next = gtk_widget_get_next_sibling (child);
 
-      g_signal_handlers_disconnect_by_data (child, layer);
+      g_signal_handlers_disconnect_by_data (child, self);
       gtk_widget_unparent (child);
 
       child = next;
@@ -495,7 +495,7 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
 
 /**
  * shumate_marker_layer_get_markers:
- * @layer: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Gets a copy of the list of all markers inserted into the layer. You should
  * free the list but not its contents.
@@ -503,14 +503,14 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *layer)
  * Returns: (transfer container) (element-type ShumateMarker): the list
  */
 GList *
-shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
+shumate_marker_layer_get_markers (ShumateMarkerLayer *self)
 {
   GList *list = NULL;
   GtkWidget *child;
 
-  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (layer), NULL);
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), NULL);
 
-  for (child = gtk_widget_get_last_child (GTK_WIDGET (layer));
+  for (child = gtk_widget_get_last_child (GTK_WIDGET (self));
        child != NULL;
        child = gtk_widget_get_prev_sibling (child))
     {
@@ -524,7 +524,7 @@ shumate_marker_layer_get_markers (ShumateMarkerLayer *layer)
 
 /**
  * shumate_marker_layer_get_selected:
- * @layer: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Gets a list of selected markers in the layer.
  *
@@ -540,12 +540,12 @@ shumate_marker_layer_get_selected (ShumateMarkerLayer *self)
 
 /**
  * shumate_marker_layer_select_marker:
- * @self: a #ShumateMarkerLayer
- * @marker: a #ShumateMarker that is a child of @self
+ * @self: a [class@MarkerLayer]
+ * @marker: a [class@Marker] that is a child of @self
  *
  * Selects a marker in this layer.
  *
- * If #ShumateMarkerLayer:selection-mode is %GTK_SELECTION_SINGLE or
+ * If [class@MarkerLayer]:selection-mode is %GTK_SELECTION_SINGLE or
  * %GTK_SELECTION_BROWSE, all other markers will be unselected. If the mode is
  * %GTK_SELECTION_NONE or @marker is not selectable, nothing will happen.
  *
@@ -589,12 +589,12 @@ shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *mar
 
 /**
  * shumate_marker_layer_unselect_marker:
- * @self: a #ShumateMarkerLayer
- * @marker: a #ShumateMarker that is a child of @self
+ * @self: a [class@MarkerLayer]
+ * @marker: a [class@Marker] that is a child of @self
  *
  * Unselects a marker in this layer.
  *
- * This works even if #ShumateMarkerLayer:selection-mode is
+ * This works even if [class@MarkerLayer]:selection-mode is
  * %GTK_SELECTION_BROWSE. Browse mode only prevents user interaction, not the
  * program, from unselecting a marker.
  */
@@ -618,8 +618,8 @@ shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self,
 
 /**
  * shumate_marker_layer_remove_marker:
- * @self: a #ShumateMarkerLayer
- * @marker: a #ShumateMarker
+ * @self: a [class@MarkerLayer]
+ * @marker: a [class@Marker]
  *
  * Removes the marker from the layer.
  */
@@ -647,7 +647,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *self,
 
 /**
  * shumate_marker_layer_unselect_all_markers:
- * @layer: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Unselects all markers in the layer.
  */
@@ -668,7 +668,7 @@ shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *self)
 
 /**
  * shumate_marker_layer_select_all_markers:
- * @layer: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Selects all selectable markers in the layer.
  */
@@ -689,8 +689,8 @@ shumate_marker_layer_select_all_markers (ShumateMarkerLayer *self)
 
 /**
  * shumate_marker_layer_set_selection_mode:
- * @self: a #ShumateMarkerLayer
- * @mode: a #GtkSelectionMode value
+ * @self: a [class@MarkerLayer]
+ * @mode: a [enum@Gtk.SelectionMode] value
  *
  * Sets the selection mode of the layer.
  *
@@ -717,7 +717,7 @@ shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *self,
 
 /**
  * shumate_marker_layer_get_selection_mode:
- * @self: a #ShumateMarkerLayer
+ * @self: a [class@MarkerLayer]
  *
  * Gets the selection mode of the layer.
  *

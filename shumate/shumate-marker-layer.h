@@ -41,22 +41,22 @@ ShumateMarkerLayer *shumate_marker_layer_new (ShumateViewport *viewport);
 ShumateMarkerLayer *shumate_marker_layer_new_full (ShumateViewport *viewport,
                                                    GtkSelectionMode mode);
 
-void shumate_marker_layer_add_marker (ShumateMarkerLayer *layer,
+void shumate_marker_layer_add_marker (ShumateMarkerLayer *self,
     ShumateMarker *marker);
-void shumate_marker_layer_remove_marker (ShumateMarkerLayer *layer,
+void shumate_marker_layer_remove_marker (ShumateMarkerLayer *self,
     ShumateMarker *marker);
-void shumate_marker_layer_remove_all (ShumateMarkerLayer *layer);
-GList *shumate_marker_layer_get_markers (ShumateMarkerLayer *layer);
-GList *shumate_marker_layer_get_selected (ShumateMarkerLayer *layer);
+void shumate_marker_layer_remove_all (ShumateMarkerLayer *self);
+GList *shumate_marker_layer_get_markers (ShumateMarkerLayer *self);
+GList *shumate_marker_layer_get_selected (ShumateMarkerLayer *self);
 
 gboolean shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
 void shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self, ShumateMarker *marker);
-void shumate_marker_layer_select_all_markers (ShumateMarkerLayer *layer);
-void shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *layer);
+void shumate_marker_layer_select_all_markers (ShumateMarkerLayer *self);
+void shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *self);
 
-void shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *layer,
+void shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *self,
                                               GtkSelectionMode    mode);
-GtkSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *layer);
+GtkSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *self);
 
 G_END_DECLS
 
