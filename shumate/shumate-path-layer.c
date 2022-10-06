@@ -24,9 +24,9 @@
  * A layer displaying line path between inserted [iface@Location] objects
  *
  * This layer shows a connection between inserted objects implementing the
- * [iface@Location] interface. This means that both #ShumateMarker
+ * [iface@Location] interface. This means that both [class@Marker]
  * objects and [class@Coordinate] objects can be inserted into the layer.
- * Of course, custom objects implementing the #ShumateLocation interface
+ * Of course, custom objects implementing the [iface@Location] interface
  * can be used as well.
  */
 
@@ -432,11 +432,11 @@ shumate_path_layer_init (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_new:
- * @viewport: the @ShumateViewport
+ * @viewport: the [class@Viewport]
  *
- * Creates a new instance of #ShumatePathLayer.
+ * Creates a new instance of [class@PathLayer].
  *
- * Returns: a new instance of #ShumatePathLayer.
+ * Returns: a new instance of [class@PathLayer].
  */
 ShumatePathLayer *
 shumate_path_layer_new (ShumateViewport *viewport)
@@ -473,10 +473,10 @@ add_node (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_add_node:
- * @self: a #ShumatePathLayer
- * @location: a #ShumateLocation
+ * @self: a [class@PathLayer]
+ * @location: a [iface@Location]
  *
- * Adds a #ShumateLocation object to the layer.
+ * Adds a [iface@Location] object to the layer.
  * The node is prepended to the list.
  */
 void
@@ -492,9 +492,9 @@ shumate_path_layer_add_node (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_remove_all:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
- * Removes all #ShumateLocation objects from the layer.
+ * Removes all [iface@Location] objects from the layer.
  */
 void
 shumate_path_layer_remove_all (ShumatePathLayer *self)
@@ -520,9 +520,9 @@ shumate_path_layer_remove_all (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_get_nodes:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
- * Gets a copy of the list of all #ShumateLocation objects inserted into the layer. You should
+ * Gets a copy of the list of all [iface@Location] objects inserted into the layer. You should
  * free the list but not its contents.
  *
  * Returns: (transfer container) (element-type ShumateLocation): the list
@@ -540,10 +540,10 @@ shumate_path_layer_get_nodes (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_remove_node:
- * @self: a #ShumatePathLayer
- * @location: a #ShumateLocation
+ * @self: a [class@PathLayer]
+ * @location: a [iface@Location]
  *
- * Removes the #ShumateLocation object from the layer.
+ * Removes the [iface@Location] object from the layer.
  */
 void
 shumate_path_layer_remove_node (ShumatePathLayer *self,
@@ -561,11 +561,11 @@ shumate_path_layer_remove_node (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_insert_node:
- * @self: a #ShumatePathLayer
- * @location: a #ShumateLocation
- * @position: position in the list where the #ShumateLocation object should be inserted
+ * @self: a [class@PathLayer]
+ * @location: a [iface@Location]
+ * @position: position in the list where the [iface@Location] object should be inserted
  *
- * Inserts a #ShumateLocation object to the specified position.
+ * Inserts a [iface@Location] object to the specified position.
  */
 void
 shumate_path_layer_insert_node (ShumatePathLayer *self,
@@ -580,7 +580,7 @@ shumate_path_layer_insert_node (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_set_fill_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @color: (nullable): The path's fill color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
@@ -607,7 +607,7 @@ shumate_path_layer_set_fill_color (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_fill_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets the path's fill color.
  *
@@ -624,7 +624,7 @@ shumate_path_layer_get_fill_color (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_stroke_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @color: (nullable): The path's stroke color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
@@ -651,7 +651,7 @@ shumate_path_layer_set_stroke_color (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_stroke_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets the path's stroke color.
  *
@@ -667,7 +667,7 @@ shumate_path_layer_get_stroke_color (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_outline_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @color: (nullable): The path's outline color or %NULL to reset to the
  *         default color. The color parameter is copied.
  *
@@ -693,7 +693,7 @@ shumate_path_layer_set_outline_color (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_outline_color:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets the path's outline color.
  *
@@ -709,7 +709,7 @@ shumate_path_layer_get_outline_color (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_stroke:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @value: if the path is stroked
  *
  * Sets the path to be stroked
@@ -729,7 +729,7 @@ shumate_path_layer_set_stroke (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_stroke:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Checks whether the path is stroked.
  *
@@ -746,7 +746,7 @@ shumate_path_layer_get_stroke (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_fill:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @value: if the path is filled
  *
  * Sets the path to be filled
@@ -766,7 +766,7 @@ shumate_path_layer_set_fill (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_fill:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Checks whether the path is filled.
  *
@@ -783,7 +783,7 @@ shumate_path_layer_get_fill (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_stroke_width:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @value: the width of the stroke (in pixels)
  *
  * Sets the width of the stroke
@@ -803,7 +803,7 @@ shumate_path_layer_set_stroke_width (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_stroke_width:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets the width of the stroke.
  *
@@ -819,7 +819,7 @@ shumate_path_layer_get_stroke_width (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_outline_width:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @value: the width of the outline (in pixels)
  *
  * Sets the width of the outline
@@ -839,7 +839,7 @@ shumate_path_layer_set_outline_width (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_outline_width:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets the width of the outline.
  *
@@ -855,7 +855,7 @@ shumate_path_layer_get_outline_width (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_closed:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @value: %TRUE to make the path closed
  *
  * Makes the path closed.
@@ -875,7 +875,7 @@ shumate_path_layer_set_closed (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_closed:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Gets information whether the path is closed.
  *
@@ -892,7 +892,7 @@ shumate_path_layer_get_closed (ShumatePathLayer *self)
 
 /**
  * shumate_path_layer_set_dash:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  * @dash_pattern: (element-type guint): list of integer values representing lengths
  *     of dashes/spaces (see cairo documentation of cairo_set_dash())
  *
@@ -924,7 +924,7 @@ shumate_path_layer_set_dash (ShumatePathLayer *self,
 
 /**
  * shumate_path_layer_get_dash:
- * @self: a #ShumatePathLayer
+ * @self: a [class@PathLayer]
  *
  * Returns the list of dash segment lengths.
  *

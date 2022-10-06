@@ -38,50 +38,50 @@ G_DECLARE_FINAL_TYPE (ShumatePathLayer, shumate_path_layer, SHUMATE, PATH_LAYER,
 
 ShumatePathLayer *shumate_path_layer_new (ShumateViewport *viewport);
 
-void shumate_path_layer_add_node (ShumatePathLayer *layer,
+void shumate_path_layer_add_node (ShumatePathLayer *self,
     ShumateLocation *location);
-void shumate_path_layer_remove_node (ShumatePathLayer *layer,
+void shumate_path_layer_remove_node (ShumatePathLayer *self,
     ShumateLocation *location);
-void shumate_path_layer_remove_all (ShumatePathLayer *layer);
-void shumate_path_layer_insert_node (ShumatePathLayer *layer,
+void shumate_path_layer_remove_all (ShumatePathLayer *self);
+void shumate_path_layer_insert_node (ShumatePathLayer *self,
     ShumateLocation *location,
     guint position);
-GList *shumate_path_layer_get_nodes (ShumatePathLayer *layer);
+GList *shumate_path_layer_get_nodes (ShumatePathLayer *self);
 
-GdkRGBA *shumate_path_layer_get_fill_color (ShumatePathLayer *layer);
-void shumate_path_layer_set_fill_color (ShumatePathLayer *layer,
+GdkRGBA *shumate_path_layer_get_fill_color (ShumatePathLayer *self);
+void shumate_path_layer_set_fill_color (ShumatePathLayer *self,
     const GdkRGBA *color);
 
-GdkRGBA *shumate_path_layer_get_stroke_color (ShumatePathLayer *layer);
-void shumate_path_layer_set_stroke_color (ShumatePathLayer *layer,
+GdkRGBA *shumate_path_layer_get_stroke_color (ShumatePathLayer *self);
+void shumate_path_layer_set_stroke_color (ShumatePathLayer *self,
     const GdkRGBA *color);
 
-GdkRGBA *shumate_path_layer_get_outline_color (ShumatePathLayer *layer);
-void shumate_path_layer_set_outline_color (ShumatePathLayer *layer,
+GdkRGBA *shumate_path_layer_get_outline_color (ShumatePathLayer *self);
+void shumate_path_layer_set_outline_color (ShumatePathLayer *self,
     const GdkRGBA *color);
 
-gboolean shumate_path_layer_get_fill (ShumatePathLayer *layer);
-void shumate_path_layer_set_fill (ShumatePathLayer *layer,
+gboolean shumate_path_layer_get_fill (ShumatePathLayer *self);
+void shumate_path_layer_set_fill (ShumatePathLayer *self,
     gboolean value);
 
-gboolean shumate_path_layer_get_stroke (ShumatePathLayer *layer);
-void shumate_path_layer_set_stroke (ShumatePathLayer *layer,
+gboolean shumate_path_layer_get_stroke (ShumatePathLayer *self);
+void shumate_path_layer_set_stroke (ShumatePathLayer *self,
     gboolean value);
 
-double shumate_path_layer_get_stroke_width (ShumatePathLayer *layer);
-void shumate_path_layer_set_stroke_width (ShumatePathLayer *layer,
+double shumate_path_layer_get_stroke_width (ShumatePathLayer *self);
+void shumate_path_layer_set_stroke_width (ShumatePathLayer *self,
     double value);
 
-double shumate_path_layer_get_outline_width (ShumatePathLayer *layer);
-void shumate_path_layer_set_outline_width (ShumatePathLayer *layer,
+double shumate_path_layer_get_outline_width (ShumatePathLayer *self);
+void shumate_path_layer_set_outline_width (ShumatePathLayer *self,
     double value);
 
-gboolean shumate_path_layer_get_closed (ShumatePathLayer *layer);
-void shumate_path_layer_set_closed (ShumatePathLayer *layer,
+gboolean shumate_path_layer_get_closed (ShumatePathLayer *self);
+void shumate_path_layer_set_closed (ShumatePathLayer *self,
     gboolean value);
 
-GList *shumate_path_layer_get_dash (ShumatePathLayer *layer);
-void shumate_path_layer_set_dash (ShumatePathLayer *layer,
+GList *shumate_path_layer_get_dash (ShumatePathLayer *self);
+void shumate_path_layer_set_dash (ShumatePathLayer *self,
     GList *dash_pattern);
 
 G_END_DECLS
