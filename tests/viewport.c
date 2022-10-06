@@ -30,10 +30,10 @@ test_viewport_zoom_level_max (void)
   ShumateViewport *viewport;
 
   viewport = shumate_viewport_new ();
-  g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 0);
-
-  shumate_viewport_set_max_zoom_level (viewport, 20);
   g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 20);
+
+  shumate_viewport_set_max_zoom_level (viewport, 17);
+  g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 17);
 
   /* Setting the maximum zoom level must update the current zoom level too */
   shumate_viewport_set_zoom_level (viewport, 15);
@@ -48,19 +48,19 @@ test_viewport_zoom_level_clamp (void)
 
   viewport = shumate_viewport_new ();
   g_assert_cmpuint (shumate_viewport_get_min_zoom_level (viewport), ==, 0);
-  g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 0);
+  g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 20);
 
   /* Can't set min zoom level > max zoom level */
   g_test_expect_message ("shumate",
                          G_LOG_LEVEL_CRITICAL,
                          "shumate_viewport_set_min_zoom_level: assertion 'min_zoom_level <= self->max_zoom_level' failed");
 
-  shumate_viewport_set_min_zoom_level (viewport, 5);
+  shumate_viewport_set_min_zoom_level (viewport, 21);
   g_test_assert_expected_messages ();
   g_assert_cmpuint (shumate_viewport_get_min_zoom_level (viewport), ==, 0);
 
-  shumate_viewport_set_max_zoom_level (viewport, 15);
   shumate_viewport_set_min_zoom_level (viewport, 5);
+  shumate_viewport_set_max_zoom_level (viewport, 15);
 
   /* Equally, can't set max zoom level < min zoom level */
   g_test_expect_message ("shumate",
@@ -127,7 +127,7 @@ test_viewport_zoom_level_notify (void)
                                NULL);
 
   /* Max zoom level */
-  for (i = 20; i > 15; i--)
+  for (i = 10; i > 5; i--)
     shumate_viewport_set_max_zoom_level (viewport, i);
   g_assert_cmpuint (max_zoom_level_notify_counter, ==, 5);
 

@@ -36,6 +36,9 @@
  * accessible via the interface methods.
  */
 
+#define DEFAULT_MIN_ZOOM 0
+#define DEFAULT_MAX_ZOOM 20
+
 struct _ShumateViewport
 {
   GObject parent_instance;
@@ -237,7 +240,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
     g_param_spec_uint ("min-zoom-level",
                        "Min zoom level",
                        "The lowest allowed level of zoom",
-                       0, 20, 0,
+                       0, 20, DEFAULT_MIN_ZOOM,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -249,7 +252,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
     g_param_spec_uint ("max-zoom-level",
                        "Max zoom level",
                        "The highest allowed level of zoom",
-                       0, 20, 20,
+                       0, 20, DEFAULT_MAX_ZOOM,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -292,6 +295,10 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
 static void
 shumate_viewport_init (ShumateViewport *self)
 {
+  /* We need to set these here, otherwise the max_zoom >= min_zoom check in
+   * the setter functions may fail if they're not called in the right order. */
+  self->min_zoom_level = DEFAULT_MIN_ZOOM;
+  self->max_zoom_level = DEFAULT_MAX_ZOOM;
 }
 
 static void
