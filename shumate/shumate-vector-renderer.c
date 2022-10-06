@@ -22,7 +22,7 @@
 /**
  * ShumateVectorRenderer:
  *
- * A [class@Shumate.MapSource] that renders tiles from a given vector data source.
+ * A [class@MapSource] that renders tiles from a given vector data source.
  */
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
@@ -434,7 +434,7 @@ shumate_vector_renderer_get_style_json (ShumateVectorRenderer *self)
 /**
  * shumate_vector_renderer_set_sprite_sheet_data:
  * @self: a [class@VectorRenderer]
- * @sprites_pixbuf: a [class@Gdk.Pixbuf]
+ * @sprites_pixbuf: a [class@GdkPixbuf.Pixbuf]
  * @sprites_json: a JSON string
  * @error: return location for a #GError, or %NULL
  *
