@@ -41,6 +41,7 @@ typedef enum {
   EXPR_SUB,
   EXPR_MUL,
   EXPR_DIV,
+  EXPR_COALESCE,
 } ExpressionType;
 
 struct _ShumateVectorExpressionFilter
@@ -176,6 +177,8 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
     }
   else if (g_strcmp0 ("case", op) == 0)
     self->type = EXPR_CASE;
+  else if (g_strcmp0 ("coalesce", op) == 0)
+    self->type = EXPR_COALESCE;
   else
     {
       g_set_error (error,
@@ -507,6 +510,23 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
       /* no case matched and there was no fallback */
       return FALSE;
+
+    case EXPR_COALESCE:
+      for (int i = 0; i < n_expressions; i ++)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            continue;
+
+          if (shumate_vector_value_is_null (&value))
+            continue;
+
+          shumate_vector_value_copy (&value, out);
+          return TRUE;
+        }
+
+      /* no expression succeeded, return null */
+      shumate_vector_value_unset (out);
+      return TRUE;
 
     default:
       g_assert_not_reached ();

@@ -177,6 +177,9 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"-\", 1], -1]"));
   g_assert_true (filter ("[\"==\", [\"*\", 5, 6, 7], 210]"));
   g_assert_true (filter ("[\"==\", [\"/\", 10, 4], 2.5]"));
+
+  g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"], 2, 3], 2]"));
+  g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"]], null]"));
 }
 
 
