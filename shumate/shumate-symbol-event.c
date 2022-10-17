@@ -18,6 +18,21 @@
 #include "shumate-location.h"
 #include "shumate-symbol-event-private.h"
 
+/**
+ * ShumateSymbolEvent:
+ *
+ * An object containing the details of a map feature that has been clicked.
+ * It is the argument of the [signal@MapLayer::symbol-clicked] and
+ * [signal@SimpleMap::symbol-clicked] signals.
+ *
+ * When vector maps are rendered, they may contain labels and icons. When one
+ * of these symbols is clicked, these signals are emitted to give the
+ * application access to the original location and details of the map feature.
+ *
+ * [class@SymbolEvent] implements [iface@Location] so you can get the latitude
+ * and longitude of the feature that was clicked.
+ */
+
 struct _ShumateSymbolEvent
 {
   GObject parent_instance;
@@ -182,6 +197,19 @@ location_interface_init (ShumateLocationInterface *iface)
   iface->set_location = shumate_symbol_event_set_location;
 }
 
+/**
+ * shumate_symbol_event_get_layer:
+ * @self: a [class@SymbolEvent]
+ *
+ * Gets the name of the layer the clicked symbol is in, as named in the vector
+ * stylesheet.
+ *
+ * Note that this is distinct from the name of the layer in the vector tile
+ * schema. Some styles have multiple symbol layers derived from the same
+ * data source layer.
+ *
+ * Returns: (transfer none): the layer name
+ */
 const char *
 shumate_symbol_event_get_layer (ShumateSymbolEvent *self)
 {
@@ -189,6 +217,18 @@ shumate_symbol_event_get_layer (ShumateSymbolEvent *self)
   return self->layer;
 }
 
+/**
+ * shumate_symbol_event_get_feature_id:
+ * @self: a [class@SymbolEvent]
+ *
+ * Gets the feature ID as specified in the data source. The meaning of the
+ * ID, if any, is up to the source.
+ *
+ * Feature IDs in Mapbox Vector Tile format are integers, but they are
+ * formatted as a string here for futureproofing.
+ *
+ * Returns: (transfer none): the feature ID
+ */
 const char *
 shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self)
 {
@@ -196,6 +236,19 @@ shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self)
   return self->feature_id;
 }
 
+/**
+ * shumate_symbol_event_get_tag:
+ * @self: a [class@SymbolEvent]
+ * @tag_name: the tag to get
+ *
+ * Gets a tag from the source feature.
+ *
+ * The available tags depend on the vector tile schema and the source layer.
+ * Check the documentation for the tiles you're using to see what information
+ * is available.
+ *
+ * Returns: (transfer none): the tag value, formatted as a string
+ */
 const char *
 shumate_symbol_event_get_tag (ShumateSymbolEvent *self,
                               const char         *tag_name)
