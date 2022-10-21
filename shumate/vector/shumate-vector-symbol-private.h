@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include "shumate-vector-symbol-info-private.h"
+#include "shumate-vector-collision-private.h"
 
 G_BEGIN_DECLS
 
@@ -31,4 +32,10 @@ ShumateVectorSymbolInfo *shumate_vector_symbol_get_symbol_info (ShumateVectorSym
 
 int shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self);
 
+gboolean shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
+                                                    ShumateVectorCollision *collision,
+                                                    float                   x,
+                                                    float                   y,
+                                                    float                   zoom_level,
+                                                    float                   rotation);
 G_END_DECLS

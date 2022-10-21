@@ -20,7 +20,6 @@
 #include "shumate-vector-collision-private.h"
 #include "shumate-symbol-event-private.h"
 
-
 struct _ShumateVectorSymbolContainer
 {
   ShumateLayer parent_instance;
@@ -29,6 +28,10 @@ struct _ShumateVectorSymbolContainer
 
   GList *children;
   ShumateVectorCollision *collision;
+
+  float last_rotation;
+  float last_zoom;
+  gboolean labels_changed : 1;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbolContainer, shumate_vector_symbol_container, SHUMATE_TYPE_LAYER)
@@ -55,8 +58,6 @@ typedef struct {
   ShumateVectorSymbol *symbol;
   ShumateVectorSymbolInfo *symbol_info;
 
-  ShumateVectorCollisionMarker *marker;
-
   // These are coordinates [0, 1) within the tile
   float x;
   float y;
@@ -69,6 +70,8 @@ typedef struct {
   int tile_x;
   int tile_y;
   int zoom;
+
+  gboolean visible : 1;
 } ChildInfo;
 
 
@@ -191,6 +194,9 @@ rotate_around_center (float *x,
 {
   /* Rotate (x, y) around (width / 2, height / 2) */
 
+  if (angle == 0)
+    return;
+
   float old_x = *x;
   float old_y = *y;
   float center_x = width / 2.0;
@@ -216,7 +222,10 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
   float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
 
-  shumate_vector_collision_recalc (self->collision, rotation, zoom_level);
+  gboolean recalc = self->labels_changed || (self->last_zoom != zoom_level) || (self->last_rotation != rotation);
+
+  if (recalc)
+    shumate_vector_collision_clear (self->collision);
 
   for (GList *l = self->children; l != NULL; l = l->next)
     {
@@ -226,17 +235,27 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       float y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
       int child_width, child_height;
 
-      gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), child->marker->visible);
-      if (!child->marker->visible)
+      rotate_around_center (&x, &y, width, height, rotation);
+
+      if (recalc)
+        {
+          gboolean now_visible = shumate_vector_symbol_calculate_collision (child->symbol, self->collision, x, y, tile_size_at_zoom, rotation);
+
+          if (now_visible != child->visible)
+            {
+              gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), now_visible);
+              child->visible = now_visible;
+            }
+        }
+
+      if (!child->visible)
         continue;
 
       gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &child_width, NULL, NULL);
       gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &child_height, NULL, NULL);
 
-      rotate_around_center (&x, &y, width, height, rotation);
       alloc.x = x - child->width/2.0;
       alloc.y = y - child->height/2.0;
-
       alloc.width = child->width;
       alloc.height = child->height;
 
@@ -244,6 +263,10 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       if (child->symbol_info->line_placement)
         gtk_widget_queue_draw (GTK_WIDGET (child->symbol));
     }
+
+  self->labels_changed = FALSE;
+  self->last_rotation = rotation;
+  self->last_zoom = zoom_level;
 }
 
 
@@ -263,6 +286,9 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
 
+#if 0
+  shumate_vector_collision_visualize (self->collision, snapshot);
+#endif
 }
 
 
@@ -348,6 +374,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->tile_x = tile_x;
       info->tile_y = tile_y;
       info->zoom = zoom;
+      info->visible = TRUE;
 
       if (!symbol_info->line_placement)
         {
@@ -355,13 +382,6 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
           gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
           gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &info->height, NULL, NULL);
         }
-
-      info->marker = shumate_vector_collision_insert (self->collision,
-                                                      zoom,
-                                                      symbol_info,
-                                                      shumate_vector_symbol_get_text_length (symbol),
-                                                      tile_x,
-                                                      tile_y);
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));
@@ -372,6 +392,8 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                self,
                                G_CONNECT_SWAPPED);
     }
+
+  self->labels_changed = TRUE;
 }
 
 
@@ -390,13 +412,12 @@ shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContainer *se
       if (info->tile_x != tile_x || info->tile_y != tile_y || info->zoom != zoom)
         continue;
 
-      shumate_vector_collision_remove (self->collision, info->marker);
-
       gtk_widget_unparent (GTK_WIDGET (info->symbol));
       g_clear_pointer (&l->data, g_free);
     }
 
   self->children = g_list_remove_all (self->children, NULL);
+  self->labels_changed = TRUE;
 }
 
 

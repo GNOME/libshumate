@@ -26,41 +26,21 @@ G_BEGIN_DECLS
 
 typedef struct ShumateVectorCollision ShumateVectorCollision;
 
-typedef struct {
-  float x;
-  float y;
-  float xextent;
-  float yextent;
-  float rotation;
-} ShumateVectorCollisionBBox;
-
-typedef struct {
-  ShumateVectorCollisionBBox bbox;
-  ShumateVectorSymbolInfo *symbol_info;
-  GList *list_link;
-  int text_length;
-  int tile_x;
-  int tile_y;
-  int zoom;
-  guint seq : 1;
-  guint visible : 1;
-} ShumateVectorCollisionMarker;
-
-ShumateVectorCollision *shumate_vector_collision_new (int tile_size);
+ShumateVectorCollision *shumate_vector_collision_new ();
 void shumate_vector_collision_free (ShumateVectorCollision *self);
 
-ShumateVectorCollisionMarker *shumate_vector_collision_insert (ShumateVectorCollision  *self,
-                                                               int                      zoom,
-                                                               ShumateVectorSymbolInfo *symbol_info,
-                                                               float                    text_length,
-                                                               int                      tile_x,
-                                                               int                      tile_y);
+gboolean shumate_vector_collision_check (ShumateVectorCollision *self,
+                                         float                   x,
+                                         float                   y,
+                                         float                   xextent,
+                                         float                   yextent,
+                                         float                   rotation);
 
-void shumate_vector_collision_remove (ShumateVectorCollision       *self,
-                                      ShumateVectorCollisionMarker *marker);
+void shumate_vector_collision_commit_pending (ShumateVectorCollision *self);
 
-void shumate_vector_collision_recalc (ShumateVectorCollision *self,
-                                      float                   rot,
-                                      float                   zoom);
+void shumate_vector_collision_clear (ShumateVectorCollision *self);
+
+void shumate_vector_collision_visualize (ShumateVectorCollision *self,
+                                         GtkSnapshot            *snapshot);
 
 G_END_DECLS

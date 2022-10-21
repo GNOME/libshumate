@@ -422,3 +422,92 @@ shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self)
       return natural;
     }
 }
+
+static void
+rotate_around_center (float *x,
+                      float *y,
+                      float  angle)
+{
+  /* Rotate (x, y) around (0, 0) */
+
+  if (angle == 0)
+    return;
+
+  float old_x = *x;
+  float old_y = *y;
+
+  *x = cosf (angle) * old_x - sinf (angle) * old_y;
+  *y = sinf (angle) * old_x + cosf (angle) * old_y;
+}
+
+
+gboolean
+shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
+                                           ShumateVectorCollision *collision,
+                                           float                   x,
+                                           float                   y,
+                                           float                   tile_size_for_zoom,
+                                           float                   rotation)
+{
+  float text_length = shumate_vector_symbol_get_text_length (self);
+  float yextent = self->symbol_info->text_size / 2.0;
+
+  if (self->symbol_info->line_placement)
+    {
+      ShumateVectorPointIter iter;
+      float line_length = shumate_vector_line_string_length (&self->symbol_info->line);
+      float length = text_length / tile_size_for_zoom;
+
+      if (length > line_length)
+        return FALSE;
+
+      shumate_vector_point_iter_init (&iter, &self->symbol_info->line);
+      shumate_vector_point_iter_advance (&iter, (line_length - length) / 2.0);
+
+      do
+        {
+          ShumateVectorPoint point;
+          float xextent = MIN (length, shumate_vector_point_iter_get_segment_length (&iter)) * tile_size_for_zoom / 2;
+
+          shumate_vector_point_iter_get_segment_center (&iter, length, &point);
+          point.x -= self->symbol_info->x;
+          point.y -= self->symbol_info->y;
+
+          rotate_around_center (&point.x, &point.y, rotation);
+          point.x *= tile_size_for_zoom;
+          point.y *= tile_size_for_zoom;
+
+          gboolean check = shumate_vector_collision_check (
+            collision,
+            x + point.x,
+            y + point.y,
+            xextent,
+            yextent,
+            rotation + shumate_vector_point_iter_get_current_angle (&iter)
+          );
+
+          if (!check)
+            return FALSE;
+        }
+      while ((length -= shumate_vector_point_iter_next_segment (&iter)) > 0);
+
+      shumate_vector_collision_commit_pending (collision);
+      return TRUE;
+    }
+  else
+    {
+      gboolean check = shumate_vector_collision_check (
+        collision,
+        x,
+        y,
+        text_length / 2.0,
+        yextent,
+        0
+      );
+
+      if (check)
+        shumate_vector_collision_commit_pending (collision);
+
+      return check;
+    }
+}
