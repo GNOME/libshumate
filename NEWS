@@ -1,4 +1,12 @@
 =====================
+Version 1.0.2
+=====================
+ - Avoid flickering when panning the map
+ - Fix warnings about min/max zoom levels for the viewport
+ - Fix documentation comments
+ - Fix cross-compilation for gi-docgen
+
+=====================
 Version 1.0.1
 =====================
 
