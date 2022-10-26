@@ -6,9 +6,9 @@
   <gresource prefix="/org/gnome/Shumate/Demo/icons">
     <file preprocess="xml-stripblanks">map-marker-symbolic.svg</file>
   </gresource>
-  <gresource prefix="/org/gnome/Shumate/Demo/styles">
-    <file preprocess="json-stripblanks">map-style.json</file>
-    <file preprocess="json-stripblanks">sprites.json</file>
-    <file>sprites.svg</file>
+  <gresource prefix="/org/gnome/Shumate/Demo/osm-liberty">
+    <file preprocess="json-stripblanks" alias="style.json">osm-liberty/style.json</file>
+    <file preprocess="json-stripblanks" alias="sprites.json">osm-liberty/sprites.json</file>
+    <file alias="sprites.png">osm-liberty/sprites.png</file>
   </gresource>
 </gresources>
