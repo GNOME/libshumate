@@ -153,11 +153,27 @@ shumate_vector_line_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
     {
       int i;
       g_autofree double *dasharray = g_new (double, self->num_dashes);
+      gboolean any_nonzero = FALSE;
+      gboolean all_positive = TRUE;
 
       for (i = 0; i < self->num_dashes; i ++)
-        dasharray[i] = self->dashes[i] * width * scope->scale;
+        {
+          dasharray[i] = self->dashes[i] * width * scope->scale;
 
-      cairo_set_dash (scope->cr, dasharray, self->num_dashes, 0);
+          if (dasharray[i] < 0)
+            {
+              all_positive = FALSE;
+              break;
+            }
+          else if (dasharray[i] != 0)
+            any_nonzero = TRUE;
+        }
+
+      /* make sure the dasharray is valid */
+      if (any_nonzero && all_positive)
+        cairo_set_dash (scope->cr, dasharray, self->num_dashes, 0);
+      else
+        cairo_set_dash (scope->cr, NULL, 0, 0);
     }
 
   cairo_stroke (scope->cr);
