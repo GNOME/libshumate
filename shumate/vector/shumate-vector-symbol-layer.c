@@ -116,6 +116,103 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
 }
 
+typedef struct {
+  ShumateVectorSymbolLayer *self;
+  const char *layer;
+  char *feature_id;
+  GHashTable *tags;
+  char *text_field;
+  GdkRGBA text_color;
+  double text_size;
+  char *cursor;
+  int tile_x;
+  int tile_y;
+  int tile_zoom_level;
+} SharedSymbolInfo;
+
+
+static ShumateVectorSymbolInfo *
+create_symbol_info (SharedSymbolInfo *shared,
+                    double x,
+                    double y)
+{
+  return shumate_vector_symbol_info_new (shared->layer,
+                                         shared->feature_id,
+                                         shared->tags,
+                                         shared->text_field,
+                                         &shared->text_color,
+                                         shared->text_size,
+                                         shared->self->text_fonts,
+                                         shared->cursor,
+                                         shared->tile_x,
+                                         shared->tile_y,
+                                         shared->tile_zoom_level,
+                                         x,
+                                         y);
+}
+
+
+static void
+place_point_label (SharedSymbolInfo         *shared,
+                   double                    x,
+                   double                    y,
+                   ShumateVectorRenderScope *scope)
+{
+  g_ptr_array_add (scope->symbols, create_symbol_info (shared, x, y));
+}
+
+
+static void
+place_line_label (SharedSymbolInfo         *shared,
+                  double                    x,
+                  double                    y,
+                  ShumateVectorRenderScope *scope)
+{
+  ShumateVectorSymbolInfo *symbol_info;
+  g_autoptr(GPtrArray) lines = shumate_vector_render_scope_get_geometry (scope);
+  guint i, j;
+
+  for (i = 0; i < lines->len; i ++)
+    {
+      g_autoptr(GPtrArray) split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+
+      for (j = 0; j < split_lines->len; j ++)
+        {
+          ShumateVectorLineString *linestring = (ShumateVectorLineString *)split_lines->pdata[j];
+          shumate_vector_line_string_simplify (linestring);
+
+#if 0
+          /* visualize line simplification */
+
+          if (linestring->n_points > 0)
+            {
+              guint k;
+              float scale = scope->scale * scope->target_size;
+
+              cairo_set_source_rgb (scope->cr,
+                                    rand () % 255 / 255.0,
+                                    rand () % 255 / 255.0,
+                                    rand () % 255 / 255.0);
+              cairo_set_line_width (scope->cr, scope->scale);
+
+              cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
+              for (k = 1; k < linestring->n_points; k ++)
+                cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
+
+              cairo_stroke (scope->cr);
+            }
+#endif
+
+          symbol_info = create_symbol_info (shared, x, y);
+
+          shumate_vector_symbol_info_set_line_points (symbol_info,
+                                                      linestring);
+
+          g_ptr_array_add (scope->symbols, symbol_info);
+        }
+    }
+}
+
 
 static void
 shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
@@ -125,25 +222,10 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autofree char *cursor = NULL;
   g_autofree char *feature_id = NULL;
   g_autoptr(GHashTable) tags = NULL;
-  const char *layer_id = shumate_vector_layer_get_id (layer);
-  GdkRGBA text_color = SHUMATE_VECTOR_COLOR_BLACK;
-  double text_size;
-  ShumateVectorSymbolInfo *symbol_info;
+  SharedSymbolInfo shared;
   double x, y;
-  double min_x, min_y, max_x, max_y;
 
-  shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
-  if (x < 0 || x >= 1 || y < 0 || y >= 1)
-    /* Tiles usually include a bit of margin. Don't include symbols that are
-     * covered by a different tile. */
-    return;
-
-  shumate_vector_render_scope_get_bounds (scope, &min_x, &min_y, &max_x, &max_y);
-
-  shumate_vector_expression_eval_color (self->text_color, scope, &text_color);
-  text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);
   text_field = shumate_vector_expression_eval_string (self->text_field, scope, "");
-
   if (strlen (text_field) == 0)
     return;
 
@@ -152,80 +234,53 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
   tags = shumate_vector_render_scope_create_tag_table (scope);
 
-  if (self->line_placement)
+  shared.self = self;
+  shared.layer = shumate_vector_layer_get_id (layer);
+  shared.feature_id = feature_id;
+  shared.text_field = text_field;
+  shared.cursor = cursor;
+  shared.tags = tags;
+  shumate_vector_expression_eval_color (self->text_color, scope, &shared.text_color);
+  shared.text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);
+
+  switch (shumate_vector_render_scope_get_geometry_type (scope))
     {
-      g_autoptr(GPtrArray) lines = shumate_vector_render_scope_get_geometry (scope);
-      guint i, j;
-
-      for (i = 0; i < lines->len; i ++)
+    case SHUMATE_VECTOR_GEOMETRY_POINT:
         {
-          g_autoptr(GPtrArray) split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+          g_autoptr(GPtrArray) geometry = shumate_vector_render_scope_get_geometry (scope);
 
-          for (j = 0; j < split_lines->len; j ++)
+          for (int i = 0; i < geometry->len; i ++)
             {
-              ShumateVectorLineString *linestring = (ShumateVectorLineString *)split_lines->pdata[j];
-              shumate_vector_line_string_simplify (linestring);
-
-#if 0
-              /* visualize line simplification */
-
-              if (linestring->n_points > 0)
-                {
-                  guint k;
-                  float scale = scope->scale * scope->target_size;
-
-                  cairo_set_source_rgb (scope->cr,
-                                        rand () % 255 / 255.0,
-                                        rand () % 255 / 255.0,
-                                        rand () % 255 / 255.0);
-                  cairo_set_line_width (scope->cr, scope->scale);
-
-                  cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
-                  for (k = 1; k < linestring->n_points; k ++)
-                    cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
-
-                  cairo_stroke (scope->cr);
-                }
-#endif
-
-              symbol_info = shumate_vector_symbol_info_new (layer_id,
-                                                            feature_id,
-                                                            tags,
-                                                            text_field,
-                                                            &text_color,
-                                                            text_size,
-                                                            self->text_fonts,
-                                                            cursor,
-                                                            scope->tile_x,
-                                                            scope->tile_y,
-                                                            scope->zoom_level,
-                                                            x,
-                                                            y);
-
-              shumate_vector_symbol_info_set_line_points (symbol_info,
-                                                          linestring);
-
-              g_ptr_array_add (scope->symbols, symbol_info);
+              ShumateVectorLineString *string = g_ptr_array_index (geometry, i);
+              for (int j = 0; j < string->n_points; j ++)
+                place_point_label (&shared, string->points[j].x, string->points[j].y, scope);
             }
         }
-    }
-  else
-    {
-      symbol_info = shumate_vector_symbol_info_new (layer_id,
-                                                    feature_id,
-                                                    tags,
-                                                    text_field,
-                                                    &text_color,
-                                                    text_size,
-                                                    self->text_fonts,
-                                                    cursor,
-                                                    scope->tile_x,
-                                                    scope->tile_y,
-                                                    scope->zoom_level,
-                                                    x,
-                                                    y);
 
-      g_ptr_array_add (scope->symbols, symbol_info);
+      break;
+
+    case SHUMATE_VECTOR_GEOMETRY_LINESTRING:
+      shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
+      if (x < 0 || x >= 1 || y < 0 || y >= 1)
+        /* Tiles usually include a bit of margin. Don't include symbols that are
+         * covered by a different tile. */
+        break;
+
+      if (self->line_placement)
+        place_line_label (&shared, x, y, scope);
+      else
+        place_point_label (&shared, x, y, scope);
+
+      break;
+
+    case SHUMATE_VECTOR_GEOMETRY_POLYGON:
+      shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
+      if (x < 0 || x >= 1 || y < 0 || y >= 1)
+        break;
+
+      place_point_label (&shared, x, y, scope);
+
+      break;
     }
 }
 

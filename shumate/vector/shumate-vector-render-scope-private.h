@@ -24,6 +24,12 @@
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
 
+typedef enum {
+  SHUMATE_VECTOR_GEOMETRY_POINT = VECTOR_TILE__TILE__GEOM_TYPE__POINT,
+  SHUMATE_VECTOR_GEOMETRY_LINESTRING = VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING,
+  SHUMATE_VECTOR_GEOMETRY_POLYGON = VECTOR_TILE__TILE__GEOM_TYPE__POLYGON,
+} ShumateVectorGeometryType;
+
 typedef struct {
   cairo_t *cr;
   int target_size;
@@ -50,6 +56,7 @@ void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
                                              double                   *min_y,
                                              double                   *max_x,
                                              double                   *max_y);
+ShumateVectorGeometryType shumate_vector_render_scope_get_geometry_type (ShumateVectorRenderScope *self);
 
 GPtrArray *shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self);
 

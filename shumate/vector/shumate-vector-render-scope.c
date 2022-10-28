@@ -225,6 +225,13 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
 }
 
 
+ShumateVectorGeometryType
+shumate_vector_render_scope_get_geometry_type (ShumateVectorRenderScope *self)
+{
+  g_return_val_if_fail (self->feature != NULL, 0);
+  return (ShumateVectorGeometryType) self->feature->type;
+}
+
 void
 shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
                                                  double                   *x,
