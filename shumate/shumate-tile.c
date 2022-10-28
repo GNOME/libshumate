@@ -260,7 +260,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
   /**
    * ShumateTile:paintable:
    *
-   * The [class@Gdk.Paintable] backing the tile
+   * The [iface@Gdk.Paintable] backing the tile
    */
   obj_properties[PROP_PAINTABLE] =
     g_param_spec_object ("paintable",
@@ -552,9 +552,9 @@ shumate_tile_set_fade_in (ShumateTile *self,
  * shumate_tile_get_paintable:
  * @self: the [class@Tile]
  *
- * Get the [class@Gdk.Paintable] representing this tile.
+ * Get the [iface@Gdk.Paintable] representing this tile.
  *
- * Returns: (transfer none) (nullable): A [class@Gdk.Paintable]
+ * Returns: (transfer none) (nullable): A [iface@Gdk.Paintable]
  */
 GdkPaintable *
 shumate_tile_get_paintable (ShumateTile *self)
@@ -567,9 +567,9 @@ shumate_tile_get_paintable (ShumateTile *self)
 /**
  * shumate_tile_set_paintable:
  * @self: the [class@Tile]
- * @paintable: a [class@Gdk.Paintable]
+ * @paintable: a [iface@Gdk.Paintable]
  *
- * Sets the [class@Gdk.Paintable] representing this tile.
+ * Sets the [iface@Gdk.Paintable] representing this tile.
  */
 void
 shumate_tile_set_paintable (ShumateTile  *self,
