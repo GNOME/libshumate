@@ -29,6 +29,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_size;
   ShumateVectorExpression *cursor;
+  ShumateVectorExpression *text_padding;
   gboolean line_placement;
   char *text_fonts;
 };
@@ -81,6 +82,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), error);
       if (layer->text_size == NULL)
         return NULL;
+
+      layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), error);
+      if (layer->text_padding == NULL)
+        return NULL;
     }
 
   /* libshumate-specific extensions to the MapLibre style format */
@@ -124,6 +129,7 @@ typedef struct {
   char *text_field;
   GdkRGBA text_color;
   double text_size;
+  double text_padding;
   char *cursor;
   int tile_x;
   int tile_y;
@@ -142,6 +148,7 @@ create_symbol_info (SharedSymbolInfo *shared,
                                          shared->text_field,
                                          &shared->text_color,
                                          shared->text_size,
+                                         shared->text_padding,
                                          shared->self->text_fonts,
                                          shared->cursor,
                                          shared->tile_x,
@@ -241,6 +248,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   shared.tags = tags;
   shumate_vector_expression_eval_color (self->text_color, scope, &shared.text_color);
   shared.text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);
+  shared.text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0);
 
   switch (shumate_vector_render_scope_get_geometry_type (scope))
     {

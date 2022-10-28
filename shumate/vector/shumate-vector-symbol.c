@@ -483,8 +483,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
             collision,
             x + point.x,
             y + point.y,
-            xextent,
-            yextent,
+            xextent + self->symbol_info->text_padding,
+            yextent + self->symbol_info->text_padding,
             rotation + shumate_vector_point_iter_get_current_angle (&iter)
           );
 
@@ -502,8 +502,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         collision,
         x,
         y,
-        text_length / 2.0,
-        yextent,
+        text_length / 2.0 + self->symbol_info->text_padding,
+        yextent + self->symbol_info->text_padding,
         0
       );
 

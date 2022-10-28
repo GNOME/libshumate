@@ -37,6 +37,7 @@ struct _ShumateVectorSymbolInfo
   char *text;
   GdkRGBA text_color;
   double text_size;
+  double text_padding;
   char *text_font;
   guint line_placement : 1;
   double x;
@@ -63,6 +64,7 @@ ShumateVectorSymbolInfo *shumate_vector_symbol_info_new (const char    *layer,
                                                          const char    *text,
                                                          const GdkRGBA *text_color,
                                                          double         text_size,
+                                                         double         text_padding,
                                                          const char    *text_font,
                                                          const char    *cursor,
                                                          int            tile_x,
