@@ -30,7 +30,7 @@ shumate_vector_symbol_info_free (ShumateVectorSymbolInfo *self)
 
   g_clear_pointer (&self->text, g_free);
   g_clear_pointer (&self->text_font, g_free);
-  shumate_vector_line_string_clear (&self->line);
+  g_clear_pointer (&self->line, shumate_vector_line_string_free);
 
   g_clear_pointer (&self->cursor, g_free);
 
@@ -104,11 +104,12 @@ shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                             ShumateVectorLineString *linestring)
 {
   ShumateVectorPoint center;
-  shumate_vector_line_string_clear (&self->line);
-  self->line = *linestring;
-  shumate_vector_line_string_bounds (&self->line, &self->line_size, &center);
+  g_clear_pointer (&self->line, shumate_vector_line_string_free);
+  self->line = linestring;
+
+  shumate_vector_line_string_bounds (self->line, &self->line_size, &center);
   self->x = center.x;
   self->y = center.y;
-  self->line_length = shumate_vector_line_string_length (&self->line);
+  self->line_length = shumate_vector_line_string_length (self->line);
   self->line_placement = TRUE;
 }

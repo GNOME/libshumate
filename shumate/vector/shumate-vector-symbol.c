@@ -117,7 +117,7 @@ shumate_vector_symbol_constructed (GObject *object)
 
       pango_layout_get_size (layout, &self->glyphs_length, NULL);
       self->glyphs_length /= PANGO_SCALE;
-      self->line_length = shumate_vector_line_string_length (&self->symbol_info->line);
+      self->line_length = shumate_vector_line_string_length (self->symbol_info->line);
 
       do {
         current_item = pango_layout_iter_get_run (iter);
@@ -294,7 +294,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
-      shumate_vector_point_iter_init (&iter, &self->symbol_info->line);
+      shumate_vector_point_iter_init (&iter, self->symbol_info->line);
       shumate_vector_point_iter_advance (&iter, (self->line_length - self->glyphs_length / scale) / 2.0);
 
       /* If the label is upside down on average, draw it the other way around */
@@ -457,13 +457,13 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
   if (self->symbol_info->line_placement)
     {
       ShumateVectorPointIter iter;
-      float line_length = shumate_vector_line_string_length (&self->symbol_info->line);
+      float line_length = shumate_vector_line_string_length (self->symbol_info->line);
       float length = text_length / tile_size_for_zoom;
 
       if (length > line_length)
         return FALSE;
 
-      shumate_vector_point_iter_init (&iter, &self->symbol_info->line);
+      shumate_vector_point_iter_init (&iter, self->symbol_info->line);
       shumate_vector_point_iter_advance (&iter, (line_length - length) / 2.0);
 
       do

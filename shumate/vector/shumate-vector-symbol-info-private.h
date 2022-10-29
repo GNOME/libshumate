@@ -45,7 +45,7 @@ struct _ShumateVectorSymbolInfo
   int tile_y;
   int tile_zoom_level;
 
-  ShumateVectorLineString line;
+  ShumateVectorLineString *line;
   ShumateVectorPoint line_size;
   float line_length;
 
