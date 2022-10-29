@@ -30,6 +30,7 @@
 #include <cairo/cairo.h>
 
 #include "vector/shumate-vector-render-scope-private.h"
+#include "vector/shumate-vector-symbol-info-private.h"
 #include "vector/shumate-vector-utils-private.h"
 #include "vector/shumate-vector-layer-private.h"
 #endif
@@ -579,7 +580,7 @@ render (ShumateVectorRenderer *self,
   cairo_surface_t *surface;
   gconstpointer data;
   gsize len;
-  g_autoptr(GPtrArray) symbols = g_ptr_array_new ();
+  g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func (shumate_vector_symbol_info_unref);
   int texture_size;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
