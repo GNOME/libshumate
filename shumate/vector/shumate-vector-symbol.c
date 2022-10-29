@@ -98,7 +98,6 @@ shumate_vector_symbol_constructed (GObject *object)
       g_autoptr(PangoLayout) layout = pango_layout_new (context);
       g_autoptr(PangoLayoutIter) iter = NULL;
       PangoGlyphItem *current_item;
-      PangoGlyphString *glyph_string;
       int i;
 
       self->glyphs = g_array_new (FALSE, FALSE, sizeof (Glyph));
@@ -122,6 +121,7 @@ shumate_vector_symbol_constructed (GObject *object)
           {
             GskRenderNode *node;
             Glyph glyph;
+            PangoGlyphString *glyph_string;
 
             glyph_string = pango_glyph_string_new ();
             pango_glyph_string_set_size (glyph_string, 1);
@@ -137,6 +137,8 @@ shumate_vector_symbol_constructed (GObject *object)
             glyph.node = node;
             glyph.width = glyph_string->glyphs[0].geometry.width / (double) PANGO_SCALE;
             g_array_append_vals (self->glyphs, &glyph, 1);
+
+            pango_glyph_string_free (glyph_string);
           }
       } while (pango_layout_iter_next_run (iter));
     }
