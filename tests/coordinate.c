@@ -41,7 +41,6 @@ int
 main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
-  gtk_init ();
 
   g_test_add_func ("/coordinate/convert", test_coordinate_convert);
 

@@ -213,6 +213,8 @@ test_vector_expression_feature_filter (void)
   g_assert_true  (filter_with_scope (&scope, "[\"!has\", \"name:en\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"$type\", \"Point\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"zoom\", 10]"));
+
+  vector_tile__tile__free_unpacked (scope.tile, NULL);
 }
 
 
@@ -248,6 +250,7 @@ test_vector_expression_format ()
   ShumateVectorRenderScope scope;
   g_autoptr(JsonNode) node = json_from_string ("\"{name}\"", NULL);
   g_autoptr(ShumateVectorExpression) expression;
+  g_autofree char *result = NULL;
 
   expression = shumate_vector_expression_from_json (node, &error);
   g_assert_no_error (error);
@@ -264,7 +267,10 @@ test_vector_expression_format ()
   g_assert_true (shumate_vector_render_scope_find_layer (&scope, "helloworld"));
   scope.feature = scope.layer->features[0];
 
-  g_assert_cmpstr (shumate_vector_expression_eval_string (expression, &scope, NULL), ==, "Hello, world!");
+  result = shumate_vector_expression_eval_string (expression, &scope, NULL);
+  g_assert_cmpstr (result, ==, "Hello, world!");
+
+  vector_tile__tile__free_unpacked (scope.tile, NULL);
 }
 
 

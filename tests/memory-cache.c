@@ -17,8 +17,6 @@ test_memory_cache_store_retrieve ()
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GdkPaintable) paintable = create_paintable ();
 
-  g_object_ref_sink (tile);
-
   /* Store the tile */
   shumate_tile_set_paintable (tile, paintable);
   shumate_memory_cache_store_tile (cache, tile, "A");
@@ -37,9 +35,6 @@ test_memory_cache_miss ()
   g_autoptr(ShumateTile) tile1 = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(ShumateTile) tile2 = shumate_tile_new_full (0, 0, 256, 1);
   g_autoptr(GdkPaintable) paintable = create_paintable ();
-
-  g_object_ref_sink (tile1);
-  g_object_ref_sink (tile2);
 
   /* Store a tile */
   shumate_tile_set_paintable (tile1, paintable);
@@ -60,9 +55,6 @@ test_memory_cache_source_id ()
   g_autoptr(ShumateTile) tile2 = shumate_tile_new_full (0, 0, 256, 0);
   g_autoptr(GdkPaintable) paintable1 = create_paintable ();
   g_autoptr(GdkPaintable) paintable2 = create_paintable ();
-
-  g_object_ref_sink (tile1);
-  g_object_ref_sink (tile2);
 
   /* Store the tiles */
   shumate_tile_set_paintable (tile1, paintable1);
@@ -85,8 +77,6 @@ test_memory_cache_purge ()
 {
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (3);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
-
-  g_object_ref_sink (tile);
 
   /* Store a few tiles */
   shumate_memory_cache_store_tile (cache, tile, "A");
@@ -117,8 +107,6 @@ test_memory_cache_clean ()
   g_autoptr(ShumateMemoryCache) cache = shumate_memory_cache_new_full (100);
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 256, 0);
 
-  g_object_ref_sink (tile);
-
   /* Store a tile */
   shumate_memory_cache_store_tile (cache, tile, "A");
 
@@ -134,7 +122,6 @@ int
 main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
-  gtk_init ();
 
   g_test_add_func ("/file-cache/store-retrieve", test_memory_cache_store_retrieve);
   g_test_add_func ("/file-cache/miss", test_memory_cache_miss);
