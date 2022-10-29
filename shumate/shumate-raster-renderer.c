@@ -375,10 +375,13 @@ on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
   ShumateRasterRenderer *self = g_task_get_source_object (task);
   ShumateTile *tile = g_task_get_task_data (task);
   GError *error = NULL;
+  g_autoptr(GBytes) bytes = NULL;
 
   g_ptr_array_remove_fast (self->tiles, tile);
 
-  if (!shumate_data_source_get_tile_data_finish (data_source, res, &error))
+  bytes = shumate_data_source_get_tile_data_finish (data_source, res, &error);
+
+  if (bytes == NULL)
     g_task_return_error (task, error);
   else
     {
