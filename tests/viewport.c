@@ -4,7 +4,7 @@
 static void
 test_viewport_zoom_level_min (void)
 {
-  ShumateViewport *viewport;
+  g_autoptr(ShumateViewport) viewport = NULL;
 
   viewport = shumate_viewport_new ();
   g_assert_cmpuint (shumate_viewport_get_min_zoom_level (viewport), ==, 0);
@@ -27,7 +27,7 @@ test_viewport_zoom_level_min (void)
 static void
 test_viewport_zoom_level_max (void)
 {
-  ShumateViewport *viewport;
+  g_autoptr(ShumateViewport) viewport = NULL;
 
   viewport = shumate_viewport_new ();
   g_assert_cmpuint (shumate_viewport_get_max_zoom_level (viewport), ==, 20);
@@ -44,7 +44,7 @@ test_viewport_zoom_level_max (void)
 static void
 test_viewport_zoom_level_clamp (void)
 {
-  ShumateViewport *viewport;
+  g_autoptr(ShumateViewport) viewport = NULL;
 
   viewport = shumate_viewport_new ();
   g_assert_cmpuint (shumate_viewport_get_min_zoom_level (viewport), ==, 0);
@@ -117,7 +117,7 @@ on_zoom_level_changed_cb (ShumateViewport *viewport,
 static void
 test_viewport_zoom_level_notify (void)
 {
-  ShumateViewport *viewport;
+  g_autoptr(ShumateViewport) viewport = NULL;
   guint i;
 
   viewport = g_object_connect (shumate_viewport_new (),
@@ -164,7 +164,6 @@ int
 main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
-  gtk_init ();
 
   g_test_add_func ("/viewport/zoom-level/min", test_viewport_zoom_level_min);
   g_test_add_func ("/viewport/zoom-level/max", test_viewport_zoom_level_max);

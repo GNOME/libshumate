@@ -1,4 +1,10 @@
 {
+  "sources": {
+    "-": {
+      "type": "vector",
+      "tiles": [""]
+    }
+  },
   "layers": [
     {
       "type": "background",
