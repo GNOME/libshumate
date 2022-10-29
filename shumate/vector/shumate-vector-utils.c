@@ -336,10 +336,10 @@ shumate_vector_point_iter_get_average_angle (ShumateVectorPointIter *iter,
 
 
 void
-shumate_vector_line_string_clear (ShumateVectorLineString *linestring)
+shumate_vector_line_string_free (ShumateVectorLineString *linestring)
 {
   g_clear_pointer (&linestring->points, g_free);
-  linestring->n_points = 0;
+  g_free (linestring);
 }
 
 

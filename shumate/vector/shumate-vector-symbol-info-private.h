@@ -39,7 +39,7 @@ struct _ShumateVectorSymbolInfo
   double x;
   double y;
 
-  ShumateVectorLineString line;
+  ShumateVectorLineString *line;
   ShumateVectorPoint line_size;
   float line_length;
 

@@ -138,7 +138,6 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
           for (j = 0; j < split_lines->len; j ++)
             {
               ShumateVectorLineString *linestring = (ShumateVectorLineString *)split_lines->pdata[j];
-              shumate_vector_line_string_simplify (linestring);
 
 #if 0
               /* visualize line simplification */
