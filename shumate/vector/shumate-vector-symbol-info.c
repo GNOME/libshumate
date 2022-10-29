@@ -28,11 +28,16 @@ shumate_vector_symbol_info_free (ShumateVectorSymbolInfo *self)
   g_assert (self);
   g_assert_cmpint (self->ref_count, ==, 0);
 
+  g_clear_pointer (&self->layer, g_free);
+  g_clear_pointer (&self->feature_id, g_free);
+
   g_clear_pointer (&self->text, g_free);
   g_clear_pointer (&self->text_font, g_free);
   g_clear_pointer (&self->line, shumate_vector_line_string_free);
 
   g_clear_pointer (&self->cursor, g_free);
+
+  g_clear_pointer (&self->tags, g_hash_table_unref);
 
   g_free (self);
 }
