@@ -235,7 +235,7 @@ add_tile (ShumateMapLayer  *self,
       g_hash_table_insert (self->tile_fill, g_object_ref (tile), cancellable);
     }
 
-  g_hash_table_insert (self->tile_children, pos, g_object_ref (tile));
+  g_hash_table_insert (self->tile_children, pos, tile);
   gtk_widget_queue_draw (GTK_WIDGET (self));
   g_signal_connect_object (tile, "notify::state", (GCallback)on_tile_notify_state, self, G_CONNECT_SWAPPED);
 }
