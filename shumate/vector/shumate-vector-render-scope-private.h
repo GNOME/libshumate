@@ -37,6 +37,7 @@ typedef struct {
   double zoom_level;
   int tile_x;
   int tile_y;
+  int layer_idx;
 
   GPtrArray *symbols;
 

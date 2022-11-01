@@ -46,6 +46,9 @@ struct _ShumateVectorSymbolInfo
   int tile_y;
   int tile_zoom_level;
 
+  int layer_idx;
+  double symbol_sort_key;
+
   ShumateVectorLineString *line;
   ShumateVectorPoint line_size;
   float line_length;
@@ -66,6 +69,8 @@ ShumateVectorSymbolInfo *shumate_vector_symbol_info_new (const char    *layer,
                                                          double         text_size,
                                                          double         text_padding,
                                                          const char    *text_font,
+                                                         int            layer_idx,
+                                                         double         symbol_sort_key,
                                                          const char    *cursor,
                                                          int            tile_x,
                                                          int            tile_y,
@@ -79,6 +84,10 @@ void shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
 GType                        shumate_vector_symbol_info_get_type (void) G_GNUC_CONST;
 ShumateVectorSymbolInfo     *shumate_vector_symbol_info_ref      (ShumateVectorSymbolInfo *self);
 void                         shumate_vector_symbol_info_unref    (ShumateVectorSymbolInfo *self);
+
+
+int shumate_vector_symbol_info_compare (ShumateVectorSymbolInfo *a,
+                                        ShumateVectorSymbolInfo *b);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorSymbolInfo, shumate_vector_symbol_info_unref)
 

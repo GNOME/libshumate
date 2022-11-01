@@ -393,6 +393,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                G_CONNECT_SWAPPED);
     }
 
+  self->children = g_list_sort (self->children, (GCompareFunc)shumate_vector_symbol_info_compare);
   self->labels_changed = TRUE;
 }
 

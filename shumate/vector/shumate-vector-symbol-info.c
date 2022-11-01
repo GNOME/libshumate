@@ -73,6 +73,8 @@ shumate_vector_symbol_info_new (const char    *layer,
                                 double         text_size,
                                 double         text_padding,
                                 const char    *text_font,
+                                int            layer_idx,
+                                double         symbol_sort_key,
                                 const char    *cursor,
                                 int            tile_x,
                                 int            tile_y,
@@ -95,6 +97,8 @@ shumate_vector_symbol_info_new (const char    *layer,
     .text_padding = text_padding,
     .text_font = g_strdup (text_font),
     .cursor = g_strdup (cursor),
+    .layer_idx = layer_idx,
+    .symbol_sort_key = symbol_sort_key,
     .tile_x = tile_x,
     .tile_y = tile_y,
     .tile_zoom_level = tile_zoom_level,
@@ -119,4 +123,20 @@ shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
   self->y = center.y;
   self->line_length = shumate_vector_line_string_length (self->line);
   self->line_placement = TRUE;
+}
+
+int
+shumate_vector_symbol_info_compare (ShumateVectorSymbolInfo *a,
+                                    ShumateVectorSymbolInfo *b)
+{
+  if (a->layer_idx < b->layer_idx)
+    return -1;
+  else if (a->layer_idx > b->layer_idx)
+    return 1;
+  else if (a->symbol_sort_key < b->symbol_sort_key)
+    return -1;
+  else if (a->symbol_sort_key > b->symbol_sort_key)
+    return 1;
+  else
+    return 0;
 }

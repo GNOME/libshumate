@@ -30,6 +30,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *text_size;
   ShumateVectorExpression *cursor;
   ShumateVectorExpression *text_padding;
+  ShumateVectorExpression *symbol_sort_key;
   gboolean line_placement;
   char *text_fonts;
 };
@@ -86,6 +87,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), error);
       if (layer->text_padding == NULL)
         return NULL;
+
+      layer->symbol_sort_key = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-sort-key"), error);
+      if (layer->symbol_sort_key == NULL)
+        return NULL;
     }
 
   /* libshumate-specific extensions to the MapLibre style format */
@@ -130,6 +135,8 @@ typedef struct {
   GdkRGBA text_color;
   double text_size;
   double text_padding;
+  int layer_idx;
+  double symbol_sort_key;
   char *cursor;
   int tile_x;
   int tile_y;
@@ -150,6 +157,8 @@ create_symbol_info (SharedSymbolInfo *shared,
                                          shared->text_size,
                                          shared->text_padding,
                                          shared->self->text_fonts,
+                                         shared->layer_idx,
+                                         shared->symbol_sort_key,
                                          shared->cursor,
                                          shared->tile_x,
                                          shared->tile_y,
@@ -245,6 +254,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   shared.feature_id = feature_id;
   shared.text_field = text_field;
   shared.cursor = cursor;
+  shared.layer_idx = scope->layer_idx;
+  shared.symbol_sort_key = shumate_vector_expression_eval_number (self->symbol_sort_key, scope, 0);
   shared.tags = tags;
   shumate_vector_expression_eval_color (self->text_color, scope, &shared.text_color);
   shared.text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);

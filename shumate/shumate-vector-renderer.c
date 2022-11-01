@@ -601,8 +601,8 @@ render (ShumateVectorRenderer *self,
   scope.tile = vector_tile__tile__unpack (NULL, len, data);
 
   if (scope.tile != NULL)
-    for (int i = 0; i < self->layers->len; i ++)
-      shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[i], &scope);
+    for (scope.layer_idx = 0; scope.layer_idx < self->layers->len; scope.layer_idx ++)
+      shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[scope.layer_idx], &scope);
 
   texture = texture_new_for_surface (surface);
   shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
