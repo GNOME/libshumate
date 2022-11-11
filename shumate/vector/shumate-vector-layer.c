@@ -148,8 +148,10 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
 
       cairo_save (scope->cr);
 
-      scope->scale = (double) scope->layer->extent / scope->target_size;
+      scope->scale = (double) scope->layer->extent / scope->target_size / scope->overzoom_scale;
       cairo_scale (scope->cr, 1.0 / scope->scale, 1.0 / scope->scale);
+
+      cairo_translate (scope->cr, -scope->overzoom_x * scope->layer->extent, -scope->overzoom_y * scope->layer->extent);
 
       for (int j = 0; j < scope->layer->n_features; j ++)
         {

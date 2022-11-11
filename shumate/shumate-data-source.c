@@ -15,6 +15,11 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+typedef struct {
+  int min_zoom_level;
+  int max_zoom_level;
+} ShumateDataSourcePrivate;
+
 #include "shumate-data-source.h"
 
 /**
@@ -23,8 +28,16 @@
  * The base class used to retrieve tiles as [struct@GLib.Bytes].
  */
 
-G_DEFINE_ABSTRACT_TYPE (ShumateDataSource, shumate_data_source, G_TYPE_OBJECT)
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (ShumateDataSource, shumate_data_source, G_TYPE_OBJECT)
 
+enum {
+  PROP_0,
+  PROP_MIN_ZOOM_LEVEL,
+  PROP_MAX_ZOOM_LEVEL,
+  N_PROPS,
+};
+
+static GParamSpec *properties[N_PROPS];
 
 enum
 {
@@ -33,6 +46,54 @@ enum
 };
 static guint signals[LAST_SIGNAL] = { 0, };
 
+
+static void
+shumate_data_source_get_property (GObject    *object,
+                                  guint       prop_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
+{
+  ShumateDataSource *data_source = SHUMATE_DATA_SOURCE (object);
+
+  switch (prop_id)
+    {
+      case PROP_MIN_ZOOM_LEVEL:
+        g_value_set_uint (value, shumate_data_source_get_min_zoom_level (data_source));
+        break;
+
+      case PROP_MAX_ZOOM_LEVEL:
+        g_value_set_uint (value, shumate_data_source_get_max_zoom_level (data_source));
+        break;
+
+      default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
+
+static void
+shumate_data_source_set_property (GObject      *object,
+                                  guint         prop_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
+{
+  ShumateDataSource *data_source = SHUMATE_DATA_SOURCE (object);
+
+  switch (prop_id)
+    {
+      case PROP_MIN_ZOOM_LEVEL:
+        shumate_data_source_set_min_zoom_level (data_source,
+                                                g_value_get_uint (value));
+        break;
+
+      case PROP_MAX_ZOOM_LEVEL:
+        shumate_data_source_set_max_zoom_level (data_source,
+                                                g_value_get_uint (value));
+        break;
+
+      default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    }
+}
 
 static GBytes *
 shumate_data_source_real_get_tile_data_finish (ShumateDataSource  *self,
@@ -50,8 +111,39 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+  object_class->get_property = shumate_data_source_get_property;
+  object_class->set_property = shumate_data_source_set_property;
+
   klass->get_tile_data_async = NULL;
   klass->get_tile_data_finish = shumate_data_source_real_get_tile_data_finish;
+
+  /**
+   * ShumateMapSource:min-zoom-level:
+   *
+   * The minimum zoom level
+   */
+  properties[PROP_MIN_ZOOM_LEVEL] =
+    g_param_spec_uint ("min-zoom-level",
+                       "Minimum Zoom Level",
+                       "The minimum zoom level",
+                       0, 30, 0,
+                       G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
+
+  /**
+   * ShumateMapSource:max-zoom-level:
+   *
+   * The maximum zoom level
+   */
+  properties[PROP_MAX_ZOOM_LEVEL] =
+    g_param_spec_uint ("max-zoom-level",
+                       "Maximum Zoom Level",
+                       "The maximum zoom level",
+                       0, 30, 30,
+                       G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
+
+  g_object_class_install_properties (object_class,
+                                     N_PROPS,
+                                     properties);
 
   /**
    * ShumateDataSource::received-data:
@@ -134,3 +226,89 @@ shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,
 
   return SHUMATE_DATA_SOURCE_GET_CLASS (self)->get_tile_data_finish (self, result, error);
 }
+
+
+/**
+ * shumate_data_source_get_min_zoom_level:
+ * @self: a [class@DataSource]
+ *
+ * Gets the data source's minimum zoom level.
+ *
+ * Returns: the minimum zoom level this data source supports
+ */
+guint
+shumate_data_source_get_min_zoom_level (ShumateDataSource *self)
+{
+  ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
+
+  g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (self), 0);
+
+  return priv->min_zoom_level;
+}
+
+/**
+ * shumate_data_source_set_min_zoom_level:
+ * @self: a [class@DataSource]
+ * @zoom_level: the minimum zoom level
+ *
+ * Sets the data source's minimum zoom level.
+ */
+void
+shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
+                                        guint              zoom_level)
+{
+  ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
+
+  g_return_if_fail (SHUMATE_IS_DATA_SOURCE (self));
+  g_return_if_fail (zoom_level >= 0 && zoom_level <= 30);
+
+  if (priv->min_zoom_level != zoom_level)
+    {
+      priv->min_zoom_level = zoom_level;
+
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MIN_ZOOM_LEVEL]);
+    }
+}
+
+/**
+ * shumate_data_source_get_max_zoom_level:
+ * @self: a [class@DataSource]
+ *
+ * Gets the data source's maximum zoom level.
+ *
+ * Returns: the maximum zoom level this data source supports
+ */
+guint
+shumate_data_source_get_max_zoom_level (ShumateDataSource *self)
+{
+  ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
+
+  g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (self), 0);
+
+  return priv->max_zoom_level;
+}
+
+/**
+ * shumate_data_source_set_max_zoom_level:
+ * @self: a [class@DataSource]
+ * @zoom_level: the maximum zoom level
+ *
+ * Sets the data source's maximum zoom level.
+ */
+void
+shumate_data_source_set_max_zoom_level (ShumateDataSource *self,
+                                        guint              zoom_level)
+{
+  ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
+
+  g_return_if_fail (SHUMATE_IS_DATA_SOURCE (self));
+  g_return_if_fail (zoom_level >= 0 && zoom_level <= 30);
+
+  if (priv->max_zoom_level != zoom_level)
+    {
+      priv->max_zoom_level = zoom_level;
+
+      g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MAX_ZOOM_LEVEL]);
+    }
+}
+

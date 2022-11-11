@@ -57,4 +57,11 @@ GBytes *shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,
                                                   GAsyncResult       *result,
                                                   GError            **error);
 
+guint shumate_data_source_get_min_zoom_level (ShumateDataSource *self);
+void shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
+                                             guint              zoom_level);
+guint shumate_data_source_get_max_zoom_level (ShumateDataSource *self);
+void shumate_data_source_set_max_zoom_level (ShumateDataSource *self,
+                                             guint              zoom_level);
+
 G_END_DECLS

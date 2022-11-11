@@ -339,15 +339,19 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
                                                error))
             return FALSE;
 
-          minzoom = MIN (minzoom, json_object_get_int_member_with_default (source_object, "minzoom", 0));
-          maxzoom = MAX (maxzoom, json_object_get_int_member_with_default (source_object, "maxzoom", 30));
+          minzoom = json_object_get_int_member_with_default (source_object, "minzoom", 0);
+          maxzoom = json_object_get_int_member_with_default (source_object, "maxzoom", 30);
 
           data_source = SHUMATE_DATA_SOURCE (shumate_tile_downloader_new (url_template));
+          shumate_data_source_set_min_zoom_level (data_source, minzoom);
+          shumate_data_source_set_max_zoom_level (data_source, maxzoom);
           g_signal_connect_object (data_source, "received-data", (GCallback)on_data_source_received_data, self, G_CONNECT_SWAPPED);
 
           self->source_name = g_strdup (source_name);
           self->data_source = data_source;
         }
+
+      maxzoom = MAX (maxzoom, 18);
 
       if (minzoom < maxzoom)
         {
@@ -503,6 +507,25 @@ static void on_data_source_done (GObject      *object,
                                  GAsyncResult *res,
                                  gpointer      user_data);
 
+
+static void
+get_source_coordinates (ShumateVectorRenderer *self,
+                        int                   *x,
+                        int                   *y,
+                        int                   *zoom_level)
+{
+  /* Figure out which tile from the data source should be used to render the
+   * given tile (which will be different if we're overzooming). */
+
+  int maxzoom = shumate_data_source_get_max_zoom_level (self->data_source);
+  if (*zoom_level > maxzoom)
+    {
+      *x >>= (*zoom_level - maxzoom);
+      *y >>= (*zoom_level - maxzoom);
+      *zoom_level = maxzoom;
+    }
+}
+
 static void
 shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
                                          ShumateTile         *tile,
@@ -512,6 +535,7 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
 {
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)map_source;
   g_autoptr(GTask) task = NULL;
+  int x, y, zoom_level;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -523,10 +547,16 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
 
   g_ptr_array_add (self->tiles, g_object_ref (tile));
 
+  x = shumate_tile_get_x (tile);
+  y = shumate_tile_get_y (tile);
+  zoom_level = shumate_tile_get_zoom_level (tile);
+
+  get_source_coordinates (self, &x, &y, &zoom_level);
+
   shumate_data_source_get_tile_data_async (self->data_source,
-                                           shumate_tile_get_x (tile),
-                                           shumate_tile_get_y (tile),
-                                           shumate_tile_get_zoom_level (tile),
+                                           x,
+                                           y,
+                                           zoom_level,
                                            cancellable,
                                            on_data_source_done,
                                            g_steal_pointer (&task));
@@ -572,7 +602,9 @@ static void
 render (ShumateVectorRenderer *self,
         ShumateTile           *tile,
         GBytes                *tile_data,
-        double                 zoom_level)
+        int                    source_x,
+        int                    source_y,
+        int                    source_zoom_level)
 {
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
@@ -590,9 +622,19 @@ render (ShumateVectorRenderer *self,
   scope.target_size = texture_size;
   scope.tile_x = shumate_tile_get_x (tile);
   scope.tile_y = shumate_tile_get_y (tile);
-  scope.zoom_level = zoom_level;
+  scope.zoom_level = shumate_tile_get_zoom_level (tile);
   scope.symbols = symbols;
   scope.sprites = self->sprites;
+
+  if (scope.zoom_level > source_zoom_level)
+    {
+      float s = 1 << ((int)scope.zoom_level - source_zoom_level);
+      scope.overzoom_x = (scope.tile_x - (source_x << ((int)scope.zoom_level - source_zoom_level))) / s;
+      scope.overzoom_y = (scope.tile_y - (source_y << ((int)scope.zoom_level - source_zoom_level))) / s;
+      scope.overzoom_scale = s;
+    }
+  else
+    scope.overzoom_scale = 1;
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
   scope.cr = cairo_create (surface);
@@ -625,19 +667,25 @@ on_data_source_received_data (ShumateVectorRenderer *self,
                               ShumateDataSource     *data_source)
 {
   int i;
-  ShumateTile *tile;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_DATA_SOURCE (data_source));
 
   for (i = 0; i < self->tiles->len; i ++)
     {
-      tile = self->tiles->pdata[i];
+      int source_x, source_y, source_zoom_level;
 
-      if (shumate_tile_get_x (tile) == x
-          && shumate_tile_get_y (tile) == y
-          && shumate_tile_get_zoom_level (tile) == zoom_level)
-          render (self, tile, bytes, zoom_level);
+      ShumateTile *tile = self->tiles->pdata[i];
+
+      source_x = shumate_tile_get_x (tile);
+      source_y = shumate_tile_get_y (tile);
+      source_zoom_level = shumate_tile_get_zoom_level (tile);
+      get_source_coordinates (self, &source_x, &source_y, &source_zoom_level);
+
+      if (source_x == x
+          && source_y == y
+          && source_zoom_level == zoom_level)
+        render (self, tile, bytes, source_x, source_y, source_zoom_level);
     }
 }
 

@@ -47,6 +47,15 @@ zigzag (guint value)
   return (value >> 1) ^ (-(value & 1));
 }
 
+static void
+apply_transforms (ShumateVectorRenderScope *self,
+                  float                    *x,
+                  float                    *y)
+{
+  *x = ((*x / self->layer->extent) - self->overzoom_x) * self->overzoom_scale;
+  *y = ((*y / self->layer->extent) - self->overzoom_y) * self->overzoom_scale;
+}
+
 /* Draws the current feature as a path onto the scope's cairo context. */
 void
 shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
@@ -98,7 +107,8 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 {
   GPtrArray *lines = g_ptr_array_new ();
   ShumateVectorLineString *current_line = NULL;
-  double x = 0, y = 0;
+  float x = 0, y = 0;
+  float x_tf, y_tf;
 
   g_return_val_if_fail (self->feature != NULL, NULL);
 
@@ -128,12 +138,17 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 
             x += zigzag (self->feature->geometry[++i]);
             y += zigzag (self->feature->geometry[++i]);
-            start_x = x;
-            start_y = y;
+
+            x_tf = x;
+            y_tf = y;
+            apply_transforms (self, &x_tf, &y_tf);
+
+            start_x = x_tf;
+            start_y = y_tf;
 
             current_line->points[0] = (ShumateVectorPoint) {
-              .x = x / self->layer->extent,
-              .y = y / self->layer->extent,
+              .x = x_tf,
+              .y = y_tf,
             };
             break;
           case LINE_TO:
@@ -142,17 +157,22 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 
             x += zigzag (self->feature->geometry[++i]);
             y += zigzag (self->feature->geometry[++i]);
+
+            x_tf = x;
+            y_tf = y;
+            apply_transforms (self, &x_tf, &y_tf);
+
             current_line->points[current_line->n_points++] = (ShumateVectorPoint) {
-              .x = x / self->layer->extent,
-              .y = y / self->layer->extent,
+              .x = x_tf,
+              .y = y_tf,
             };
             break;
           case CLOSE_PATH:
             g_return_val_if_fail (current_line != NULL, NULL);
 
             current_line->points[current_line->n_points++] = (ShumateVectorPoint) {
-              .x = start_x / self->layer->extent,
-              .y = start_y / self->layer->extent,
+              .x = start_x,
+              .y = start_y,
             };
             break;
           default:
@@ -170,17 +190,17 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 
 void
 shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
-                                        double                   *min_x,
-                                        double                   *min_y,
-                                        double                   *max_x,
-                                        double                   *max_y)
+                                        float                    *min_x,
+                                        float                    *min_y,
+                                        float                    *max_x,
+                                        float                    *max_y)
 {
   double x = 0, y = 0;
 
-  *min_x = self->layer->extent;
-  *min_y = self->layer->extent;
-  *max_x = 0;
-  *max_y = 0;
+  *min_x = G_MAXFLOAT;
+  *min_y = G_MAXFLOAT;
+  *max_x = G_MINFLOAT;
+  *max_y = G_MINFLOAT;
 
   g_return_if_fail (self->feature != NULL);
 
@@ -218,10 +238,8 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
         }
     }
 
-  *min_x /= self->layer->extent;
-  *min_y /= self->layer->extent;
-  *max_x /= self->layer->extent;
-  *max_y /= self->layer->extent;
+  apply_transforms (self, min_x, min_y);
+  apply_transforms (self, max_x, max_y);
 }
 
 
@@ -237,7 +255,7 @@ shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
                                                  double                   *x,
                                                  double                   *y)
 {
-  double min_x, min_y, max_x, max_y;
+  float min_x, min_y, max_x, max_y;
   shumate_vector_render_scope_get_bounds (self, &min_x, &min_y, &max_x, &max_y);
   *x = (min_x + max_x) / 2.0;
   *y = (min_y + max_y) / 2.0;

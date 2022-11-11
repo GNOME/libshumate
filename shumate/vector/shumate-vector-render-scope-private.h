@@ -43,6 +43,8 @@ typedef struct {
 
   ShumateVectorSpriteSheet *sprites;
 
+  float overzoom_x, overzoom_y, overzoom_scale;
+
   VectorTile__Tile *tile;
   VectorTile__Tile__Layer *layer;
   VectorTile__Tile__Feature *feature;
@@ -53,10 +55,10 @@ gboolean shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self,
 void shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self);
 void shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self, double *x, double *y);
 void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
-                                             double                   *min_x,
-                                             double                   *min_y,
-                                             double                   *max_x,
-                                             double                   *max_y);
+                                             float                    *min_x,
+                                             float                    *min_y,
+                                             float                    *max_x,
+                                             float                    *max_y);
 ShumateVectorGeometryType shumate_vector_render_scope_get_geometry_type (ShumateVectorRenderScope *self);
 
 GPtrArray *shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self);
