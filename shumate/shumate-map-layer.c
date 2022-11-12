@@ -293,20 +293,22 @@ recompute_grid (ShumateMapLayer *self)
 
   gboolean all_filled = TRUE;
 
-  /* First, remove all the tiles that aren't in bounds. For now, ignore tiles
-   * that aren't on the current zoom level--those are only removed once the
-   * current level is fully loaded */
+  /* First, remove all the tiles that aren't in bounds, or that are on the
+   * wrong zoom level and haven't finished loading */
   g_hash_table_iter_init (&iter, self->tile_children);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       TileGridPosition *pos = key;
       ShumateTile *tile = value;
+      float size = powf (2, zoom_level - pos->zoom);
+      float x = pos->x * size;
+      float y = pos->y * size;
 
-      if ((pos->x < tile_initial_column
-          || pos->x >= tile_initial_column + required_columns
-          || pos->y < tile_initial_row
-          || pos->y >= tile_initial_row + required_rows)
-          && pos->zoom == zoom_level)
+      if (x + size <= tile_initial_column
+          || x >= tile_initial_column + required_columns
+          || y + size <= tile_initial_row
+          || y >= tile_initial_row + required_rows
+          || (pos->zoom != zoom_level && shumate_tile_get_state (tile) != SHUMATE_STATE_DONE))
         {
           remove_tile (self, tile, pos);
           g_hash_table_iter_remove (&iter);
