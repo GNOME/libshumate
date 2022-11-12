@@ -250,6 +250,9 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   tags = shumate_vector_render_scope_create_tag_table (scope);
 
   shared.self = self;
+  shared.tile_x = scope->tile_x;
+  shared.tile_y = scope->tile_y;
+  shared.tile_zoom_level = scope->zoom_level;
   shared.layer = shumate_vector_layer_get_id (layer);
   shared.feature_id = feature_id;
   shared.text_field = text_field;
@@ -271,7 +274,13 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
             {
               ShumateVectorLineString *string = g_ptr_array_index (geometry, i);
               for (int j = 0; j < string->n_points; j ++)
-                place_point_label (&shared, string->points[j].x, string->points[j].y, scope);
+                {
+                  x = string->points[j].x;
+                  y = string->points[j].y;
+                  if (x < 0 || x >= 1 || y < 0 || y >= 1)
+                    break;
+                  place_point_label (&shared, x, y, scope);
+                }
             }
         }
 
