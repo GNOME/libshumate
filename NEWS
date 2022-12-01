@@ -1,4 +1,10 @@
 =====================
+Version 1.0.3
+=====================
+ - Fix memory leaks
+ - Remove old tiles more aggresively, speeding up zoom animations
+
+=====================
 Version 1.0.2
 =====================
  - Avoid flickering when panning the map
