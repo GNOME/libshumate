@@ -6,22 +6,19 @@ test_env = [
   'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
 ]
 
-valgrind_tests = [
+tests = [
   'coordinate',
   'data-source-request',
+  'file-cache',
+  'map',
+  'marker',
+  'marker-layer',
   'memory-cache',
   'viewport',
 ]
 
-tests = [
-  'file-cache',
-  'marker',
-  'map',
-  'marker-layer',
-]
-
 if get_option('vector_renderer')
-  valgrind_tests += [
+  tests += [
     'vector-expression',
     'vector-renderer',
     'vector-style',
@@ -31,21 +28,20 @@ endif
 
 subdir('data')
 
+# Allow the tests to be easily run under valgrind using --setup=valgrind
 valgrind = find_program('valgrind', required: false)
 
 if valgrind.found()
-  foreach test : valgrind_tests
-    executable = executable(
-      test,
-      test_resources,
-      '@0@.c'.format(test),
-      dependencies: [libshumate_dep],
-    )
-
-    test(test, valgrind, args: ['--leak-check=full', '--error-exitcode=1', executable], env: test_env)
-  endforeach
-else
-  tests += valgrind_tests
+  add_test_setup('valgrind',
+    exclude_suites: [ 'no-valgrind', 'flaky' ],
+    exe_wrapper: [
+      valgrind,
+      '--leak-check=full',
+      '--error-exitcode=1',
+    ],
+    env: test_env,
+    timeout_multiplier: 20,
+  )
 endif
 
 foreach test : tests
