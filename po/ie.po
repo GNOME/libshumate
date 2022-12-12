@@ -1,0 +1,42 @@
+# Interlingue translation for libshumate.
+# Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
+# This file is distributed under the same license as the libshumate package.
+# Olga Smirnova <mistresssilvara@hotmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libshumate main\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
+"POT-Creation-Date: 2022-11-27 18:47+0000\n"
+"PO-Revision-Date: 2022-12-12 08:33+0700\n"
+"Language-Team: Interlingue <ie@li.org>\n"
+"Language: ie\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: OIS <mistresssilvara@hotmail.com>\n"
+"X-Generator: Poedit 1.8.12\n"
+
+#. m is the unit for meters
+#: shumate/shumate-scale.c:197
+#, c-format
+msgid "%d m"
+msgstr "%d m"
+
+#. km is the unit for kilometers
+#: shumate/shumate-scale.c:200
+#, c-format
+msgid "%d km"
+msgstr "%d km"
+
+#. ft is the unit for feet
+#: shumate/shumate-scale.c:206
+#, c-format
+msgid "%d ft"
+msgstr "%d pd"
+
+#. mi is the unit for miles
+#: shumate/shumate-scale.c:209
+#, c-format
+msgid "%d mi"
+msgstr "%d mi"
