@@ -634,7 +634,11 @@ render (ShumateVectorRenderer *self,
       scope.overzoom_scale = s;
     }
   else
-    scope.overzoom_scale = 1;
+    {
+      scope.overzoom_x = 0;
+      scope.overzoom_y = 0;
+      scope.overzoom_scale = 1;
+    }
 
   surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
   scope.cr = cairo_create (surface);
