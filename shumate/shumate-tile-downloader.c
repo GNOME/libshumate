@@ -313,6 +313,9 @@ fetch_from_network (GTask *task)
   g_autofree char *modtime_string = NULL;
   SoupMessageHeaders *headers;
 
+  if (g_task_return_error_if_cancelled (task))
+    return;
+
   uri = get_tile_uri (data->self, data->x, data->y, data->z);
 
   data->msg = soup_message_new (SOUP_METHOD_GET, uri);
