@@ -200,6 +200,16 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       self->type = EXPR_DIV;
       expect_exprs = 2;
     }
+  else if (g_strcmp0 ("zoom", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+
+      self->type = EXPR_GET;
+      expect_exprs = 0;
+
+      shumate_vector_value_set_string (&value, "zoom");
+      g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
+    }
   else if (g_strcmp0 ("case", op) == 0)
     self->type = EXPR_CASE;
   else if (g_strcmp0 ("coalesce", op) == 0)
@@ -213,7 +223,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       return FALSE;
     }
 
-  if (expect_exprs > 0 && json_array_get_length (array) - 1 != expect_exprs)
+  if (expect_exprs > -1 && json_array_get_length (array) - 1 != expect_exprs)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
