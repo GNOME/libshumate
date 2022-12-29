@@ -34,18 +34,22 @@ typedef struct {
       GdkRGBA color;
       int color_state;
     };
+    GPtrArray *array;
   };
 } ShumateVectorValue;
 
 #define SHUMATE_VECTOR_VALUE_INIT ((ShumateVectorValue) {.type = 0})
 
+gboolean shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *node, GError **error);
 gboolean shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *value);
 void shumate_vector_value_set_from_feature_value (ShumateVectorValue *self, VectorTile__Tile__Value *value);
 
+void shumate_vector_value_free (ShumateVectorValue *self);
 void shumate_vector_value_unset (ShumateVectorValue *self);
 gboolean shumate_vector_value_is_null (ShumateVectorValue *self);
 void shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorValue, shumate_vector_value_free)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (ShumateVectorValue, shumate_vector_value_unset)
 
 void shumate_vector_value_set_number (ShumateVectorValue *self, double number);
@@ -59,6 +63,10 @@ gboolean shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *b
 
 void shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color);
 gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color);
+
+void shumate_vector_value_start_array (ShumateVectorValue *self);
+void shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element);
+gboolean shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValue *element);
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
 

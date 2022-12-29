@@ -58,7 +58,7 @@ G_DEFINE_TYPE (ShumateVectorExpressionFilter, shumate_vector_expression_filter, 
 ShumateVectorExpression *
 shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **error)
 {
-  g_autoptr(ShumateVectorExpressionFilter) self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+  g_autoptr(ShumateVectorExpressionFilter) self = NULL;
   JsonNode *op_node;
   const char *op;
   gboolean lookup_first_arg = TRUE;
@@ -85,6 +85,31 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
     }
 
   op = json_node_get_string (op_node);
+
+  if (g_strcmp0 ("literal", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      JsonNode *arg;
+
+      if (json_array_get_length (array) != 2)
+        {
+          g_set_error (error,
+                      SHUMATE_STYLE_ERROR,
+                      SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                      "Operator `literal` expected exactly 1 argument, got %d",
+                      json_array_get_length (array) - 1);
+          return NULL;
+        }
+
+      arg = json_array_get_element (array, 1);
+
+      if (!shumate_vector_value_set_from_json_literal (&value, arg, error))
+        return NULL;
+
+      return shumate_vector_expression_literal_new (&value);
+    }
+
+  self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
 
   if (g_strcmp0 ("!", op) == 0)
     {
@@ -347,7 +372,9 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       for (int i = 1; i < n_expressions; i ++)
         {
           shumate_vector_expression_eval (expressions[i], scope, &value2);
-          if (shumate_vector_value_equal (&value, &value2))
+          if (
+              shumate_vector_value_equal (&value, &value2)
+              || shumate_vector_value_array_contains (&value2, &value))
             {
               shumate_vector_value_set_boolean (out, TRUE ^ inverted);
               return TRUE;

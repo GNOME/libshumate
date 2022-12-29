@@ -612,7 +612,7 @@ render (ShumateVectorRenderer *self,
   cairo_surface_t *surface;
   gconstpointer data;
   gsize len;
-  g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func (shumate_vector_symbol_info_unref);
+  g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));

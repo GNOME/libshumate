@@ -112,9 +112,13 @@ static gboolean
 filter_with_scope (ShumateVectorRenderScope *scope, const char *filter)
 {
   g_autoptr(GError) error = NULL;
-  g_autoptr(JsonNode) node = json_from_string (filter, NULL);
-  g_autoptr(ShumateVectorExpression) expression = shumate_vector_expression_from_json (node, &error);
+  g_autoptr(JsonNode) node = NULL;
+  g_autoptr(ShumateVectorExpression) expression = NULL;
 
+  node = json_from_string (filter, &error);
+  g_assert_no_error (error);
+
+  expression = shumate_vector_expression_from_json (node, &error);
   g_assert_no_error (error);
 
   return shumate_vector_expression_eval_boolean (expression, scope, FALSE);
@@ -148,6 +152,9 @@ test_vector_expression_basic_filter (void)
 
   g_assert_true  (filter ("[\"in\", 10, 20, 10, 13]"));
   g_assert_true  (filter ("[\"!in\", 10, 20, 0, 13]"));
+  g_assert_true  (filter ("[\"==\", [\"literal\", []], [\"literal\", []]]"));
+  g_assert_true  (filter ("[\"==\", [\"literal\", [10, true, \"A\", null]], [\"literal\", [10, true, \"A\", null]]]"));
+  g_assert_true  (filter ("[\"in\", 13, [\"literal\", [10, 20, 0, 13]]]"));
 
   g_assert_true  (filter ("[\"==\", 10, 10]"));
   g_assert_false (filter ("[\"==\", 10, 20]"));
@@ -274,6 +281,51 @@ test_vector_expression_format ()
 }
 
 
+static void
+test_vector_expression_array ()
+{
+  g_autofree char *string = NULL;
+  g_auto(ShumateVectorValue) element1 = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) element2 = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) array1 = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) array2 = SHUMATE_VECTOR_VALUE_INIT;
+
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = NULL;
+  g_autoptr(ShumateVectorExpression) expression = NULL;
+  g_auto(ShumateVectorValue) eval = SHUMATE_VECTOR_VALUE_INIT;
+
+  shumate_vector_value_set_string (&element1, "Hello, world!");
+  shumate_vector_value_set_boolean (&element2, TRUE);
+
+  shumate_vector_value_start_array (&array1);
+  shumate_vector_value_array_append (&array1, &element1);
+  g_assert_false (shumate_vector_value_array_contains (&array1, &element2));
+
+  shumate_vector_value_array_append (&array1, &element2);
+  g_assert_true (shumate_vector_value_array_contains (&array1, &element2));
+
+  string = shumate_vector_value_as_string (&array1);
+  g_assert_cmpstr (string, ==, "[Hello, world!, true]");
+
+  shumate_vector_value_start_array (&array2);
+  shumate_vector_value_array_append (&array2, &element1);
+  shumate_vector_value_array_append (&array2, &element2);
+
+  g_assert_true (shumate_vector_value_equal (&array1, &array2));
+
+  shumate_vector_value_array_append (&array2, &element1);
+  g_assert_false (shumate_vector_value_equal (&array1, &array2));
+
+  node = json_from_string ("[\"literal\", [\"Hello, world!\", true, \"Hello, world!\"]]", NULL);
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+  shumate_vector_expression_eval (expression, NULL, &eval);
+
+  g_assert_true (shumate_vector_value_equal (&eval, &array2));
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -287,6 +339,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
   g_test_add_func ("/vector/expression/format", test_vector_expression_format);
+  g_test_add_func ("/vector/expression/array", test_vector_expression_array);
 
   return g_test_run ();
 }
