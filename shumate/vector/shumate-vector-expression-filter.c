@@ -210,6 +210,16 @@ shumate_vector_expression_filter_from_json_array (JsonArray *array, GError **err
       shumate_vector_value_set_string (&value, "zoom");
       g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
     }
+  else if (g_strcmp0 ("geometry-type", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+
+      self->type = EXPR_GET;
+      expect_exprs = 0;
+
+      shumate_vector_value_set_string (&value, "$type");
+      g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
+    }
   else if (g_strcmp0 ("case", op) == 0)
     self->type = EXPR_CASE;
   else if (g_strcmp0 ("coalesce", op) == 0)
