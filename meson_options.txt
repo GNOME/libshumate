@@ -20,3 +20,7 @@ option('vector_renderer',
 option('libsoup3',
        type: 'boolean', value: true,
        description: 'Use libsoup 3.0')
+
+option('sysprof',
+       type: 'feature', value: 'auto',
+       description : 'enable sysprof-capture support for profiling')

@@ -72,6 +72,23 @@ introspection_dep = dependency('gobject-introspection-1.0', version: introspecti
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
 gtk_doc_dep = dependency('gtk-doc', version: gtk_doc_req, required: false)
 
+libsysprof_capture_dep = dependency('sysprof-capture-4',
+  required: get_option('sysprof'),
+  default_options: [
+    'enable_examples=false',
+    'enable_gtk=false',
+    'enable_tests=false',
+    'enable_tools=false',
+    'libsysprof=false',
+    'with_sysprofd=none',
+    'help=false',
+  ],
+  fallback: ['sysprof', 'libsysprof_capture_dep'],
+)
+if libsysprof_capture_dep.found()
+  add_project_arguments('-DSHUMATE_HAS_SYSPROF=1', language: 'c')
+endif
+
 if get_option('gtk_doc')
   dependency('gi-docgen',
     version: '>= 2021.1',

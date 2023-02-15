@@ -19,6 +19,7 @@
 #include "shumate-tile-downloader.h"
 #include "shumate-file-cache.h"
 #include "shumate-user-agent.h"
+#include "shumate-profiling-private.h"
 
 /**
  * ShumateTileDownloader:
@@ -292,7 +293,11 @@ on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user
 
   if (data->bytes != NULL)
     {
+      g_autofree char *desc = g_strdup_printf ("(%d, %d) @ %d", data->x, data->y, data->z);
+
+      SHUMATE_PROFILE_START_NAMED (emit_received_data);
       g_signal_emit_by_name (data->self, "received-data", data->x, data->y, data->z, data->bytes);
+      SHUMATE_PROFILE_END_NAMED (emit_received_data, desc);
 
       if (!tile_is_expired (data->modtime))
         {
@@ -480,6 +485,7 @@ on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
   GCancellable *cancellable = g_task_get_cancellable (task);
   FillTileData *data = g_task_get_task_data (task);
   g_autoptr(GError) error = NULL;
+  g_autofree char *profiling_desc = g_strdup_printf ("(%d, %d) @ %d", data->x, data->y, data->z);
 
   g_output_stream_splice_finish (output_stream, res, &error);
   if (error != NULL)
@@ -491,7 +497,9 @@ on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
   g_bytes_unref (data->bytes);
   data->bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
 
+  SHUMATE_PROFILE_START_NAMED (emit_received_data);
   g_signal_emit_by_name (data->self, "received-data", data->x, data->y, data->z, data->bytes);
+  SHUMATE_PROFILE_END_NAMED (emit_received_data, profiling_desc);
 
   shumate_file_cache_store_tile_async (data->self->cache,
                                        data->x, data->y, data->z,

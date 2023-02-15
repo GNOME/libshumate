@@ -18,6 +18,7 @@
 #include "shumate-vector-renderer-private.h"
 #include "shumate-tile-downloader.h"
 #include "shumate-tile-private.h"
+#include "shumate-profiling-private.h"
 
 /**
  * ShumateVectorRenderer:
@@ -229,6 +230,8 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
                                        GCancellable  *cancellable,
                                        GError       **error)
 {
+  SHUMATE_PROFILE_START ();
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)initable;
   g_autoptr(JsonNode) node = NULL;
@@ -606,6 +609,8 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
                                 int                    source_y,
                                 int                    source_zoom_level)
 {
+  SHUMATE_PROFILE_START ();
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
   g_autoptr(GdkTexture) texture = NULL;
@@ -614,6 +619,7 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
   gsize len;
   g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
+  g_autofree char *profile_desc = NULL;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_TILE (tile));
@@ -657,6 +663,10 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
   cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
   vector_tile__tile__free_unpacked (scope.tile, NULL);
+
+  profile_desc = g_strdup_printf ("(%d, %d) @ %f", scope.tile_x, scope.tile_y, scope.zoom_level);
+  SHUMATE_PROFILE_END (profile_desc);
+
 #else
   g_return_if_reached ();
 #endif

@@ -30,6 +30,7 @@ libshumate_private_h = [
   'shumate-kinetic-scrolling-private.h',
   'shumate-marker-private.h',
   'shumate-memory-cache-private.h',
+  'shumate-profiling-private.h',
   'shumate-symbol-event-private.h',
   'shumate-tile-private.h',
   'shumate-viewport-private.h',
@@ -92,6 +93,7 @@ libshumate_deps = [
   cairo_dep,
   sqlite_dep,
   libsoup_dep,
+  libsysprof_capture_dep,
 ]
 
 libshumate_c_args = [

@@ -19,6 +19,7 @@
 #include "shumate-vector-symbol-private.h"
 #include "shumate-vector-collision-private.h"
 #include "shumate-symbol-event-private.h"
+#include "shumate-profiling-private.h"
 
 struct _ShumateVectorSymbolContainer
 {
@@ -227,6 +228,8 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
                                                int        height,
                                                int        baseline)
 {
+  SHUMATE_PROFILE_START ();
+
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
   GtkAllocation alloc;
   float tile_size = shumate_map_source_get_tile_size (self->map_source);
@@ -311,6 +314,8 @@ static void
 shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
                                           GtkSnapshot *snapshot)
 {
+  SHUMATE_PROFILE_START ();
+
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
 
   for (GList *l = self->children; l != NULL; l = l->next)
@@ -417,6 +422,8 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                              int                           tile_y,
                                              int                           zoom)
 {
+  SHUMATE_PROFILE_START ();
+
   g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
 
   for (int i = 0; i < symbol_infos->len; i ++)
@@ -455,6 +462,8 @@ shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContainer *se
                                                 int                           tile_y,
                                                 int                           zoom)
 {
+  SHUMATE_PROFILE_START ();
+
   g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
 
   for (GList *l = self->children; l != NULL; l = l->next)
