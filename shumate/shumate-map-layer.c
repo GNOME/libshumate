@@ -22,6 +22,7 @@
 #include "shumate-tile-private.h"
 #include "shumate-symbol-event.h"
 #include "shumate-profiling-private.h"
+#include "shumate-utils-private.h"
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 #  include "vector/shumate-vector-symbol-container-private.h"
@@ -81,60 +82,7 @@ static guint signals[LAST_SIGNAL] = { 0, };
  * Note that, unlike the values given to ShumateTile, the x and y coordinates
  * here are *not* wrapped. For example, a ShumateTile at level 3 might have
  * coordinates of (7, 2) but have a TileGridPosition of (-1, 2). */
-typedef struct
-{
-  int x;
-  int y;
-  int zoom;
-} TileGridPosition;
 
-static void
-tile_grid_position_init (TileGridPosition *self,
-                         int x,
-                         int y,
-                         int zoom)
-{
-  self->x = x;
-  self->y = y;
-  self->zoom = zoom;
-}
-
-static TileGridPosition *
-tile_grid_position_new (int x,
-                        int y,
-                        int zoom)
-{
-  TileGridPosition *self = g_new0 (TileGridPosition, 1);
-  tile_grid_position_init (self, x, y, zoom);
-  return self;
-}
-
-static guint
-tile_grid_position_hash (gconstpointer pointer)
-{
-  const TileGridPosition *self = pointer;
-  return self->x ^ self->y ^ self->zoom;
-}
-
-static gboolean
-tile_grid_position_equal (gconstpointer a, gconstpointer b)
-{
-  const TileGridPosition *pos_a = a;
-  const TileGridPosition *pos_b = b;
-  return pos_a->x == pos_b->x && pos_a->y == pos_b->y && pos_a->zoom == pos_b->zoom;
-}
-
-static void
-tile_grid_position_free (gpointer pointer)
-{
-  TileGridPosition *self = pointer;
-  if (!self)
-    return;
-
-  g_free (self);
-}
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileGridPosition, tile_grid_position_free);
 
 static int
 positive_mod (int i, int n)
@@ -146,7 +94,7 @@ typedef struct {
   ShumateMapLayer *self;
   ShumateTile *tile;
   char *source_id;
-  TileGridPosition pos;
+  ShumateGridPosition pos;
 } TileFilledData;
 
 static void
@@ -161,9 +109,9 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (TileFilledData, tile_filled_data_free);
 
 
 static void
-add_symbols (ShumateMapLayer  *self,
-             ShumateTile      *tile,
-             TileGridPosition *pos)
+add_symbols (ShumateMapLayer     *self,
+             ShumateTile         *tile,
+             ShumateGridPosition *pos)
 {
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   GPtrArray *symbols;
@@ -215,9 +163,9 @@ on_tile_filled (GObject      *source_object,
 }
 
 static void
-add_tile (ShumateMapLayer  *self,
-          ShumateTile      *tile,
-          TileGridPosition *pos)
+add_tile (ShumateMapLayer     *self,
+          ShumateTile         *tile,
+          ShumateGridPosition *pos)
 {
   const char *source_id = shumate_map_source_get_id (self->map_source);
 
@@ -248,9 +196,9 @@ add_tile (ShumateMapLayer  *self,
 }
 
 static void
-remove_tile (ShumateMapLayer  *self,
-             ShumateTile      *tile,
-             TileGridPosition *pos)
+remove_tile (ShumateMapLayer     *self,
+             ShumateTile         *tile,
+             ShumateGridPosition *pos)
 {
   GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, tile);
   if (cancellable)
@@ -314,7 +262,7 @@ recompute_grid (ShumateMapLayer *self)
   g_hash_table_iter_init (&iter, self->tile_children);
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      TileGridPosition *pos = key;
+      ShumateGridPosition *pos = key;
       ShumateTile *tile = value;
       float size = powf (2, zoom_level - pos->zoom);
       float x = pos->x * size;
@@ -336,7 +284,7 @@ recompute_grid (ShumateMapLayer *self)
     {
       for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
         {
-          g_autoptr(TileGridPosition) pos = tile_grid_position_new (x, y, zoom_level);
+          g_autoptr(ShumateGridPosition) pos = shumate_grid_position_new (x, y, zoom_level);
           ShumateTile *tile = g_hash_table_lookup (self->tile_children, pos);
 
           n_tiles ++;
@@ -375,7 +323,7 @@ recompute_grid (ShumateMapLayer *self)
       g_hash_table_iter_init (&iter, self->tile_children);
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
-          TileGridPosition *pos = key;
+          ShumateGridPosition *pos = key;
           ShumateTile *tile = value;
 
           if (pos->zoom != zoom_level)
@@ -651,7 +599,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
-      TileGridPosition *pos = key;
+      ShumateGridPosition *pos = key;
       ShumateTile *tile = value;
       GdkPaintable *paintable = shumate_tile_get_paintable (tile);
       double size = tile_size * pow (2, zoom_level - pos->zoom);
@@ -737,7 +685,7 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
 static void
 shumate_map_layer_init (ShumateMapLayer *self)
 {
-  self->tile_children = g_hash_table_new_full (tile_grid_position_hash, tile_grid_position_equal, tile_grid_position_free, g_object_unref);
+  self->tile_children = g_hash_table_new_full (shumate_grid_position_hash, shumate_grid_position_equal, shumate_grid_position_free, g_object_unref);
   self->tile_fill = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, g_object_unref);
   self->memcache = shumate_memory_cache_new_full (100);
 }

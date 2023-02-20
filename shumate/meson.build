@@ -33,6 +33,7 @@ libshumate_private_h = [
   'shumate-profiling-private.h',
   'shumate-symbol-event-private.h',
   'shumate-tile-private.h',
+  'shumate-utils-private.h',
   'shumate-viewport-private.h',
 
   'vector/shumate-vector-background-layer-private.h',
@@ -80,6 +81,7 @@ libshumate_sources = [
   'shumate-tile.c',
   'shumate-tile-downloader.c',
   'shumate-user-agent.c',
+  'shumate-utils.c',
   'shumate-vector-renderer.c',
   'shumate-viewport.c',
 ]
