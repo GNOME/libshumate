@@ -23,6 +23,8 @@
 
 #include <sysprof-capture.h>
 
+#define SHUMATE_PROFILE_CURRENT_TIME SYSPROF_CAPTURE_CURRENT_TIME
+
 typedef struct {
   gint64 begin;
   char *name;
@@ -57,6 +59,13 @@ shumate_profile_scope_end (ShumateProfileScope *self)
 
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(ShumateProfileScope, shumate_profile_scope_end)
 
+#define SHUMATE_PROFILE_COLLECT(begin, name, desc) \
+  sysprof_collector_mark (begin, \
+                          SYSPROF_CAPTURE_CURRENT_TIME - begin, \
+                          "shumate", \
+                          name, \
+                          desc);
+
 #define SHUMATE_PROFILE_START() \
     G_GNUC_UNUSED g_auto(ShumateProfileScope) __profile_scope = { \
       .begin = SYSPROF_CAPTURE_CURRENT_TIME, \
@@ -81,9 +90,13 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC(ShumateProfileScope, shumate_profile_scope_end)
 
 #else
 
+#define SHUMATE_PROFILE_CURRENT_TIME ((gint64) -1)
+
+#define SHUMATE_PROFILE_COLLECT(begin, name, desc)
 #define SHUMATE_PROFILE_START()
 #define SHUMATE_PROFILE_START_NAMED(var_name)
 #define SHUMATE_PROFILE_END(desc)
 #define SHUMATE_PROFILE_END_NAMED(var_name, desc)
 
 #endif
+

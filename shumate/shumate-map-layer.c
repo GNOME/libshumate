@@ -21,6 +21,7 @@
 #include "shumate-memory-cache-private.h"
 #include "shumate-tile-private.h"
 #include "shumate-symbol-event.h"
+#include "shumate-profiling-private.h"
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 #  include "vector/shumate-vector-symbol-container-private.h"
@@ -47,6 +48,9 @@ struct _ShumateMapLayer
   float last_recompute_x, last_recompute_y;
 
   ShumateMemoryCache *memcache;
+
+  gint64 profile_all_tiles_filled_begin;
+  gint64 profile_all_tiles_done_begin;
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorSymbolContainer *symbols;
@@ -217,6 +221,9 @@ add_tile (ShumateMapLayer  *self,
 {
   const char *source_id = shumate_map_source_get_id (self->map_source);
 
+  self->profile_all_tiles_filled_begin = SHUMATE_PROFILE_CURRENT_TIME;
+  self->profile_all_tiles_done_begin = SHUMATE_PROFILE_CURRENT_TIME;
+
   if (shumate_memory_cache_try_fill_tile (self->memcache, tile, source_id))
     {
       add_symbols (self, tile, pos);
@@ -281,6 +288,7 @@ recompute_grid (ShumateMapLayer *self)
   int source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
   double rotation = shumate_viewport_get_rotation (viewport);
+  int n_tiles = 0;
 
   int size_x = MAX (
     abs ((int) (cos (rotation) *  width/2.0 - sin (rotation) * height/2.0)),
@@ -299,7 +307,7 @@ recompute_grid (ShumateMapLayer *self)
   int required_columns = tile_final_column - tile_initial_column;
   int required_rows = tile_final_row - tile_initial_row;
 
-  gboolean all_filled = TRUE;
+  gboolean all_filled = TRUE, all_done = TRUE;
 
   /* First, remove all the tiles that aren't in bounds, or that are on the
    * wrong zoom level and haven't finished loading */
@@ -331,20 +339,38 @@ recompute_grid (ShumateMapLayer *self)
           g_autoptr(TileGridPosition) pos = tile_grid_position_new (x, y, zoom_level);
           ShumateTile *tile = g_hash_table_lookup (self->tile_children, pos);
 
+          n_tiles ++;
+
           if (!tile)
             {
               tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
               add_tile (self, tile, g_steal_pointer (&pos));
             }
 
-          if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+          if (shumate_tile_get_paintable (tile) == NULL)
             all_filled = FALSE;
+
+          if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+            all_done = FALSE;
         }
+    }
+
+  if (all_done && self->profile_all_tiles_done_begin > 0)
+    {
+      g_autofree char *desc = g_strdup_printf ("Visible tiles done (%d)", n_tiles);
+      SHUMATE_PROFILE_COLLECT (self->profile_all_tiles_done_begin, desc, NULL);
+      self->profile_all_tiles_done_begin = 0;
+    }
+  if (all_filled && self->profile_all_tiles_filled_begin > 0)
+    {
+      g_autofree char *desc = g_strdup_printf ("Visible tiles filled (%d)", n_tiles);
+      SHUMATE_PROFILE_COLLECT (self->profile_all_tiles_filled_begin, desc, NULL);
+      self->profile_all_tiles_filled_begin = 0;
     }
 
   /* If all the tiles on the current zoom level are filled, delete tiles on all
    * other zoom levels */
-  if (all_filled)
+  if (all_done)
     {
       g_hash_table_iter_init (&iter, self->tile_children);
       while (g_hash_table_iter_next (&iter, &key, &value))
