@@ -42,7 +42,6 @@ struct _ShumateVectorRenderer
 
   char *source_name;
   ShumateDataSource *data_source;
-  GPtrArray *tiles;
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorSpriteSheet *sprites;
@@ -120,15 +119,6 @@ shumate_vector_renderer_is_supported (void)
 
 
 static void
-on_data_source_received_data (ShumateVectorRenderer *self,
-                              int                    x,
-                              int                    y,
-                              int                    zoom_level,
-                              GBytes                *bytes,
-                              ShumateDataSource     *data_source);
-
-
-static void
 shumate_vector_renderer_finalize (GObject *object)
 {
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)object;
@@ -137,7 +127,6 @@ shumate_vector_renderer_finalize (GObject *object)
   g_clear_pointer (&self->style_json, g_free);
   g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
-  g_clear_pointer (&self->tiles, g_ptr_array_unref);
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_clear_object (&self->sprites);
 #endif
@@ -348,7 +337,6 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
           data_source = SHUMATE_DATA_SOURCE (shumate_tile_downloader_new (url_template));
           shumate_data_source_set_min_zoom_level (data_source, minzoom);
           shumate_data_source_set_max_zoom_level (data_source, maxzoom);
-          g_signal_connect_object (data_source, "received-data", (GCallback)on_data_source_received_data, self, G_CONNECT_SWAPPED);
 
           self->source_name = g_strdup (source_name);
           self->data_source = data_source;
@@ -418,7 +406,6 @@ shumate_vector_renderer_initable_iface_init (GInitableIface *iface)
 static void
 shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
-  self->tiles = g_ptr_array_new_full (0, g_object_unref);
 }
 
 
@@ -506,11 +493,6 @@ texture_new_for_surface (cairo_surface_t *surface)
 #endif
 
 
-static void on_data_source_done (GObject      *object,
-                                 GAsyncResult *res,
-                                 gpointer      user_data);
-
-
 static void
 get_source_coordinates (ShumateVectorRenderer *self,
                         int                   *x,
@@ -530,6 +512,44 @@ get_source_coordinates (ShumateVectorRenderer *self,
 }
 
 static void
+on_request_notify (ShumateDataSourceRequest *req,
+                   GParamSpec               *pspec,
+                   gpointer                  user_data)
+{
+  GTask *task = user_data;
+  GBytes *data;
+  ShumateTile *tile = g_task_get_task_data (task);
+  ShumateVectorRenderer *self = g_task_get_source_object (task);
+
+  if ((data = shumate_data_source_request_get_data (req)))
+    {
+      shumate_vector_renderer_render (self,
+                                      tile,
+                                      data,
+                                      shumate_data_source_request_get_x (req),
+                                      shumate_data_source_request_get_y (req),
+                                      shumate_data_source_request_get_zoom_level (req));
+    }
+}
+
+static void
+on_request_notify_completed (ShumateDataSourceRequest *req,
+                             GParamSpec               *pspec,
+                             gpointer                  user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  GError *error;
+  ShumateTile *tile = g_task_get_task_data (task);
+
+  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+
+  if ((error = shumate_data_source_request_get_error (req)))
+    g_task_return_error (task, g_error_copy (error));
+  else
+    g_task_return_boolean (task, TRUE);
+}
+
+static void
 shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
                                          ShumateTile         *tile,
                                          GCancellable        *cancellable,
@@ -539,6 +559,8 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)map_source;
   g_autoptr(GTask) task = NULL;
   int x, y, zoom_level;
+  g_autoptr(ShumateDataSourceRequest) req = NULL;
+  GBytes *data;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -548,21 +570,27 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
   g_task_set_source_tag (task, shumate_vector_renderer_fill_tile_async);
   g_task_set_task_data (task, g_object_ref (tile), (GDestroyNotify)g_object_unref);
 
-  g_ptr_array_add (self->tiles, g_object_ref (tile));
-
   x = shumate_tile_get_x (tile);
   y = shumate_tile_get_y (tile);
   zoom_level = shumate_tile_get_zoom_level (tile);
 
   get_source_coordinates (self, &x, &y, &zoom_level);
 
-  shumate_data_source_get_tile_data_async (self->data_source,
-                                           x,
-                                           y,
-                                           zoom_level,
-                                           cancellable,
-                                           on_data_source_done,
-                                           g_steal_pointer (&task));
+  req = shumate_data_source_start_request (self->data_source, x, y, zoom_level, cancellable);
+
+  if ((data = shumate_data_source_request_get_data (req)))
+    shumate_vector_renderer_render (self, tile, data, x, y, zoom_level);
+
+  if (shumate_data_source_request_is_completed (req))
+    {
+      on_request_notify (req, NULL, task);
+      on_request_notify_completed (req, NULL, g_steal_pointer (&task));
+    }
+  else
+    {
+      g_signal_connect_object (req, "notify::data", (GCallback)on_request_notify, task, G_CONNECT_DEFAULT);
+      g_signal_connect_object (req, "notify::completed", (GCallback)on_request_notify_completed, g_object_ref (task), G_CONNECT_DEFAULT);
+    }
 }
 
 static gboolean
@@ -576,29 +604,6 @@ shumate_vector_renderer_fill_tile_finish (ShumateMapSource  *map_source,
   g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
 
   return g_task_propagate_boolean (G_TASK (result), error);
-}
-
-static void
-on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
-{
-  ShumateDataSource *data_source = SHUMATE_DATA_SOURCE (object);
-  g_autoptr(GTask) task = G_TASK (user_data);
-  ShumateVectorRenderer *self = g_task_get_source_object (task);
-  ShumateTile *tile = g_task_get_task_data (task);
-  GError *error = NULL;
-  g_autoptr(GBytes) bytes = NULL;
-
-  g_ptr_array_remove_fast (self->tiles, tile);
-
-  bytes = shumate_data_source_get_tile_data_finish (data_source, res, &error);
-
-  if (bytes == NULL)
-    g_task_return_error (task, error);
-  else
-    {
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      g_task_return_boolean (task, TRUE);
-    }
 }
 
 void
@@ -672,36 +677,6 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
 #endif
 }
 
-static void
-on_data_source_received_data (ShumateVectorRenderer *self,
-                              int                    x,
-                              int                    y,
-                              int                    zoom_level,
-                              GBytes                *bytes,
-                              ShumateDataSource     *data_source)
-{
-  int i;
-
-  g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
-  g_assert (SHUMATE_IS_DATA_SOURCE (data_source));
-
-  for (i = 0; i < self->tiles->len; i ++)
-    {
-      int source_x, source_y, source_zoom_level;
-
-      ShumateTile *tile = self->tiles->pdata[i];
-
-      source_x = shumate_tile_get_x (tile);
-      source_y = shumate_tile_get_y (tile);
-      source_zoom_level = shumate_tile_get_zoom_level (tile);
-      get_source_coordinates (self, &source_x, &source_y, &source_zoom_level);
-
-      if (source_x == x
-          && source_y == y
-          && source_zoom_level == zoom_level)
-        shumate_vector_renderer_render (self, tile, bytes, source_x, source_y, source_zoom_level);
-    }
-}
 
 /**
  * shumate_style_error_quark:

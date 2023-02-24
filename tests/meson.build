@@ -8,6 +8,7 @@ test_env = [
 
 valgrind_tests = [
   'coordinate',
+  'data-source-request',
   'memory-cache',
   'viewport',
 ]

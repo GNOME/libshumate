@@ -21,6 +21,7 @@ typedef struct {
 } ShumateDataSourcePrivate;
 
 #include "shumate-data-source.h"
+#include "shumate-data-source-request.h"
 
 /**
  * ShumateDataSource:
@@ -107,6 +108,40 @@ shumate_data_source_real_get_tile_data_finish (ShumateDataSource  *self,
 }
 
 static void
+on_get_tile_data_done (GObject      *source,
+                       GAsyncResult *result,
+                       gpointer      user_data)
+{
+  ShumateDataSource *self = (ShumateDataSource *)source;
+  g_autoptr(ShumateDataSourceRequest) req = user_data;
+  g_autoptr(GError) error = NULL;
+  g_autoptr(GBytes) data = NULL;
+
+  data = shumate_data_source_get_tile_data_finish (self, result, &error);
+
+  if (data)
+    shumate_data_source_request_emit_data (req, data, TRUE);
+  else
+    shumate_data_source_request_emit_error (req, error);
+}
+
+static ShumateDataSourceRequest *
+shumate_data_source_real_start_request (ShumateDataSource *self,
+                                        int                x,
+                                        int                y,
+                                        int                zoom_level,
+                                        GCancellable      *cancellable)
+{
+  ShumateDataSourceRequest *req = shumate_data_source_request_new (x, y, zoom_level);
+  shumate_data_source_get_tile_data_async (self,
+                                           x, y, zoom_level,
+                                           cancellable,
+                                           on_get_tile_data_done,
+                                           g_object_ref (req));
+  return req;
+}
+
+static void
 shumate_data_source_class_init (ShumateDataSourceClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -116,6 +151,7 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
 
   klass->get_tile_data_async = NULL;
   klass->get_tile_data_finish = shumate_data_source_real_get_tile_data_finish;
+  klass->start_request = shumate_data_source_real_start_request;
 
   /**
    * ShumateMapSource:min-zoom-level:
@@ -225,6 +261,32 @@ shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,
   g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (self), FALSE);
 
   return SHUMATE_DATA_SOURCE_GET_CLASS (self)->get_tile_data_finish (self, result, error);
+}
+
+
+/**
+ * shumate_data_source_start_request:
+ * @self: a [class@DataSource]
+ * @x: X coordinate to request
+ * @y: Y coordinate to request
+ * @zoom_level: zoom level to request
+ * @cancellable: for cancelling the request
+ *
+ * Begins a request for a tile.
+ *
+ * Returns: (transfer full): a [class@DataSourceRequest] object for tracking
+ * the request.
+ */
+ShumateDataSourceRequest *
+shumate_data_source_start_request (ShumateDataSource         *self,
+                                   int                        x,
+                                   int                        y,
+                                   int                        zoom_level,
+                                   GCancellable              *cancellable)
+{
+  g_return_val_if_fail (SHUMATE_IS_DATA_SOURCE (self), NULL);
+
+  return SHUMATE_DATA_SOURCE_GET_CLASS (self)->start_request (self, x, y, zoom_level, cancellable);
 }
 
 

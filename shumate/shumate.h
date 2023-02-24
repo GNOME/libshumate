@@ -29,6 +29,7 @@
 #include "shumate/shumate-version.h"
 
 #include "shumate/shumate-data-source.h"
+#include "shumate/shumate-data-source-request.h"
 #include "shumate/shumate-license.h"
 #include "shumate/shumate-layer.h"
 #include "shumate/shumate-map-layer.h"
