@@ -316,7 +316,7 @@ GHashTable *
 shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self)
 {
   g_autoptr(GHashTable) tags = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
 
   for (int i = 1; i < self->feature->n_tags; i += 2)
     {

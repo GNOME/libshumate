@@ -222,7 +222,6 @@ shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean)
 }
 
 
-
 void
 shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 {

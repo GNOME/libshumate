@@ -513,3 +513,4 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
       return check;
     }
 }
+

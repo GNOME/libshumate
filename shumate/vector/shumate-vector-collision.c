@@ -113,6 +113,7 @@ static void
 bucket_row_free (RTreeBucketRow *bucket_row)
 {
   g_hash_table_unref (bucket_row->bucket_cols);
+  g_ptr_array_unref (bucket_row->bucket_cols_array);
   g_free (bucket_row);
 }
 
@@ -135,6 +136,7 @@ shumate_vector_collision_free (ShumateVectorCollision *self)
 {
   g_hash_table_unref (self->bucket_rows);
   g_array_unref (self->pending_boxes);
+  g_ptr_array_unref (self->bucket_rows_array);
   g_free (self);
 }
 

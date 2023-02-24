@@ -121,6 +121,8 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
   g_clear_object (&self->cursor);
+  g_clear_object (&self->text_padding);
+  g_clear_object (&self->symbol_sort_key);
   g_clear_pointer (&self->text_fonts, g_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
@@ -269,10 +271,12 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     case SHUMATE_VECTOR_GEOMETRY_POINT:
         {
           g_autoptr(GPtrArray) geometry = shumate_vector_render_scope_get_geometry (scope);
+          g_ptr_array_set_free_func (geometry, (GDestroyNotify)shumate_vector_line_string_free);
 
           for (int i = 0; i < geometry->len; i ++)
             {
               ShumateVectorLineString *string = g_ptr_array_index (geometry, i);
+
               for (int j = 0; j < string->n_points; j ++)
                 {
                   x = string->points[j].x;

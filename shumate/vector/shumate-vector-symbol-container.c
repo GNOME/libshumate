@@ -352,6 +352,13 @@ on_symbol_clicked (ShumateVectorSymbolContainer *self,
 }
 
 
+static int
+child_info_compare (ChildInfo *a, ChildInfo *b)
+{
+  return shumate_vector_symbol_info_compare (a->symbol_info, b->symbol_info);
+}
+
+
 void
 shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                              GPtrArray                    *symbol_infos,
@@ -393,7 +400,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                G_CONNECT_SWAPPED);
     }
 
-  self->children = g_list_sort (self->children, (GCompareFunc)shumate_vector_symbol_info_compare);
+  self->children = g_list_sort (self->children, (GCompareFunc)child_info_compare);
   self->labels_changed = TRUE;
 }
 

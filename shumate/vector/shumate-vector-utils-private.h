@@ -98,3 +98,5 @@ void   shumate_vector_line_string_bounds              (ShumateVectorLineString *
                                                        ShumateVectorPoint      *radius_out,
                                                        ShumateVectorPoint      *center_out);
 GPtrArray *shumate_vector_line_string_simplify        (ShumateVectorLineString *linestring);
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorLineString, shumate_vector_line_string_free)

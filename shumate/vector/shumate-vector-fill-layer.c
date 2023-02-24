@@ -111,6 +111,7 @@ shumate_vector_fill_layer_finalize (GObject *object)
 
   g_clear_object (&self->color);
   g_clear_object (&self->opacity);
+  g_clear_object (&self->pattern);
 
   G_OBJECT_CLASS (shumate_vector_fill_layer_parent_class)->finalize (object);
 }
