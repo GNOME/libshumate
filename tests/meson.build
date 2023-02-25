@@ -22,6 +22,7 @@ tests = [
 if get_option('vector_renderer')
   valgrind_tests += [
     'vector-expression',
+    'vector-renderer',
     'vector-style',
     'vector-value',
   ]

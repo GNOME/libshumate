@@ -7,10 +7,37 @@
   },
   "layers": [
     {
+      "id": "background",
       "type": "background",
       "paint": {
         "background-color": "goldenrod",
         "background-opacity": 0.5
+      }
+    },
+    {
+      "id": "fill",
+      "type": "fill",
+      "source-layer": "polygons",
+      "paint": {
+        "fill-color": "blue",
+        "fill-opacity": 0.5
+      }
+    },
+    {
+      "id": "line",
+      "type": "line",
+      "source-layer": "lines",
+      "paint": {
+        "line-color": "red",
+        "line-width": 5
+      }
+    },
+    {
+      "id": "symbols",
+      "type": "symbol",
+      "source-layer": "points",
+      "layout": {
+        "text-field": "Hello, world!"
       }
     }
   ]

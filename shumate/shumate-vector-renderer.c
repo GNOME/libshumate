@@ -15,7 +15,7 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "shumate-vector-renderer.h"
+#include "shumate-vector-renderer-private.h"
 #include "shumate-tile-downloader.h"
 #include "shumate-tile-private.h"
 
@@ -598,13 +598,13 @@ on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
     }
 }
 
-static void
-render (ShumateVectorRenderer *self,
-        ShumateTile           *tile,
-        GBytes                *tile_data,
-        int                    source_x,
-        int                    source_y,
-        int                    source_zoom_level)
+void
+shumate_vector_renderer_render (ShumateVectorRenderer *self,
+                                ShumateTile           *tile,
+                                GBytes                *tile_data,
+                                int                    source_x,
+                                int                    source_y,
+                                int                    source_zoom_level)
 {
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
@@ -689,7 +689,7 @@ on_data_source_received_data (ShumateVectorRenderer *self,
       if (source_x == x
           && source_y == y
           && source_zoom_level == zoom_level)
-        render (self, tile, bytes, source_x, source_y, source_zoom_level);
+        shumate_vector_renderer_render (self, tile, bytes, source_x, source_y, source_zoom_level);
     }
 }
 
