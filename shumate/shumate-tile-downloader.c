@@ -20,6 +20,7 @@
 #include "shumate-file-cache.h"
 #include "shumate-user-agent.h"
 #include "shumate-profiling-private.h"
+#include "shumate-data-source-request.h"
 
 /**
  * ShumateTileDownloader:
@@ -145,6 +146,13 @@ get_tile_data_async (ShumateDataSource   *data_source,
                      GAsyncReadyCallback  callback,
                      gpointer             user_data);
 
+static ShumateDataSourceRequest *
+start_request (ShumateDataSource *data_source,
+               int                x,
+               int                y,
+               int                zoom_level,
+               GCancellable      *cancellable);
+
 static void
 shumate_tile_downloader_class_init (ShumateTileDownloaderClass *klass)
 {
@@ -157,6 +165,7 @@ shumate_tile_downloader_class_init (ShumateTileDownloaderClass *klass)
   object_class->set_property = shumate_tile_downloader_set_property;
 
   source_class->get_tile_data_async = get_tile_data_async;
+  source_class->start_request = start_request;
 
   /**
    * ShumateTileDownloader:url-template:
@@ -184,19 +193,10 @@ shumate_tile_downloader_init (ShumateTileDownloader *self)
 }
 
 
-static void on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user_data);
-static void fetch_from_network (GTask *task);
-static void on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data);
-static void on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data);
-
-static void on_file_cache_stored (GObject *source_object, GAsyncResult *res, gpointer user_data);
-
 typedef struct {
   ShumateTileDownloader *self;
-  int x;
-  int y;
-  int z;
-  GBytes *bytes;
+  ShumateDataSourceRequest *req;
+  GCancellable *cancellable;
   char *etag;
   SoupMessage *msg;
   GDateTime *modtime;
@@ -206,12 +206,21 @@ static void
 fill_tile_data_free (FillTileData *data)
 {
   g_clear_object (&data->self);
-  g_clear_pointer (&data->bytes, g_bytes_unref);
+  g_clear_object (&data->req);
+  g_clear_object (&data->cancellable);
   g_clear_pointer (&data->etag, g_free);
   g_clear_object (&data->msg);
   g_clear_pointer (&data->modtime, g_date_time_unref);
   g_free (data);
 }
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FillTileData, fill_tile_data_free)
+
+static void on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void fetch_from_network (FillTileData *data);
+static void on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data);
+static void on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data);
+
 
 static gboolean
 tile_is_expired (GDateTime *modified_time)
@@ -252,6 +261,40 @@ get_tile_uri (ShumateTileDownloader *self,
   return g_string_free (string, FALSE);
 }
 
+static void
+on_request_notify_completed (GTask                    *task,
+                             GParamSpec               *pspec,
+                             ShumateDataSourceRequest *req)
+{
+  GBytes *bytes;
+
+  if ((bytes = shumate_data_source_request_get_data (req)))
+    g_task_return_pointer (task, g_bytes_ref (bytes), (GDestroyNotify)g_bytes_unref);
+  else
+    g_task_return_error (task, g_error_copy (shumate_data_source_request_get_error (req)));
+
+  g_clear_object (&task);
+}
+
+static void
+on_request_notify_data (ShumateTileDownloader    *self,
+                        GParamSpec               *pspec,
+                        ShumateDataSourceRequest *req)
+{
+  GBytes *bytes = shumate_data_source_request_get_data (req);
+
+  if (bytes != NULL)
+    {
+      int x = shumate_data_source_request_get_x (req);
+      int y = shumate_data_source_request_get_y (req);
+      int z = shumate_data_source_request_get_zoom_level (req);
+      g_autofree char *profiling_desc = g_strdup_printf ("(%d, %d) @ %d", x, y, z);
+
+      SHUMATE_PROFILE_START_NAMED (emit_received_data);
+      g_signal_emit_by_name (self, "received-data", x, y, z, bytes);
+      SHUMATE_PROFILE_END_NAMED (emit_received_data, profiling_desc);
+    }
+}
 
 static void
 get_tile_data_async (ShumateDataSource   *data_source,
@@ -264,7 +307,7 @@ get_tile_data_async (ShumateDataSource   *data_source,
 {
   g_autoptr(GTask) task = NULL;
   ShumateTileDownloader *self = (ShumateTileDownloader *)data_source;
-  FillTileData *data;
+  g_autoptr(ShumateDataSourceRequest) req = NULL;
 
   g_return_if_fail (SHUMATE_IS_TILE_DOWNLOADER (self));
   g_return_if_fail (!cancellable || G_IS_CANCELLABLE (cancellable));
@@ -272,64 +315,102 @@ get_tile_data_async (ShumateDataSource   *data_source,
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, get_tile_data_async);
 
+  req = start_request ((ShumateDataSource *)self, x, y, zoom_level, cancellable);
+
+  if (shumate_data_source_request_is_completed (req))
+    {
+      on_request_notify_data (self, NULL, req);
+      on_request_notify_completed (task, NULL, req);
+    }
+  else
+    {
+      g_signal_connect_object (req,
+                               "notify::data",
+                               (GCallback)on_request_notify_data,
+                               self,
+                               G_CONNECT_SWAPPED);
+      g_signal_connect_object (req,
+                               "notify::completed",
+                               (GCallback)on_request_notify_completed,
+                               g_steal_pointer (&task),
+                               G_CONNECT_SWAPPED);
+    }
+}
+
+static ShumateDataSourceRequest *
+start_request (ShumateDataSource *data_source,
+               int                x,
+               int                y,
+               int                zoom_level,
+               GCancellable      *cancellable)
+{
+  ShumateTileDownloader *self = (ShumateTileDownloader *)data_source;
+  g_autoptr(ShumateDataSourceRequest) req = NULL;
+  FillTileData *data;
+
+  req = shumate_data_source_request_new (x, y, zoom_level);
   data = g_new0 (FillTileData, 1);
   data->self = g_object_ref (self);
-  data->x = x;
-  data->y = y;
-  data->z = zoom_level;
-  g_task_set_task_data (task, data, (GDestroyNotify) fill_tile_data_free);
+  data->req = g_object_ref (req);
+  data->cancellable = g_object_ref (cancellable);
 
-  shumate_file_cache_get_tile_async (self->cache, x, y, zoom_level, cancellable, on_file_cache_get_tile, g_object_ref (task));
+  shumate_file_cache_get_tile_async (self->cache, x, y, zoom_level, cancellable, on_file_cache_get_tile, data);
+
+  return g_steal_pointer (&req);
 }
 
 static void
 on_file_cache_get_tile (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
-  g_autoptr(GTask) task = user_data;
-  FillTileData *data = g_task_get_task_data (task);
+  g_autoptr(FillTileData) data = user_data;
+  g_autoptr(GBytes) bytes = NULL;
 
-  data->bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
-                                                    &data->etag, &data->modtime, res, NULL);
+  bytes = shumate_file_cache_get_tile_finish (SHUMATE_FILE_CACHE (source_object),
+                                              &data->etag, &data->modtime, res, NULL);
 
-  if (data->bytes != NULL)
+  if (bytes != NULL)
     {
-      g_autofree char *desc = g_strdup_printf ("(%d, %d) @ %d", data->x, data->y, data->z);
+      gboolean complete = !tile_is_expired (data->modtime);
 
-      SHUMATE_PROFILE_START_NAMED (emit_received_data);
-      g_signal_emit_by_name (data->self, "received-data", data->x, data->y, data->z, data->bytes);
-      SHUMATE_PROFILE_END_NAMED (emit_received_data, desc);
+      shumate_data_source_request_emit_data (data->req, bytes, complete);
 
-      if (!tile_is_expired (data->modtime))
-        {
-          g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
-          return;
-        }
+      if (complete)
+        return;
     }
 
-  fetch_from_network (task);
+  fetch_from_network (g_steal_pointer (&data));
 }
 
 static void
-fetch_from_network (GTask *task)
+fetch_from_network (FillTileData *data_arg)
 {
-  FillTileData *data = g_task_get_task_data (task);
-  GCancellable *cancellable = g_task_get_cancellable (task);
+  g_autoptr(FillTileData) data = data_arg;
   g_autofree char *uri = NULL;
   g_autofree char *modtime_string = NULL;
   SoupMessageHeaders *headers;
+  int x, y, z;
 
-  if (g_task_return_error_if_cancelled (task))
-    return;
+  if (g_cancellable_is_cancelled (data->cancellable))
+    {
+      g_autoptr(GError) error = g_error_new (G_IO_ERROR, G_IO_ERROR_CANCELLED, "Cancelled");
+      shumate_data_source_request_emit_error (data->req, error);
+      return;
+    }
 
-  uri = get_tile_uri (data->self, data->x, data->y, data->z);
+  x = shumate_data_source_request_get_x (data->req);
+  y = shumate_data_source_request_get_y (data->req);
+  z = shumate_data_source_request_get_zoom_level (data->req);
+  uri = get_tile_uri (data->self, x, y, z);
 
   data->msg = soup_message_new (SOUP_METHOD_GET, uri);
 
   if (data->msg == NULL)
     {
-      g_task_return_new_error (task, SHUMATE_TILE_DOWNLOADER_ERROR,
-                               SHUMATE_TILE_DOWNLOADER_ERROR_MALFORMED_URL,
-                               "The URL %s is not valid", uri);
+      g_autoptr(GError) error =
+        g_error_new (SHUMATE_TILE_DOWNLOADER_ERROR,
+                     SHUMATE_TILE_DOWNLOADER_ERROR_MALFORMED_URL,
+                     "The URL %s is not valid", uri);
+      shumate_data_source_request_emit_error (data->req, error);
       return;
     }
 
@@ -387,9 +468,10 @@ fetch_from_network (GTask *task)
 #ifdef SHUMATE_LIBSOUP_3
                            G_PRIORITY_DEFAULT,
 #endif
-                           cancellable,
+                           data->cancellable,
                            on_message_sent,
-                           g_object_ref (task));
+                           data);
+  data = NULL;
 }
 
 /* Receive the response from the network. If the tile hasn't been modified,
@@ -397,9 +479,7 @@ fetch_from_network (GTask *task)
 static void
 on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
-  g_autoptr(GTask) task = user_data;
-  FillTileData *data = g_task_get_task_data (task);
-  GCancellable *cancellable = g_task_get_cancellable (task);
+  g_autoptr(FillTileData) data = user_data;
   g_autoptr(GInputStream) input_stream = NULL;
   g_autoptr(GError) error = NULL;
   g_autoptr(GOutputStream) output_stream = NULL;
@@ -409,15 +489,15 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   input_stream = soup_session_send_finish (data->self->soup_session, res, &error);
   if (error != NULL)
     {
-      if (data->bytes)
+      if (shumate_data_source_request_get_data (data->req))
         {
           /* The tile has already been filled from the cache, so the operation
            * was overall successful even though the network request failed. */
           g_debug ("Fetching tile failed, but there is a cached version (error: %s)", error->message);
-          g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
+          shumate_data_source_request_complete (data->req);
         }
       else
-        g_task_return_error (task, g_steal_pointer (&error));
+        shumate_data_source_request_emit_error (data->req, error);
 
       return;
     }
@@ -435,28 +515,35 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
   if (status == SOUP_STATUS_NOT_MODIFIED)
     {
       /* The tile has already been filled from the cache, and the server says
-       * it doesn't have a newer one. Just update the cache, mark the tile as
-       * DONE, and return. */
+       * it doesn't have a newer one. Just update the cache and return. */
 
-      shumate_file_cache_mark_up_to_date (data->self->cache, data->x, data->y, data->z);
-      g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
+      int x, y, z;
+
+      x = shumate_data_source_request_get_x (data->req);
+      y = shumate_data_source_request_get_y (data->req);
+      z = shumate_data_source_request_get_zoom_level (data->req);
+
+      shumate_file_cache_mark_up_to_date (data->self->cache, x, y, z);
+      shumate_data_source_request_complete (data->req);
       return;
     }
 
   if (!SOUP_STATUS_IS_SUCCESSFUL (status))
     {
-      if (data->bytes)
+      if (shumate_data_source_request_get_data (data->req))
         {
           g_debug ("Fetching tile failed, but there is a cached version (HTTP %s)",
                    soup_status_get_phrase (status));
-          g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
+          shumate_data_source_request_complete (data->req);
         }
       else
         {
-          g_task_return_new_error (task, SHUMATE_TILE_DOWNLOADER_ERROR,
-                                   SHUMATE_TILE_DOWNLOADER_ERROR_BAD_RESPONSE,
-                                   "Unable to download tile: HTTP %s",
-                                   soup_status_get_phrase (status));
+          g_autoptr(GError) error =
+            g_error_new (SHUMATE_TILE_DOWNLOADER_ERROR,
+                         SHUMATE_TILE_DOWNLOADER_ERROR_BAD_RESPONSE,
+                         "Unable to download tile: HTTP %s",
+                         soup_status_get_phrase (status));
+          shumate_data_source_request_emit_error (data->req, error);
         }
 
       return;
@@ -472,51 +559,40 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
                                 input_stream,
                                 G_OUTPUT_STREAM_SPLICE_CLOSE_TARGET,
                                 G_PRIORITY_DEFAULT,
-                                cancellable,
+                                data->cancellable,
                                 on_message_read,
-                                g_steal_pointer (&task));
+                                data);
+  data = NULL;
 }
 
 static void
 on_message_read (GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
+  g_autoptr(FillTileData) data = user_data;
   GOutputStream *output_stream = G_OUTPUT_STREAM (source_object);
-  g_autoptr(GTask) task = user_data;
-  GCancellable *cancellable = g_task_get_cancellable (task);
-  FillTileData *data = g_task_get_task_data (task);
   g_autoptr(GError) error = NULL;
-  g_autofree char *profiling_desc = g_strdup_printf ("(%d, %d) @ %d", data->x, data->y, data->z);
+  g_autoptr (GBytes) bytes = NULL;
+  int x = shumate_data_source_request_get_x (data->req);
+  int y = shumate_data_source_request_get_y (data->req);
+  int z = shumate_data_source_request_get_zoom_level (data->req);
 
   g_output_stream_splice_finish (output_stream, res, &error);
   if (error != NULL)
     {
-      g_task_return_error (task, g_steal_pointer (&error));
+      shumate_data_source_request_emit_error (data->req, error);
       return;
     }
 
-  g_bytes_unref (data->bytes);
-  data->bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
-
-  SHUMATE_PROFILE_START_NAMED (emit_received_data);
-  g_signal_emit_by_name (data->self, "received-data", data->x, data->y, data->z, data->bytes);
-  SHUMATE_PROFILE_END_NAMED (emit_received_data, profiling_desc);
+  bytes = g_memory_output_stream_steal_as_bytes (G_MEMORY_OUTPUT_STREAM (output_stream));
+  shumate_data_source_request_emit_data (data->req, bytes, TRUE);
 
   shumate_file_cache_store_tile_async (data->self->cache,
-                                       data->x, data->y, data->z,
-                                       data->bytes,
+                                       x, y, z,
+                                       bytes,
                                        data->etag,
-                                       cancellable,
-                                       on_file_cache_stored,
-                                       g_steal_pointer (&task));
-}
-
-static void
-on_file_cache_stored (GObject *source_object, GAsyncResult *res, gpointer user_data)
-{
-  g_autoptr(GTask) task = user_data;
-  FillTileData *data = g_task_get_task_data (task);
-
-  g_task_return_pointer (task, g_steal_pointer (&data->bytes), (GDestroyNotify)g_bytes_unref);
+                                       NULL,
+                                       NULL,
+                                       NULL);
 }
 
 

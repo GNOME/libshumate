@@ -588,8 +588,8 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
     }
   else
     {
-      g_signal_connect_object (req, "notify::data", (GCallback)on_request_notify, task, G_CONNECT_DEFAULT);
-      g_signal_connect_object (req, "notify::completed", (GCallback)on_request_notify_completed, g_object_ref (task), G_CONNECT_DEFAULT);
+      g_signal_connect_object (req, "notify::data", (GCallback)on_request_notify, task, 0);
+      g_signal_connect_object (req, "notify::completed", (GCallback)on_request_notify_completed, g_object_ref (task), 0);
     }
 }
 

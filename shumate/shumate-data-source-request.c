@@ -17,6 +17,7 @@
 
 #include "shumate-data-source-request.h"
 #include "shumate-utils-private.h"
+#include "shumate-profiling-private.h"
 
 
 /**
@@ -190,8 +191,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
   /**
    * ShumateDataSourceRequest:data:
    *
-   * The most recent data for the tile, if available. If an error is set, this
-   * will be %NULL.
+   * The most recent data for the tile, if available. If an error is emitted,
+   * this will be set to %NULL.
    */
   properties[PROP_DATA] =
     g_param_spec_boxed ("data", "data", "data",
@@ -368,6 +369,7 @@ shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
                                        gboolean                  complete)
 {
   ShumateDataSourceRequestPrivate *priv = shumate_data_source_request_get_instance_private (self);
+  g_autofree char *profiling_desc = NULL;
 
   g_return_if_fail (SHUMATE_IS_DATA_SOURCE_REQUEST (self));
   g_return_if_fail (data != NULL);
@@ -382,7 +384,11 @@ shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
   if (complete)
     priv->completed = TRUE;
 
+  profiling_desc = g_strdup_printf ("(%d, %d) @ %d", priv->pos.x, priv->pos.y, priv->pos.zoom);
+  SHUMATE_PROFILE_START_NAMED (emit_data);
   g_object_notify_by_pspec ((GObject *)self, properties[PROP_DATA]);
+  SHUMATE_PROFILE_END_NAMED (emit_data, profiling_desc);
+
   if (complete)
     g_object_notify_by_pspec ((GObject *)self, properties[PROP_COMPLETED]);
 }
