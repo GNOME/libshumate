@@ -25,7 +25,8 @@ G_BEGIN_DECLS
 #define SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER (shumate_vector_expression_filter_get_type())
 G_DECLARE_FINAL_TYPE (ShumateVectorExpressionFilter, shumate_vector_expression_filter, SHUMATE, VECTOR_EXPRESSION_FILTER, ShumateVectorExpression)
 
-ShumateVectorExpression *shumate_vector_expression_filter_from_json_array (JsonArray  *array,
-                                                                           GError    **error);
+ShumateVectorExpression *shumate_vector_expression_filter_from_json_array (JsonArray                       *array,
+                                                                           ShumateVectorExpressionContext  *ctx,
+                                                                           GError                         **error);
 
 G_END_DECLS

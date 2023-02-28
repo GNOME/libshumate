@@ -23,6 +23,16 @@
 
 G_BEGIN_DECLS
 
+typedef struct _ShumateVectorExpressionContext ShumateVectorExpressionContext;
+struct _ShumateVectorExpressionContext {
+  ShumateVectorExpressionContext *parent;
+  GHashTable *variables;
+};
+
+void shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx);
+
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (ShumateVectorExpressionContext, shumate_vector_expression_context_clear)
+
 #define SHUMATE_TYPE_VECTOR_EXPRESSION (shumate_vector_expression_get_type())
 G_DECLARE_DERIVABLE_TYPE (ShumateVectorExpression, shumate_vector_expression, SHUMATE, VECTOR_EXPRESSION, GObject)
 
@@ -35,7 +45,9 @@ struct _ShumateVectorExpressionClass
                     ShumateVectorValue       *out);
 };
 
-ShumateVectorExpression *shumate_vector_expression_from_json (JsonNode *json, GError **error);
+ShumateVectorExpression *shumate_vector_expression_from_json (JsonNode                        *json,
+                                                              ShumateVectorExpressionContext  *ctx,
+                                                              GError                         **error);
 
 gboolean shumate_vector_expression_eval (ShumateVectorExpression  *self,
                                          ShumateVectorRenderScope *scope,

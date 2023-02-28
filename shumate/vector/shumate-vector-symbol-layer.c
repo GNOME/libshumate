@@ -47,7 +47,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
     {
       JsonObject *paint = json_object_get_object_member (object, "paint");
 
-      layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), error);
+      layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), NULL, error);
       if (layer->text_color == NULL)
         return NULL;
     }
@@ -58,7 +58,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       JsonNode *text_font_node;
       JsonArray *text_font;
 
-      layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), error);
+      layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), NULL, error);
       if (layer->text_field == NULL)
         return NULL;
 
@@ -80,15 +80,15 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->line_placement = g_strcmp0 (json_object_get_string_member_with_default (layout, "symbol-placement", NULL), "line") == 0;
 
-      layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), error);
+      layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), NULL, error);
       if (layer->text_size == NULL)
         return NULL;
 
-      layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), error);
+      layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), NULL, error);
       if (layer->text_padding == NULL)
         return NULL;
 
-      layer->symbol_sort_key = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-sort-key"), error);
+      layer->symbol_sort_key = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-sort-key"), NULL, error);
       if (layer->symbol_sort_key == NULL)
         return NULL;
     }
@@ -103,7 +103,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
        * mouseleave and setting the cursor on the whole map via JS.
        *
        * See gdk_cursor_new_from_name for possible values. */
-      layer->cursor = shumate_vector_expression_from_json (json_object_get_member (metadata, "libshumate:cursor"), error);
+      layer->cursor = shumate_vector_expression_from_json (json_object_get_member (metadata, "libshumate:cursor"), NULL, error);
       if (layer->cursor == NULL)
         return NULL;
     }

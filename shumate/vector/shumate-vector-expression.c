@@ -29,7 +29,9 @@ G_DEFINE_TYPE (ShumateVectorExpression, shumate_vector_expression, G_TYPE_OBJECT
 
 
 ShumateVectorExpression *
-shumate_vector_expression_from_json (JsonNode *json, GError **error)
+shumate_vector_expression_from_json (JsonNode                        *json,
+                                     ShumateVectorExpressionContext  *ctx,
+                                     GError                         **error)
 {
   if (json == NULL || JSON_NODE_HOLDS_NULL (json))
     return shumate_vector_expression_literal_new (&SHUMATE_VECTOR_VALUE_INIT);
@@ -57,7 +59,7 @@ shumate_vector_expression_from_json (JsonNode *json, GError **error)
   else if (JSON_NODE_HOLDS_OBJECT (json))
     return shumate_vector_expression_interpolate_from_json_obj (json_node_get_object (json), error);
   else if (JSON_NODE_HOLDS_ARRAY (json))
-    return shumate_vector_expression_filter_from_json_array (json_node_get_array (json), error);
+    return shumate_vector_expression_filter_from_json_array (json_node_get_array (json), ctx, error);
   else
     g_assert_not_reached ();
 }
@@ -158,4 +160,10 @@ shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
   shumate_vector_expression_eval (self, scope, &value);
   shumate_vector_value_get_color (&value, color);
+}
+
+void
+shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
+{
+  g_clear_pointer (&ctx->variables, g_hash_table_unref);
 }

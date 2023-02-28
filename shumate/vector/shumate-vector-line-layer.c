@@ -51,13 +51,13 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "line-color"), error)))
+      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "line-color"), NULL, error)))
         return NULL;
 
-      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "line-opacity"), error)))
+      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "line-opacity"), NULL, error)))
         return NULL;
 
-      if (!(layer->width = shumate_vector_expression_from_json (json_object_get_member (paint, "line-width"), error)))
+      if (!(layer->width = shumate_vector_expression_from_json (json_object_get_member (paint, "line-width"), NULL, error)))
         return NULL;
 
       {
@@ -84,10 +84,10 @@ shumate_vector_line_layer_create_from_json (JsonObject *object, GError **error)
       if (!shumate_vector_json_get_object (layout_node, &layout, error))
         return NULL;
 
-      if (!(layer->cap = shumate_vector_expression_from_json (json_object_get_member (layout, "line-cap"), error)))
+      if (!(layer->cap = shumate_vector_expression_from_json (json_object_get_member (layout, "line-cap"), NULL, error)))
         return NULL;
 
-      if (!(layer->join = shumate_vector_expression_from_json (json_object_get_member (layout, "line-join"), error)))
+      if (!(layer->join = shumate_vector_expression_from_json (json_object_get_member (layout, "line-join"), NULL, error)))
         return NULL;
     }
 

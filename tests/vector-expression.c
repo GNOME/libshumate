@@ -14,15 +14,15 @@ test_vector_expression_parse (void)
   g_autoptr(ShumateVectorExpression) expr2 = NULL;
   g_autoptr(ShumateVectorExpression) expr3 = NULL;
 
-  expr1 = shumate_vector_expression_from_json (node1, &error);
+  expr1 = shumate_vector_expression_from_json (node1, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_INTERPOLATE (expr1));
 
-  expr2 = shumate_vector_expression_from_json (node2, &error);
+  expr2 = shumate_vector_expression_from_json (node2, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_LITERAL (expr2));
 
-  expr3 = shumate_vector_expression_from_json (NULL, &error);
+  expr3 = shumate_vector_expression_from_json (NULL, NULL, &error);
   g_assert_no_error (error);
   g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_LITERAL (expr3));
 }
@@ -51,7 +51,7 @@ test_vector_expression_interpolate (void)
   g_autoptr(ShumateVectorExpression) expression;
   ShumateVectorRenderScope scope;
 
-  expression = shumate_vector_expression_from_json (node, &error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
   g_assert_no_error (error);
 
   /* Test that exact stop values work */
@@ -87,7 +87,7 @@ test_vector_expression_interpolate_color (void)
   ShumateVectorRenderScope scope;
   GdkRGBA color, correct_color;
 
-  expression = shumate_vector_expression_from_json (node, &error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
   g_assert_no_error (error);
 
   /* Test that exact stop values work */
@@ -118,7 +118,7 @@ filter_with_scope (ShumateVectorRenderScope *scope, const char *filter)
   node = json_from_string (filter, &error);
   g_assert_no_error (error);
 
-  expression = shumate_vector_expression_from_json (node, &error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
   g_assert_no_error (error);
 
   return shumate_vector_expression_eval_boolean (expression, scope, FALSE);
@@ -191,6 +191,16 @@ test_vector_expression_basic_filter (void)
 
 
 static void
+test_vector_expression_variable_binding (void)
+{
+  g_assert_true  (filter ("[\"let\", \"a\", [\"-\", 15, 5], \"b\", 20, [\"==\", 30, [\"+\", [\"var\", \"a\"], [\"var\", \"b\"]]]]"));
+
+  /* Test nesting */
+  g_assert_true  (filter ("[\"let\", \"a\", 10, [\"==\", 20, [\"let\", \"a\", 20, [\"var\", \"a\"]]]]"));
+}
+
+
+static void
 test_vector_expression_feature_filter (void)
 {
   GError *error = NULL;
@@ -230,7 +240,7 @@ filter_expect_error (const char *filter)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(JsonNode) node = json_from_string (filter, NULL);
-  g_autoptr(ShumateVectorExpression) expression = shumate_vector_expression_from_json (node, &error);
+  g_autoptr(ShumateVectorExpression) expression = shumate_vector_expression_from_json (node, NULL, &error);
 
   g_assert_error (error, SHUMATE_STYLE_ERROR, SHUMATE_STYLE_ERROR_INVALID_EXPRESSION);
   g_assert_null (expression);
@@ -259,7 +269,7 @@ test_vector_expression_format ()
   g_autoptr(ShumateVectorExpression) expression;
   g_autofree char *result = NULL;
 
-  expression = shumate_vector_expression_from_json (node, &error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
   g_assert_no_error (error);
 
   vector_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
@@ -318,7 +328,7 @@ test_vector_expression_array ()
   g_assert_false (shumate_vector_value_equal (&array1, &array2));
 
   node = json_from_string ("[\"literal\", [\"Hello, world!\", true, \"Hello, world!\"]]", NULL);
-  expression = shumate_vector_expression_from_json (node, &error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
   g_assert_no_error (error);
   shumate_vector_expression_eval (expression, NULL, &eval);
 
@@ -336,6 +346,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/interpolate", test_vector_expression_interpolate);
   g_test_add_func ("/vector/expression/interpolate-color", test_vector_expression_interpolate_color);
   g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
+  g_test_add_func ("/vector/expression/variable-binding", test_vector_expression_variable_binding);
   g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
   g_test_add_func ("/vector/expression/format", test_vector_expression_format);
