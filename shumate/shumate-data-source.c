@@ -191,11 +191,14 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
    *
    * Emitted when data is received for any tile. This includes any intermediate
    * steps, such as data from the file cache, as well as the final result.
+   *
+   * Deprecated: 1.1: Use [method@DataSource.start_request] and connect to the
+   * notify signals of the resulting [class@DataSourceRequest].
    */
   signals[RECEIVED_DATA] =
     g_signal_new ("received-data",
                   G_OBJECT_CLASS_TYPE (object_class),
-                  G_SIGNAL_RUN_LAST,
+                  G_SIGNAL_RUN_LAST | G_SIGNAL_DEPRECATED,
                   0, NULL, NULL,
                   NULL,
                   G_TYPE_NONE,

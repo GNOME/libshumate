@@ -26,8 +26,6 @@ struct _ShumateRasterRenderer
   ShumateMapSource parent_instance;
 
   ShumateDataSource *data_source;
-
-  GPtrArray *tiles;
 };
 
 G_DEFINE_TYPE (ShumateRasterRenderer, shumate_raster_renderer, SHUMATE_TYPE_MAP_SOURCE)
@@ -177,62 +175,12 @@ shumate_raster_renderer_new_full_from_url (const char           *id,
                        NULL);
 }
 
-
-static void
-on_data_source_received_data (ShumateRasterRenderer *self,
-                              int                    x,
-                              int                    y,
-                              int                    zoom_level,
-                              GBytes                *bytes,
-                              ShumateDataSource     *data_source)
-{
-  int i;
-  ShumateTile *tile;
-  g_autoptr(GError) error = NULL;
-  g_autoptr(GdkPixbuf) pixbuf = NULL;
-  g_autoptr(GInputStream) stream = NULL;
-  g_autoptr(GdkTexture) texture = NULL;
-
-  g_assert (SHUMATE_IS_RASTER_RENDERER (self));
-  g_assert (SHUMATE_IS_DATA_SOURCE (data_source));
-
-  stream = g_memory_input_stream_new_from_bytes (bytes);
-  pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
-  if (error)
-    {
-      g_warning ("Failed to create texture from tile data: %s", error->message);
-      return;
-    }
-
-  texture = gdk_texture_new_for_pixbuf (pixbuf);
-
-  for (i = 0; i < self->tiles->len; i ++)
-    {
-      tile = self->tiles->pdata[i];
-
-      if (shumate_tile_get_x (tile) == x
-          && shumate_tile_get_y (tile) == y
-          && shumate_tile_get_zoom_level (tile) == zoom_level)
-        shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
-    }
-}
-
-
-static void
-shumate_raster_renderer_constructed (GObject *object)
-{
-  ShumateRasterRenderer *self = SHUMATE_RASTER_RENDERER (object);
-
-  g_signal_connect_object (self->data_source, "received-data", (GCallback)on_data_source_received_data, self, G_CONNECT_SWAPPED);
-}
-
 static void
 shumate_raster_renderer_finalize (GObject *object)
 {
   ShumateRasterRenderer *self = (ShumateRasterRenderer *)object;
 
   g_clear_object (&self->data_source);
-  g_clear_pointer (&self->tiles, g_ptr_array_unref);
 
   G_OBJECT_CLASS (shumate_raster_renderer_parent_class)->finalize (object);
 }
@@ -289,7 +237,6 @@ shumate_raster_renderer_class_init (ShumateRasterRendererClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   ShumateMapSourceClass *map_source_class = SHUMATE_MAP_SOURCE_CLASS (klass);
 
-  object_class->constructed = shumate_raster_renderer_constructed;
   object_class->finalize = shumate_raster_renderer_finalize;
   object_class->get_property = shumate_raster_renderer_get_property;
   object_class->set_property = shumate_raster_renderer_set_property;
@@ -316,13 +263,58 @@ shumate_raster_renderer_class_init (ShumateRasterRendererClass *klass)
 static void
 shumate_raster_renderer_init (ShumateRasterRenderer *self)
 {
-  self->tiles = g_ptr_array_new_full (0, g_object_unref);
 }
 
 
-static void on_data_source_done (GObject      *object,
-                                 GAsyncResult *res,
-                                 gpointer      user_data);
+static void
+on_request_notify (ShumateDataSourceRequest *req,
+                   GParamSpec               *pspec,
+                   gpointer                  user_data)
+{
+  GTask *task = user_data;
+  GBytes *data;
+  ShumateTile *tile = g_task_get_task_data (task);
+
+  if ((data = shumate_data_source_request_get_data (req)))
+    {
+      g_autoptr(GError) error = NULL;
+      g_autoptr(GdkPixbuf) pixbuf = NULL;
+      g_autoptr(GInputStream) stream = NULL;
+      g_autoptr(GdkTexture) texture = NULL;
+
+      stream = g_memory_input_stream_new_from_bytes (data);
+      pixbuf = gdk_pixbuf_new_from_stream (stream, NULL, &error);
+      if (error)
+        {
+          g_warning ("Failed to create texture from tile data (%d, %d @ %d): %s",
+                     shumate_tile_get_x (tile),
+                     shumate_tile_get_y (tile),
+                     shumate_tile_get_zoom_level (tile),
+                     error->message);
+          return;
+        }
+
+      texture = gdk_texture_new_for_pixbuf (pixbuf);
+      shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
+    }
+}
+
+static void
+on_request_notify_completed (ShumateDataSourceRequest *req,
+                             GParamSpec               *pspec,
+                             gpointer                  user_data)
+{
+  g_autoptr(GTask) task = user_data;
+  GError *error;
+  ShumateTile *tile = g_task_get_task_data (task);
+
+  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
+
+  if ((error = shumate_data_source_request_get_error (req)))
+    g_task_return_error (task, g_error_copy (error));
+  else
+    g_task_return_boolean (task, TRUE);
+}
 
 static void
 shumate_raster_renderer_fill_tile_async (ShumateMapSource    *map_source,
@@ -333,6 +325,7 @@ shumate_raster_renderer_fill_tile_async (ShumateMapSource    *map_source,
 {
   ShumateRasterRenderer *self = (ShumateRasterRenderer *)map_source;
   g_autoptr(GTask) task = NULL;
+  g_autoptr(ShumateDataSourceRequest) req = NULL;
 
   g_return_if_fail (SHUMATE_IS_RASTER_RENDERER (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -343,15 +336,22 @@ shumate_raster_renderer_fill_tile_async (ShumateMapSource    *map_source,
 
   g_task_set_task_data (task, g_object_ref (tile), (GDestroyNotify)g_object_unref);
 
-  g_ptr_array_add (self->tiles, g_object_ref (tile));
-
-  shumate_data_source_get_tile_data_async (self->data_source,
+  req = shumate_data_source_start_request (self->data_source,
                                            shumate_tile_get_x (tile),
                                            shumate_tile_get_y (tile),
                                            shumate_tile_get_zoom_level (tile),
-                                           cancellable,
-                                           on_data_source_done,
-                                           g_steal_pointer (&task));
+                                           cancellable);
+
+  if (shumate_data_source_request_is_completed (req))
+    {
+      on_request_notify (req, NULL, task);
+      on_request_notify_completed (req, NULL, g_steal_pointer (&task));
+    }
+  else
+    {
+      g_signal_connect_object (req, "notify::data", (GCallback)on_request_notify, task, 0);
+      g_signal_connect_object (req, "notify::completed", (GCallback)on_request_notify_completed, g_object_ref (task), 0);
+    }
 }
 
 static gboolean
@@ -365,27 +365,4 @@ shumate_raster_renderer_fill_tile_finish (ShumateMapSource  *map_source,
   g_return_val_if_fail (g_task_is_valid (result, self), FALSE);
 
   return g_task_propagate_boolean (G_TASK (result), error);
-}
-
-static void
-on_data_source_done (GObject *object, GAsyncResult *res, gpointer user_data)
-{
-  ShumateDataSource *data_source = SHUMATE_DATA_SOURCE (object);
-  g_autoptr(GTask) task = G_TASK (user_data);
-  ShumateRasterRenderer *self = g_task_get_source_object (task);
-  ShumateTile *tile = g_task_get_task_data (task);
-  GError *error = NULL;
-  g_autoptr(GBytes) bytes = NULL;
-
-  g_ptr_array_remove_fast (self->tiles, tile);
-
-  bytes = shumate_data_source_get_tile_data_finish (data_source, res, &error);
-
-  if (bytes == NULL)
-    g_task_return_error (task, error);
-  else
-    {
-      shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-      g_task_return_boolean (task, TRUE);
-    }
 }
