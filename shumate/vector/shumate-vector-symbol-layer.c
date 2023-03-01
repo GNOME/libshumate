@@ -31,7 +31,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *cursor;
   ShumateVectorExpression *text_padding;
   ShumateVectorExpression *symbol_sort_key;
-  gboolean line_placement;
+  ShumateVectorExpression *symbol_placement;
   char *text_fonts;
 };
 
@@ -78,7 +78,9 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->text_fonts = g_strjoinv (", ", fonts);
         }
 
-      layer->line_placement = g_strcmp0 (json_object_get_string_member_with_default (layout, "symbol-placement", NULL), "line") == 0;
+      layer->symbol_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-placement"), NULL, error);
+      if (layer->symbol_placement == NULL)
+        return NULL;
 
       layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), NULL, error);
       if (layer->text_size == NULL)
@@ -123,6 +125,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->cursor);
   g_clear_object (&self->text_padding);
   g_clear_object (&self->symbol_sort_key);
+  g_clear_object (&self->symbol_placement);
   g_clear_pointer (&self->text_fonts, g_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
@@ -238,6 +241,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autofree char *text_field = NULL;
   g_autofree char *cursor = NULL;
   g_autofree char *feature_id = NULL;
+  g_autofree char *symbol_placement = NULL;
   g_autoptr(GHashTable) tags = NULL;
   SharedSymbolInfo shared;
   double x, y;
@@ -297,7 +301,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
          * covered by a different tile. */
         break;
 
-      if (self->line_placement)
+      symbol_placement = shumate_vector_expression_eval_string (self->symbol_placement, scope, "point");
+      if (g_strcmp0 (symbol_placement, "line") == 0)
         place_line_label (&shared, x, y, scope);
       else
         place_point_label (&shared, x, y, scope);
