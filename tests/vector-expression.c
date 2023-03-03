@@ -156,6 +156,7 @@ test_vector_expression_basic_filter (void)
   g_assert_true  (filter ("[\"==\", [\"literal\", [10, true, \"A\", null]], [\"literal\", [10, true, \"A\", null]]]"));
   g_assert_true  (filter ("[\"in\", 13, [\"literal\", [10, 20, 0, 13]]]"));
 
+  g_assert_true  (filter ("[\"==\", null, null]"));
   g_assert_true  (filter ("[\"==\", 10, 10]"));
   g_assert_false (filter ("[\"==\", 10, 20]"));
   g_assert_false (filter ("[\"==\", 10, \"10\"]"));
@@ -229,6 +230,28 @@ test_vector_expression_variable_binding (void)
 
   /* Test nesting */
   g_assert_true  (filter ("[\"let\", \"a\", 10, [\"==\", 20, [\"let\", \"a\", 20, [\"var\", \"a\"]]]]"));
+}
+
+
+static void
+test_vector_expression_image (void)
+{
+  g_autoptr(GdkPixbuf) pixbuf;
+  g_autoptr(GBytes) json_data = NULL;
+  GError *error = NULL;
+  ShumateVectorRenderScope scope;
+
+  pixbuf = gdk_pixbuf_new_from_resource ("/org/gnome/shumate/Tests/sprites.png", &error);
+  g_assert_no_error (error);
+  json_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  g_assert_no_error (error);
+
+  scope.sprites = shumate_vector_sprite_sheet_new (pixbuf, g_bytes_get_data (json_data, NULL), NULL, NULL);
+
+  g_assert_true (filter_with_scope (&scope, "[\"!=\", null, [\"image\", \"sprite\"]]"));
+  g_assert_true (filter_with_scope (&scope, "[\"==\", null, [\"image\", \"does-not-exist\"]]"));
+
+  g_clear_object (&scope.sprites);
 }
 
 
@@ -385,6 +408,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/interpolate-color", test_vector_expression_interpolate_color);
   g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
   g_test_add_func ("/vector/expression/variable-binding", test_vector_expression_variable_binding);
+  g_test_add_func ("/vector/expression/image", test_vector_expression_image);
   g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
   g_test_add_func ("/vector/expression/format", test_vector_expression_format);

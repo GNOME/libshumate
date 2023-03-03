@@ -74,4 +74,8 @@ char *shumate_vector_expression_eval_string (ShumateVectorExpression  *self,
 void shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
                                            ShumateVectorRenderScope *scope,
                                            GdkRGBA                  *color);
+
+GdkPixbuf *shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
+                                                 ShumateVectorRenderScope *scope);
+
 G_END_DECLS

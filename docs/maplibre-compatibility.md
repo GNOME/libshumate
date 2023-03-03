@@ -564,63 +564,63 @@ evaluated at integer zoom levels only.
 
 <table>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#array">array</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-array">array</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#boolean">boolean</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-boolean">boolean</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#collator">collator</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-collator">collator</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#format">format</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-format">format</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#image">image</a></td>
-    <td>❌ Not supported</td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-image">image</a></td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#literal">literal</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-literal">literal</a></td>
     <td>Only array literals are supported, not objects.</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#number">number</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-number">number</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#number-format">number-format</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-number-format">number-format</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#object">object</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-object">object</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#string">string</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-string">string</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#to-boolean">to-boolean</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-boolean">to-boolean</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#to-color">to-color</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-color">to-color</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#to-number">to-number</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-number">to-number</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#to-string">to-string</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-string">to-string</a></td>
     <td>❌ Not supported</td>
   </tr>
   <tr>
-    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#typeof">typeof</a></td>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-typeof">typeof</a></td>
     <td>❌ Not supported</td>
   </tr>
 </table>

@@ -38,6 +38,7 @@ typedef enum {
   EXPR_LE,
   EXPR_CASE,
   EXPR_COALESCE,
+  EXPR_IMAGE,
 
   EXPR_CONCAT,
   EXPR_DOWNCASE,
@@ -485,6 +486,12 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
   else if (g_strcmp0 ("tan", op) == 0)
     {
       self->type = EXPR_TAN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("image", op) == 0)
+    {
+      self->type = EXPR_IMAGE;
       expect_exprs = 1;
       lookup_first_arg = FALSE;
     }
@@ -1090,6 +1097,29 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
       shumate_vector_value_set_number (out, number);
       return TRUE;
+
+    case EXPR_IMAGE:
+        {
+          GdkPixbuf *pixbuf = NULL;
+          g_assert (n_expressions == 1);
+
+          string = shumate_vector_expression_eval_string (expressions[0], scope, NULL);
+          if (string == NULL)
+            {
+              shumate_vector_value_unset (out);
+              return TRUE;
+            }
+
+          pixbuf = shumate_vector_sprite_sheet_get_icon (scope->sprites, string);
+          if (pixbuf == NULL)
+            {
+              shumate_vector_value_unset (out);
+              return TRUE;
+            }
+
+          shumate_vector_value_set_image (out, pixbuf, string);
+          return TRUE;
+        }
 
     default:
       g_assert_not_reached ();

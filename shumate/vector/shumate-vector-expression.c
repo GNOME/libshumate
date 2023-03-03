@@ -161,6 +161,28 @@ shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
   shumate_vector_value_get_color (&value, color);
 }
 
+GdkPixbuf *
+shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
+                                      ShumateVectorRenderScope *scope)
+{
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  shumate_vector_expression_eval (self, scope, &value);
+  if (value.type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
+    {
+      const char *name;
+      shumate_vector_value_get_string (&value, &name);
+      return shumate_vector_sprite_sheet_get_icon (scope->sprites, name);
+    }
+  else if (value.type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+    {
+      GdkPixbuf *pixbuf;
+      shumate_vector_value_get_image (&value, &pixbuf);
+      return pixbuf;
+    }
+  else
+    return NULL;
+}
+
 void
 shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
 {

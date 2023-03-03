@@ -23,8 +23,18 @@
 
 #define SHUMATE_VECTOR_COLOR_BLACK ((GdkRGBA) {.red=0, .green=0, .blue=0, .alpha=1})
 
+typedef enum {
+  SHUMATE_VECTOR_VALUE_TYPE_NULL,
+  SHUMATE_VECTOR_VALUE_TYPE_NUMBER,
+  SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN,
+  SHUMATE_VECTOR_VALUE_TYPE_STRING,
+  SHUMATE_VECTOR_VALUE_TYPE_COLOR,
+  SHUMATE_VECTOR_VALUE_TYPE_ARRAY,
+  SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE,
+} ShumateVectorValueType;
+
 typedef struct {
-  int type;
+  ShumateVectorValueType type;
 
   union {
     double number;
@@ -35,6 +45,10 @@ typedef struct {
       int color_state;
     };
     GPtrArray *array;
+    struct {
+      GdkPixbuf *image;
+      char *image_name;
+    };
   };
 } ShumateVectorValue;
 
@@ -67,6 +81,9 @@ gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *colo
 void shumate_vector_value_start_array (ShumateVectorValue *self);
 void shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element);
 gboolean shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValue *element);
+
+void shumate_vector_value_set_image (ShumateVectorValue *self, GdkPixbuf *image, const char *image_name);
+gboolean shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image);
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
 

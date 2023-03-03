@@ -19,15 +19,6 @@
 #include "shumate-vector-value-private.h"
 
 enum {
-  TYPE_NULL,
-  TYPE_NUMBER,
-  TYPE_BOOLEAN,
-  TYPE_STRING,
-  TYPE_COLOR,
-  TYPE_ARRAY,
-};
-
-enum {
   COLOR_UNSET,
   COLOR_SET,
   COLOR_INVALID,
@@ -154,18 +145,23 @@ shumate_vector_value_free (ShumateVectorValue *self)
 void
 shumate_vector_value_unset (ShumateVectorValue *self)
 {
-  if (self->type == TYPE_STRING)
+  if (self->type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
     g_clear_pointer (&self->string, g_free);
-  else if (self->type == TYPE_ARRAY)
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
     g_clear_pointer (&self->array, g_ptr_array_unref);
-  self->type = TYPE_NULL;
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+    {
+      g_clear_object (&self->image);
+      g_clear_pointer (&self->image_name, g_free);
+    }
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_NULL;
 }
 
 
 gboolean
 shumate_vector_value_is_null (ShumateVectorValue *self)
 {
-  return self->type == TYPE_NULL;
+  return self->type == SHUMATE_VECTOR_VALUE_TYPE_NULL;
 }
 
 
@@ -175,10 +171,15 @@ shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out)
   shumate_vector_value_unset (out);
   *out = *self;
 
-  if (self->type == TYPE_STRING)
+  if (self->type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
     out->string = g_strdup (out->string);
-  else if (self->type == TYPE_ARRAY)
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
     out->array = g_ptr_array_ref (out->array);
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+    {
+      out->image = g_object_ref (out->image);
+      out->image_name = g_strdup (out->image_name);
+    }
 }
 
 
@@ -186,7 +187,7 @@ void
 shumate_vector_value_set_number (ShumateVectorValue *self, double number)
 {
   shumate_vector_value_unset (self);
-  self->type = TYPE_NUMBER;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_NUMBER;
   self->number = number;
 }
 
@@ -194,7 +195,7 @@ shumate_vector_value_set_number (ShumateVectorValue *self, double number)
 gboolean
 shumate_vector_value_get_number (ShumateVectorValue *self, double *number)
 {
-  if (self->type != TYPE_NUMBER)
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_NUMBER)
     return FALSE;
 
   *number = self->number;
@@ -206,7 +207,7 @@ void
 shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean)
 {
   shumate_vector_value_unset (self);
-  self->type = TYPE_BOOLEAN;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN;
   self->boolean = boolean;
 }
 
@@ -214,7 +215,7 @@ shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean)
 gboolean
 shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean)
 {
-  if (self->type != TYPE_BOOLEAN)
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN)
     return FALSE;
 
   *boolean = self->boolean;
@@ -226,7 +227,7 @@ void
 shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 {
   shumate_vector_value_unset (self);
-  self->type = TYPE_STRING;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_STRING;
   self->string = g_strdup (string);
   self->color_state = COLOR_UNSET;
 }
@@ -235,7 +236,7 @@ shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 gboolean
 shumate_vector_value_get_string (ShumateVectorValue *self, const char **string)
 {
-  if (self->type != TYPE_STRING)
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_STRING)
     return FALSE;
 
   *string = self->string;
@@ -247,7 +248,7 @@ void
 shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color)
 {
   shumate_vector_value_unset (self);
-  self->type = TYPE_COLOR;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_COLOR;
   self->color = *color;
 }
 
@@ -255,7 +256,7 @@ shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color)
 gboolean
 shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color)
 {
-  if (self->type == TYPE_STRING)
+  if (self->type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
     {
       if (self->color_state == COLOR_UNSET)
         {
@@ -274,7 +275,7 @@ shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color)
         return FALSE;
     }
 
-  if (self->type != TYPE_COLOR)
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_COLOR)
     return FALSE;
 
   *color = self->color;
@@ -286,7 +287,7 @@ void
 shumate_vector_value_start_array (ShumateVectorValue *self)
 {
   shumate_vector_value_unset (self);
-  self->type = TYPE_ARRAY;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_ARRAY;
   self->array = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_value_free);
 }
 
@@ -296,7 +297,7 @@ shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue 
 {
   g_autoptr(ShumateVectorValue) copy = g_new0 (ShumateVectorValue, 1);
 
-  g_return_if_fail (self->type == TYPE_ARRAY);
+  g_return_if_fail (self->type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY);
 
   shumate_vector_value_copy (element, copy);
   g_ptr_array_add (self->array, g_steal_pointer (&copy));
@@ -306,7 +307,7 @@ shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue 
 gboolean
 shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValue *element)
 {
-  if (self->type != TYPE_ARRAY)
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
     return FALSE;
 
   for (int i = 0, n = self->array->len; i < n; i ++)
@@ -314,6 +315,30 @@ shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValu
       return TRUE;
 
   return FALSE;
+}
+
+void
+shumate_vector_value_set_image (ShumateVectorValue *self,
+                                GdkPixbuf          *image,
+                                const char         *image_name)
+{
+  g_assert (GDK_IS_PIXBUF (image));
+  g_assert (image_name != NULL);
+
+  shumate_vector_value_unset (self);
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE;
+  self->image = g_object_ref (image);
+  self->image_name = g_strdup (image_name);
+}
+
+gboolean
+shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image)
+{
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+    return FALSE;
+
+  *image = self->image;
+  return TRUE;
 }
 
 gboolean
@@ -324,17 +349,17 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 
   switch (a->type)
     {
-    case TYPE_NULL:
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
       return TRUE;
-    case TYPE_NUMBER:
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
       return a->number == b->number;
-    case TYPE_BOOLEAN:
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
       return a->boolean == b->boolean;
-    case TYPE_STRING:
+    case SHUMATE_VECTOR_VALUE_TYPE_STRING:
       return g_strcmp0 (a->string, b->string) == 0;
-    case TYPE_COLOR:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
       return gdk_rgba_equal (&a->color, &b->color);
-    case TYPE_ARRAY:
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
       if (a->array->len != b->array->len)
         return FALSE;
 
@@ -343,6 +368,8 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
           return FALSE;
 
       return TRUE;
+    case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+      return g_strcmp0 (a->image_name, b->image_name) == 0;
     default:
       g_assert_not_reached ();
     }
@@ -354,17 +381,17 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
 {
   switch (self->type)
     {
-    case TYPE_NULL:
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
       return g_strdup ("");
-    case TYPE_NUMBER:
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
       return g_strdup_printf ("%g", self->number);
-    case TYPE_BOOLEAN:
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
       return g_strdup (self->boolean ? "true" : "false");
-    case TYPE_STRING:
+    case SHUMATE_VECTOR_VALUE_TYPE_STRING:
       return g_strdup (self->string);
-    case TYPE_COLOR:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
       return gdk_rgba_to_string (&self->color);
-    case TYPE_ARRAY:
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
       {
         g_autofree char *result = NULL;
         g_autoptr(GStrvBuilder) builder = g_strv_builder_new ();
@@ -380,6 +407,8 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
         result = g_strjoinv (", ", strv);
         return g_strconcat ("[", result, "]", NULL);
       }
+    case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+      return g_strdup (self->image_name);
     default:
       g_assert_not_reached ();
     }

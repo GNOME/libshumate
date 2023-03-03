@@ -67,34 +67,30 @@ shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
   ShumateVectorFillLayer *self = SHUMATE_VECTOR_FILL_LAYER (layer);
   GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
   double opacity;
-  g_autofree char *pattern;
+  GdkPixbuf *pattern;
 
   shumate_vector_expression_eval_color (self->color, scope, &color);
   opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
-  pattern = shumate_vector_expression_eval_string (self->pattern, scope, NULL);
+  pattern = shumate_vector_expression_eval_image (self->pattern, scope);
 
   shumate_vector_render_scope_exec_geometry (scope);
 
   if (pattern != NULL)
     {
-      GdkPixbuf *sprite = shumate_vector_sprite_sheet_get_icon (scope->sprites, pattern);
-      if (sprite != NULL)
-        {
-          cairo_pattern_t *cr_pattern;
-          cairo_matrix_t matrix;
+      cairo_pattern_t *cr_pattern;
+      cairo_matrix_t matrix;
 
-          gdk_cairo_set_source_pixbuf (scope->cr, sprite, 0, 0);
-          cr_pattern = cairo_get_source (scope->cr);
-          cairo_matrix_init_scale (&matrix, 1 / scope->scale, 1 / scope->scale);
-          cairo_pattern_set_matrix (cr_pattern, &matrix);
-          cairo_pattern_set_extend (cr_pattern, CAIRO_EXTEND_REPEAT);
+      gdk_cairo_set_source_pixbuf (scope->cr, pattern, 0, 0);
+      cr_pattern = cairo_get_source (scope->cr);
+      cairo_matrix_init_scale (&matrix, 1 / scope->scale, 1 / scope->scale);
+      cairo_pattern_set_matrix (cr_pattern, &matrix);
+      cairo_pattern_set_extend (cr_pattern, CAIRO_EXTEND_REPEAT);
 
-          /* Use cairo_paint_with_alpha so that we can set fill-opacity correctly. */
-          cairo_save (scope->cr);
-          cairo_clip (scope->cr);
-          cairo_paint_with_alpha (scope->cr, opacity);
-          cairo_restore (scope->cr);
-        }
+      /* Use cairo_paint_with_alpha so that we can set fill-opacity correctly. */
+      cairo_save (scope->cr);
+      cairo_clip (scope->cr);
+      cairo_paint_with_alpha (scope->cr, opacity);
+      cairo_restore (scope->cr);
     }
   else
     {
