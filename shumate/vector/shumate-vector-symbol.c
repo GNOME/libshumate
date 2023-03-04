@@ -82,22 +82,22 @@ shumate_vector_symbol_constructed (GObject *object)
   g_autoptr(PangoAttrList) attrs = pango_attr_list_new ();
   PangoAttribute *attr;
 
-  if (self->symbol_info->text_font != NULL)
+  if (self->symbol_info->details->text_font != NULL)
     {
-      g_autoptr(PangoFontDescription) desc = pango_font_description_from_string (self->symbol_info->text_font);
+      g_autoptr(PangoFontDescription) desc = pango_font_description_from_string (self->symbol_info->details->text_font);
       attr = pango_attr_font_desc_new (desc);
       pango_attr_list_insert (attrs, attr);
     }
 
-  attr = pango_attr_foreground_new (self->symbol_info->text_color.red * 65535,
-                                    self->symbol_info->text_color.green * 65535,
-                                    self->symbol_info->text_color.blue * 65535);
+  attr = pango_attr_foreground_new (self->symbol_info->details->text_color.red * 65535,
+                                    self->symbol_info->details->text_color.green * 65535,
+                                    self->symbol_info->details->text_color.blue * 65535);
   pango_attr_list_insert (attrs, attr);
 
-  attr = pango_attr_foreground_alpha_new (self->symbol_info->text_color.alpha * 65535);
+  attr = pango_attr_foreground_alpha_new (self->symbol_info->details->text_color.alpha * 65535);
   pango_attr_list_insert (attrs, attr);
 
-  attr = pango_attr_size_new_absolute (self->symbol_info->text_size * PANGO_SCALE);
+  attr = pango_attr_size_new_absolute (self->symbol_info->details->text_size * PANGO_SCALE);
   pango_attr_list_insert (attrs, attr);
 
   if (self->symbol_info->line_placement)
@@ -112,7 +112,7 @@ shumate_vector_symbol_constructed (GObject *object)
       g_array_set_clear_func (self->glyphs, (GDestroyNotify)glyph_clear);
 
       pango_layout_set_attributes (layout, attrs);
-      pango_layout_set_text (layout, self->symbol_info->text, -1);
+      pango_layout_set_text (layout, self->symbol_info->details->text, -1);
       iter = pango_layout_get_iter (layout);
 
       pango_layout_get_size (layout, &self->glyphs_length, NULL);
@@ -139,7 +139,7 @@ shumate_vector_symbol_constructed (GObject *object)
             node =
               gsk_text_node_new (current_item->item->analysis.font,
                                  glyph_string,
-                                 &self->symbol_info->text_color,
+                                 &self->symbol_info->details->text_color,
                                  &GRAPHENE_POINT_INIT (0, 0));
 
             glyph.node = node;
@@ -152,17 +152,17 @@ shumate_vector_symbol_constructed (GObject *object)
     }
   else
     {
-      GtkWidget *label = gtk_label_new (self->symbol_info->text);
+      GtkWidget *label = gtk_label_new (self->symbol_info->details->text);
       gtk_label_set_attributes (GTK_LABEL (label), attrs);
       gtk_widget_set_parent (label, GTK_WIDGET (self));
     }
 
-  if (self->symbol_info->cursor != NULL)
-    gtk_widget_set_cursor_from_name (GTK_WIDGET (self), self->symbol_info->cursor);
+  if (self->symbol_info->details->cursor != NULL)
+    gtk_widget_set_cursor_from_name (GTK_WIDGET (self), self->symbol_info->details->cursor);
 
   gtk_accessible_update_property (GTK_ACCESSIBLE (self),
                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                  self->symbol_info->text,
+                                  self->symbol_info->details->text,
                                   -1);
 
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->constructed (object);
@@ -329,7 +329,9 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                         (point.y - self->symbol_info->y) * scale
                                       ));
               gtk_snapshot_rotate (snapshot, average_angle * 180 / G_PI);
-              gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-glyph->width / 2.0, self->symbol_info->text_size / 2.0));
+              gtk_snapshot_translate (snapshot,
+                                      &GRAPHENE_POINT_INIT (-glyph->width / 2.0,
+                                                            self->symbol_info->details->text_size / 2.0));
               gtk_snapshot_append_node (snapshot, glyph->node);
               gtk_snapshot_restore (snapshot);
             }
@@ -388,9 +390,9 @@ on_clicked (ShumateVectorSymbol *self,
             double               y,
             GtkGestureClick     *click)
 {
-  g_autoptr(ShumateSymbolEvent) event = shumate_symbol_event_new (self->symbol_info->layer,
-                                                                  self->symbol_info->feature_id,
-                                                                  self->symbol_info->tags);
+  g_autoptr(ShumateSymbolEvent) event = shumate_symbol_event_new (self->symbol_info->details->layer,
+                                                                  self->symbol_info->details->feature_id,
+                                                                  self->symbol_info->details->tags);
   g_signal_emit (self, signals[CLICKED], 0, event);
 }
 
@@ -452,7 +454,7 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                            float                   rotation)
 {
   float text_length = shumate_vector_symbol_get_text_length (self);
-  float yextent = self->symbol_info->text_size / 2.0;
+  float yextent = self->symbol_info->details->text_size / 2.0;
 
   if (self->symbol_info->line_placement)
     {
@@ -483,8 +485,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
             collision,
             x + point.x,
             y + point.y,
-            xextent + self->symbol_info->text_padding,
-            yextent + self->symbol_info->text_padding,
+            xextent + self->symbol_info->details->text_padding,
+            yextent + self->symbol_info->details->text_padding,
             rotation + shumate_vector_point_iter_get_current_angle (&iter)
           );
 
@@ -502,8 +504,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         collision,
         x,
         y,
-        text_length / 2.0 + self->symbol_info->text_padding,
-        yextent + self->symbol_info->text_padding,
+        text_length / 2.0 + self->symbol_info->details->text_padding,
+        yextent + self->symbol_info->details->text_padding,
         0
       );
 

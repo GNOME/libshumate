@@ -340,11 +340,11 @@ on_symbol_clicked (ShumateVectorSymbolContainer *self,
 
   double tile_size = shumate_map_source_get_tile_size (self->map_source);
   double lat = shumate_map_source_get_latitude (self->map_source,
-                                                symbol_info->tile_zoom_level,
-                                                (symbol_info->tile_y + symbol_info->y) * tile_size);
+                                                symbol_info->details->tile_zoom_level,
+                                                (symbol_info->details->tile_y + symbol_info->y) * tile_size);
   double lon = shumate_map_source_get_longitude (self->map_source,
-                                                 symbol_info->tile_zoom_level,
-                                                 (symbol_info->tile_x + symbol_info->x) * tile_size);
+                                                 symbol_info->details->tile_zoom_level,
+                                                 (symbol_info->details->tile_x + symbol_info->x) * tile_size);
 
   shumate_symbol_event_set_lat_lon (event, lat, lon);
 

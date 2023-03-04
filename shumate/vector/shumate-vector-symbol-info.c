@@ -23,21 +23,54 @@ G_DEFINE_BOXED_TYPE (ShumateVectorSymbolInfo, shumate_vector_symbol_info, shumat
 
 
 static void
+shumate_vector_symbol_details_free (ShumateVectorSymbolDetails *details)
+{
+  g_assert (details != NULL);
+  g_assert_cmpint (details->ref_count, ==, 0);
+
+  g_clear_pointer (&details->layer, g_free);
+  g_clear_pointer (&details->feature_id, g_free);
+
+  g_clear_pointer (&details->text, g_free);
+  g_clear_pointer (&details->text_font, g_free);
+
+  g_clear_pointer (&details->cursor, g_free);
+
+  g_clear_pointer (&details->tags, g_hash_table_unref);
+
+  g_free (details);
+}
+
+ShumateVectorSymbolDetails *
+shumate_vector_symbol_details_ref (ShumateVectorSymbolDetails *details)
+{
+  g_return_val_if_fail (details, NULL);
+  g_return_val_if_fail (details->ref_count, NULL);
+
+  g_atomic_int_inc (&details->ref_count);
+
+  return details;
+}
+
+void
+shumate_vector_symbol_details_unref (ShumateVectorSymbolDetails *details)
+{
+  g_return_if_fail (details);
+  g_return_if_fail (details->ref_count);
+
+  if (g_atomic_int_dec_and_test (&details->ref_count))
+    shumate_vector_symbol_details_free (details);
+}
+
+static void
 shumate_vector_symbol_info_free (ShumateVectorSymbolInfo *self)
 {
-  g_assert (self);
+  g_assert (self != NULL);
   g_assert_cmpint (self->ref_count, ==, 0);
 
-  g_clear_pointer (&self->layer, g_free);
-  g_clear_pointer (&self->feature_id, g_free);
+  g_clear_pointer (&self->details, shumate_vector_symbol_details_unref);
 
-  g_clear_pointer (&self->text, g_free);
-  g_clear_pointer (&self->text_font, g_free);
   g_clear_pointer (&self->line, shumate_vector_line_string_free);
-
-  g_clear_pointer (&self->cursor, g_free);
-
-  g_clear_pointer (&self->tags, g_hash_table_unref);
 
   g_free (self);
 }
@@ -64,52 +97,6 @@ shumate_vector_symbol_info_unref (ShumateVectorSymbolInfo *self)
 }
 
 
-ShumateVectorSymbolInfo *
-shumate_vector_symbol_info_new (const char    *layer,
-                                const char    *feature_id,
-                                GHashTable    *tags,
-                                const char    *text,
-                                const GdkRGBA *text_color,
-                                double         text_size,
-                                double         text_padding,
-                                const char    *text_font,
-                                int            layer_idx,
-                                double         symbol_sort_key,
-                                const char    *cursor,
-                                int            tile_x,
-                                int            tile_y,
-                                int            tile_zoom_level,
-                                double         x,
-                                double         y)
-{
-  ShumateVectorSymbolInfo *self;
-
-  self = g_new0 (ShumateVectorSymbolInfo, 1);
-
-  *self = (ShumateVectorSymbolInfo) {
-    .ref_count = 1,
-    .layer = g_strdup (layer),
-    .feature_id = g_strdup (feature_id),
-    .tags = g_hash_table_ref (tags),
-    .text = g_strdup (text),
-    .text_color = *text_color,
-    .text_size = text_size,
-    .text_padding = text_padding,
-    .text_font = g_strdup (text_font),
-    .cursor = g_strdup (cursor),
-    .layer_idx = layer_idx,
-    .symbol_sort_key = symbol_sort_key,
-    .tile_x = tile_x,
-    .tile_y = tile_y,
-    .tile_zoom_level = tile_zoom_level,
-    .x = x,
-    .y = y,
-  };
-
-  return self;
-}
-
-
 void
 shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                             ShumateVectorLineString *linestring)
@@ -129,13 +116,13 @@ int
 shumate_vector_symbol_info_compare (ShumateVectorSymbolInfo *a,
                                     ShumateVectorSymbolInfo *b)
 {
-  if (a->layer_idx < b->layer_idx)
+  if (a->details->layer_idx < b->details->layer_idx)
     return -1;
-  else if (a->layer_idx > b->layer_idx)
+  else if (a->details->layer_idx > b->details->layer_idx)
     return 1;
-  else if (a->symbol_sort_key < b->symbol_sort_key)
+  else if (a->details->symbol_sort_key < b->details->symbol_sort_key)
     return -1;
-  else if (a->symbol_sort_key > b->symbol_sort_key)
+  else if (a->details->symbol_sort_key > b->details->symbol_sort_key)
     return 1;
   else
     return 0;

@@ -131,63 +131,37 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
 }
 
-typedef struct {
-  ShumateVectorSymbolLayer *self;
-  const char *layer;
-  char *feature_id;
-  GHashTable *tags;
-  char *text_field;
-  GdkRGBA text_color;
-  double text_size;
-  double text_padding;
-  int layer_idx;
-  double symbol_sort_key;
-  char *cursor;
-  int tile_x;
-  int tile_y;
-  int tile_zoom_level;
-} SharedSymbolInfo;
-
-
 static ShumateVectorSymbolInfo *
-create_symbol_info (SharedSymbolInfo *shared,
-                    double x,
-                    double y)
+create_symbol_info (ShumateVectorSymbolDetails *details,
+                    double                      x,
+                    double                      y)
 {
-  return shumate_vector_symbol_info_new (shared->layer,
-                                         shared->feature_id,
-                                         shared->tags,
-                                         shared->text_field,
-                                         &shared->text_color,
-                                         shared->text_size,
-                                         shared->text_padding,
-                                         shared->self->text_fonts,
-                                         shared->layer_idx,
-                                         shared->symbol_sort_key,
-                                         shared->cursor,
-                                         shared->tile_x,
-                                         shared->tile_y,
-                                         shared->tile_zoom_level,
-                                         x,
-                                         y);
+  ShumateVectorSymbolInfo *symbol_info = g_new0 (ShumateVectorSymbolInfo, 1);
+  *symbol_info = (ShumateVectorSymbolInfo) {
+    .details = shumate_vector_symbol_details_ref (details),
+    .x = x,
+    .y = y,
+    .ref_count = 1,
+  };
+  return symbol_info;
 }
 
 
 static void
-place_point_label (SharedSymbolInfo         *shared,
-                   double                    x,
-                   double                    y,
-                   ShumateVectorRenderScope *scope)
+place_point_label (ShumateVectorSymbolDetails *details,
+                   double                      x,
+                   double                      y,
+                   ShumateVectorRenderScope   *scope)
 {
-  g_ptr_array_add (scope->symbols, create_symbol_info (shared, x, y));
+  g_ptr_array_add (scope->symbols, create_symbol_info (details, x, y));
 }
 
 
 static void
-place_line_label (SharedSymbolInfo         *shared,
-                  double                    x,
-                  double                    y,
-                  ShumateVectorRenderScope *scope)
+place_line_label (ShumateVectorSymbolDetails *details,
+                  double                      x,
+                  double                      y,
+                  ShumateVectorRenderScope   *scope)
 {
   ShumateVectorSymbolInfo *symbol_info;
   g_autoptr(GPtrArray) lines = shumate_vector_render_scope_get_geometry (scope);
@@ -223,7 +197,7 @@ place_line_label (SharedSymbolInfo         *shared,
             }
 #endif
 
-          symbol_info = create_symbol_info (shared, x, y);
+          symbol_info = create_symbol_info (details, x, y);
 
           shumate_vector_symbol_info_set_line_points (symbol_info,
                                                       linestring);
@@ -243,7 +217,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autofree char *feature_id = NULL;
   g_autofree char *symbol_placement = NULL;
   g_autoptr(GHashTable) tags = NULL;
-  SharedSymbolInfo shared;
+  g_autoptr(ShumateVectorSymbolDetails) details = NULL;
   double x, y;
 
   text_field = shumate_vector_expression_eval_string (self->text_field, scope, "");
@@ -255,20 +229,25 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
   tags = shumate_vector_render_scope_create_tag_table (scope);
 
-  shared.self = self;
-  shared.tile_x = scope->tile_x;
-  shared.tile_y = scope->tile_y;
-  shared.tile_zoom_level = scope->zoom_level;
-  shared.layer = shumate_vector_layer_get_id (layer);
-  shared.feature_id = feature_id;
-  shared.text_field = text_field;
-  shared.cursor = cursor;
-  shared.layer_idx = scope->layer_idx;
-  shared.symbol_sort_key = shumate_vector_expression_eval_number (self->symbol_sort_key, scope, 0);
-  shared.tags = tags;
-  shumate_vector_expression_eval_color (self->text_color, scope, &shared.text_color);
-  shared.text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0);
-  shared.text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0);
+  details = g_new0 (ShumateVectorSymbolDetails, 1);
+  *details = (ShumateVectorSymbolDetails) {
+    .ref_count = 1,
+    .layer = g_strdup (shumate_vector_layer_get_id (layer)),
+    .feature_id = g_strdup (feature_id),
+    .tags = g_hash_table_ref (tags),
+    .text = g_strdup (text_field),
+    .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
+    .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),
+    .text_font = g_strdup (self->text_fonts),
+    .cursor = g_strdup (cursor),
+    .layer_idx = scope->layer_idx,
+    .symbol_sort_key = shumate_vector_expression_eval_number (self->symbol_sort_key, scope, 0),
+    .tile_x = scope->tile_x,
+    .tile_y = scope->tile_y,
+    .tile_zoom_level = scope->zoom_level,
+  };
+
+  shumate_vector_expression_eval_color (self->text_color, scope, &details->text_color);
 
   switch (shumate_vector_render_scope_get_geometry_type (scope))
     {
@@ -287,7 +266,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                   y = string->points[j].y;
                   if (x < 0 || x >= 1 || y < 0 || y >= 1)
                     break;
-                  place_point_label (&shared, x, y, scope);
+                  place_point_label (details, x, y, scope);
                 }
             }
         }
@@ -303,9 +282,9 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
       symbol_placement = shumate_vector_expression_eval_string (self->symbol_placement, scope, "point");
       if (g_strcmp0 (symbol_placement, "line") == 0)
-        place_line_label (&shared, x, y, scope);
+        place_line_label (details, x, y, scope);
       else
-        place_point_label (&shared, x, y, scope);
+        place_point_label (details, x, y, scope);
 
       break;
 
@@ -314,7 +293,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
       if (x < 0 || x >= 1 || y < 0 || y >= 1)
         break;
 
-      place_point_label (&shared, x, y, scope);
+      place_point_label (details, x, y, scope);
 
       break;
     }

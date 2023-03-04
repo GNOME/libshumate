@@ -25,12 +25,7 @@
 
 G_BEGIN_DECLS
 
-#define SHUMATE_TYPE_VECTOR_SYMBOL_INFO (shumate_vector_symbol_info_get_type ())
-
-typedef struct _ShumateVectorSymbolInfo ShumateVectorSymbolInfo;
-
-struct _ShumateVectorSymbolInfo
-{
+typedef struct {
   char *layer;
   char *feature_id;
 
@@ -39,9 +34,6 @@ struct _ShumateVectorSymbolInfo
   double text_size;
   double text_padding;
   char *text_font;
-  guint line_placement : 1;
-  double x;
-  double y;
   int tile_x;
   int tile_y;
   int tile_zoom_level;
@@ -49,34 +41,38 @@ struct _ShumateVectorSymbolInfo
   int layer_idx;
   double symbol_sort_key;
 
-  ShumateVectorLineString *line;
-  ShumateVectorPoint line_size;
-  float line_length;
-
   char *cursor;
 
   GHashTable *tags;
 
   /*< private >*/
   guint ref_count;
-};
+} ShumateVectorSymbolDetails;
 
-ShumateVectorSymbolInfo *shumate_vector_symbol_info_new (const char    *layer,
-                                                         const char    *feature_id,
-                                                         GHashTable    *tags,
-                                                         const char    *text,
-                                                         const GdkRGBA *text_color,
-                                                         double         text_size,
-                                                         double         text_padding,
-                                                         const char    *text_font,
-                                                         int            layer_idx,
-                                                         double         symbol_sort_key,
-                                                         const char    *cursor,
-                                                         int            tile_x,
-                                                         int            tile_y,
-                                                         int            tile_zoom_level,
-                                                         double         x,
-                                                         double         y);
+
+ShumateVectorSymbolDetails *shumate_vector_symbol_details_ref (ShumateVectorSymbolDetails *details);
+void shumate_vector_symbol_details_unref (ShumateVectorSymbolDetails *details);
+
+#define SHUMATE_TYPE_VECTOR_SYMBOL_INFO (shumate_vector_symbol_info_get_type ())
+
+typedef struct _ShumateVectorSymbolInfo ShumateVectorSymbolInfo;
+
+struct _ShumateVectorSymbolInfo
+{
+  ShumateVectorSymbolDetails *details;
+
+  double x;
+  double y;
+
+  ShumateVectorLineString *line;
+  ShumateVectorPoint line_size;
+  float line_length;
+
+  guint line_placement : 1;
+
+  /*< private >*/
+  guint ref_count;
+};
 
 void shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                                  ShumateVectorLineString *linestring);
@@ -89,6 +85,7 @@ void                         shumate_vector_symbol_info_unref    (ShumateVectorS
 int shumate_vector_symbol_info_compare (ShumateVectorSymbolInfo *a,
                                         ShumateVectorSymbolInfo *b);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorSymbolDetails, shumate_vector_symbol_details_unref)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorSymbolInfo, shumate_vector_symbol_info_unref)
 
 G_END_DECLS
