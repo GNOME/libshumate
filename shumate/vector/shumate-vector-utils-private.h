@@ -79,6 +79,7 @@ gboolean shumate_vector_json_get_array (JsonNode *node, JsonArray **dest, GError
 
 void   shumate_vector_point_iter_init                 (ShumateVectorPointIter  *iter,
                                                        ShumateVectorLineString *linestring);
+gboolean shumate_vector_point_iter_is_at_end          (ShumateVectorPointIter *iter);
 double shumate_vector_point_iter_next_segment         (ShumateVectorPointIter *iter);
 double shumate_vector_point_iter_get_segment_length   (ShumateVectorPointIter *iter);
 void   shumate_vector_point_iter_get_segment_center   (ShumateVectorPointIter *iter,
@@ -92,6 +93,7 @@ void   shumate_vector_point_iter_advance              (ShumateVectorPointIter *i
                                                        double                  distance);
 double shumate_vector_point_iter_get_current_angle    (ShumateVectorPointIter *iter);
 
+ShumateVectorLineString *shumate_vector_line_string_copy (ShumateVectorLineString *linestring);
 void   shumate_vector_line_string_free                (ShumateVectorLineString *linestring);
 double shumate_vector_line_string_length              (ShumateVectorLineString *linestring);
 void   shumate_vector_line_string_bounds              (ShumateVectorLineString *linestring,

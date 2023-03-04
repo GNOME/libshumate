@@ -30,8 +30,10 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *text_size;
   ShumateVectorExpression *cursor;
   ShumateVectorExpression *text_padding;
+  ShumateVectorExpression *text_keep_upright;
   ShumateVectorExpression *symbol_sort_key;
   ShumateVectorExpression *symbol_placement;
+  ShumateVectorExpression *symbol_spacing;
   char *text_fonts;
 };
 
@@ -62,6 +64,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       if (layer->text_field == NULL)
         return NULL;
 
+      layer->text_keep_upright = shumate_vector_expression_from_json (json_object_get_member (layout, "text-keep-upright"), NULL, error);
+      if (layer->text_keep_upright == NULL)
+        return NULL;
+
       text_font_node = json_object_get_member (layout, "text-font");
       if (text_font_node != NULL)
         {
@@ -80,6 +86,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->symbol_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-placement"), NULL, error);
       if (layer->symbol_placement == NULL)
+        return NULL;
+
+      layer->symbol_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-spacing"), NULL, error);
+      if (layer->symbol_spacing == NULL)
         return NULL;
 
       layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), NULL, error);
@@ -123,9 +133,11 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
   g_clear_object (&self->cursor);
+  g_clear_object (&self->text_keep_upright);
   g_clear_object (&self->text_padding);
   g_clear_object (&self->symbol_sort_key);
   g_clear_object (&self->symbol_placement);
+  g_clear_object (&self->symbol_spacing);
   g_clear_pointer (&self->text_fonts, g_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_layer_parent_class)->finalize (object);
@@ -173,7 +185,14 @@ place_line_label (ShumateVectorSymbolDetails *details,
 
       for (j = 0; j < split_lines->len; j ++)
         {
-          ShumateVectorLineString *linestring = (ShumateVectorLineString *)split_lines->pdata[j];
+          g_autoptr(ShumateVectorLineString) linestring = (ShumateVectorLineString *)split_lines->pdata[j];
+          double length = shumate_vector_line_string_length (linestring);
+          float distance = 0;
+          ShumateVectorPointIter iter;
+          float spacing = details->symbol_spacing / scope->target_size;
+
+          if (spacing <= 0)
+            return;
 
 #if 0
           /* visualize line simplification */
@@ -197,12 +216,28 @@ place_line_label (ShumateVectorSymbolDetails *details,
             }
 #endif
 
-          symbol_info = create_symbol_info (details, x, y);
+          shumate_vector_point_iter_init (&iter, linestring);
 
-          shumate_vector_symbol_info_set_line_points (symbol_info,
-                                                      linestring);
+          /* Make the spacing even on both sides */
+          shumate_vector_point_iter_advance (&iter, fmod (length, spacing) / 2);
+          distance += fmod (length, spacing) / 2;
 
-          g_ptr_array_add (scope->symbols, symbol_info);
+          while (!shumate_vector_point_iter_is_at_end (&iter))
+            {
+              ShumateVectorPoint point;
+              shumate_vector_point_iter_get_current_point (&iter, &point);
+
+              symbol_info = create_symbol_info (details, x, y);
+
+              shumate_vector_symbol_info_set_line_points (symbol_info,
+                                                          shumate_vector_line_string_copy (linestring),
+                                                          distance);
+
+              g_ptr_array_add (scope->symbols, symbol_info);
+
+              shumate_vector_point_iter_advance (&iter, spacing);
+              distance += spacing;
+            }
         }
     }
 }
@@ -239,6 +274,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
     .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),
     .text_font = g_strdup (self->text_fonts),
+    .text_keep_upright = shumate_vector_expression_eval_boolean (self->text_keep_upright, scope, TRUE),
+    .symbol_spacing = shumate_vector_expression_eval_number (self->symbol_spacing, scope, 250),
     .cursor = g_strdup (cursor),
     .layer_idx = scope->layer_idx,
     .symbol_sort_key = shumate_vector_expression_eval_number (self->symbol_sort_key, scope, 0),
@@ -275,6 +312,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
       break;
 
     case SHUMATE_VECTOR_GEOMETRY_LINESTRING:
+    case SHUMATE_VECTOR_GEOMETRY_POLYGON:
       shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
       if (x < 0 || x >= 1 || y < 0 || y >= 1)
         /* Tiles usually include a bit of margin. Don't include symbols that are
@@ -282,19 +320,37 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
         break;
 
       symbol_placement = shumate_vector_expression_eval_string (self->symbol_placement, scope, "point");
-      if (g_strcmp0 (symbol_placement, "line") == 0)
+      if (g_strcmp0 (symbol_placement, "line") == 0
+          || g_strcmp0 (symbol_placement, "line-center") == 0)
         place_line_label (details, x, y, scope);
       else
-        place_point_label (details, x, y, scope);
+        {
+          if (shumate_vector_render_scope_get_geometry_type (scope) == SHUMATE_VECTOR_GEOMETRY_LINESTRING)
+            {
+              // Place at the middle point of the linestring
+              g_autoptr(GPtrArray) geometry = shumate_vector_render_scope_get_geometry (scope);
+              g_ptr_array_set_free_func (geometry, (GDestroyNotify)shumate_vector_line_string_free);
 
-      break;
+              for (int i = 0; i < geometry->len; i ++)
+                {
+                  ShumateVectorLineString *linestring = g_ptr_array_index (geometry, i);
+                  double length = shumate_vector_line_string_length (linestring);
+                  ShumateVectorPointIter iter;
+                  ShumateVectorPoint point;
 
-    case SHUMATE_VECTOR_GEOMETRY_POLYGON:
-      shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
-      if (x < 0 || x >= 1 || y < 0 || y >= 1)
-        break;
+                  shumate_vector_point_iter_init (&iter, linestring);
+                  shumate_vector_point_iter_advance (&iter, length / 2);
+                  shumate_vector_point_iter_get_current_point (&iter, &point);
 
-      place_point_label (details, x, y, scope);
+                  place_point_label (details, point.x, point.y, scope);
+                }
+            }
+          else
+            {
+              // Place at the center of the polygon's bounding box
+              place_point_label (details, x, y, scope);
+            }
+        }
 
       break;
     }

@@ -169,10 +169,25 @@ shumate_vector_point_iter_init (ShumateVectorPointIter  *iter,
 }
 
 
+gboolean
+shumate_vector_point_iter_is_at_end (ShumateVectorPointIter *iter)
+{
+  if (iter->reversed)
+    return iter->current_point == 0;
+  else
+    return iter->current_point >= iter->num_points - 1;
+}
+
+
 double
 shumate_vector_point_iter_next_segment (ShumateVectorPointIter *iter)
 {
-  double res = shumate_vector_point_iter_get_segment_length (iter) - iter->distance;
+  double res;
+
+  if (shumate_vector_point_iter_is_at_end (iter))
+    return 0;
+
+  res = shumate_vector_point_iter_get_segment_length (iter) - iter->distance;
   iter->distance = 0;
 
   if (iter->reversed)
@@ -203,12 +218,17 @@ point_distance (ShumateVectorPoint *a,
 static ShumateVectorPoint *
 get_prev_point (ShumateVectorPointIter *iter)
 {
+  g_assert (iter->current_point >= 0);
+  g_assert (iter->current_point < iter->num_points);
   return &iter->points[iter->current_point];
 }
 
 static ShumateVectorPoint *
 get_next_point (ShumateVectorPointIter *iter)
 {
+  g_assert (iter->current_point >= 0);
+  g_assert (iter->current_point < iter->num_points);
+
   if (iter->reversed)
     {
       if (iter->current_point == 0)
@@ -292,12 +312,8 @@ void
 shumate_vector_point_iter_advance (ShumateVectorPointIter *iter,
                                    double                  distance)
 {
-  while (distance > 0)
+  while (distance > 0 && !shumate_vector_point_iter_is_at_end (iter))
     {
-      if ((iter->reversed && iter->current_point == 0)
-          || (!iter->reversed && iter->current_point >= iter->num_points - 1))
-        return;
-
       if (iter->distance + distance > shumate_vector_point_iter_get_segment_length (iter))
         distance -= shumate_vector_point_iter_next_segment (iter);
       else
@@ -324,16 +340,33 @@ shumate_vector_point_iter_get_average_angle (ShumateVectorPointIter *iter,
   ShumateVectorPointIter iter2 = *iter;
   double sum_x = 0.0, sum_y = 0.0;
 
-  while (remaining_distance > 0)
+  while (remaining_distance > 0 && !shumate_vector_point_iter_is_at_end (&iter2))
     {
-      sum_x += get_next_point (iter)->x - get_prev_point (iter)->x;
-      sum_y += get_next_point (iter)->y - get_prev_point (iter)->y;
+      double len = shumate_vector_point_iter_get_segment_length (&iter2);
+      double scale;
+
+      if (len != 0)
+        {
+          scale = MIN (remaining_distance, len - iter2.distance) / len;
+          sum_x += (get_next_point (&iter2)->x - get_prev_point (&iter2)->x) * scale;
+          sum_y += (get_next_point (&iter2)->y - get_prev_point (&iter2)->y) * scale;
+        }
+
       remaining_distance -= shumate_vector_point_iter_next_segment (&iter2);
     }
 
   return atan2 (sum_y, sum_x);
 }
 
+
+ShumateVectorLineString *
+shumate_vector_line_string_copy (ShumateVectorLineString *linestring)
+{
+  ShumateVectorLineString *copy = g_new0 (ShumateVectorLineString, 1);
+  copy->n_points = linestring->n_points;
+  copy->points = g_memdup2 (linestring->points, linestring->n_points * sizeof (ShumateVectorPoint));
+  return copy;
+}
 
 void
 shumate_vector_line_string_free (ShumateVectorLineString *linestring)

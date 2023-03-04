@@ -507,12 +507,17 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
   RTreeBucketRow *bucket_row;
 
   float width[4] = { 1, 1, 1, 1 };
-  GdkRGBA color[4];
+  GdkRGBA color[4], color2[4];
 
   gdk_rgba_parse (&color[0], "#FF0000");
   gdk_rgba_parse (&color[1], "#FF0000");
   gdk_rgba_parse (&color[2], "#FF0000");
   gdk_rgba_parse (&color[3], "#FF0000");
+
+  gdk_rgba_parse (&color2[0], "#00FF00");
+  gdk_rgba_parse (&color2[1], "#00FF00");
+  gdk_rgba_parse (&color2[2], "#00FF00");
+  gdk_rgba_parse (&color2[3], "#00FF00");
 
   g_hash_table_iter_init (&bucket_rows, self->bucket_rows);
 
@@ -585,7 +590,7 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
                                                                               b->xextent * 2,
                                                                               b->yextent * 2),
                                                       width,
-                                                      color);
+                                                      color2);
 
                           gtk_snapshot_restore (snapshot);
                         }

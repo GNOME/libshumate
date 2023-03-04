@@ -260,7 +260,7 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       alloc.height = child->height;
 
       gtk_widget_size_allocate (GTK_WIDGET (child->symbol), &alloc, -1);
-      if (child->symbol_info->line_placement)
+      if (child->symbol_info->line != NULL)
         gtk_widget_queue_draw (GTK_WIDGET (child->symbol));
     }
 
@@ -383,7 +383,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->zoom = zoom;
       info->visible = TRUE;
 
-      if (!symbol_info->line_placement)
+      if (symbol_info->line == NULL)
         {
           /* Measure the label widget to get the symbol size */
           gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);

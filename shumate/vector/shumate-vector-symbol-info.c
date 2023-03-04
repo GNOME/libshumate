@@ -99,7 +99,8 @@ shumate_vector_symbol_info_unref (ShumateVectorSymbolInfo *self)
 
 void
 shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
-                                            ShumateVectorLineString *linestring)
+                                            ShumateVectorLineString *linestring,
+                                            float                    position)
 {
   ShumateVectorPoint center;
   g_clear_pointer (&self->line, shumate_vector_line_string_free);
@@ -109,7 +110,7 @@ shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
   self->x = center.x;
   self->y = center.y;
   self->line_length = shumate_vector_line_string_length (self->line);
-  self->line_placement = TRUE;
+  self->line_position = position;
 }
 
 int

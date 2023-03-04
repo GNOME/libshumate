@@ -34,6 +34,9 @@ typedef struct {
   double text_size;
   double text_padding;
   char *text_font;
+
+  float symbol_spacing;
+
   int tile_x;
   int tile_y;
   int tile_zoom_level;
@@ -44,6 +47,8 @@ typedef struct {
   char *cursor;
 
   GHashTable *tags;
+
+  gboolean text_keep_upright : 1;
 
   /*< private >*/
   guint ref_count;
@@ -67,15 +72,15 @@ struct _ShumateVectorSymbolInfo
   ShumateVectorLineString *line;
   ShumateVectorPoint line_size;
   float line_length;
-
-  guint line_placement : 1;
+  float line_position;
 
   /*< private >*/
   guint ref_count;
 };
 
 void shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
-                                                 ShumateVectorLineString *linestring);
+                                                 ShumateVectorLineString *linestring,
+                                                 float                    position);
 
 GType                        shumate_vector_symbol_info_get_type (void) G_GNUC_CONST;
 ShumateVectorSymbolInfo     *shumate_vector_symbol_info_ref      (ShumateVectorSymbolInfo *self);

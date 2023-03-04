@@ -100,7 +100,7 @@ shumate_vector_symbol_constructed (GObject *object)
   attr = pango_attr_size_new_absolute (self->symbol_info->details->text_size * PANGO_SCALE);
   pango_attr_list_insert (attrs, attr);
 
-  if (self->symbol_info->line_placement)
+  if (self->symbol_info->line != NULL)
     {
       PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (self));
       g_autoptr(PangoLayout) layout = pango_layout_new (context);
@@ -244,7 +244,7 @@ shumate_vector_symbol_measure (GtkWidget      *widget,
 {
   ShumateVectorSymbol *self = SHUMATE_VECTOR_SYMBOL (widget);
 
-  if (self->symbol_info->line_placement)
+  if (self->symbol_info->line != NULL)
     {
       if (minimum)
         *minimum = 0;
@@ -268,7 +268,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 {
   ShumateVectorSymbol *self = SHUMATE_VECTOR_SYMBOL (widget);
 
-  if (self->symbol_info->line_placement)
+  if (self->symbol_info->line != NULL)
     {
       GtkWidget *parent = gtk_widget_get_parent (widget);
       int i;
@@ -276,16 +276,19 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       double rotation = 0.0;
       double scale = 512.0;
       double avg_angle;
+      double start_pos;
 
       if (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (parent))
         {
           ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (parent));
           ShumateMapSource *map_source = shumate_vector_symbol_container_get_map_source (SHUMATE_VECTOR_SYMBOL_CONTAINER (parent));
-          scale = shumate_map_source_get_tile_size_at_zoom (map_source, shumate_viewport_get_zoom_level (viewport));
+          double zoom_level = shumate_viewport_get_zoom_level (viewport);
+          scale = shumate_map_source_get_tile_size (map_source) * powf (2, zoom_level - self->symbol_info->details->tile_zoom_level);
           rotation = shumate_viewport_get_rotation (viewport);
         }
 
-      if (self->glyphs_length > self->line_length * scale)
+      start_pos = MAX (0, self->symbol_info->line_position - (self->glyphs_length / scale / 2.0));
+      if (self->glyphs_length > (self->line_length - start_pos) * scale)
         return;
 
       gtk_snapshot_save (snapshot);
@@ -295,17 +298,20 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
       shumate_vector_point_iter_init (&iter, self->symbol_info->line);
-      shumate_vector_point_iter_advance (&iter, (self->line_length - self->glyphs_length / scale) / 2.0);
+      shumate_vector_point_iter_advance (&iter, start_pos);
 
       /* If the label is upside down on average, draw it the other way around */
-      avg_angle = shumate_vector_point_iter_get_average_angle (&iter, self->glyphs_length / scale);
-      avg_angle = positive_mod (avg_angle + rotation, G_PI * 2.0);
-      if (avg_angle > G_PI / 2.0 && avg_angle < 3.0 * G_PI / 2.0)
+      if (self->symbol_info->details->text_keep_upright)
         {
-          iter.reversed = TRUE;
-          iter.current_point = iter.num_points - 1;
-          iter.distance = 0;
-          shumate_vector_point_iter_advance (&iter, (self->line_length - self->glyphs_length / scale) / 2.0);
+          avg_angle = shumate_vector_point_iter_get_average_angle (&iter, self->glyphs_length / scale);
+          avg_angle = positive_mod (avg_angle + rotation, G_PI * 2.0);
+          if (avg_angle > G_PI / 2.0 && avg_angle < 3.0 * G_PI / 2.0)
+            {
+              iter.reversed = TRUE;
+              iter.current_point = iter.num_points - 1;
+              iter.distance = 0;
+              shumate_vector_point_iter_advance (&iter, self->line_length - start_pos - (self->glyphs_length / scale));
+            }
         }
 
       for (i = 0; i < self->glyphs->len; i ++)
@@ -417,7 +423,7 @@ shumate_vector_symbol_get_symbol_info (ShumateVectorSymbol *self)
 int
 shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self)
 {
-  if (self->symbol_info->line_placement)
+  if (self->symbol_info->line != NULL)
     return self->glyphs_length;
   else
     {
@@ -456,22 +462,26 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
   float text_length = shumate_vector_symbol_get_text_length (self);
   float yextent = self->symbol_info->details->text_size / 2.0;
 
-  if (self->symbol_info->line_placement)
+  if (self->symbol_info->line != NULL)
     {
       ShumateVectorPointIter iter;
-      float line_length = shumate_vector_line_string_length (self->symbol_info->line);
+      float line_length = self->symbol_info->line_length;
       float length = text_length / tile_size_for_zoom;
+      double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
 
-      if (length > line_length)
+      if (length > line_length - start_pos)
         return FALSE;
 
       shumate_vector_point_iter_init (&iter, self->symbol_info->line);
-      shumate_vector_point_iter_advance (&iter, (line_length - length) / 2.0);
+      shumate_vector_point_iter_advance (&iter, start_pos);
 
       do
         {
           ShumateVectorPoint point;
-          float xextent = MIN (length, shumate_vector_point_iter_get_segment_length (&iter)) * tile_size_for_zoom / 2;
+          float xextent = MIN (length, shumate_vector_point_iter_get_segment_length (&iter) - iter.distance) * tile_size_for_zoom / 2;
+
+          if (shumate_vector_point_iter_is_at_end (&iter))
+            return FALSE;
 
           shumate_vector_point_iter_get_segment_center (&iter, length, &point);
           point.x -= self->symbol_info->x;
