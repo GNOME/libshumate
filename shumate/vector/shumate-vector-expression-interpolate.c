@@ -155,7 +155,7 @@ lerp (ShumateVectorValue *last_value, ShumateVectorValue *next_value, double pos
       shumate_vector_value_set_color (out, &color);
     }
   else
-    shumate_vector_value_unset (out);
+    shumate_vector_value_copy (last_value, out);
 }
 
 
