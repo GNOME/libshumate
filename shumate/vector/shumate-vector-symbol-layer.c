@@ -247,6 +247,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .tile_zoom_level = scope->zoom_level,
   };
 
+  details->text_color = SHUMATE_VECTOR_COLOR_BLACK;
   shumate_vector_expression_eval_color (self->text_color, scope, &details->text_color);
 
   switch (shumate_vector_render_scope_get_geometry_type (scope))
