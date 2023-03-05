@@ -30,8 +30,6 @@ ShumateVectorSymbol *shumate_vector_symbol_new (ShumateVectorSymbolInfo *symbol_
 
 ShumateVectorSymbolInfo *shumate_vector_symbol_get_symbol_info (ShumateVectorSymbol *self);
 
-int shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self);
-
 gboolean shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                                     ShumateVectorCollision *collision,
                                                     float                   x,

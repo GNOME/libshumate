@@ -31,8 +31,10 @@ struct _ShumateVectorSymbol
   ShumateVectorSymbolInfo *symbol_info;
 
   GArray *glyphs;
-  int glyphs_length;
   double line_length;
+
+  GskRenderNode *glyphs_node;
+  int layout_width, layout_height;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbol, shumate_vector_symbol, GTK_TYPE_WIDGET)
@@ -79,6 +81,8 @@ static void
 shumate_vector_symbol_constructed (GObject *object)
 {
   ShumateVectorSymbol *self = (ShumateVectorSymbol *)object;
+  PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (self));
+  g_autoptr(PangoLayout) layout = pango_layout_new (context);
   g_autoptr(PangoAttrList) attrs = pango_attr_list_new ();
   PangoAttribute *attr;
 
@@ -100,10 +104,14 @@ shumate_vector_symbol_constructed (GObject *object)
   attr = pango_attr_size_new_absolute (self->symbol_info->details->text_size * PANGO_SCALE);
   pango_attr_list_insert (attrs, attr);
 
+  pango_layout_set_attributes (layout, attrs);
+  pango_layout_set_text (layout, self->symbol_info->details->text, -1);
+  pango_layout_get_size (layout, &self->layout_width, &self->layout_height);
+  self->layout_width /= PANGO_SCALE;
+  self->layout_height /= PANGO_SCALE;
+
   if (self->symbol_info->line != NULL)
     {
-      PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (self));
-      g_autoptr(PangoLayout) layout = pango_layout_new (context);
       g_autoptr(PangoLayoutIter) iter = NULL;
       PangoGlyphItem *current_item;
       int i;
@@ -111,12 +119,8 @@ shumate_vector_symbol_constructed (GObject *object)
       self->glyphs = g_array_new (FALSE, FALSE, sizeof (Glyph));
       g_array_set_clear_func (self->glyphs, (GDestroyNotify)glyph_clear);
 
-      pango_layout_set_attributes (layout, attrs);
-      pango_layout_set_text (layout, self->symbol_info->details->text, -1);
       iter = pango_layout_get_iter (layout);
 
-      pango_layout_get_size (layout, &self->glyphs_length, NULL);
-      self->glyphs_length /= PANGO_SCALE;
       self->line_length = shumate_vector_line_string_length (self->symbol_info->line);
 
       do {
@@ -152,9 +156,9 @@ shumate_vector_symbol_constructed (GObject *object)
     }
   else
     {
-      GtkWidget *label = gtk_label_new (self->symbol_info->details->text);
-      gtk_label_set_attributes (GTK_LABEL (label), attrs);
-      gtk_widget_set_parent (label, GTK_WIDGET (self));
+      g_autoptr(GtkSnapshot) snapshot = gtk_snapshot_new ();
+      gtk_snapshot_append_layout (snapshot, layout, &self->symbol_info->details->text_color);
+      self->glyphs_node = gtk_snapshot_free_to_node (g_steal_pointer (&snapshot));
     }
 
   if (self->symbol_info->details->cursor != NULL)
@@ -180,6 +184,7 @@ shumate_vector_symbol_dispose (GObject *object)
 
   g_clear_pointer (&self->symbol_info, shumate_vector_symbol_info_unref);
   g_clear_pointer (&self->glyphs, g_array_unref);
+  g_clear_pointer (&self->glyphs_node, gsk_render_node_unref);
 
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->dispose (object);
 }
@@ -252,13 +257,28 @@ shumate_vector_symbol_measure (GtkWidget      *widget,
         *natural = 0;
     }
   else
-    GTK_WIDGET_CLASS (shumate_vector_symbol_parent_class)->measure (widget,
-                                                                    orientation,
-                                                                    for_size,
-                                                                    minimum,
-                                                                    natural,
-                                                                    minimum_baseline,
-                                                                    natural_baseline);
+    {
+      if (orientation == GTK_ORIENTATION_HORIZONTAL)
+        {
+          if (minimum)
+            *minimum = self->layout_width;
+          if (natural)
+            *natural = self->layout_width;
+        }
+      else if (orientation == GTK_ORIENTATION_VERTICAL)
+        {
+          if (minimum)
+            *minimum = self->layout_height;
+          if (natural)
+            *natural = self->layout_height;
+        }
+    }
+}
+
+static GtkSizeRequestMode
+shumate_vector_symbol_get_request_mode (GtkWidget *widget)
+{
+  return GTK_SIZE_REQUEST_CONSTANT_SIZE;
 }
 
 
@@ -287,8 +307,8 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
           rotation = shumate_viewport_get_rotation (viewport);
         }
 
-      start_pos = MAX (0, self->symbol_info->line_position - (self->glyphs_length / scale / 2.0));
-      if (self->glyphs_length > (self->line_length - start_pos) * scale)
+      start_pos = MAX (0, self->symbol_info->line_position - (self->layout_width / scale / 2.0));
+      if (self->layout_width > (self->line_length - start_pos) * scale)
         return;
 
       gtk_snapshot_save (snapshot);
@@ -303,14 +323,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       /* If the label is upside down on average, draw it the other way around */
       if (self->symbol_info->details->text_keep_upright)
         {
-          avg_angle = shumate_vector_point_iter_get_average_angle (&iter, self->glyphs_length / scale);
+          avg_angle = shumate_vector_point_iter_get_average_angle (&iter, self->layout_width / scale);
           avg_angle = positive_mod (avg_angle + rotation, G_PI * 2.0);
           if (avg_angle > G_PI / 2.0 && avg_angle < 3.0 * G_PI / 2.0)
             {
               iter.reversed = TRUE;
               iter.current_point = iter.num_points - 1;
               iter.distance = 0;
-              shumate_vector_point_iter_advance (&iter, self->line_length - start_pos - (self->glyphs_length / scale));
+              shumate_vector_point_iter_advance (&iter, self->line_length - start_pos - (self->layout_width / scale));
             }
         }
 
@@ -348,7 +368,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
   else
-    GTK_WIDGET_CLASS (shumate_vector_symbol_parent_class)->snapshot (widget, snapshot);
+    gtk_snapshot_append_node (snapshot, self->glyphs_node);
 }
 
 
@@ -363,6 +383,7 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
   object_class->get_property = shumate_vector_symbol_get_property;
   object_class->set_property = shumate_vector_symbol_set_property;
 
+  widget_class->get_request_mode = shumate_vector_symbol_get_request_mode;
   widget_class->snapshot = shumate_vector_symbol_snapshot;
   widget_class->measure = shumate_vector_symbol_measure;
 
@@ -385,7 +406,6 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
                   1,
                   SHUMATE_TYPE_SYMBOL_EVENT);
 
-  gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BOX_LAYOUT);
   gtk_widget_class_set_accessible_role (widget_class, GTK_ACCESSIBLE_ROLE_LABEL);
 }
 
@@ -419,20 +439,6 @@ shumate_vector_symbol_get_symbol_info (ShumateVectorSymbol *self)
   return self->symbol_info;
 }
 
-
-int
-shumate_vector_symbol_get_text_length (ShumateVectorSymbol *self)
-{
-  if (self->symbol_info->line != NULL)
-    return self->glyphs_length;
-  else
-    {
-      int natural;
-      gtk_widget_measure (GTK_WIDGET (self), GTK_ORIENTATION_HORIZONTAL, 0, NULL, &natural, NULL, NULL);
-      return natural;
-    }
-}
-
 static void
 rotate_around_center (float *x,
                       float *y,
@@ -459,14 +465,13 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                            float                   tile_size_for_zoom,
                                            float                   rotation)
 {
-  float text_length = shumate_vector_symbol_get_text_length (self);
   float yextent = self->symbol_info->details->text_size / 2.0;
 
   if (self->symbol_info->line != NULL)
     {
       ShumateVectorPointIter iter;
       float line_length = self->symbol_info->line_length;
-      float length = text_length / tile_size_for_zoom;
+      float length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
 
       if (length > line_length - start_pos)
@@ -514,7 +519,7 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         collision,
         x,
         y,
-        text_length / 2.0 + self->symbol_info->details->text_padding,
+        self->layout_width / 2.0 + self->symbol_info->details->text_padding,
         yextent + self->symbol_info->details->text_padding,
         0
       );
