@@ -67,7 +67,7 @@ shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
   ShumateVectorFillLayer *self = SHUMATE_VECTOR_FILL_LAYER (layer);
   GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
   double opacity;
-  GdkPixbuf *pattern;
+  g_autoptr(GdkPixbuf) pattern = NULL;
 
   shumate_vector_expression_eval_color (self->color, scope, &color);
   opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);

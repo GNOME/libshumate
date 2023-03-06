@@ -170,14 +170,21 @@ shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
   if (value.type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
     {
       const char *name;
+      GdkPixbuf *pixbuf;
+
       shumate_vector_value_get_string (&value, &name);
-      return shumate_vector_sprite_sheet_get_icon (scope->sprites, name);
+
+      pixbuf = shumate_vector_sprite_sheet_get_icon (scope->sprites, name);
+      if (pixbuf)
+        return g_object_ref (pixbuf);
+      else
+        return NULL;
     }
   else if (value.type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
     {
       GdkPixbuf *pixbuf;
       shumate_vector_value_get_image (&value, &pixbuf);
-      return pixbuf;
+      return g_object_ref (pixbuf);
     }
   else
     return NULL;
@@ -188,3 +195,4 @@ shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
 {
   g_clear_pointer (&ctx->variables, g_hash_table_unref);
 }
+

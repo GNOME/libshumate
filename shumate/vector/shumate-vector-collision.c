@@ -392,9 +392,22 @@ shumate_vector_collision_check (ShumateVectorCollision *self,
   return TRUE;
 }
 
+int
+shumate_vector_collision_save_pending (ShumateVectorCollision *self)
+{
+  return self->pending_boxes->len;
+}
 
 void
-shumate_vector_collision_commit_pending (ShumateVectorCollision *self)
+shumate_vector_collision_rollback_pending (ShumateVectorCollision *self,
+                                           int                     save)
+{
+  g_array_set_size (self->pending_boxes, save);
+}
+
+void
+shumate_vector_collision_commit_pending (ShumateVectorCollision *self,
+                                         graphene_rect_t        *bounds_out)
 {
   int i;
 
@@ -407,6 +420,7 @@ shumate_vector_collision_commit_pending (ShumateVectorCollision *self)
       RTreeCol *col;
       gsize bucket_x = floor (bbox.x / BUCKET_SIZE);
       gsize bucket_y = floor (bbox.y / BUCKET_SIZE);
+      graphene_rect_t bounds;
 
       bucket_row = g_hash_table_lookup (self->bucket_rows, (gpointer) bucket_y);
       if (bucket_row == NULL)
@@ -438,6 +452,15 @@ shumate_vector_collision_commit_pending (ShumateVectorCollision *self)
       expand_rect (&bucket_col->bbox, &bbox);
       expand_rect (&row->bbox, &bbox);
       expand_rect (&col->bbox, &bbox);
+
+      bounds = GRAPHENE_RECT_INIT (bbox.x - bbox.aaxextent,
+                                   bbox.y - bbox.aayextent,
+                                   bbox.aaxextent * 2,
+                                   bbox.aayextent * 2);
+      if (i == 0)
+        *bounds_out = bounds;
+      else
+        graphene_rect_union (bounds_out, &bounds, bounds_out);
     }
 
   /* clear the pending boxes */

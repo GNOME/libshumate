@@ -35,6 +35,11 @@ struct _ShumateVectorSymbol
 
   GskRenderNode *glyphs_node;
   int layout_width, layout_height;
+
+  graphene_rect_t bounds;
+  float x, y;
+
+  GdkTexture *icon;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbol, shumate_vector_symbol, GTK_TYPE_WIDGET)
@@ -164,6 +169,9 @@ shumate_vector_symbol_constructed (GObject *object)
   if (self->symbol_info->details->cursor != NULL)
     gtk_widget_set_cursor_from_name (GTK_WIDGET (self), self->symbol_info->details->cursor);
 
+  if (self->symbol_info->details->icon_image != NULL)
+    self->icon = gdk_texture_new_for_pixbuf (self->symbol_info->details->icon_image);
+
   gtk_accessible_update_property (GTK_ACCESSIBLE (self),
                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
                                   self->symbol_info->details->text,
@@ -185,6 +193,7 @@ shumate_vector_symbol_dispose (GObject *object)
   g_clear_pointer (&self->symbol_info, shumate_vector_symbol_info_unref);
   g_clear_pointer (&self->glyphs, g_array_unref);
   g_clear_pointer (&self->glyphs_node, gsk_render_node_unref);
+  g_clear_object (&self->icon);
 
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->dispose (object);
 }
@@ -288,6 +297,12 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 {
   ShumateVectorSymbol *self = SHUMATE_VECTOR_SYMBOL (widget);
 
+  gtk_snapshot_save (snapshot);
+
+  /* Translate so the origin is at the anchor point of the symbol */
+  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->x - self->bounds.origin.x,
+                                                          self->y - self->bounds.origin.y));
+
   if (self->symbol_info->line != NULL)
     {
       GtkWidget *parent = gtk_widget_get_parent (widget);
@@ -312,9 +327,6 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
         return;
 
       gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (gtk_widget_get_allocated_width (widget) / 2,
-                                                              gtk_widget_get_allocated_height (widget) / 2));
-
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
       shumate_vector_point_iter_init (&iter, self->symbol_info->line);
@@ -368,7 +380,28 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
   else
-    gtk_snapshot_append_node (snapshot, self->glyphs_node);
+    {
+      if (self->icon)
+        {
+          float width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
+                        * self->symbol_info->details->icon_size;
+          float height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+                         * self->symbol_info->details->icon_size;
+
+          gtk_snapshot_append_texture (snapshot,
+                                       self->icon,
+                                       &GRAPHENE_RECT_INIT (-width / 2, -height / 2,
+                                                            width, height));
+        }
+
+      gtk_snapshot_save (snapshot);
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0,
+                                                              -self->symbol_info->details->text_size / 2.0));
+      gtk_snapshot_append_node (snapshot, self->glyphs_node);
+      gtk_snapshot_restore (snapshot);
+    }
+
+  gtk_snapshot_restore (snapshot);
 }
 
 
@@ -463,9 +496,12 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                            float                   x,
                                            float                   y,
                                            float                   tile_size_for_zoom,
-                                           float                   rotation)
+                                           float                   rotation,
+                                           graphene_rect_t        *bounds_out)
 {
   float yextent = self->symbol_info->details->text_size / 2.0;
+
+  shumate_vector_collision_rollback_pending (collision, 0);
 
   if (self->symbol_info->line != NULL)
     {
@@ -509,9 +545,6 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
             return FALSE;
         }
       while ((length -= shumate_vector_point_iter_next_segment (&iter)) > 0);
-
-      shumate_vector_collision_commit_pending (collision);
-      return TRUE;
     }
   else
     {
@@ -524,10 +557,26 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         0
       );
 
-      if (check)
-        shumate_vector_collision_commit_pending (collision);
+      if (!check)
+        return FALSE;
 
-      return check;
+      if (self->symbol_info->details->icon_image)
+        {
+          int width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
+                      * self->symbol_info->details->icon_size;
+          int height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+                       * self->symbol_info->details->icon_size;
+
+          check = shumate_vector_collision_check (collision, x, y, width / 2.0, height / 2.0, 0);
+          if (!check)
+            return FALSE;
+        }
     }
+
+  shumate_vector_collision_commit_pending (collision, &self->bounds);
+  *bounds_out = self->bounds;
+  self->x = x;
+  self->y = y;
+  return TRUE;
 }
 

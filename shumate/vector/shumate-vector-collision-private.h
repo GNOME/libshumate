@@ -35,8 +35,11 @@ gboolean shumate_vector_collision_check (ShumateVectorCollision *self,
                                          float                   xextent,
                                          float                   yextent,
                                          float                   rotation);
-
-void shumate_vector_collision_commit_pending (ShumateVectorCollision *self);
+int shumate_vector_collision_save_pending (ShumateVectorCollision *self);
+void shumate_vector_collision_rollback_pending (ShumateVectorCollision *self,
+                                                int                     save);
+void shumate_vector_collision_commit_pending (ShumateVectorCollision *self,
+                                              graphene_rect_t         *bounds_out);
 
 void shumate_vector_collision_clear (ShumateVectorCollision *self);
 

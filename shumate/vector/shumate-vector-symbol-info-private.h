@@ -29,6 +29,9 @@ typedef struct {
   char *layer;
   char *feature_id;
 
+  GdkPixbuf *icon_image;
+  float icon_size;
+
   char *text;
   GdkRGBA text_color;
   double text_size;

@@ -35,5 +35,6 @@ gboolean shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self
                                                     float                   x,
                                                     float                   y,
                                                     float                   zoom_level,
-                                                    float                   rotation);
+                                                    float                   rotation,
+                                                    graphene_rect_t        *bounds_out);
 G_END_DECLS

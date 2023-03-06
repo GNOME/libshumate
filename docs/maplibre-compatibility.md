@@ -328,7 +328,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-image">icon-image</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-keep-upright">icon-keep-upright</a></td>
@@ -368,7 +368,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-size">icon-size</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-text-fit">icon-text-fit</a></td>

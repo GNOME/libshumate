@@ -25,6 +25,8 @@ struct _ShumateVectorSymbolLayer
 {
   ShumateVectorLayer parent_instance;
 
+  ShumateVectorExpression *icon_image;
+  ShumateVectorExpression *icon_size;
   ShumateVectorExpression *text_field;
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_size;
@@ -59,6 +61,14 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       JsonObject *layout = json_object_get_object_member (object, "layout");
       JsonNode *text_font_node;
       JsonArray *text_font;
+
+      layer->icon_image = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-image"), NULL, error);
+      if (layer->icon_image == NULL)
+        return NULL;
+
+      layer->icon_size = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-size"), NULL, error);
+      if (layer->icon_size == NULL)
+        return NULL;
 
       layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), NULL, error);
       if (layer->text_field == NULL)
@@ -129,6 +139,8 @@ shumate_vector_symbol_layer_finalize (GObject *object)
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (object);
 
+  g_clear_object (&self->icon_image);
+  g_clear_object (&self->icon_size);
   g_clear_object (&self->text_field);
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
@@ -253,10 +265,11 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autofree char *symbol_placement = NULL;
   g_autoptr(GHashTable) tags = NULL;
   g_autoptr(ShumateVectorSymbolDetails) details = NULL;
+  g_autoptr(GdkPixbuf) icon_image = shumate_vector_expression_eval_image (self->icon_image, scope);
   double x, y;
 
   text_field = shumate_vector_expression_eval_string (self->text_field, scope, "");
-  if (strlen (text_field) == 0)
+  if (strlen (text_field) == 0 && icon_image == NULL)
     return;
 
   feature_id = g_strdup_printf ("%ld", scope->feature->id);
@@ -270,6 +283,10 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .layer = g_strdup (shumate_vector_layer_get_id (layer)),
     .feature_id = g_strdup (feature_id),
     .tags = g_hash_table_ref (tags),
+
+    .icon_image = g_steal_pointer (&icon_image),
+    .icon_size = shumate_vector_expression_eval_number (self->icon_size, scope, 1.0),
+
     .text = g_strdup (text_field),
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
     .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),

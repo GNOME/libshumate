@@ -31,6 +31,7 @@ struct _ShumateVectorSymbolContainer
 
   float last_rotation;
   float last_zoom;
+  float last_center_x, last_center_y;
   gboolean labels_changed : 1;
 };
 
@@ -54,6 +55,8 @@ static guint signals[LAST_SIGNAL] = { 0, };
 
 
 typedef struct {
+  graphene_rect_t bounds;
+
   // do not need to be freed because they're owned by the widget
   ShumateVectorSymbol *symbol;
   ShumateVectorSymbolInfo *symbol_info;
@@ -61,11 +64,6 @@ typedef struct {
   // These are coordinates [0, 1) within the tile
   float x;
   float y;
-
-  // We assume these don't change so we don't have to measure them again
-  // every time. We can do this because children are all created internally
-  int width;
-  int height;
 
   int tile_x;
   int tile_y;
@@ -225,7 +223,11 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   gboolean recalc = self->labels_changed || (self->last_zoom != zoom_level) || (self->last_rotation != rotation);
 
   if (recalc)
-    shumate_vector_collision_clear (self->collision);
+    {
+      shumate_vector_collision_clear (self->collision);
+      self->last_center_x = center_x;
+      self->last_center_y = center_y;
+    }
 
   for (GList *l = self->children; l != NULL; l = l->next)
     {
@@ -233,13 +235,19 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       float tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
       float x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
       float y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
-      int child_width, child_height;
 
       rotate_around_center (&x, &y, width, height, rotation);
 
       if (recalc)
         {
-          gboolean now_visible = shumate_vector_symbol_calculate_collision (child->symbol, self->collision, x, y, tile_size_at_zoom, rotation);
+          gboolean now_visible =
+            shumate_vector_symbol_calculate_collision (child->symbol,
+                                                       self->collision,
+                                                       x,
+                                                       y,
+                                                       tile_size_at_zoom,
+                                                       rotation,
+                                                       &child->bounds);
 
           if (now_visible != child->visible)
             {
@@ -251,13 +259,13 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       if (!child->visible)
         continue;
 
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &child_width, NULL, NULL);
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &child_height, NULL, NULL);
+      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, NULL, NULL, NULL);
+      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, NULL, NULL, NULL);
 
-      alloc.x = x - child->width/2.0;
-      alloc.y = y - child->height/2.0;
-      alloc.width = child->width;
-      alloc.height = child->height;
+      alloc.x = child->bounds.origin.x - (center_x - self->last_center_x);
+      alloc.y = child->bounds.origin.y - (center_y - self->last_center_y);
+      alloc.width = child->bounds.size.width;
+      alloc.height = child->bounds.size.height;
 
       gtk_widget_size_allocate (GTK_WIDGET (child->symbol), &alloc, -1);
       if (child->symbol_info->line != NULL)
@@ -287,7 +295,17 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
     }
 
 #if 0
-  shumate_vector_collision_visualize (self->collision, snapshot);
+    {
+      ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+      float zoom_level = shumate_viewport_get_zoom_level (viewport);
+      float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
+      float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+
+      gtk_snapshot_save (snapshot);
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->last_center_x - center_x, self->last_center_y - center_y));
+      shumate_vector_collision_visualize (self->collision, snapshot);
+      gtk_snapshot_restore (snapshot);
+    }
 #endif
 }
 
@@ -382,13 +400,6 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->tile_y = tile_y;
       info->zoom = zoom;
       info->visible = TRUE;
-
-      if (symbol_info->line == NULL)
-        {
-          /* Measure the label widget to get the symbol size */
-          gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, &info->width, NULL, NULL);
-          gtk_widget_measure (GTK_WIDGET (symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, &info->height, NULL, NULL);
-        }
 
       self->children = g_list_prepend (self->children, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));
