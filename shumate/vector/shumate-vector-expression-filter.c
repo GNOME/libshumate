@@ -37,11 +37,30 @@ typedef enum {
   EXPR_GE,
   EXPR_LE,
   EXPR_CASE,
+  EXPR_COALESCE,
+
   EXPR_ADD,
   EXPR_SUB,
   EXPR_MUL,
   EXPR_DIV,
-  EXPR_COALESCE,
+  EXPR_REM,
+  EXPR_POW,
+  EXPR_ABS,
+  EXPR_ACOS,
+  EXPR_ASIN,
+  EXPR_ATAN,
+  EXPR_CEIL,
+  EXPR_COS,
+  EXPR_FLOOR,
+  EXPR_LN,
+  EXPR_LOG10,
+  EXPR_LOG2,
+  EXPR_MAX,
+  EXPR_MIN,
+  EXPR_ROUND,
+  EXPR_SIN,
+  EXPR_SQRT,
+  EXPR_TAN,
 } ExpressionType;
 
 struct _ShumateVectorExpressionFilter
@@ -66,6 +85,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
   gboolean lookup_first_arg = TRUE;
   int expect_exprs = -1;
   int expect_ge_exprs = -1;
+  int expect_le_exprs = -1;
 
   if (json_array_get_length (array) == 0)
     {
@@ -205,6 +225,24 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
                    variable);
       return NULL;
     }
+  else if (g_strcmp0 ("e", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      shumate_vector_value_set_number (&value, G_E);
+      return shumate_vector_expression_literal_new (&value);
+    }
+  else if (g_strcmp0 ("pi", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      shumate_vector_value_set_number (&value, G_PI);
+      return shumate_vector_expression_literal_new (&value);
+    }
+  else if (g_strcmp0 ("ln2", op) == 0)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      shumate_vector_value_set_number (&value, G_LN2);
+      return shumate_vector_expression_literal_new (&value);
+    }
 
   self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
 
@@ -277,26 +315,6 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       self->type = EXPR_LE;
       expect_exprs = 2;
     }
-  else if (g_strcmp0 ("+", op) == 0)
-    {
-      self->type = EXPR_ADD;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("-", op) == 0)
-    {
-      self->type = EXPR_SUB;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("*", op) == 0)
-    {
-      self->type = EXPR_MUL;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("/", op) == 0)
-    {
-      self->type = EXPR_DIV;
-      expect_exprs = 2;
-    }
   else if (g_strcmp0 ("zoom", op) == 0)
     {
       g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
@@ -321,6 +339,133 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
     self->type = EXPR_CASE;
   else if (g_strcmp0 ("coalesce", op) == 0)
     self->type = EXPR_COALESCE;
+  else if (g_strcmp0 ("+", op) == 0)
+    {
+      self->type = EXPR_ADD;
+      expect_ge_exprs = 1;
+    }
+  else if (g_strcmp0 ("-", op) == 0)
+    {
+      self->type = EXPR_SUB;
+      expect_ge_exprs = 1;
+      expect_le_exprs = 2;
+    }
+  else if (g_strcmp0 ("*", op) == 0)
+    {
+      self->type = EXPR_MUL;
+      expect_ge_exprs = 1;
+    }
+  else if (g_strcmp0 ("/", op) == 0)
+    {
+      self->type = EXPR_DIV;
+      expect_exprs = 2;
+    }
+  else if (g_strcmp0 ("%", op) == 0)
+    {
+      self->type = EXPR_REM;
+      expect_exprs = 2;
+    }
+  else if (g_strcmp0 ("^", op) == 0)
+    {
+      self->type = EXPR_POW;
+      expect_exprs = 2;
+    }
+  else if (g_strcmp0 ("abs", op) == 0)
+    {
+      self->type = EXPR_ABS;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("acos", op) == 0)
+    {
+      self->type = EXPR_ACOS;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("asin", op) == 0)
+    {
+      self->type = EXPR_ASIN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("atan", op) == 0)
+    {
+      self->type = EXPR_ATAN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("ceil", op) == 0)
+    {
+      self->type = EXPR_CEIL;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("cos", op) == 0)
+    {
+      self->type = EXPR_COS;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("floor", op) == 0)
+    {
+      self->type = EXPR_FLOOR;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("ln", op) == 0)
+    {
+      self->type = EXPR_LN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("log10", op) == 0)
+    {
+      self->type = EXPR_LOG10;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("log2", op) == 0)
+    {
+      self->type = EXPR_LOG2;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("max", op) == 0)
+    {
+      self->type = EXPR_MAX;
+      expect_ge_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("min", op) == 0)
+    {
+      self->type = EXPR_MIN;
+      expect_ge_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("round", op) == 0)
+    {
+      self->type = EXPR_ROUND;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("sin", op) == 0)
+    {
+      self->type = EXPR_SIN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("sqrt", op) == 0)
+    {
+      self->type = EXPR_SQRT;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("tan", op) == 0)
+    {
+      self->type = EXPR_TAN;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
   else
     {
       g_set_error (error,
@@ -347,6 +492,16 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
                    SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
                    "Operator `%s` expected at least %d arguments, got %d",
                    op, expect_ge_exprs, json_array_get_length (array) - 1);
+      return FALSE;
+    }
+
+  if (expect_le_exprs > -1 && json_array_get_length (array) - 1 > expect_le_exprs)
+    {
+      g_set_error (error,
+                   SHUMATE_STYLE_ERROR,
+                   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                   "Operator `%s` expected at most %d arguments, got %d",
+                   op, expect_le_exprs, json_array_get_length (array) - 1);
       return FALSE;
     }
 
@@ -553,79 +708,6 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       shumate_vector_value_set_boolean (out, (number < number2) ^ inverted);
       return TRUE;
 
-    case EXPR_ADD:
-      number = 0;
-
-      for (int i = 0; i < n_expressions; i ++)
-        {
-          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
-            return FALSE;
-          if (!shumate_vector_value_get_number (&value, &number2))
-            return FALSE;
-
-          number += number2;
-        }
-
-      shumate_vector_value_set_number (out, number);
-      return TRUE;
-
-    case EXPR_SUB:
-      g_assert (n_expressions >= 1);
-
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
-      if (!shumate_vector_value_get_number (&value, &number))
-        return FALSE;
-
-      if (n_expressions == 1)
-        shumate_vector_value_set_number (out, 0 - number);
-      else
-        {
-          if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
-            return FALSE;
-          if (!shumate_vector_value_get_number (&value2, &number2))
-            return FALSE;
-
-          shumate_vector_value_set_number (out, number - number2);
-        }
-      return TRUE;
-
-    case EXPR_MUL:
-      g_assert (n_expressions >= 1);
-
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
-      if (!shumate_vector_value_get_number (&value, &number))
-        return FALSE;
-
-      for (int i = 1; i < n_expressions; i ++)
-        {
-          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
-            return FALSE;
-          if (!shumate_vector_value_get_number (&value, &number2))
-            return FALSE;
-
-          number *= number2;
-        }
-
-      shumate_vector_value_set_number (out, number);
-      return TRUE;
-
-    case EXPR_DIV:
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
-      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
-        return FALSE;
-
-      if (!shumate_vector_value_get_number (&value, &number))
-        return FALSE;
-      if (!shumate_vector_value_get_number (&value2, &number2))
-        return FALSE;
-
-      shumate_vector_value_set_number (out, number / number2);
-
-      return TRUE;
-
     case EXPR_CASE:
       for (int i = 0; i < n_expressions; i += 2)
         {
@@ -670,6 +752,186 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
       /* no expression succeeded, return null */
       shumate_vector_value_unset (out);
+      return TRUE;
+
+    case EXPR_ADD:
+    case EXPR_MUL:
+    case EXPR_MIN:
+    case EXPR_MAX:
+      g_assert (n_expressions >= 1);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      for (int i = 1; i < n_expressions; i ++)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value, &number2))
+            return FALSE;
+
+          switch (self->type)
+            {
+            case EXPR_ADD:
+              number += number2;
+              break;
+            case EXPR_MUL:
+              number *= number2;
+              break;
+            case EXPR_MIN:
+              number = MIN (number, number2);
+              break;
+            case EXPR_MAX:
+              number = MAX (number, number2);
+              break;
+            default:
+              g_assert_not_reached ();
+            }
+        }
+
+      shumate_vector_value_set_number (out, number);
+      return TRUE;
+
+    case EXPR_SUB:
+      g_assert (n_expressions >= 1);
+      g_assert (n_expressions <= 2);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      if (n_expressions == 1)
+        shumate_vector_value_set_number (out, 0 - number);
+      else
+        {
+          if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value2, &number2))
+            return FALSE;
+
+          shumate_vector_value_set_number (out, number - number2);
+        }
+      return TRUE;
+
+    case EXPR_DIV:
+    case EXPR_REM:
+    case EXPR_POW:
+      g_assert (n_expressions == 2);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value2, &number2))
+        return FALSE;
+
+      switch (self->type)
+        {
+        case EXPR_DIV:
+          if (number2 == 0)
+            return FALSE;
+          shumate_vector_value_set_number (out, number / number2);
+          return TRUE;
+
+        case EXPR_REM:
+          if (number2 == 0)
+            return FALSE;
+          shumate_vector_value_set_number (out, fmod (number, number2));
+          return TRUE;
+
+        case EXPR_POW:
+          number = pow (number, number2);
+          if (isnan (number))
+            return FALSE;
+
+          shumate_vector_value_set_number (out, number);
+          return TRUE;
+
+        default:
+          g_assert_not_reached ();
+        }
+
+      return TRUE;
+
+    case EXPR_ABS:
+    case EXPR_ACOS:
+    case EXPR_ASIN:
+    case EXPR_ATAN:
+    case EXPR_CEIL:
+    case EXPR_COS:
+    case EXPR_FLOOR:
+    case EXPR_LN:
+    case EXPR_LOG10:
+    case EXPR_LOG2:
+    case EXPR_ROUND:
+    case EXPR_SIN:
+    case EXPR_SQRT:
+    case EXPR_TAN:
+      g_assert (n_expressions == 1);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value, &number))
+        return FALSE;
+
+      switch (self->type)
+        {
+        case EXPR_ABS:
+          number = fabs (number);
+          break;
+        case EXPR_ACOS:
+          number = acos (number);
+          break;
+        case EXPR_ASIN:
+          number = asin (number);
+          break;
+        case EXPR_ATAN:
+          number = atan (number);
+          break;
+        case EXPR_CEIL:
+          number = ceil (number);
+          break;
+        case EXPR_COS:
+          number = cos (number);
+          break;
+        case EXPR_FLOOR:
+          number = floor (number);
+          break;
+        case EXPR_LN:
+          number = log (number);
+          break;
+        case EXPR_LOG10:
+          number = log10 (number);
+          break;
+        case EXPR_LOG2:
+          number = log2 (number);
+          break;
+        case EXPR_ROUND:
+          number = round (number);
+          break;
+        case EXPR_SIN:
+          number = sin (number);
+          break;
+        case EXPR_SQRT:
+          number = sqrt (number);
+          break;
+        case EXPR_TAN:
+          number = tan (number);
+          break;
+        default:
+          g_assert_not_reached ();
+        }
+
+      if (isnan (number))
+        return FALSE;
+
+      shumate_vector_value_set_number (out, number);
       return TRUE;
 
     default:

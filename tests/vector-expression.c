@@ -184,6 +184,28 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"-\", 1], -1]"));
   g_assert_true (filter ("[\"==\", [\"*\", 5, 6, 7], 210]"));
   g_assert_true (filter ("[\"==\", [\"/\", 10, 4], 2.5]"));
+  g_assert_true (filter ("[\"==\", -1, [\"%\", -21, 4]]"));
+
+  g_assert_true (filter ("[\">=\", 2, [\"^\", [\"e\"], [\"ln2\"]]]"));
+  g_assert_true (filter ("[\"<=\", 1.9999999999, [\"^\", [\"e\"], [\"ln2\"]]]"));
+  g_assert_true (filter ("[\"==\", 1, [\"abs\", -1]]"));
+  g_assert_true (filter ("[\"==\", 1, [\"abs\", 1]]"));
+  g_assert_true (filter ("[\"==\", 0, [\"acos\", 1]]"));
+  g_assert_true (filter ("[\"==\", 0, [\"asin\", 0]]"));
+  g_assert_true (filter ("[\"==\", 0, [\"atan\", 0]]"));
+  g_assert_true (filter ("[\"==\", 0, [\"ceil\", -0.5]]"));
+  g_assert_true (filter ("[\"==\", -1, [\"cos\", [\"pi\"]]]"));
+  g_assert_true (filter ("[\"==\", -1, [\"floor\", -0.5]]"));
+  g_assert_true (filter ("[\"==\", 1, [\"ln\", [\"e\"]]]"));
+  g_assert_true (filter ("[\"==\", 2, [\"log10\", 100]]"));
+  g_assert_true (filter ("[\"==\", 6, [\"log2\", 64]]"));
+  g_assert_true (filter ("[\"==\", 6, [\"max\", -10, 3, 6, -10000]]"));
+  g_assert_true (filter ("[\"==\", -10000, [\"min\", -10, 3, 6, -10000]]"));
+  g_assert_true (filter ("[\"==\", 0, [\"round\", 0.49999]]"));
+  g_assert_true (filter ("[\"==\", 1, [\"round\", 0.5]]"));
+  g_assert_true (filter ("[\">=\", 0.0000000000001, [\"sin\", [\"pi\"]]]"));
+  g_assert_true (filter ("[\"==\", 12, [\"sqrt\", 144]]"));
+  g_assert_true (filter ("[\">=\", 0.0000000000001, [\"tan\", [\"pi\"]]]"));
 
   g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"], 2, 3], 2]"));
   g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"]], null]"));
@@ -254,6 +276,12 @@ test_vector_expression_filter_errors (void)
   filter_expect_error ("[\"==\", 0, 1, 2]");
   filter_expect_error ("[]");
   filter_expect_error ("[[]]");
+
+  filter_expect_error ("[\"+\"]");
+  filter_expect_error ("[\"-\", 1, 2, 3]");
+  filter_expect_error ("[\"/\", 1, 2, 3]");
+  filter_expect_error ("[\"abs\", 1, 2]");
+  filter_expect_error ("[\"%\", 1]");
 }
 
 

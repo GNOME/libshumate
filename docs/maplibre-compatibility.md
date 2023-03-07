@@ -839,11 +839,11 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#%">% (remainder)</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#^">^ (exponent)</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#+">+ (sum)</a></td>
@@ -851,27 +851,27 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#abs">abs</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#acos">acos</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#asin">asin</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#atan">atan</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#ceil">ceil</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#cos">cos</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#distance">distance</a></td>
@@ -879,55 +879,55 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#e">e</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#floor">floor</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#ln">ln</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#ln2">ln2</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#log10">log10</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#log2">log2</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#max">max</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#min">min</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#pi">pi</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#round">round</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#sin">sin</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#sqrt">sqrt</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#tan">tan</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
 </table>
 
