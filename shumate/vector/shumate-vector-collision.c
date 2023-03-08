@@ -550,10 +550,10 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
       RTreeBucketCol *bucket_col;
 
       gtk_snapshot_append_border (snapshot,
-                                  &GSK_ROUNDED_RECT_INIT (bucket_row->bbox.x - bucket_row->bbox.xextent,
-                                                          bucket_row->bbox.y - bucket_row->bbox.yextent,
-                                                          bucket_row->bbox.xextent * 2,
-                                                          bucket_row->bbox.yextent),
+                                  &GSK_ROUNDED_RECT_INIT (bucket_row->bbox.x - bucket_row->bbox.aaxextent,
+                                                          bucket_row->bbox.y - bucket_row->bbox.aayextent,
+                                                          bucket_row->bbox.aaxextent * 2,
+                                                          bucket_row->bbox.aayextent),
                                   width,
                                   color);
 
@@ -565,10 +565,10 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
             continue;
 
           gtk_snapshot_append_border (snapshot,
-                                      &GSK_ROUNDED_RECT_INIT (bucket_col->bbox.x - bucket_col->bbox.xextent,
-                                                              bucket_col->bbox.y - bucket_col->bbox.yextent,
-                                                              bucket_col->bbox.xextent * 2,
-                                                              bucket_col->bbox.yextent * 2),
+                                      &GSK_ROUNDED_RECT_INIT (bucket_col->bbox.x - bucket_col->bbox.aaxextent,
+                                                              bucket_col->bbox.y - bucket_col->bbox.aayextent,
+                                                              bucket_col->bbox.aaxextent * 2,
+                                                              bucket_col->bbox.aayextent * 2),
                                       width,
                                       color);
 
@@ -577,10 +577,10 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
               RTreeRow *row = &bucket_col->rows[y];
 
               gtk_snapshot_append_border (snapshot,
-                                          &GSK_ROUNDED_RECT_INIT (row->bbox.x - row->bbox.xextent,
-                                                                  row->bbox.y - row->bbox.yextent,
-                                                                  row->bbox.xextent * 2,
-                                                                  row->bbox.yextent * 2),
+                                          &GSK_ROUNDED_RECT_INIT (row->bbox.x - row->bbox.aaxextent,
+                                                                  row->bbox.y - row->bbox.aayextent,
+                                                                  row->bbox.aaxextent * 2,
+                                                                  row->bbox.aayextent * 2),
                                           width,
                                           color);
 
@@ -592,10 +592,10 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
                     {
 
                       gtk_snapshot_append_border (snapshot,
-                                                  &GSK_ROUNDED_RECT_INIT (col->bbox.x - col->bbox.xextent,
-                                                                          col->bbox.y - col->bbox.yextent,
-                                                                          col->bbox.xextent * 2,
-                                                                          col->bbox.yextent * 2),
+                                                  &GSK_ROUNDED_RECT_INIT (col->bbox.x - col->bbox.aaxextent,
+                                                                          col->bbox.y - col->bbox.aayextent,
+                                                                          col->bbox.aaxextent * 2,
+                                                                          col->bbox.aayextent * 2),
                                                   width,
                                                   color);
 
