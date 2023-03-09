@@ -190,6 +190,48 @@ shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
     return NULL;
 }
 
+ShumateVectorAlignment
+shumate_vector_expression_eval_alignment (ShumateVectorExpression  *self,
+                                          ShumateVectorRenderScope *scope)
+{
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  const char *string;
+
+  shumate_vector_expression_eval (self, scope, &value);
+
+  if (shumate_vector_value_get_string (&value, &string))
+    {
+      if (g_strcmp0 (string, "map") == 0)
+        return SHUMATE_VECTOR_ALIGNMENT_MAP;
+      else if (g_strcmp0 (string, "viewport") == 0)
+        return SHUMATE_VECTOR_ALIGNMENT_VIEWPORT;
+      else if (g_strcmp0 (string, "viewport-glyph") == 0)
+        return SHUMATE_VECTOR_ALIGNMENT_VIEWPORT_GLYPH;
+    }
+
+  return SHUMATE_VECTOR_ALIGNMENT_AUTO;
+}
+
+ShumateVectorPlacement
+shumate_vector_expression_eval_placement (ShumateVectorExpression  *self,
+                                          ShumateVectorRenderScope *scope)
+{
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  const char *string;
+
+  shumate_vector_expression_eval (self, scope, &value);
+
+  if (shumate_vector_value_get_string (&value, &string))
+    {
+      if (g_strcmp0 (string, "line") == 0)
+        return SHUMATE_VECTOR_PLACEMENT_LINE;
+      else if (g_strcmp0 (string, "line-center") == 0)
+        return SHUMATE_VECTOR_PLACEMENT_LINE_CENTER;
+    }
+
+  return SHUMATE_VECTOR_PLACEMENT_POINT;
+}
+
 void
 shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
 {

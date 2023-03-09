@@ -25,19 +25,35 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+  SHUMATE_VECTOR_ALIGNMENT_AUTO,
+  SHUMATE_VECTOR_ALIGNMENT_MAP,
+  SHUMATE_VECTOR_ALIGNMENT_VIEWPORT,
+  SHUMATE_VECTOR_ALIGNMENT_VIEWPORT_GLYPH,
+} ShumateVectorAlignment;
+
+typedef enum {
+  SHUMATE_VECTOR_PLACEMENT_POINT,
+  SHUMATE_VECTOR_PLACEMENT_LINE,
+  SHUMATE_VECTOR_PLACEMENT_LINE_CENTER,
+} ShumateVectorPlacement;
+
 typedef struct {
   char *layer;
   char *feature_id;
 
   GdkPixbuf *icon_image;
   float icon_size;
+  ShumateVectorAlignment icon_rotation_alignment;
 
   char *text;
   GdkRGBA text_color;
   double text_size;
   double text_padding;
   char *text_font;
+  ShumateVectorAlignment text_rotation_alignment;
 
+  ShumateVectorPlacement symbol_placement;
   float symbol_spacing;
 
   int tile_x;

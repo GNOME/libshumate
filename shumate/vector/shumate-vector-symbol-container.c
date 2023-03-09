@@ -182,6 +182,23 @@ shumate_vector_symbol_container_set_property (GObject      *object,
     }
 }
 
+static void
+rotate_around_origin (float *x,
+                      float *y,
+                      float  angle)
+{
+  /* Rotate (x, y) around (0, 0) */
+
+  if (angle == 0)
+    return;
+
+  float old_x = *x;
+  float old_y = *y;
+
+  *x = cosf (angle) * old_x - sinf (angle) * old_y;
+  *y = sinf (angle) * old_x + cosf (angle) * old_y;
+}
+
 
 static void
 rotate_around_center (float *x,
@@ -192,16 +209,14 @@ rotate_around_center (float *x,
 {
   /* Rotate (x, y) around (width / 2, height / 2) */
 
-  if (angle == 0)
-    return;
-
-  float old_x = *x;
-  float old_y = *y;
   float center_x = width / 2.0;
   float center_y = height / 2.0;
 
-  *x = cosf (angle) * (old_x - center_x) - sinf (angle) * (old_y - center_y) + center_x;
-  *y = sinf (angle) * (old_x - center_x) + cosf (angle) * (old_y - center_y) + center_y;
+  *x -= center_x;
+  *y -= center_y;
+  rotate_around_origin (x, y, angle);
+  *x += center_x;
+  *y += center_y;
 }
 
 
@@ -219,6 +234,7 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   float rotation = shumate_viewport_get_rotation (viewport);
   float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
   float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+  float d_center_x = 0, d_center_y = 0;
 
   gboolean recalc = self->labels_changed || (self->last_zoom != zoom_level) || (self->last_rotation != rotation);
 
@@ -227,6 +243,12 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       shumate_vector_collision_clear (self->collision);
       self->last_center_x = center_x;
       self->last_center_y = center_y;
+    }
+  else
+    {
+      d_center_x = center_x - self->last_center_x;
+      d_center_y = center_y - self->last_center_y;
+      rotate_around_origin (&d_center_x, &d_center_y, rotation);
     }
 
   for (GList *l = self->children; l != NULL; l = l->next)
@@ -262,8 +284,8 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, NULL, NULL, NULL);
       gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, NULL, NULL, NULL);
 
-      alloc.x = child->bounds.origin.x - (center_x - self->last_center_x);
-      alloc.y = child->bounds.origin.y - (center_y - self->last_center_y);
+      alloc.x = child->bounds.origin.x - d_center_x;
+      alloc.y = child->bounds.origin.y - d_center_y;
       alloc.width = child->bounds.size.width;
       alloc.height = child->bounds.size.height;
 
@@ -298,11 +320,15 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
     {
       ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
       float zoom_level = shumate_viewport_get_zoom_level (viewport);
+      float rotation = shumate_viewport_get_rotation (viewport);
       float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
       float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+      float d_center_x = self->last_center_x - center_x, d_center_y = self->last_center_y - center_y;
+
+      rotate_around_origin (&d_center_x, &d_center_y, rotation);
 
       gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->last_center_x - center_x, self->last_center_y - center_y));
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (d_center_x, d_center_y));
       shumate_vector_collision_visualize (self->collision, snapshot);
       gtk_snapshot_restore (snapshot);
     }

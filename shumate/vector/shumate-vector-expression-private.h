@@ -19,6 +19,7 @@
 
 #include <json-glib/json-glib.h>
 #include "shumate-vector-render-scope-private.h"
+#include "shumate-vector-symbol-info-private.h"
 #include "shumate-vector-value-private.h"
 
 G_BEGIN_DECLS
@@ -77,5 +78,10 @@ void shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
 
 GdkPixbuf *shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
                                                  ShumateVectorRenderScope *scope);
+
+ShumateVectorAlignment shumate_vector_expression_eval_alignment (ShumateVectorExpression  *self,
+                                                                 ShumateVectorRenderScope *scope);
+ShumateVectorPlacement shumate_vector_expression_eval_placement (ShumateVectorExpression  *self,
+                                                                 ShumateVectorRenderScope *scope);
 
 G_END_DECLS

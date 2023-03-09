@@ -364,7 +364,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-rotation-alignment">icon-rotation-alignment</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-size">icon-size</a></td>
@@ -500,7 +500,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-rotation-alignment">text-rotation-alignment</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-size">text-size</a></td>
