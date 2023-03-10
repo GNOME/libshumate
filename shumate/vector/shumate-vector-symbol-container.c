@@ -32,6 +32,7 @@ struct _ShumateVectorSymbolContainer
   float last_rotation;
   float last_zoom;
   float last_center_x, last_center_y;
+  float last_width, last_height;
   gboolean labels_changed : 1;
 };
 
@@ -236,7 +237,11 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
   float d_center_x = 0, d_center_y = 0;
 
-  gboolean recalc = self->labels_changed || (self->last_zoom != zoom_level) || (self->last_rotation != rotation);
+  gboolean recalc = self->labels_changed
+                    || self->last_zoom != zoom_level
+                    || self->last_rotation != rotation
+                    || self->last_width != width
+                    || self->last_height != height;
 
   if (recalc)
     {
@@ -297,6 +302,8 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   self->labels_changed = FALSE;
   self->last_rotation = rotation;
   self->last_zoom = zoom_level;
+  self->last_width = width;
+  self->last_height = height;
 }
 
 
