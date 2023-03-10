@@ -452,7 +452,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
 
       gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0,
-                                                              -self->symbol_info->details->text_size / 2.0));
+                                                              -self->layout_height / 2.0));
       gtk_snapshot_append_node (snapshot, self->glyphs_node);
       gtk_snapshot_restore (snapshot);
     }
