@@ -38,20 +38,36 @@ typedef enum {
   SHUMATE_VECTOR_PLACEMENT_LINE_CENTER,
 } ShumateVectorPlacement;
 
+typedef enum {
+  SHUMATE_VECTOR_ANCHOR_CENTER,
+  SHUMATE_VECTOR_ANCHOR_TOP,
+  SHUMATE_VECTOR_ANCHOR_BOTTOM,
+  SHUMATE_VECTOR_ANCHOR_LEFT,
+  SHUMATE_VECTOR_ANCHOR_RIGHT,
+  SHUMATE_VECTOR_ANCHOR_TOP_LEFT,
+  SHUMATE_VECTOR_ANCHOR_TOP_RIGHT,
+  SHUMATE_VECTOR_ANCHOR_BOTTOM_LEFT,
+  SHUMATE_VECTOR_ANCHOR_BOTTOM_RIGHT,
+} ShumateVectorAnchor;
+
 typedef struct {
   char *layer;
   char *feature_id;
 
+  ShumateVectorAnchor icon_anchor;
   GdkPixbuf *icon_image;
+  double icon_offset_x, icon_offset_y;
   float icon_size;
   ShumateVectorAlignment icon_rotation_alignment;
 
   char *text;
+  ShumateVectorAnchor text_anchor;
   GdkRGBA text_color;
   double text_size;
   double text_padding;
   char *text_font;
   ShumateVectorAlignment text_rotation_alignment;
+  double text_offset_x, text_offset_y;
 
   ShumateVectorPlacement symbol_placement;
   float symbol_spacing;

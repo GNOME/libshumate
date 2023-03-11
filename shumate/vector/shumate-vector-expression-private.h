@@ -84,4 +84,6 @@ ShumateVectorAlignment shumate_vector_expression_eval_alignment (ShumateVectorEx
 ShumateVectorPlacement shumate_vector_expression_eval_placement (ShumateVectorExpression  *self,
                                                                  ShumateVectorRenderScope *scope);
 
+ShumateVectorAnchor shumate_vector_expression_eval_anchor (ShumateVectorExpression  *self,
+                                                           ShumateVectorRenderScope *scope);
 G_END_DECLS

@@ -316,6 +316,35 @@ shumate_vector_symbol_get_request_mode (GtkWidget *widget)
 
 
 static void
+add_anchor_offset (ShumateVectorAnchor anchor,
+                   float *offset_x,
+                   float *offset_y,
+                   float width,
+                   float height)
+{
+  if (anchor == SHUMATE_VECTOR_ANCHOR_LEFT
+      || anchor == SHUMATE_VECTOR_ANCHOR_TOP_LEFT
+      || anchor == SHUMATE_VECTOR_ANCHOR_BOTTOM_LEFT)
+    *offset_x += width / 2.0;
+
+  if (anchor == SHUMATE_VECTOR_ANCHOR_RIGHT
+      || anchor == SHUMATE_VECTOR_ANCHOR_TOP_RIGHT
+      || anchor == SHUMATE_VECTOR_ANCHOR_BOTTOM_RIGHT)
+    *offset_x -= width / 2.0;
+
+  if (anchor == SHUMATE_VECTOR_ANCHOR_TOP
+      || anchor == SHUMATE_VECTOR_ANCHOR_TOP_LEFT
+      || anchor == SHUMATE_VECTOR_ANCHOR_TOP_RIGHT)
+    *offset_y += height / 2.0;
+
+  if (anchor == SHUMATE_VECTOR_ANCHOR_BOTTOM
+      || anchor == SHUMATE_VECTOR_ANCHOR_BOTTOM_LEFT
+      || anchor == SHUMATE_VECTOR_ANCHOR_BOTTOM_RIGHT)
+    *offset_y -= height / 2.0;
+}
+
+
+static void
 shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 GtkSnapshot *snapshot)
 {
@@ -348,6 +377,13 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       float icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
 
+      float offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
+      float offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
+
+      add_anchor_offset (self->symbol_info->details->icon_anchor,
+                         &offset_x, &offset_y,
+                         icon_width, icon_height);
+
       if (self->symbol_info->details->icon_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = self->midpoint_angle;
       else
@@ -364,7 +400,8 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
       gtk_snapshot_append_texture (snapshot,
                                    self->icon,
-                                   &GRAPHENE_RECT_INIT (-icon_width / 2.0, -icon_height / 2.0,
+                                   &GRAPHENE_RECT_INIT (-icon_width / 2.0 + offset_x,
+                                                        -icon_height / 2.0 + offset_y,
                                                         icon_width, icon_height));
       gtk_snapshot_restore (snapshot);
     }
@@ -437,6 +474,12 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
   else if (self->glyphs_node)
     {
       float angle = 0;
+      float offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
+      float offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
+
+      add_anchor_offset (self->symbol_info->details->text_anchor,
+                         &offset_x, &offset_y,
+                         self->layout_width, self->layout_height);
 
       if (self->symbol_info->details->text_rotation_alignment != SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = -rotation;
@@ -451,8 +494,8 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                               ));
       gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
 
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0,
-                                                              -self->layout_height / 2.0));
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0 + offset_x,
+                                                              -self->layout_height / 2.0 + offset_y));
       gtk_snapshot_append_node (snapshot, self->glyphs_node);
       gtk_snapshot_restore (snapshot);
     }
@@ -617,15 +660,22 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
     }
   else if (self->glyphs_node != NULL)
     {
+      ShumateVectorAnchor anchor = self->symbol_info->details->text_anchor;
       float angle = 0;
+      float offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
+      float offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
+
+      add_anchor_offset (anchor, &offset_x, &offset_y, self->layout_width, self->layout_height);
 
       if (self->symbol_info->details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = rotation;
 
+      rotate_around_center (&offset_x, &offset_y, angle);
+
       check = shumate_vector_collision_check (
         collision,
-        x + midpoint.x,
-        y + midpoint.y,
+        x + midpoint.x + offset_x,
+        y + midpoint.y + offset_y,
         self->layout_width / 2.0 + self->symbol_info->details->text_padding,
         yextent + self->symbol_info->details->text_padding,
         angle
@@ -642,14 +692,20 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                          * self->symbol_info->details->icon_size;
       float icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
+      float offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
+      float offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
+
+      add_anchor_offset (self->symbol_info->details->icon_anchor, &offset_x, &offset_y, icon_width, icon_height);
+
+      rotate_around_center (&offset_x, &offset_y, angle);
 
       if (self->symbol_info->details->icon_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = rotation + self->midpoint_angle;
 
       check = shumate_vector_collision_check (
         collision,
-        x + midpoint.x,
-        y + midpoint.y,
+        x + midpoint.x + offset_x,
+        y + midpoint.y + offset_y,
         icon_width / 2,
         icon_height / 2,
         angle

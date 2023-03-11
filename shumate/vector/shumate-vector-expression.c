@@ -232,6 +232,38 @@ shumate_vector_expression_eval_placement (ShumateVectorExpression  *self,
   return SHUMATE_VECTOR_PLACEMENT_POINT;
 }
 
+ShumateVectorAnchor
+shumate_vector_expression_eval_anchor (ShumateVectorExpression  *self,
+                                       ShumateVectorRenderScope *scope)
+{
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  const char *string;
+
+  shumate_vector_expression_eval (self, scope, &value);
+
+  if (shumate_vector_value_get_string (&value, &string))
+    {
+      if (g_strcmp0 (string, "top") == 0)
+        return SHUMATE_VECTOR_ANCHOR_TOP;
+      else if (g_strcmp0 (string, "bottom") == 0)
+        return SHUMATE_VECTOR_ANCHOR_BOTTOM;
+      else if (g_strcmp0 (string, "left") == 0)
+        return SHUMATE_VECTOR_ANCHOR_LEFT;
+      else if (g_strcmp0 (string, "right") == 0)
+        return SHUMATE_VECTOR_ANCHOR_RIGHT;
+      else if (g_strcmp0 (string, "top-left") == 0)
+        return SHUMATE_VECTOR_ANCHOR_TOP_LEFT;
+      else if (g_strcmp0 (string, "top-right") == 0)
+        return SHUMATE_VECTOR_ANCHOR_TOP_RIGHT;
+      else if (g_strcmp0 (string, "bottom-left") == 0)
+        return SHUMATE_VECTOR_ANCHOR_BOTTOM_LEFT;
+      else if (g_strcmp0 (string, "bottom-right") == 0)
+        return SHUMATE_VECTOR_ANCHOR_BOTTOM_RIGHT;
+    }
+
+  return SHUMATE_VECTOR_ANCHOR_CENTER;
+}
+
 void
 shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
 {

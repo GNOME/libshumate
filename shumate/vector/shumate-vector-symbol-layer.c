@@ -19,15 +19,18 @@
 #include "shumate-vector-symbol-info-private.h"
 #include "shumate-vector-symbol-layer-private.h"
 #include "shumate-vector-expression-private.h"
+#include "shumate-vector-renderer.h"
 #include "shumate-vector-utils-private.h"
 
 struct _ShumateVectorSymbolLayer
 {
   ShumateVectorLayer parent_instance;
 
+  ShumateVectorExpression *icon_anchor;
   ShumateVectorExpression *icon_image;
   ShumateVectorExpression *icon_rotation_alignment;
   ShumateVectorExpression *icon_size;
+  ShumateVectorExpression *text_anchor;
   ShumateVectorExpression *text_field;
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_size;
@@ -39,6 +42,8 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *symbol_placement;
   ShumateVectorExpression *symbol_spacing;
   char *text_fonts;
+  double icon_offset_x, icon_offset_y;
+  double text_offset_x, text_offset_y;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbolLayer, shumate_vector_symbol_layer, SHUMATE_TYPE_VECTOR_LAYER)
@@ -61,12 +66,39 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
   if (json_object_has_member (object, "layout"))
     {
       JsonObject *layout = json_object_get_object_member (object, "layout");
+      JsonNode *icon_offset_node;
       JsonNode *text_font_node;
+      JsonNode *text_offset_node;
       JsonArray *text_font;
+
+      layer->icon_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-anchor"), NULL, error);
+      if (layer->icon_anchor == NULL)
+        return NULL;
 
       layer->icon_image = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-image"), NULL, error);
       if (layer->icon_image == NULL)
         return NULL;
+
+      icon_offset_node = json_object_get_member (layout, "icon-offset");
+      if (icon_offset_node != NULL)
+        {
+          JsonArray *icon_offset;
+
+          if (!shumate_vector_json_get_array (icon_offset_node, &icon_offset, error))
+            return NULL;
+
+          if (json_array_get_length (icon_offset) != 2)
+            {
+              g_set_error (error,
+                           SHUMATE_STYLE_ERROR,
+                           SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                           "Expected `icon-offset` to be an array of two numbers");
+              return NULL;
+            }
+
+          layer->icon_offset_x = json_array_get_double_element (icon_offset, 0);
+          layer->icon_offset_y = json_array_get_double_element (icon_offset, 1);
+        }
 
       layer->icon_size = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-size"), NULL, error);
       if (layer->icon_size == NULL)
@@ -80,9 +112,34 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       if (layer->text_field == NULL)
         return NULL;
 
+      layer->text_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "text-anchor"), NULL, error);
+      if (layer->text_anchor == NULL)
+        return NULL;
+
       layer->text_keep_upright = shumate_vector_expression_from_json (json_object_get_member (layout, "text-keep-upright"), NULL, error);
       if (layer->text_keep_upright == NULL)
         return NULL;
+
+      text_offset_node = json_object_get_member (layout, "text-offset");
+      if (text_offset_node != NULL)
+        {
+          JsonArray *text_offset;
+
+          if (!shumate_vector_json_get_array (text_offset_node, &text_offset, error))
+            return NULL;
+
+          if (json_array_get_length (text_offset) != 2)
+            {
+              g_set_error (error,
+                           SHUMATE_STYLE_ERROR,
+                           SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                           "Expected `text-offset` to be an array of two numbers");
+              return NULL;
+            }
+
+          layer->text_offset_x = json_array_get_double_element (text_offset, 0);
+          layer->text_offset_y = json_array_get_double_element (text_offset, 1);
+        }
 
       layer->text_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "text-rotation-alignment"), NULL, error);
       if (layer->text_rotation_alignment == NULL)
@@ -149,10 +206,12 @@ shumate_vector_symbol_layer_finalize (GObject *object)
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (object);
 
+  g_clear_object (&self->icon_anchor);
   g_clear_object (&self->icon_image);
   g_clear_object (&self->icon_rotation_alignment);
   g_clear_object (&self->icon_size);
   g_clear_object (&self->text_field);
+  g_clear_object (&self->text_anchor);
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
   g_clear_object (&self->cursor);
@@ -321,16 +380,23 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .feature_id = g_strdup (feature_id),
     .tags = g_hash_table_ref (tags),
 
+    .icon_anchor = shumate_vector_expression_eval_anchor (self->icon_anchor, scope),
     .icon_image = g_steal_pointer (&icon_image),
     .icon_rotation_alignment = icon_rotation_alignment,
     .icon_size = shumate_vector_expression_eval_number (self->icon_size, scope, 1.0),
+    .icon_offset_x = self->icon_offset_x,
+    .icon_offset_y = self->icon_offset_y,
 
     .text = g_steal_pointer (&text_field),
+
+    .text_anchor = shumate_vector_expression_eval_anchor (self->text_anchor, scope),
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
     .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),
     .text_font = g_strdup (self->text_fonts),
     .text_keep_upright = shumate_vector_expression_eval_boolean (self->text_keep_upright, scope, TRUE),
     .text_rotation_alignment = text_rotation_alignment,
+    .text_offset_x = self->text_offset_x,
+    .text_offset_y = self->text_offset_y,
 
     .symbol_placement = symbol_placement,
     .symbol_spacing = shumate_vector_expression_eval_number (self->symbol_spacing, scope, 250),

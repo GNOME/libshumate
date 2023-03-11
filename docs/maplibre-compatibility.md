@@ -304,7 +304,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-anchor">icon-anchor</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-icon-color">icon-color</a></td>
@@ -336,7 +336,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-offset">icon-offset</a></td>
-    <td>❌ Not supported</td>
+    <td>Expressions are not supported.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-icon-opacity">icon-opacity</a></td>
@@ -412,7 +412,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-anchor">text-anchor</a></td>
-    <td>❌ Not supported</td>
+    <td>Not supported when glyphs are positioned along a line geometry.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-text-color">text-color</a></td>
@@ -468,7 +468,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-offset">text-offset</a></td>
-    <td>❌ Not supported</td>
+    <td>Not supported when glyphs are positioned along a line geometry. Expressions are not supported.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-text-opacity">text-opacity</a></td>
