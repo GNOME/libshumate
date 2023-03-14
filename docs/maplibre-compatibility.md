@@ -785,7 +785,7 @@ evaluated at integer zoom levels only.
 <table>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#concat">concat</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#downcase">downcase</a></td>

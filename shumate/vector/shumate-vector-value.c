@@ -357,7 +357,7 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
     case TYPE_NULL:
       return g_strdup ("");
     case TYPE_NUMBER:
-      return g_strdup_printf ("%f", self->number);
+      return g_strdup_printf ("%g", self->number);
     case TYPE_BOOLEAN:
       return g_strdup (self->boolean ? "true" : "false");
     case TYPE_STRING:

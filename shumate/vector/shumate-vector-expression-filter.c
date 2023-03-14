@@ -39,6 +39,7 @@ typedef enum {
   EXPR_CASE,
   EXPR_COALESCE,
 
+  EXPR_CONCAT,
   EXPR_DOWNCASE,
   EXPR_UPCASE,
 
@@ -342,6 +343,12 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
     self->type = EXPR_CASE;
   else if (g_strcmp0 ("coalesce", op) == 0)
     self->type = EXPR_COALESCE;
+  else if (g_strcmp0 ("concat", op) == 0)
+    {
+      self->type = EXPR_CONCAT;
+      expect_ge_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
   else if (g_strcmp0 ("downcase", op) == 0)
     {
       self->type = EXPR_DOWNCASE;
@@ -768,6 +775,25 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       /* no expression succeeded, return null */
       shumate_vector_value_unset (out);
       return TRUE;
+
+    case EXPR_CONCAT:
+      {
+        g_autoptr(GString) string_builder = g_string_new ("");
+
+        for (int i = 0; i < n_expressions; i ++)
+          {
+            if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+              return FALSE;
+
+            g_free (string);
+            string = shumate_vector_value_as_string (&value);
+
+            g_string_append (string_builder, string);
+          }
+
+        shumate_vector_value_set_string (out, string_builder->str);
+        return TRUE;
+      }
 
     case EXPR_DOWNCASE:
       {
