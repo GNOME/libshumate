@@ -789,7 +789,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#downcase">downcase</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#is-supported-script">is-supported-script</a></td>
@@ -801,7 +801,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#upcase">upcase</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
 </table>
 

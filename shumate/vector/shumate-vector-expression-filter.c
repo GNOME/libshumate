@@ -39,6 +39,9 @@ typedef enum {
   EXPR_CASE,
   EXPR_COALESCE,
 
+  EXPR_DOWNCASE,
+  EXPR_UPCASE,
+
   EXPR_ADD,
   EXPR_SUB,
   EXPR_MUL,
@@ -339,6 +342,18 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
     self->type = EXPR_CASE;
   else if (g_strcmp0 ("coalesce", op) == 0)
     self->type = EXPR_COALESCE;
+  else if (g_strcmp0 ("downcase", op) == 0)
+    {
+      self->type = EXPR_DOWNCASE;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
+  else if (g_strcmp0 ("upcase", op) == 0)
+    {
+      self->type = EXPR_UPCASE;
+      expect_exprs = 1;
+      lookup_first_arg = FALSE;
+    }
   else if (g_strcmp0 ("+", op) == 0)
     {
       self->type = EXPR_ADD;
@@ -753,6 +768,40 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       /* no expression succeeded, return null */
       shumate_vector_value_unset (out);
       return TRUE;
+
+    case EXPR_DOWNCASE:
+      {
+        const char *str;
+        g_autofree char *string_down = NULL;
+        g_assert (n_expressions == 1);
+
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        if (!shumate_vector_value_get_string (&value, &str))
+          return FALSE;
+
+        string_down = g_utf8_strdown (str, -1);
+
+        shumate_vector_value_set_string (out, string_down);
+        return TRUE;
+      }
+
+    case EXPR_UPCASE:
+      {
+        const char *str;
+        g_autofree char *string_up = NULL;
+        g_assert (n_expressions == 1);
+
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        if (!shumate_vector_value_get_string (&value, &str))
+          return FALSE;
+
+        string_up = g_utf8_strup (str, -1);
+
+        shumate_vector_value_set_string (out, string_up);
+        return TRUE;
+      }
 
     case EXPR_ADD:
     case EXPR_MUL:
