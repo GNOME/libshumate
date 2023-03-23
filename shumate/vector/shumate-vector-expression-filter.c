@@ -558,6 +558,74 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 }
 
 
+ShumateVectorExpression *
+shumate_vector_expression_filter_from_format (const char *format, GError **error)
+{
+  g_autoptr(ShumateVectorExpressionFilter) self = NULL;
+  g_auto(GStrv) parts = NULL;
+  int balance = 0;
+
+  if (strchr (format, '{') == NULL || strchr (format, '}') == NULL)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      shumate_vector_value_set_string (&value, format);
+      return shumate_vector_expression_literal_new (&value);
+    }
+
+  self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+  self->type = EXPR_CONCAT;
+
+  /* Ensure the braces in the format string are balanced and not nested */
+  for (int i = 0, n = strlen (format); i < n; i ++)
+    {
+      if (format[i] == '{')
+        balance ++;
+      else if (format[i] == '}')
+        balance --;
+
+      if (balance != 0 && balance != 1)
+        {
+          g_set_error (error,
+                       SHUMATE_STYLE_ERROR,
+                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                       "Format string `%s` is nested or unbalanced",
+                       format);
+          return NULL;
+        }
+    }
+
+  parts = g_strsplit_set (format, "{}", 0);
+
+  for (int i = 0; TRUE;)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      g_autoptr(ShumateVectorExpressionFilter) get_expr = NULL;
+
+      if (parts[i] == NULL)
+        break;
+
+      if (strlen (parts[i]) > 0)
+        {
+          shumate_vector_value_set_string (&value, parts[i]);
+          g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
+        }
+      i ++;
+
+      if (parts[i] == NULL)
+        break;
+
+      shumate_vector_value_set_string (&value, parts[i]);
+      get_expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+      get_expr->type = EXPR_GET;
+      g_ptr_array_add (get_expr->expressions, shumate_vector_expression_literal_new (&value));
+      g_ptr_array_add (self->expressions, g_steal_pointer (&get_expr));
+      i ++;
+    }
+
+  return (ShumateVectorExpression *)g_steal_pointer (&self);
+}
+
+
 static void
 shumate_vector_expression_filter_finalize (GObject *object)
 {

@@ -297,7 +297,7 @@ test_vector_expression_format ()
   gconstpointer data;
   gsize len;
   ShumateVectorRenderScope scope;
-  g_autoptr(JsonNode) node = json_from_string ("\"{name}\"", NULL);
+  g_autoptr(JsonNode) node = json_from_string ("\"***** {name} *****\"", NULL);
   g_autoptr(ShumateVectorExpression) expression;
   g_autofree char *result = NULL;
 
@@ -317,7 +317,7 @@ test_vector_expression_format ()
   scope.feature = scope.layer->features[0];
 
   result = shumate_vector_expression_eval_string (expression, &scope, NULL);
-  g_assert_cmpstr (result, ==, "Hello, world!");
+  g_assert_cmpstr (result, ==, "***** Hello, world! *****");
 
   vector_tile__tile__free_unpacked (scope.tile, NULL);
 }

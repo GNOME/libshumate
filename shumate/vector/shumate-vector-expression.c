@@ -19,7 +19,6 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-private.h"
 #include "shumate-vector-expression-filter-private.h"
-#include "shumate-vector-expression-format-private.h"
 #include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-literal-private.h"
 #include "shumate-vector-value-private.h"
@@ -52,7 +51,7 @@ shumate_vector_expression_from_json (JsonNode                        *json,
         }
 
       if (shumate_vector_value_get_string (&value, &string))
-        return shumate_vector_expression_format_new (string, error);
+        return shumate_vector_expression_filter_from_format (string, error);
       else
         return shumate_vector_expression_literal_new (&value);
     }
