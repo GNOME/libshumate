@@ -760,43 +760,57 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       shumate_vector_value_set_boolean (out, shumate_vector_value_equal (&value, &value2) ^ inverted);
       return TRUE;
 
-    case EXPR_LE:
-      inverted = TRUE;
-      G_GNUC_FALLTHROUGH;
-    case EXPR_GT:
-      g_assert (n_expressions == 2);
-
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
-      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
-        return FALSE;
-
-      if (!shumate_vector_value_get_number (&value, &number))
-        return FALSE;
-      if (!shumate_vector_value_get_number (&value2, &number2))
-        return FALSE;
-
-      shumate_vector_value_set_boolean (out, (number > number2) ^ inverted);
-      return TRUE;
-
-    case EXPR_GE:
-      inverted = TRUE;
-      G_GNUC_FALLTHROUGH;
     case EXPR_LT:
-      g_assert (n_expressions == 2);
+    case EXPR_GT:
+    case EXPR_LE:
+    case EXPR_GE:
+      {
+        int cmp;
+        const char *str, *str2;
+        g_assert (n_expressions == 2);
 
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
-      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
-        return FALSE;
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+          return FALSE;
 
-      if (!shumate_vector_value_get_number (&value, &number))
-        return FALSE;
-      if (!shumate_vector_value_get_number (&value2, &number2))
-        return FALSE;
+        if (shumate_vector_value_get_number (&value, &number))
+          {
+            if (!shumate_vector_value_get_number (&value2, &number2))
+              return FALSE;
 
-      shumate_vector_value_set_boolean (out, (number < number2) ^ inverted);
-      return TRUE;
+            cmp = number > number2 ? 1 : number < number2 ? -1 : 0;
+          }
+        else if (shumate_vector_value_get_string (&value, &str))
+          {
+            if (!shumate_vector_value_get_string (&value2, &str2))
+              return FALSE;
+
+            cmp = g_utf8_collate (str, str2);
+          }
+        else
+          return FALSE;
+
+        switch (self->type)
+          {
+          case EXPR_LT:
+            shumate_vector_value_set_boolean (out, (cmp < 0) ^ inverted);
+            break;
+          case EXPR_GT:
+            shumate_vector_value_set_boolean (out, (cmp > 0) ^ inverted);
+            break;
+          case EXPR_LE:
+            shumate_vector_value_set_boolean (out, (cmp <= 0) ^ inverted);
+            break;
+          case EXPR_GE:
+            shumate_vector_value_set_boolean (out, (cmp >= 0) ^ inverted);
+            break;
+          default:
+            g_assert_not_reached ();
+          }
+
+        return TRUE;
+      }
 
     case EXPR_CASE:
       for (int i = 0; i < n_expressions; i += 2)

@@ -700,11 +700,11 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#<">&lt;</a></td>
-    <td>Does not support strings or the collator argument.</td>
+    <td>Does not support the collator argument.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#<=">&lt;=</a></td>
-    <td>Does not support strings or the collator argument.</td>
+    <td>Does not support the collator argument.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#==">==</a></td>
@@ -712,11 +712,11 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#&gt;">&gt;</a></td>
-    <td>Does not support strings or the collator argument.</td>
+    <td>Does not support the collator argument.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#&gt;=">&gt;=</a></td>
-    <td>Does not support strings or the collator argument.</td>
+    <td>Does not support the collator argument.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#all">all</a></td>

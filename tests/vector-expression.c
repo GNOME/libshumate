@@ -213,6 +213,12 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"concat\", \"hello\", 10, \"world\", true], \"hello10worldtrue\"]"));
   g_assert_true (filter ("[\"==\", [\"downcase\", \"HeLlO, WoRlD!\"], \"hello, world!\"]"));
   g_assert_true (filter ("[\"==\", [\"upcase\", \"HeLlO, WoRlD!\"], \"HELLO, WORLD!\"]"));
+  g_assert_true (filter ("[\">\", [\"literal\", \"oranges\"], \"apples\"]"));
+  g_assert_true (filter ("[\"<\", [\"literal\", \"apples\"], \"oranges\"]"));
+  g_assert_true (filter ("[\">=\", [\"literal\", \"oranges\"], \"apples\"]"));
+  g_assert_true (filter ("[\"<=\", [\"literal\", \"apples\"], \"oranges\"]"));
+  g_assert_true (filter ("[\">=\", [\"literal\", \"apples\"], \"apples\"]"));
+  g_assert_true (filter ("[\"<=\", [\"literal\", \"oranges\"], \"oranges\"]"));
 }
 
 
