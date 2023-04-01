@@ -36,7 +36,7 @@
             <property name="orientation">vertical</property>
             <child>
               <object class="GtkButton">
-                <property name="tooltip-text">Zoom In</property>
+                <property name="tooltip-text" translatable="yes">Zoom In</property>
                 <signal name="clicked" handler="on_zoom_in_clicked" swapped="true"/>
                 <style>
                   <class name="osd"/>
@@ -50,7 +50,7 @@
             </child>
             <child>
               <object class="GtkButton">
-                <property name="tooltip-text">Zoom Out</property>
+                <property name="tooltip-text" translatable="yes">Zoom Out</property>
                 <signal name="clicked" handler="on_zoom_out_clicked" swapped="true"/>
                 <style>
                   <class name="osd"/>

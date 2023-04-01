@@ -1,3 +1,4 @@
+data/shumate-simple-map.ui
 shumate/shumate-viewport.c
 shumate/shumate-vector-renderer.c
 shumate/shumate-user-agent.c
