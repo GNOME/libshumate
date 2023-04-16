@@ -205,6 +205,39 @@ shumate_vector_symbol_constructed (GObject *object)
 }
 
 
+static gboolean
+shumate_vector_symbol_contains (GtkWidget *widget,
+                                double     x,
+                                double     y)
+{
+  GtkWidget *parent;
+  GtkAllocation alloc;
+
+  if (x < 0 || y < 0)
+    return FALSE;
+
+  gtk_widget_get_allocation (widget, &alloc);
+
+  if (x > alloc.width || y > alloc.height)
+    return FALSE;
+
+  parent = gtk_widget_get_parent (widget);
+
+  if (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (parent))
+    {
+      ShumateVectorCollision *collision =
+        shumate_vector_symbol_container_get_collision ((ShumateVectorSymbolContainer *) (parent));
+
+      return shumate_vector_collision_query_point (collision,
+                                                   alloc.x + x + collision->delta_x,
+                                                   alloc.y + y + collision->delta_y,
+                                                   widget);
+    }
+
+  return TRUE;
+}
+
+
 static void
 shumate_vector_symbol_dispose (GObject *object)
 {
@@ -515,6 +548,7 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
   object_class->get_property = shumate_vector_symbol_get_property;
   object_class->set_property = shumate_vector_symbol_set_property;
 
+  widget_class->contains = shumate_vector_symbol_contains;
   widget_class->get_request_mode = shumate_vector_symbol_get_request_mode;
   widget_class->snapshot = shumate_vector_symbol_snapshot;
   widget_class->measure = shumate_vector_symbol_measure;
@@ -650,7 +684,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
             y + point.y,
             xextent + self->symbol_info->details->text_padding,
             yextent + self->symbol_info->details->text_padding,
-            rotation + shumate_vector_point_iter_get_current_angle (&iter)
+            rotation + shumate_vector_point_iter_get_current_angle (&iter),
+            self
           );
 
           if (!check)
@@ -678,7 +713,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         y + midpoint.y + offset_y,
         self->layout_width / 2.0 + self->symbol_info->details->text_padding,
         yextent + self->symbol_info->details->text_padding,
-        angle
+        angle,
+        self
       );
 
       if (!check)
@@ -708,7 +744,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         y + midpoint.y + offset_y,
         icon_width / 2,
         icon_height / 2,
-        angle
+        angle,
+        self
       );
 
       if (!check)

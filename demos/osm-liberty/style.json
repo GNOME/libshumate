@@ -1300,6 +1300,9 @@
         "text-color": "#5d60be",
         "text-halo-color": "rgba(255,255,255,0.7)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1318,6 +1321,9 @@
         "text-color": "#5d60be",
         "text-halo-color": "rgba(255,255,255,0.7)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1341,6 +1347,9 @@
         "text-halo-blur": 0.5,
         "text-halo-color": "#ffffff",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1369,6 +1378,9 @@
         "text-halo-blur": 0.5,
         "text-halo-color": "#ffffff",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1397,6 +1409,9 @@
         "text-halo-blur": 0.5,
         "text-halo-color": "#ffffff",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1419,6 +1434,9 @@
         "text-halo-blur": 0.5,
         "text-halo-color": "#ffffff",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1439,6 +1457,9 @@
         "text-color": "#765",
         "text-halo-blur": 0.5,
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1491,6 +1512,9 @@
         "text-color": "#633",
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1.2
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1509,6 +1533,9 @@
         "text-color": "#333",
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1.2
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1530,6 +1557,9 @@
         "text-color": "#333",
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1.2
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1554,6 +1584,9 @@
         "text-color": "#333",
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1.2
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1573,6 +1606,9 @@
         "text-color": "#633",
         "text-halo-color": "rgba(255,255,255,0.7)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1593,6 +1629,9 @@
         "text-halo-blur": 1,
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1613,6 +1652,9 @@
         "text-halo-blur": 1,
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1633,6 +1675,9 @@
         "text-halo-blur": 1,
         "text-halo-color": "rgba(255,255,255,0.8)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     },
     {
@@ -1653,6 +1698,9 @@
         "text-color": "#633",
         "text-halo-color": "rgba(255,255,255,0.7)",
         "text-halo-width": 1
+      },
+      "metadata": {
+        "libshumate:cursor": "pointer"
       }
     }
   ],

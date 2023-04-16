@@ -37,15 +37,8 @@
 
 #define EMPTY_BOX ((Box){0, 0, 0, 0, 0, 0, 0})
 
-struct ShumateVectorCollision {
-  GHashTable *bucket_rows;
-  /* Use a ptr array because iterating a hash map is fairly expensive, and we
-   * have to do it in the detect_collision() hot path */
-  GPtrArray *bucket_rows_array;
-  GArray *pending_boxes;
-};
-
 typedef struct {
+  gpointer tag;
   float x;
   float y;
   float xextent;
@@ -373,10 +366,11 @@ shumate_vector_collision_check (ShumateVectorCollision *self,
                                 float                   y,
                                 float                   xextent,
                                 float                   yextent,
-                                float                   rotation)
+                                float                   rotation,
+                                gpointer                tag)
 {
   Box new_bbox = {
-    x, y, xextent, yextent, rotation,
+    tag, x, y, xextent, yextent, rotation,
   };
 
   axis_align (&new_bbox);
@@ -465,6 +459,90 @@ shumate_vector_collision_commit_pending (ShumateVectorCollision *self,
 
   /* clear the pending boxes */
   g_array_set_size (self->pending_boxes, 0);
+}
+
+
+static gboolean
+point_intersects_rect_aa (Box   *box,
+                          float  x,
+                          float  y)
+{
+  return (x >= box->x - box->aaxextent &&
+          x <= box->x + box->aaxextent &&
+          y >= box->y - box->aayextent &&
+          y <= box->y + box->aayextent);
+}
+
+
+static gboolean
+point_intersects_rect (Box   *box,
+                       float  x,
+                       float  y)
+{
+  float x2, y2;
+  x -= box->x;
+  y -= box->y;
+
+  x2 = cosf (-box->rotation) * x - sinf (-box->rotation) * y;
+  y2 = sinf (-box->rotation) * x + cosf (-box->rotation) * y;
+
+  return (x2 >= -box->xextent &&
+          x2 <= box->xextent &&
+          y2 >= -box->yextent &&
+          y2 <= box->yextent);
+}
+
+
+gboolean
+shumate_vector_collision_query_point (ShumateVectorCollision *self,
+                                      float                  x,
+                                      float                  y,
+                                      gpointer              tag)
+{
+  for (int i = 0; i < self->bucket_rows_array->len; i ++)
+    {
+      RTreeBucketRow *bucket_row = g_ptr_array_index (self->bucket_rows_array, i);
+
+      if (!point_intersects_rect_aa (&bucket_row->bbox, x, y))
+        continue;
+
+      for (int j = 0; j < bucket_row->bucket_cols_array->len; j ++)
+        {
+          RTreeBucketCol *bucket_col = g_ptr_array_index (bucket_row->bucket_cols_array, j);
+
+          if (bucket_col->n_boxes == 0)
+            continue;
+
+          if (!point_intersects_rect_aa (&bucket_col->bbox, x, y))
+            continue;
+
+          for (int r = 0; r < NODES; r ++)
+            {
+              RTreeRow *row = &bucket_col->rows[r];
+
+              if (!point_intersects_rect_aa (&row->bbox, x, y))
+                continue;
+
+              for (int c = 0; c < NODES; c ++)
+                {
+                  RTreeCol *col = &row->cols[c];
+
+                  if (col->boxes == NULL || !point_intersects_rect_aa (&col->bbox, x, y))
+                    continue;
+
+                  for (int i = 0; i < col->boxes->len; i ++)
+                    {
+                      Box *b = &((Box*)col->boxes->data)[i];
+
+                      if (point_intersects_rect (b, x, y) && (tag == NULL || tag == b->tag))
+                        return TRUE;
+                    }
+                }
+            }
+        }
+    }
+
+  return FALSE;
 }
 
 

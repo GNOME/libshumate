@@ -19,6 +19,7 @@
 
 #include "shumate-map-source.h"
 #include "shumate-layer.h"
+#include "shumate-vector-collision-private.h"
 
 G_BEGIN_DECLS
 
@@ -41,4 +42,7 @@ void shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContaine
                                                      int                           zoom);
 
 ShumateMapSource *shumate_vector_symbol_container_get_map_source (ShumateVectorSymbolContainer *self);
+
+ShumateVectorCollision *shumate_vector_symbol_container_get_collision (ShumateVectorSymbolContainer *self);
+
 G_END_DECLS
