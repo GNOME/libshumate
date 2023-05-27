@@ -420,7 +420,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-field">text-field</a></td>
-    <td>Only plain strings are supported, not formatted strings.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-font">text-font</a></td>
@@ -577,7 +577,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-format">format</a></td>
-    <td>❌ Not supported</td>
+    <td>The text-font style override property is not supported.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-image">image</a></td>

@@ -154,6 +154,9 @@ shumate_vector_value_unset (ShumateVectorValue *self)
       g_clear_object (&self->image);
       g_clear_pointer (&self->image_name, g_free);
     }
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
+    g_clear_pointer (&self->formatted_string, g_ptr_array_unref);
+
   self->type = SHUMATE_VECTOR_VALUE_TYPE_NULL;
 }
 
@@ -180,6 +183,8 @@ shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out)
       out->image = g_object_ref (out->image);
       out->image_name = g_strdup (out->image_name);
     }
+  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
+    out->formatted_string = g_ptr_array_ref (out->formatted_string);
 }
 
 
@@ -341,6 +346,34 @@ shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image)
   return TRUE;
 }
 
+void
+shumate_vector_value_set_formatted (ShumateVectorValue *self,
+                                    GPtrArray          *format_parts)
+{
+  shumate_vector_value_unset (self);
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING;
+  self->formatted_string = g_ptr_array_ref (format_parts);
+}
+
+gboolean
+shumate_vector_value_get_formatted (ShumateVectorValue  *self,
+                                    GPtrArray          **format_parts)
+{
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
+    return FALSE;
+
+  *format_parts = self->formatted_string;
+  return TRUE;
+}
+
+void
+shumate_vector_format_part_free (ShumateVectorFormatPart *format_part)
+{
+  g_clear_pointer (&format_part->string, g_free);
+  g_clear_object (&format_part->image);
+  g_free (format_part);
+}
+
 gboolean
 shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 {
@@ -370,6 +403,9 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
       return TRUE;
     case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
       return g_strcmp0 (a->image_name, b->image_name) == 0;
+    case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+      /* Not supported */
+      return FALSE;
     default:
       g_assert_not_reached ();
     }
@@ -409,6 +445,19 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
       }
     case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
       return g_strdup (self->image_name);
+    case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+      {
+        g_autoptr(GString) result = g_string_new ("");
+
+        for (int i = 0; i < self->formatted_string->len; i ++)
+          {
+            ShumateVectorFormatPart *part = g_ptr_array_index (self->formatted_string, i);
+            if (!part->image)
+              g_string_append (result, part->string);
+          }
+
+        return g_string_free (g_steal_pointer (&result), FALSE);
+      }
     default:
       g_assert_not_reached ();
     }

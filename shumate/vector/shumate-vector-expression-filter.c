@@ -40,6 +40,8 @@ typedef enum {
   EXPR_COALESCE,
   EXPR_IMAGE,
 
+  EXPR_FORMAT,
+
   EXPR_CONCAT,
   EXPR_DOWNCASE,
   EXPR_UPCASE,
@@ -76,7 +78,24 @@ struct _ShumateVectorExpressionFilter
   GPtrArray *expressions;
 };
 
+typedef struct {
+  ShumateVectorExpression *string;
+  ShumateVectorExpression *font_scale;
+  ShumateVectorExpression *text_color;
+} FormatExpressionPart;
+
 G_DEFINE_TYPE (ShumateVectorExpressionFilter, shumate_vector_expression_filter, SHUMATE_TYPE_VECTOR_EXPRESSION)
+
+
+static void
+format_expression_part_free (FormatExpressionPart *part)
+{
+  g_clear_object (&part->string);
+  g_clear_object (&part->font_scale);
+  g_clear_object (&part->text_color);
+  g_free (part);
+}
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (FormatExpressionPart, format_expression_part_free);
 
 
 ShumateVectorExpression *
@@ -248,6 +267,45 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       shumate_vector_value_set_number (&value, G_LN2);
       return shumate_vector_expression_literal_new (&value);
     }
+  else if (g_strcmp0 ("format", op) == 0)
+    {
+      self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+      self->type = EXPR_FORMAT;
+      g_ptr_array_set_free_func (self->expressions, (GDestroyNotify)format_expression_part_free);
+
+      for (int i = 1, n = json_array_get_length (array); i < n;)
+        {
+          JsonNode *arg_node = json_array_get_element (array, i);
+          JsonNode *format_node = NULL;
+          FormatExpressionPart *part = g_new0 (FormatExpressionPart, 1);
+
+          g_ptr_array_add (self->expressions, part);
+
+          part->string = shumate_vector_expression_from_json (arg_node, ctx, error);
+          if (part->string == NULL)
+            return NULL;
+
+          i ++;
+          if (i >= n)
+            break;
+
+          format_node = json_array_get_element (array, i);
+          if (JSON_NODE_HOLDS_OBJECT (format_node))
+            {
+              JsonObject *format_object = json_node_get_object (format_node);
+
+              i ++;
+
+              if (!(part->text_color = shumate_vector_expression_from_json (json_object_get_member (format_object, "text-color"), ctx, error)))
+                return NULL;
+
+              if (!(part->font_scale = shumate_vector_expression_from_json (json_object_get_member (format_object, "font-scale"), ctx, error)))
+                return NULL;
+            }
+        }
+
+      return (ShumateVectorExpression *)g_steal_pointer (&self);
+    }
 
   self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
 
@@ -341,9 +399,15 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
     }
   else if (g_strcmp0 ("case", op) == 0)
-    self->type = EXPR_CASE;
+    {
+      self->type = EXPR_CASE;
+      lookup_first_arg = FALSE;
+    }
   else if (g_strcmp0 ("coalesce", op) == 0)
-    self->type = EXPR_COALESCE;
+    {
+      self->type = EXPR_COALESCE;
+      lookup_first_arg = FALSE;
+    }
   else if (g_strcmp0 ("concat", op) == 0)
     {
       self->type = EXPR_CONCAT;
@@ -1118,6 +1182,80 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
             }
 
           shumate_vector_value_set_image (out, pixbuf, string);
+          return TRUE;
+        }
+
+    case EXPR_FORMAT:
+        {
+          FormatExpressionPart **format_expressions = (FormatExpressionPart **)expressions;
+          g_autoptr(GPtrArray) format_parts = g_ptr_array_new_full (n_expressions, (GDestroyNotify)shumate_vector_format_part_free);
+
+          for (int i = 0; i < n_expressions; i++)
+            {
+              g_autoptr(ShumateVectorFormatPart) part = g_new0 (ShumateVectorFormatPart, 1);
+
+              if (!shumate_vector_expression_eval (format_expressions[i]->string, scope, &value))
+                return FALSE;
+
+              switch (value.type)
+                {
+                case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+                  {
+                    const char *string;
+                    shumate_vector_value_get_string (&value, &string);
+
+                    if (strlen (string) == 0)
+                      continue;
+
+                    part->string = g_strdup (string);
+                    break;
+                  }
+
+                case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+                  {
+                    part->string = shumate_vector_value_as_string (&value);
+                    shumate_vector_value_get_image (&value, &part->image);
+                    g_object_ref (part->image);
+                    break;
+                  }
+
+                case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+                  continue;
+
+                default:
+                  return FALSE;
+                }
+
+              if (format_expressions[i]->text_color != NULL)
+                {
+                  if (!shumate_vector_expression_eval (format_expressions[i]->text_color, scope, &value))
+                    return FALSE;
+
+                  if (!shumate_vector_value_is_null (&value))
+                    {
+                      if (!shumate_vector_value_get_color (&value, &part->text_color))
+                        return FALSE;
+                      part->has_text_color = TRUE;
+                    }
+                }
+
+              if (format_expressions[i]->font_scale != NULL)
+                {
+                  if (!shumate_vector_expression_eval (format_expressions[i]->font_scale, scope, &value))
+                    return FALSE;
+
+                  if (!shumate_vector_value_is_null (&value))
+                    {
+                      if (!shumate_vector_value_get_number (&value, &part->font_scale))
+                        return FALSE;
+                      part->has_font_scale = TRUE;
+                    }
+                }
+
+              g_ptr_array_add (format_parts, g_steal_pointer (&part));
+            }
+
+          shumate_vector_value_set_formatted (out, format_parts);
           return TRUE;
         }
 

@@ -23,6 +23,7 @@
 #include "shumate-layer.h"
 #include "shumate-symbol-event-private.h"
 
+#define RGBA_BLACK ((GdkRGBA){0, 0, 0, 1})
 
 struct _ShumateVectorSymbol
 {
@@ -85,17 +86,49 @@ shumate_vector_symbol_new (ShumateVectorSymbolInfo *symbol_info)
 }
 
 
+static PangoAttrShape *
+get_shape_from_glyph_item (PangoGlyphItem *item)
+{
+  for (GSList *list = item->item->analysis.extra_attrs; list != NULL; list = list->next)
+    if (((PangoAttribute*)list->data)->klass->type == PANGO_ATTR_SHAPE)
+      return (PangoAttrShape*)list->data;
+  return NULL;
+}
+
+static void
+get_color_from_glyph_item (PangoGlyphItem *item, GdkRGBA *color)
+{
+  *color = RGBA_BLACK;
+
+  for (GSList *list = item->item->analysis.extra_attrs; list != NULL; list = list->next)
+    {
+      if (((PangoAttribute*)list->data)->klass->type == PANGO_ATTR_FOREGROUND)
+        {
+          PangoColor c = ((PangoAttrColor*)list->data)->color;
+          color->red = c.red / 65535.0;
+          color->green = c.green / 65535.0;
+          color->blue = c.blue / 65535.0;
+        }
+      else if (((PangoAttribute*)list->data)->klass->type == PANGO_ATTR_FOREGROUND_ALPHA)
+        color->alpha = ((PangoAttrInt*)list->data)->value / 65535.0;
+    }
+}
+
+
 static void
 shumate_vector_symbol_constructed (GObject *object)
 {
   ShumateVectorSymbol *self = (ShumateVectorSymbol *)object;
+  g_autofree char *text = NULL;
 
-  if (self->symbol_info->details->text != NULL)
+  if (self->symbol_info->details->formatted_text != NULL)
     {
       PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (self));
       g_autoptr(PangoLayout) layout = pango_layout_new (context);
       g_autoptr(PangoAttrList) attrs = pango_attr_list_new ();
+      g_autoptr(GString) string = g_string_new ("");
       PangoAttribute *attr;
+      gboolean any_images = FALSE;
 
       if (self->symbol_info->details->text_font != NULL)
         {
@@ -116,7 +149,63 @@ shumate_vector_symbol_constructed (GObject *object)
       pango_attr_list_insert (attrs, attr);
 
       pango_layout_set_attributes (layout, attrs);
-      pango_layout_set_text (layout, self->symbol_info->details->text, -1);
+
+      for (int i = 0, n = self->symbol_info->details->formatted_text->len; i < n; i ++)
+        {
+          ShumateVectorFormatPart *part = g_ptr_array_index (self->symbol_info->details->formatted_text, i);
+
+          if (part->image != NULL)
+            {
+              int width = gdk_pixbuf_get_width (part->image);
+              int height = gdk_pixbuf_get_height (part->image);
+              PangoRectangle rect = {
+                .x = 0,
+                .y = -height * PANGO_SCALE,
+                .width = width * PANGO_SCALE,
+                .height = height * PANGO_SCALE,
+              };
+
+              attr = pango_attr_shape_new_with_data (&rect, &rect, g_object_ref (part->image), (PangoAttrDataCopyFunc)g_object_ref, g_object_unref);
+              attr->start_index = string->len;
+              attr->end_index = string->len + strlen ("\uFFFC");
+              pango_attr_list_insert (attrs, attr);
+
+              g_string_append (string, "\uFFFC");
+
+              any_images = TRUE;
+            }
+          else
+            {
+              if (part->has_font_scale)
+                {
+                  attr = pango_attr_size_new_absolute (part->font_scale * self->symbol_info->details->text_size * PANGO_SCALE);
+                  attr->start_index = string->len;
+                  attr->end_index = string->len + strlen (part->string);
+                  pango_attr_list_insert (attrs, attr);
+                }
+
+              if (part->has_text_color)
+                {
+                  attr = pango_attr_foreground_new (part->text_color.red * 65535,
+                                                    part->text_color.green * 65535,
+                                                    part->text_color.blue * 65535);
+                  attr->start_index = string->len;
+                  attr->end_index = string->len + strlen (part->string);
+                  pango_attr_list_insert (attrs, attr);
+
+                  attr = pango_attr_foreground_alpha_new (part->text_color.alpha * 65535);
+                  attr->start_index = string->len;
+                  attr->end_index = string->len + strlen (part->string);
+                  pango_attr_list_insert (attrs, attr);
+                }
+
+              g_string_append (string, part->string);
+            }
+        }
+
+      text = g_string_free (g_steal_pointer (&string), FALSE);
+      pango_layout_set_text (layout, text, -1);
+
       pango_layout_get_size (layout, &self->layout_width, &self->layout_height);
       self->layout_width /= PANGO_SCALE;
       self->layout_height /= PANGO_SCALE;
@@ -136,40 +225,103 @@ shumate_vector_symbol_constructed (GObject *object)
           iter = pango_layout_get_iter (layout);
 
           do {
+            PangoAttrShape *shape = NULL;
+
             current_item = pango_layout_iter_get_run (iter);
 
             if (current_item == NULL)
               continue;
 
-            for (i = 0; i < current_item->glyphs->num_glyphs; i ++)
+            shape = get_shape_from_glyph_item (current_item);
+
+            if (shape != NULL)
               {
-                GskRenderNode *node;
                 Glyph glyph;
-                PangoGlyphString *glyph_string;
+                g_autoptr(GdkTexture) texture = gdk_texture_new_for_pixbuf (shape->data);
+                int width = gdk_pixbuf_get_width (shape->data);
+                int height = gdk_pixbuf_get_height (shape->data);
 
-                glyph_string = pango_glyph_string_new ();
-                pango_glyph_string_set_size (glyph_string, 1);
-                glyph_string->glyphs[0] = current_item->glyphs->glyphs[i];
-                glyph_string->log_clusters[0] = 0;
-
-                node =
-                  gsk_text_node_new (current_item->item->analysis.font,
-                                     glyph_string,
-                                     &self->symbol_info->details->text_color,
-                                     &GRAPHENE_POINT_INIT (0, 0));
-
-                glyph.node = node;
-                glyph.width = glyph_string->glyphs[0].geometry.width / (double) PANGO_SCALE;
+                glyph.node = gsk_texture_node_new (
+                  texture,
+                  &GRAPHENE_RECT_INIT (0, -height, width, height)
+                );
+                glyph.width = shape->logical_rect.width / (double) PANGO_SCALE;
                 g_array_append_vals (self->glyphs, &glyph, 1);
+              }
+            else
+              {
+                for (i = 0; i < current_item->glyphs->num_glyphs; i ++)
+                  {
+                    GskRenderNode *node;
+                    Glyph glyph;
+                    PangoGlyphString *glyph_string;
+                    GdkRGBA color;
 
-                pango_glyph_string_free (glyph_string);
+                    glyph_string = pango_glyph_string_new ();
+                    pango_glyph_string_set_size (glyph_string, 1);
+                    glyph_string->glyphs[0] = current_item->glyphs->glyphs[i];
+                    glyph_string->log_clusters[0] = 0;
+
+                    get_color_from_glyph_item (current_item, &color);
+
+                    node =
+                      gsk_text_node_new (current_item->item->analysis.font,
+                                         glyph_string,
+                                         &color,
+                                         &GRAPHENE_POINT_INIT (0, 0));
+
+                    glyph.node = node;
+                    glyph.width = glyph_string->glyphs[0].geometry.width / (double) PANGO_SCALE;
+                    g_array_append_vals (self->glyphs, &glyph, 1);
+
+                    pango_glyph_string_free (glyph_string);
+                  }
               }
           } while (pango_layout_iter_next_run (iter));
         }
       else
         {
           g_autoptr(GtkSnapshot) snapshot = gtk_snapshot_new ();
-          gtk_snapshot_append_layout (snapshot, layout, &self->symbol_info->details->text_color);
+
+          gtk_snapshot_append_layout (snapshot, layout, &RGBA_BLACK);
+
+          if (any_images)
+            {
+              g_autoptr(PangoLayoutIter) iter = NULL;
+
+              iter = pango_layout_get_iter (layout);
+
+              do {
+                PangoGlyphItem *current_item = pango_layout_iter_get_run (iter);
+                PangoAttrShape *shape;
+
+                if (current_item == NULL)
+                  continue;
+
+                shape = get_shape_from_glyph_item (current_item);
+                if (shape != NULL)
+                  {
+                    g_autoptr(GdkTexture) texture = gdk_texture_new_for_pixbuf (shape->data);
+                    g_autoptr(GskRenderNode) node = NULL;
+                    PangoRectangle extents;
+
+                    pango_layout_iter_get_run_extents (iter, &extents, NULL);
+
+                    node = gsk_texture_node_new (
+                      texture,
+                      &GRAPHENE_RECT_INIT (
+                        PANGO_PIXELS (extents.x),
+                        PANGO_PIXELS (extents.y),
+                        PANGO_PIXELS (extents.width),
+                        PANGO_PIXELS (extents.height)
+                      )
+                    );
+
+                    gtk_snapshot_append_node (snapshot, node);
+                  }
+              } while (pango_layout_iter_next_run (iter));
+            }
+
           self->glyphs_node = gtk_snapshot_free_to_node (g_steal_pointer (&snapshot));
         }
     }
@@ -198,7 +350,7 @@ shumate_vector_symbol_constructed (GObject *object)
 
   gtk_accessible_update_property (GTK_ACCESSIBLE (self),
                                   GTK_ACCESSIBLE_PROPERTY_LABEL,
-                                  self->symbol_info->details->text,
+                                  text,
                                   -1);
 
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->constructed (object);

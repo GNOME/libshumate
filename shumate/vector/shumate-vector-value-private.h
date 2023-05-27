@@ -31,7 +31,17 @@ typedef enum {
   SHUMATE_VECTOR_VALUE_TYPE_COLOR,
   SHUMATE_VECTOR_VALUE_TYPE_ARRAY,
   SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE,
+  SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING,
 } ShumateVectorValueType;
+
+typedef struct {
+  GdkRGBA text_color;
+  char *string;
+  GdkPixbuf *image;
+  double font_scale;
+  gboolean has_text_color : 1;
+  gboolean has_font_scale : 1;
+} ShumateVectorFormatPart;
 
 typedef struct {
   ShumateVectorValueType type;
@@ -49,6 +59,7 @@ typedef struct {
       GdkPixbuf *image;
       char *image_name;
     };
+    GPtrArray *formatted_string;
   };
 } ShumateVectorValue;
 
@@ -84,6 +95,11 @@ gboolean shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateV
 
 void shumate_vector_value_set_image (ShumateVectorValue *self, GdkPixbuf *image, const char *image_name);
 gboolean shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image);
+
+void shumate_vector_value_set_formatted (ShumateVectorValue *self, GPtrArray *format_parts);
+gboolean shumate_vector_value_get_formatted (ShumateVectorValue *self, GPtrArray **format_parts);
+void shumate_vector_format_part_free (ShumateVectorFormatPart *self);
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorFormatPart, shumate_vector_format_part_free)
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
 

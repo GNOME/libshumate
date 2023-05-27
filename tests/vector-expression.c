@@ -210,6 +210,7 @@ test_vector_expression_basic_filter (void)
 
   g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"], 2, 3], 2]"));
   g_assert_true (filter ("[\"==\", [\"coalesce\", null, [\"*\", 0, \"b\"]], null]"));
+  g_assert_true (filter ("[\"==\", [\"coalesce\", \"red\"], \"red\"]"));
 
   g_assert_true (filter ("[\"==\", [\"concat\", \"hello\", 10, \"world\", true], \"hello10worldtrue\"]"));
   g_assert_true (filter ("[\"==\", [\"downcase\", \"HeLlO, WoRlD!\"], \"hello, world!\"]"));
@@ -397,6 +398,62 @@ test_vector_expression_array ()
 }
 
 
+static void
+test_vector_expression_formatted_string ()
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = NULL;
+  g_autoptr(ShumateVectorExpression) expression = NULL;
+  g_auto(ShumateVectorValue) eval = SHUMATE_VECTOR_VALUE_INIT;
+  g_autofree char *as_string = NULL;
+  GPtrArray *format_parts = NULL;
+  ShumateVectorFormatPart *part = NULL;
+
+  node = json_from_string ("[\"format\",\
+    \"Hello \",\
+    [\"concat\", \"world\", \"!\"], {\"font-scale\": 0.1},\
+    \"\n\", {\"text-color\": [\"coalesce\", \"red\"]},\
+    null,\
+    \"test\"\
+    ]", &error);
+  g_assert_no_error (error);
+  expression = shumate_vector_expression_from_json (node, NULL, &error);
+  g_assert_no_error (error);
+
+  g_assert_true (shumate_vector_expression_eval (expression, NULL, &eval));
+  g_assert_true (shumate_vector_value_get_formatted (&eval, &format_parts));
+  g_assert_cmpint (format_parts->len, ==, 4);
+
+  as_string = shumate_vector_value_as_string (&eval);
+  g_assert_cmpstr (as_string, ==, "Hello world!\ntest");
+
+  part = format_parts->pdata[0];
+  g_assert_cmpstr (part->string, ==, "Hello ");
+  g_assert_null (part->image);
+  g_assert_false (part->has_font_scale);
+  g_assert_false (part->has_text_color);
+
+  part = format_parts->pdata[1];
+  g_assert_cmpstr (part->string, ==, "world!");
+  g_assert_null (part->image);
+  g_assert_true (part->has_font_scale);
+  g_assert_cmpfloat (part->font_scale, ==, 0.1);
+  g_assert_false (part->has_text_color);
+
+  part = format_parts->pdata[2];
+  g_assert_cmpstr (part->string, ==, "\n");
+  g_assert_null (part->image);
+  g_assert_false (part->has_font_scale);
+  g_assert_true (part->has_text_color);
+
+  part = format_parts->pdata[3];
+  g_assert_cmpstr (part->string, ==, "test");
+  g_assert_null (part->image);
+  g_assert_false (part->has_font_scale);
+  g_assert_false (part->has_text_color);
+}
+
+
 int
 main (int argc, char *argv[])
 {
@@ -413,6 +470,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);
   g_test_add_func ("/vector/expression/format", test_vector_expression_format);
   g_test_add_func ("/vector/expression/array", test_vector_expression_array);
+  g_test_add_func ("/vector/expression/formatted-string", test_vector_expression_formatted_string);
 
   return g_test_run ();
 }

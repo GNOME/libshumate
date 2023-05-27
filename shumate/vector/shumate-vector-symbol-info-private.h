@@ -60,7 +60,8 @@ typedef struct {
   float icon_size;
   ShumateVectorAlignment icon_rotation_alignment;
 
-  char *text;
+  /* Array of ShumateVectorFormatPart */
+  GPtrArray *formatted_text;
   ShumateVectorAnchor text_anchor;
   GdkRGBA text_color;
   double text_size;

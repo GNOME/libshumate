@@ -330,7 +330,8 @@ static void
 shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (layer);
-  g_autofree char *text_field = NULL;
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  g_autoptr(GPtrArray) text_field = NULL;
   g_autofree char *cursor = NULL;
   g_autofree char *feature_id = NULL;
   ShumateVectorPlacement symbol_placement;
@@ -341,9 +342,27 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   ShumateVectorGeometryType geometry_type = shumate_vector_render_scope_get_geometry_type (scope);
   double x, y;
 
-  text_field = shumate_vector_expression_eval_string (self->text_field, scope, "");
-  if (strlen (text_field) == 0)
-    g_clear_pointer (&text_field, g_free);
+  shumate_vector_expression_eval (self->text_field, scope, &value);
+  if (value.type == SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
+    {
+      shumate_vector_value_get_formatted (&value, &text_field);
+      if (text_field->len == 0)
+        text_field = NULL;
+      else
+        g_ptr_array_ref (text_field);
+    }
+  else if (value.type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
+    {
+      g_autofree char *text = shumate_vector_value_as_string (&value);
+
+      if (strlen (text) > 0)
+        {
+          text_field = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_format_part_free);
+          ShumateVectorFormatPart *part = g_new0 (ShumateVectorFormatPart, 1);
+          part->string = g_steal_pointer (&text);
+          g_ptr_array_add (text_field, part);
+        }
+    }
 
   if (text_field == NULL && icon_image == NULL)
     return;
@@ -387,7 +406,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .icon_offset_x = self->icon_offset_x,
     .icon_offset_y = self->icon_offset_y,
 
-    .text = g_steal_pointer (&text_field),
+    .formatted_text = g_steal_pointer (&text_field),
 
     .text_anchor = shumate_vector_expression_eval_anchor (self->text_anchor, scope),
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),

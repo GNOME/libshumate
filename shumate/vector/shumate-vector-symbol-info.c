@@ -33,7 +33,7 @@ shumate_vector_symbol_details_free (ShumateVectorSymbolDetails *details)
 
   g_clear_object (&details->icon_image);
 
-  g_clear_pointer (&details->text, g_free);
+  g_clear_pointer (&details->formatted_text, g_ptr_array_unref);
   g_clear_pointer (&details->text_font, g_free);
 
   g_clear_pointer (&details->cursor, g_free);
