@@ -4,7 +4,7 @@ stages:
 
 fedora:
   stage: build
-  image: registry.gitlab.gnome.org/gnome/gtk/fedora:v38
+  image: registry.gitlab.gnome.org/gnome/gtk/fedora:v46
   script:
     - sudo dnf install -y vala sqlite-devel libsoup3-devel gtk4-devel protobuf-c-devel gcovr python3-packaging
     - meson _build -Db_coverage=true -Dgtk_doc=true
