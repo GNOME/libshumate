@@ -20,6 +20,7 @@
 
 #include <shumate/shumate-data-source.h>
 #include <shumate/shumate-map-source.h>
+#include <shumate/shumate-vector-sprite-sheet.h>
 
 G_BEGIN_DECLS
 
@@ -39,6 +40,10 @@ gboolean shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *
                                                         GdkPixbuf              *sprites_pixbuf,
                                                         const char             *sprites_json,
                                                         GError                **error);
+
+ShumateVectorSpriteSheet *shumate_vector_renderer_get_sprite_sheet (ShumateVectorRenderer *self);
+void shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
+                                               ShumateVectorSpriteSheet *sprites);
 
 /**
  * SHUMATE_STYLE_ERROR:

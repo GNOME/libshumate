@@ -20,7 +20,7 @@
 #include <glib-object.h>
 #include <cairo/cairo.h>
 #include "vector_tile.pb-c.h"
-#include "shumate-vector-sprite-sheet-private.h"
+#include "../shumate-vector-sprite-sheet.h"
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
 
@@ -34,6 +34,7 @@ typedef struct {
   cairo_t *cr;
   int target_size;
   double scale;
+  double scale_factor;
   double zoom_level;
   int tile_x;
   int tile_y;

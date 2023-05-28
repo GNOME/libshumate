@@ -43,9 +43,8 @@ struct _ShumateVectorRenderer
   char *source_name;
   ShumateDataSource *data_source;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorSpriteSheet *sprites;
-#endif
+  GMutex sprites_mutex;
 
   GThreadPool *thread_pool;
 
@@ -68,6 +67,7 @@ G_DEFINE_TYPE_WITH_CODE (ShumateVectorRenderer, shumate_vector_renderer, SHUMATE
 enum {
   PROP_0,
   PROP_STYLE_JSON,
+  PROP_SPRITE_SHEET,
   N_PROPS
 };
 
@@ -135,12 +135,12 @@ shumate_vector_renderer_finalize (GObject *object)
   g_clear_pointer (&self->style_json, g_free);
   g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_clear_object (&self->sprites);
-#endif
 
   if (self->thread_pool)
     g_thread_pool_free (self->thread_pool, FALSE, FALSE);
+
+  g_mutex_clear (&self->sprites_mutex);
 
   G_OBJECT_CLASS (shumate_vector_renderer_parent_class)->finalize (object);
 }
@@ -157,6 +157,9 @@ shumate_vector_renderer_get_property (GObject    *object,
     {
     case PROP_STYLE_JSON:
       g_value_set_string (value, self->style_json);
+      break;
+    case PROP_SPRITE_SHEET:
+      g_value_set_object (value, shumate_vector_renderer_get_sprite_sheet (self));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -177,6 +180,9 @@ shumate_vector_renderer_set_property (GObject      *object,
       /* Property is construct only, so it should only be set once */
       g_assert (self->style_json == NULL);
       self->style_json = g_strdup (g_value_get_string (value));
+      break;
+    case PROP_SPRITE_SHEET:
+      shumate_vector_renderer_set_sprite_sheet (self, g_value_get_object (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -220,6 +226,20 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
                          "Style JSON",
                          NULL,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateVectorRenderer:sprite-sheet:
+   *
+   * The sprite sheet used to render icons and textures.
+   *
+   * Since: 1.1
+   */
+  properties[PROP_SPRITE_SHEET] =
+    g_param_spec_object ("sprite-sheet",
+                         "sprite-sheet",
+                         "sprite-sheet",
+                         SHUMATE_TYPE_VECTOR_SPRITE_SHEET,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -460,6 +480,7 @@ task_data_free (TaskData *data)
 static void
 shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
+  g_mutex_init (&self->sprites_mutex);
 }
 
 
@@ -489,11 +510,12 @@ shumate_vector_renderer_get_style_json (ShumateVectorRenderer *self)
  *
  * Sets the sprite sheet used by the style JSON to render icons and textures.
  *
- * See <https://maplibre.org/maplibre-gl-js-docs/style-spec/sprite/> for
- * details about the spritesheet format. Most stylesheets provide these files
- * along with the main style JSON.
+ * The existing [property@VectorRenderer:sprite-sheet] property will be replaced
+ * with a new instance of [class@VectorSpriteSheet].
  *
  * Returns: whether the sprite sheet was loaded successfully
+ *
+ * Deprecated: 1.1: Use the methods of [property@VectorRenderer:sprite-sheet] instead.
  */
 gboolean
 shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
@@ -501,21 +523,72 @@ shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
                                                const char             *sprites_json,
                                                GError                **error)
 {
+  g_autoptr(ShumateVectorSpriteSheet) sprites = NULL;
+  g_autoptr(GdkTexture) texture = NULL;
+
   g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), FALSE);
   g_return_val_if_fail (GDK_IS_PIXBUF (sprites_pixbuf), FALSE);
   g_return_val_if_fail (sprites_json != NULL, FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-  g_clear_object (&self->sprites);
-  self->sprites = shumate_vector_sprite_sheet_new (sprites_pixbuf, sprites_json, NULL, error);
-  return self->sprites != NULL;
-#else
-  g_set_error (error,
-               SHUMATE_STYLE_ERROR,
-               SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
-               "Libshumate was compiled without support for vector tiles.");
-  return FALSE;
-#endif
+  sprites = shumate_vector_sprite_sheet_new ();
+
+  texture = gdk_texture_new_for_pixbuf (sprites_pixbuf);
+  if (!shumate_vector_sprite_sheet_add_page (self->sprites, texture, sprites_json, 1, error))
+    return FALSE;
+
+  shumate_vector_renderer_set_sprite_sheet (self, sprites);
+  return TRUE;
+}
+
+
+/**
+ * shumate_vector_renderer_get_sprite_sheet:
+ * @self: a [class@VectorRenderer]
+ *
+ * Gets the sprite sheet used to render icons and textures.
+ *
+ * Returns: (transfer none): the [class@VectorSpriteSheet]
+ *
+ * Since: 1.1
+ */
+ShumateVectorSpriteSheet *
+shumate_vector_renderer_get_sprite_sheet (ShumateVectorRenderer *self)
+{
+  g_autoptr(GMutexLocker) locker = NULL;
+
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), FALSE);
+
+  locker = g_mutex_locker_new (&self->sprites_mutex);
+
+  if (self->sprites == NULL)
+    self->sprites = shumate_vector_sprite_sheet_new ();
+
+  return self->sprites;
+}
+
+
+/**
+ * shumate_vector_renderer_set_sprite_sheet:
+ * @self: a [class@VectorRenderer]
+ * @sprites: a [class@VectorSpriteSheet]
+ *
+ * Sets the sprite sheet used to render icons and textures.
+ *
+ * Since: 1.1
+ */
+void
+shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
+                                          ShumateVectorSpriteSheet *sprites)
+{
+  g_autoptr(GMutexLocker) locker = NULL;
+
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_return_if_fail (SHUMATE_IS_VECTOR_SPRITE_SHEET (sprites));
+
+  locker = g_mutex_locker_new (&self->sprites_mutex);
+
+  if (g_set_object (&self->sprites, sprites))
+    g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SPRITE_SHEET]);
 }
 
 
@@ -701,20 +774,26 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   gsize len;
   g_autoptr(GPtrArray) symbol_list = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
-  float scale_factor;
   g_autofree char *profile_desc = NULL;
+  g_autoptr(ShumateVectorSpriteSheet) sprites = NULL;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_TILE (tile));
 
+  g_mutex_lock (&self->sprites_mutex);
+  if (self->sprites == NULL)
+    self->sprites = shumate_vector_sprite_sheet_new ();
+  sprites = g_object_ref (self->sprites);
+  g_mutex_unlock (&self->sprites_mutex);
+
   texture_size = shumate_tile_get_size (tile);
-  scale_factor = shumate_tile_get_scale_factor (tile);
+  scope.scale_factor = shumate_tile_get_scale_factor (tile);
   scope.target_size = texture_size;
   scope.tile_x = shumate_tile_get_x (tile);
   scope.tile_y = shumate_tile_get_y (tile);
   scope.zoom_level = shumate_tile_get_zoom_level (tile);
   scope.symbols = symbol_list;
-  scope.sprites = self->sprites;
+  scope.sprites = sprites;
 
   if (scope.zoom_level > source_position->zoom)
     {
@@ -730,9 +809,13 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
       scope.overzoom_scale = 1;
     }
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size * scale_factor, texture_size * scale_factor);
+  surface = cairo_image_surface_create (
+    CAIRO_FORMAT_ARGB32,
+    texture_size * scope.scale_factor,
+    texture_size * scope.scale_factor
+  );
   scope.cr = cairo_create (surface);
-  cairo_scale (scope.cr, scale_factor, scale_factor);
+  cairo_scale (scope.cr, scope.scale_factor, scope.scale_factor);
 
   data = g_bytes_get_data (tile_data, &len);
   scope.tile = vector_tile__tile__unpack (NULL, len, data);

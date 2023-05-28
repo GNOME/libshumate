@@ -23,6 +23,8 @@ libshumate_public_h = [
   'shumate-tile-downloader.h',
   'shumate-user-agent.h',
   'shumate-vector-renderer.h',
+  'shumate-vector-sprite.h',
+  'shumate-vector-sprite-sheet.h',
   'shumate-viewport.h',
   'shumate.h',
 ]
@@ -47,7 +49,6 @@ libshumate_private_h = [
   'vector/shumate-vector-layer-private.h',
   'vector/shumate-vector-line-layer-private.h',
   'vector/shumate-vector-render-scope-private.h',
-  'vector/shumate-vector-sprite-sheet-private.h',
   'vector/shumate-vector-symbol-private.h',
   'vector/shumate-vector-symbol-container-private.h',
   'vector/shumate-vector-symbol-info-private.h',
@@ -85,6 +86,8 @@ libshumate_sources = [
   'shumate-user-agent.c',
   'shumate-utils.c',
   'shumate-vector-renderer.c',
+  'shumate-vector-sprite.c',
+  'shumate-vector-sprite-sheet.c',
   'shumate-viewport.c',
 ]
 

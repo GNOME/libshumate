@@ -21,6 +21,7 @@ if get_option('vector_renderer')
   tests += [
     'vector-expression',
     'vector-renderer',
+    'vector-sprite-sheet',
     'vector-style',
     'vector-value',
   ]

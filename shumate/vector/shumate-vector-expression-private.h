@@ -75,8 +75,8 @@ void shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
                                            ShumateVectorRenderScope *scope,
                                            GdkRGBA                  *color);
 
-GdkPixbuf *shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
-                                                 ShumateVectorRenderScope *scope);
+ShumateVectorSprite *shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
+                                                           ShumateVectorRenderScope *scope);
 
 ShumateVectorAlignment shumate_vector_expression_eval_alignment (ShumateVectorExpression  *self,
                                                                  ShumateVectorRenderScope *scope);

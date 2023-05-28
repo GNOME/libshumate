@@ -56,7 +56,7 @@ because once a tile is rendered, its pixel contents do not change as you zoom.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/root/#sprite">sprite</a></td>
-    <td>❌ Not supported. Sprite sheets are set using [method@Shumate.VectorRenderer.set_sprite_sheet_data].
+    <td>❌ Not supported. Sprite sheets are set using [property@Shumate.VectorRenderer:sprite-sheet].
     Only one sprite sheet may be used.</td>
   </tr>
   <tr>

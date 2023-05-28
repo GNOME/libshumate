@@ -310,17 +310,20 @@ test_vector_expression_variable_binding (void)
 static void
 test_vector_expression_image (void)
 {
-  g_autoptr(GdkPixbuf) pixbuf;
+  g_autoptr(GdkTexture) texture = NULL;
   g_autoptr(GBytes) json_data = NULL;
   GError *error = NULL;
   ShumateVectorRenderScope scope;
 
-  pixbuf = gdk_pixbuf_new_from_resource ("/org/gnome/shumate/Tests/sprites.png", &error);
+  texture = gdk_texture_new_from_resource ("/org/gnome/shumate/Tests/sprites.png");
   g_assert_no_error (error);
   json_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
 
-  scope.sprites = shumate_vector_sprite_sheet_new (pixbuf, g_bytes_get_data (json_data, NULL), NULL, NULL);
+  scope.sprites = shumate_vector_sprite_sheet_new ();
+  scope.scale_factor = 1;
+  shumate_vector_sprite_sheet_add_page (scope.sprites, texture, g_bytes_get_data (json_data, NULL), 1, &error);
+  g_assert_no_error (error);
 
   g_assert_true (filter_with_scope (&scope, "[\"!=\", null, [\"image\", \"sprite\"]]"));
   g_assert_true (filter_with_scope (&scope, "[\"==\", null, [\"image\", \"does-not-exist\"]]"));
@@ -499,26 +502,26 @@ test_vector_expression_formatted_string ()
 
   part = format_parts->pdata[0];
   g_assert_cmpstr (part->string, ==, "Hello ");
-  g_assert_null (part->image);
+  g_assert_null (part->sprite);
   g_assert_false (part->has_font_scale);
   g_assert_false (part->has_text_color);
 
   part = format_parts->pdata[1];
   g_assert_cmpstr (part->string, ==, "world!");
-  g_assert_null (part->image);
+  g_assert_null (part->sprite);
   g_assert_true (part->has_font_scale);
   g_assert_cmpfloat (part->font_scale, ==, 0.1);
   g_assert_false (part->has_text_color);
 
   part = format_parts->pdata[2];
   g_assert_cmpstr (part->string, ==, "\n");
-  g_assert_null (part->image);
+  g_assert_null (part->sprite);
   g_assert_false (part->has_font_scale);
   g_assert_true (part->has_text_color);
 
   part = format_parts->pdata[3];
   g_assert_cmpstr (part->string, ==, "test");
-  g_assert_null (part->image);
+  g_assert_null (part->sprite);
   g_assert_false (part->has_font_scale);
   g_assert_false (part->has_text_color);
 }

@@ -9,6 +9,8 @@
   <gresource prefix="/org/gnome/Shumate/Demo/osm-liberty">
     <file preprocess="json-stripblanks" alias="style.json">osm-liberty/style.json</file>
     <file preprocess="json-stripblanks" alias="sprites.json">osm-liberty/sprites.json</file>
+    <file preprocess="json-stripblanks" alias="sprites@2x.json">osm-liberty/sprites@2x.json</file>
     <file alias="sprites.png">osm-liberty/sprites.png</file>
+    <file alias="sprites@2x.png">osm-liberty/sprites@2x.png</file>
   </gresource>
 </gresources>

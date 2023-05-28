@@ -188,17 +188,26 @@ shumate_demo_window_init (ShumateDemoWindow *self)
         }
       else
         {
-          g_autoptr(GdkPixbuf) sprites_pixbuf = NULL;
+          g_autoptr(GdkTexture) sprites_texture = NULL;
           g_autoptr(GBytes) sprites_json = NULL;
+          g_autoptr(GdkTexture) sprites_2x_texture = NULL;
+          g_autoptr(GBytes) sprites_2x_json = NULL;
+          ShumateVectorSpriteSheet *sprites = NULL;
 
           sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_pixbuf = gdk_pixbuf_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites.png", NULL);
+          sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites.png");
+          sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+          sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.png");
 
-          shumate_vector_renderer_set_sprite_sheet_data (renderer,
-                                                         sprites_pixbuf,
-                                                         g_bytes_get_data (sprites_json, NULL),
-                                                         &error);
+          sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
+          shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);
+          if (error)
+            {
+              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
+              g_clear_error (&error);
+            }
 
+          shumate_vector_sprite_sheet_add_page (sprites, sprites_2x_texture, g_bytes_get_data (sprites_2x_json, NULL), 2, &error);
           if (error)
             {
               g_warning ("Failed to create spritesheet for vector map style: %s", error->message);

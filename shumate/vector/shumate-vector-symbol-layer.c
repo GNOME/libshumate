@@ -338,7 +338,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   ShumateVectorAlignment icon_rotation_alignment, text_rotation_alignment;
   g_autoptr(GHashTable) tags = NULL;
   g_autoptr(ShumateVectorSymbolDetails) details = NULL;
-  g_autoptr(GdkPixbuf) icon_image = shumate_vector_expression_eval_image (self->icon_image, scope);
+  g_autoptr(ShumateVectorSprite) icon_image = shumate_vector_expression_eval_image (self->icon_image, scope);
   ShumateVectorGeometryType geometry_type = shumate_vector_render_scope_get_geometry_type (scope);
   double x, y;
 

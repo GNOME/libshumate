@@ -320,11 +320,11 @@ shumate_vector_value_get_array (ShumateVectorValue *self)
 
 
 void
-shumate_vector_value_set_image (ShumateVectorValue *self,
-                                GdkPixbuf          *image,
-                                const char         *image_name)
+shumate_vector_value_set_image (ShumateVectorValue  *self,
+                                ShumateVectorSprite *image,
+                                const char          *image_name)
 {
-  g_assert (GDK_IS_PIXBUF (image));
+  g_assert (SHUMATE_IS_VECTOR_SPRITE (image));
   g_assert (image_name != NULL);
 
   shumate_vector_value_unset (self);
@@ -334,7 +334,7 @@ shumate_vector_value_set_image (ShumateVectorValue *self,
 }
 
 gboolean
-shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image)
+shumate_vector_value_get_image (ShumateVectorValue *self, ShumateVectorSprite **image)
 {
   if (self->type != SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
     return FALSE;
@@ -367,7 +367,7 @@ void
 shumate_vector_format_part_free (ShumateVectorFormatPart *format_part)
 {
   g_clear_pointer (&format_part->string, g_free);
-  g_clear_object (&format_part->image);
+  g_clear_object (&format_part->sprite);
   g_free (format_part);
 }
 
@@ -469,7 +469,7 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
         for (int i = 0; i < self->formatted_string->len; i ++)
           {
             ShumateVectorFormatPart *part = g_ptr_array_index (self->formatted_string, i);
-            if (!part->image)
+            if (!part->sprite)
               g_string_append (result, part->string);
           }
 

@@ -607,7 +607,7 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
   GHashTableIter bucket_rows;
   RTreeBucketRow *bucket_row;
 
-  double width[4] = { 1, 1, 1, 1 };
+  float width[4] = { 1, 1, 1, 1 };
   GdkRGBA color[4], color2[4];
 
   gdk_rgba_parse (&color[0], "#FF0000");

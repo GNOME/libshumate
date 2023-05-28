@@ -160,7 +160,7 @@ shumate_vector_expression_eval_color (ShumateVectorExpression  *self,
   shumate_vector_value_get_color (&value, color);
 }
 
-GdkPixbuf *
+ShumateVectorSprite *
 shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
                                       ShumateVectorRenderScope *scope)
 {
@@ -169,21 +169,14 @@ shumate_vector_expression_eval_image (ShumateVectorExpression  *self,
   if (value.type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
     {
       const char *name;
-      GdkPixbuf *pixbuf;
-
       shumate_vector_value_get_string (&value, &name);
-
-      pixbuf = shumate_vector_sprite_sheet_get_icon (scope->sprites, name);
-      if (pixbuf)
-        return g_object_ref (pixbuf);
-      else
-        return NULL;
+      return shumate_vector_sprite_sheet_get_sprite (scope->sprites, name, scope->scale_factor);
     }
   else if (value.type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
     {
-      GdkPixbuf *pixbuf;
-      shumate_vector_value_get_image (&value, &pixbuf);
-      return g_object_ref (pixbuf);
+      ShumateVectorSprite *sprite;
+      shumate_vector_value_get_image (&value, &sprite);
+      return g_object_ref (sprite);
     }
   else
     return NULL;

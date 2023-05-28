@@ -22,6 +22,7 @@
 #include "shumate-vector-symbol-container-private.h"
 #include "shumate-layer.h"
 #include "shumate-symbol-event-private.h"
+#include "../shumate-vector-sprite.h"
 
 #define RGBA_BLACK ((GdkRGBA){0, 0, 0, 1})
 
@@ -42,8 +43,6 @@ struct _ShumateVectorSymbol
   ShumateVectorPoint midpoint;
   double midpoint_angle;
   double line_length;
-
-  GdkTexture *icon;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbol, shumate_vector_symbol, GTK_TYPE_WIDGET)
@@ -67,6 +66,7 @@ static guint signals[LAST_SIGNAL] = { 0, };
 
 typedef struct {
   GskRenderNode *node;
+  ShumateVectorSprite *sprite;
   double width;
 } Glyph;
 
@@ -154,10 +154,10 @@ shumate_vector_symbol_constructed (GObject *object)
         {
           ShumateVectorFormatPart *part = g_ptr_array_index (self->symbol_info->details->formatted_text, i);
 
-          if (part->image != NULL)
+          if (part->sprite != NULL)
             {
-              int width = gdk_pixbuf_get_width (part->image);
-              int height = gdk_pixbuf_get_height (part->image);
+              int width = shumate_vector_sprite_get_width (part->sprite);
+              int height = shumate_vector_sprite_get_height (part->sprite);
               PangoRectangle rect = {
                 .x = 0,
                 .y = -height * PANGO_SCALE,
@@ -165,7 +165,7 @@ shumate_vector_symbol_constructed (GObject *object)
                 .height = height * PANGO_SCALE,
               };
 
-              attr = pango_attr_shape_new_with_data (&rect, &rect, g_object_ref (part->image), (PangoAttrDataCopyFunc)g_object_ref, g_object_unref);
+              attr = pango_attr_shape_new_with_data (&rect, &rect, g_object_ref (part->sprite), (PangoAttrDataCopyFunc)g_object_ref, g_object_unref);
               attr->start_index = string->len;
               attr->end_index = string->len + strlen ("\uFFFC");
               pango_attr_list_insert (attrs, attr);
@@ -236,16 +236,11 @@ shumate_vector_symbol_constructed (GObject *object)
 
             if (shape != NULL)
               {
-                Glyph glyph;
-                g_autoptr(GdkTexture) texture = gdk_texture_new_for_pixbuf (shape->data);
-                int width = gdk_pixbuf_get_width (shape->data);
-                int height = gdk_pixbuf_get_height (shape->data);
-
-                glyph.node = gsk_texture_node_new (
-                  texture,
-                  &GRAPHENE_RECT_INIT (0, -height, width, height)
-                );
-                glyph.width = shape->logical_rect.width / (double) PANGO_SCALE;
+                Glyph glyph = {
+                  .sprite = g_object_ref (shape->data),
+                  .node = NULL,
+                  .width = shape->logical_rect.width / (double) PANGO_SCALE,
+                };
                 g_array_append_vals (self->glyphs, &glyph, 1);
               }
             else
@@ -271,6 +266,7 @@ shumate_vector_symbol_constructed (GObject *object)
                                          &GRAPHENE_POINT_INIT (0, 0));
 
                     glyph.node = node;
+                    glyph.sprite = NULL;
                     glyph.width = glyph_string->glyphs[0].geometry.width / (double) PANGO_SCALE;
                     g_array_append_vals (self->glyphs, &glyph, 1);
 
@@ -328,9 +324,6 @@ shumate_vector_symbol_constructed (GObject *object)
 
   if (self->symbol_info->details->cursor != NULL)
     gtk_widget_set_cursor_from_name (GTK_WIDGET (self), self->symbol_info->details->cursor);
-
-  if (self->symbol_info->details->icon_image != NULL)
-    self->icon = gdk_texture_new_for_pixbuf (self->symbol_info->details->icon_image);
 
   if (self->symbol_info->line != NULL)
     {
@@ -402,7 +395,6 @@ shumate_vector_symbol_dispose (GObject *object)
   g_clear_pointer (&self->symbol_info, shumate_vector_symbol_info_unref);
   g_clear_pointer (&self->glyphs, g_array_unref);
   g_clear_pointer (&self->glyphs_node, gsk_render_node_unref);
-  g_clear_object (&self->icon);
 
   G_OBJECT_CLASS (shumate_vector_symbol_parent_class)->dispose (object);
 }
@@ -554,13 +546,13 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->x - self->bounds.origin.x,
                                                           self->y - self->bounds.origin.y));
 
-  if (self->icon)
+  if (self->symbol_info->details->icon_image)
     {
       double angle = 0;
-      double icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
-                         * self->symbol_info->details->icon_size;
-      double icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+      double icon_width = shumate_vector_sprite_get_width (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
+      double icon_height = shumate_vector_sprite_get_height (self->symbol_info->details->icon_image)
+                           * self->symbol_info->details->icon_size;
 
       double offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
       double offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
@@ -583,11 +575,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 self->midpoint.y * tile_size_for_zoom
                               ));
       gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
-      gtk_snapshot_append_texture (snapshot,
-                                   self->icon,
-                                   &GRAPHENE_RECT_INIT (-icon_width / 2.0 + offset_x,
-                                                        -icon_height / 2.0 + offset_y,
-                                                        icon_width, icon_height));
+      gtk_snapshot_translate (snapshot,
+                              &GRAPHENE_POINT_INIT (
+                                -icon_width / 2.0 + offset_x,
+                                -icon_height / 2.0 + offset_y
+                              ));
+      gdk_paintable_snapshot (GDK_PAINTABLE (self->symbol_info->details->icon_image),
+                              snapshot,
+                              icon_width, icon_height);
       gtk_snapshot_restore (snapshot);
     }
 
@@ -624,7 +619,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
           /* Whitespace has no glyph, but still has a width that needs to be
            * advanced in the point iter */
-          if (glyph->node != NULL)
+          if (glyph->node != NULL || glyph->sprite != NULL)
             {
               double angle;
 
@@ -647,7 +642,17 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
               gtk_snapshot_translate (snapshot,
                                       &GRAPHENE_POINT_INIT (-glyph->width / 2.0,
                                                             self->symbol_info->details->text_size / 2.0));
-              gtk_snapshot_append_node (snapshot, glyph->node);
+
+              if (glyph->node != NULL)
+                gtk_snapshot_append_node (snapshot, glyph->node);
+              else
+                {
+                  int width = shumate_vector_sprite_get_width (glyph->sprite);
+                  int height = shumate_vector_sprite_get_height (glyph->sprite);
+                  gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (0, -height));
+                  gdk_paintable_snapshot (GDK_PAINTABLE (glyph->sprite), snapshot, width, height);
+                }
+
               gtk_snapshot_restore (snapshot);
             }
           else
@@ -874,13 +879,14 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         return FALSE;
     }
 
-  if (self->icon)
+  if (self->symbol_info->details->icon_image)
     {
-      double angle = 0;
-      double icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
-                         * self->symbol_info->details->icon_size;
-      double icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+      float angle = 0;
+      double icon_width = shumate_vector_sprite_get_width (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
+      double icon_height = shumate_vector_sprite_get_height (self->symbol_info->details->icon_image)
+                           * self->symbol_info->details->icon_size;
+
       double offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
       double offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
 

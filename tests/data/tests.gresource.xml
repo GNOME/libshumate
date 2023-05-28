@@ -3,6 +3,8 @@
   <gresource prefix="/org/gnome/shumate/Tests">
     <file>sprites.json</file>
     <file>sprites.png</file>
+    <file>sprites@2x.json</file>
+    <file>sprites@2x.png</file>
     <file>style.json</file>
     <file>0.pbf</file>
   </gresource>

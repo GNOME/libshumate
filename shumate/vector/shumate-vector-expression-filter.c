@@ -1078,7 +1078,7 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
     case EXPR_IMAGE:
         {
-          GdkPixbuf *pixbuf = NULL;
+          g_autoptr(ShumateVectorSprite) sprite = NULL;
           g_assert (n_expressions == 1);
 
           string = shumate_vector_expression_eval_string (expressions[0], scope, NULL);
@@ -1088,14 +1088,14 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
               return TRUE;
             }
 
-          pixbuf = shumate_vector_sprite_sheet_get_icon (scope->sprites, string);
-          if (pixbuf == NULL)
+          sprite = shumate_vector_sprite_sheet_get_sprite (scope->sprites, string, scope->scale_factor);
+          if (sprite == NULL)
             {
               shumate_vector_value_unset (out);
               return TRUE;
             }
 
-          shumate_vector_value_set_image (out, pixbuf, string);
+          shumate_vector_value_set_image (out, sprite, string);
           return TRUE;
         }
 
@@ -1135,8 +1135,8 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
                 case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
                   {
                     part->string = shumate_vector_value_as_string (&value);
-                    shumate_vector_value_get_image (&value, &part->image);
-                    g_object_ref (part->image);
+                    shumate_vector_value_get_image (&value, &part->sprite);
+                    g_object_ref (part->sprite);
                     break;
                   }
 

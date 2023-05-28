@@ -19,6 +19,7 @@
 
 #include <json-glib/json-glib.h>
 #include <gtk/gtk.h>
+#include "../shumate-vector-sprite.h"
 #include "vector_tile.pb-c.h"
 
 #define SHUMATE_VECTOR_COLOR_BLACK ((GdkRGBA) {.red=0, .green=0, .blue=0, .alpha=1})
@@ -38,7 +39,7 @@ typedef enum {
 typedef struct {
   GdkRGBA text_color;
   char *string;
-  GdkPixbuf *image;
+  ShumateVectorSprite *sprite;
   double font_scale;
   gboolean has_text_color : 1;
   gboolean has_font_scale : 1;
@@ -61,7 +62,7 @@ typedef struct {
     };
     GPtrArray *array;
     struct {
-      GdkPixbuf *image;
+      ShumateVectorSprite *image;
       char *image_name;
     };
     GPtrArray *formatted_string;
@@ -99,8 +100,8 @@ void shumate_vector_value_start_array (ShumateVectorValue *self);
 void shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element);
 GPtrArray *shumate_vector_value_get_array (ShumateVectorValue *self);
 
-void shumate_vector_value_set_image (ShumateVectorValue *self, GdkPixbuf *image, const char *image_name);
-gboolean shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image);
+void shumate_vector_value_set_image (ShumateVectorValue *self, ShumateVectorSprite *image, const char *image_name);
+gboolean shumate_vector_value_get_image (ShumateVectorValue *self, ShumateVectorSprite **image);
 
 void shumate_vector_value_set_formatted (ShumateVectorValue *self, GPtrArray *format_parts);
 gboolean shumate_vector_value_get_formatted (ShumateVectorValue *self, GPtrArray **format_parts);

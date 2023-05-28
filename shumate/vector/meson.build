@@ -9,7 +9,6 @@ libshumate_sources += files(
   'shumate-vector-layer.c',
   'shumate-vector-line-layer.c',
   'shumate-vector-render-scope.c',
-  'shumate-vector-sprite-sheet.c',
   'shumate-vector-symbol.c',
   'shumate-vector-symbol-container.c',
   'shumate-vector-symbol-info.c',

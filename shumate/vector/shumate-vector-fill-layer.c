@@ -18,7 +18,7 @@
 #include <gtk/gtk.h>
 #include "shumate-vector-expression-private.h"
 #include "shumate-vector-fill-layer-private.h"
-#include "shumate-vector-sprite-sheet-private.h"
+#include "shumate-vector-sprite-sheet.h"
 #include "shumate-vector-utils-private.h"
 #include "shumate-vector-value-private.h"
 
@@ -60,6 +60,35 @@ shumate_vector_fill_layer_create_from_json (JsonObject *object, GError **error)
   return (ShumateVectorLayer *)layer;
 }
 
+static cairo_pattern_t *
+create_pattern (ShumateVectorSprite      *sprite,
+                ShumateVectorRenderScope *scope)
+{
+  int width = shumate_vector_sprite_get_width (sprite) * scope->scale_factor;
+  int height = shumate_vector_sprite_get_height (sprite) * scope->scale_factor;
+  cairo_surface_t *surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
+  cairo_t *source_cr = cairo_create (surface);
+  GtkSnapshot *snapshot = gtk_snapshot_new ();
+  g_autoptr(GskRenderNode) node = NULL;
+  cairo_pattern_t *pattern;
+  cairo_matrix_t matrix;
+
+  gdk_paintable_snapshot (GDK_PAINTABLE (sprite), snapshot, width, height);
+  node = gtk_snapshot_free_to_node (snapshot);
+
+  gsk_render_node_draw (node, source_cr);
+
+  pattern = cairo_pattern_create_for_surface (surface);
+  cairo_matrix_init_scale (&matrix, 1 / scope->scale * scope->scale_factor, 1 / scope->scale * scope->scale_factor);
+  cairo_pattern_set_matrix (pattern, &matrix);
+  cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
+
+  cairo_surface_destroy (surface);
+  cairo_destroy (source_cr);
+
+  return pattern;
+}
+
 
 static void
 shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRenderScope *scope)
@@ -67,30 +96,27 @@ shumate_vector_fill_layer_render (ShumateVectorLayer *layer, ShumateVectorRender
   ShumateVectorFillLayer *self = SHUMATE_VECTOR_FILL_LAYER (layer);
   GdkRGBA color = SHUMATE_VECTOR_COLOR_BLACK;
   double opacity;
-  g_autoptr(GdkPixbuf) pattern = NULL;
+  g_autoptr(ShumateVectorSprite) pattern_sprite = NULL;
 
   shumate_vector_expression_eval_color (self->color, scope, &color);
   opacity = shumate_vector_expression_eval_number (self->opacity, scope, 1.0);
-  pattern = shumate_vector_expression_eval_image (self->pattern, scope);
+  pattern_sprite = shumate_vector_expression_eval_image (self->pattern, scope);
 
   shumate_vector_render_scope_exec_geometry (scope);
 
-  if (pattern != NULL)
+  if (pattern_sprite != NULL)
     {
-      cairo_pattern_t *cr_pattern;
-      cairo_matrix_t matrix;
+      cairo_pattern_t *pattern = create_pattern (pattern_sprite, scope);
 
-      gdk_cairo_set_source_pixbuf (scope->cr, pattern, 0, 0);
-      cr_pattern = cairo_get_source (scope->cr);
-      cairo_matrix_init_scale (&matrix, 1 / scope->scale, 1 / scope->scale);
-      cairo_pattern_set_matrix (cr_pattern, &matrix);
-      cairo_pattern_set_extend (cr_pattern, CAIRO_EXTEND_REPEAT);
+      cairo_set_source (scope->cr, pattern);
 
       /* Use cairo_paint_with_alpha so that we can set fill-opacity correctly. */
       cairo_save (scope->cr);
       cairo_clip (scope->cr);
       cairo_paint_with_alpha (scope->cr, opacity);
       cairo_restore (scope->cr);
+
+      cairo_pattern_destroy (pattern);
     }
   else
     {

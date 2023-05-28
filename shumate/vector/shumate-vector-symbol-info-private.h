@@ -21,6 +21,7 @@
 #include <glib-object.h>
 #include "shumate-vector-utils-private.h"
 #include "shumate-vector-render-scope-private.h"
+#include "../shumate-vector-sprite.h"
 
 
 G_BEGIN_DECLS
@@ -56,7 +57,7 @@ typedef struct {
   char *feature_id;
 
   ShumateVectorAnchor icon_anchor;
-  GdkPixbuf *icon_image;
+  ShumateVectorSprite *icon_image;
   double icon_offset_x, icon_offset_y;
   float icon_size;
   ShumateVectorAlignment icon_rotation_alignment;
