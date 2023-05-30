@@ -19,10 +19,11 @@
 #pragma once
 
 #include "shumate-vector-renderer.h"
+#include "shumate-utils-private.h"
 
-void shumate_vector_renderer_render (ShumateVectorRenderer *self,
-                                     ShumateTile           *tile,
-                                     GBytes                *tile_data,
-                                     int                    source_x,
-                                     int                    source_y,
-                                     int                    source_zoom_level);
+void shumate_vector_renderer_render (ShumateVectorRenderer  *self,
+                                     ShumateTile            *tile,
+                                     GBytes                 *data,
+                                     ShumateGridPosition    *source_position,
+                                     GdkPaintable          **paintable,
+                                     GPtrArray             **symbols);

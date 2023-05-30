@@ -26,6 +26,8 @@ typedef struct
   int zoom;
 } ShumateGridPosition;
 
+#define SHUMATE_GRID_POSITION_INIT(x, y, zoom) ((ShumateGridPosition) {x, y, zoom})
+
 void shumate_grid_position_init (ShumateGridPosition *self,
                                  int                  x,
                                  int                  y,

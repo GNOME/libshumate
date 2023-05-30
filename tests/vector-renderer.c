@@ -2,6 +2,7 @@
 #include <shumate/shumate.h>
 #include "shumate/shumate-tile-private.h"
 #include "shumate/shumate-vector-renderer-private.h"
+#include "shumate/shumate-utils-private.h"
 
 static void
 test_vector_renderer_render (void)
@@ -11,6 +12,9 @@ test_vector_renderer_render (void)
   g_autoptr(GBytes) tile_data = NULL;
   g_autoptr(ShumateVectorRenderer) renderer = NULL;
   g_autoptr(ShumateTile) tile = shumate_tile_new_full (0, 0, 512, 0);
+  g_autoptr(GdkPaintable) paintable = NULL;
+  g_autoptr(GPtrArray) symbols = NULL;
+  ShumateGridPosition source_position = { 0, 0, 0 };
 
   style_json = g_resources_lookup_data ("/org/gnome/shumate/Tests/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
@@ -21,9 +25,10 @@ test_vector_renderer_render (void)
   tile_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
 
-  shumate_vector_renderer_render (renderer, tile, tile_data, 0, 0, 0);
-  g_assert_nonnull (shumate_tile_get_paintable (tile));
-  g_assert_nonnull (shumate_tile_get_symbols (tile));
+  shumate_vector_renderer_render (renderer, tile, tile_data, &source_position, &paintable, &symbols);
+  g_assert_no_error (error);
+  g_assert_true (GDK_IS_PAINTABLE (paintable));
+  g_assert_nonnull (symbols);
 }
 
 int

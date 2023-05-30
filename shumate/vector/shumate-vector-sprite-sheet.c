@@ -23,6 +23,8 @@ struct _ShumateVectorSpriteSheet
 {
   GObject parent_instance;
 
+  GMutex mutex;
+
   char *json;
   GdkPixbuf *pixbuf;
   GHashTable *sprites;
@@ -120,6 +122,7 @@ shumate_vector_sprite_sheet_finalize (GObject *object)
   g_clear_pointer (&self->json, g_free);
   g_clear_object (&self->pixbuf);
   g_clear_pointer (&self->sprites, g_hash_table_unref);
+  g_mutex_clear (&self->mutex);
 
   G_OBJECT_CLASS (shumate_vector_sprite_sheet_parent_class)->finalize (object);
 }
@@ -201,6 +204,7 @@ shumate_vector_sprite_sheet_initable_iface_init (GInitableIface *iface)
 static void
 shumate_vector_sprite_sheet_init (ShumateVectorSpriteSheet *self)
 {
+  g_mutex_init (&self->mutex);
   self->sprites = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)sprite_free);
 }
 
@@ -219,6 +223,7 @@ shumate_vector_sprite_sheet_get_icon (ShumateVectorSpriteSheet *self,
                                       const char               *name)
 {
   Sprite *sprite;
+  g_autoptr(GMutexLocker) locker = g_mutex_locker_new (&self->mutex);
 
   sprite = g_hash_table_lookup (self->sprites, name);
   if (sprite == NULL)

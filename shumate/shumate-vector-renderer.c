@@ -47,10 +47,18 @@ struct _ShumateVectorRenderer
   ShumateVectorSpriteSheet *sprites;
 #endif
 
+  GThreadPool *thread_pool;
+
   char *style_json;
 
   GPtrArray *layers;
 };
+
+
+static gboolean begin_render (ShumateVectorRenderer  *self,
+                              GTask                  *task,
+                              GBytes                 *tile_data,
+                              ShumateGridPosition    *source_position);
 
 static void shumate_vector_renderer_initable_iface_init (GInitableIface *iface);
 
@@ -130,6 +138,9 @@ shumate_vector_renderer_finalize (GObject *object)
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_clear_object (&self->sprites);
 #endif
+
+  if (self->thread_pool)
+    g_thread_pool_free (self->thread_pool, FALSE, FALSE);
 
   G_OBJECT_CLASS (shumate_vector_renderer_parent_class)->finalize (object);
 }
@@ -403,6 +414,49 @@ shumate_vector_renderer_initable_iface_init (GInitableIface *iface)
 }
 
 
+/* An item in the thread pool queue to render a tile from received data. */
+typedef struct {
+  GTask *task;
+  GCancellable *cancellable;
+  gulong cancellable_handle;
+  GBytes *data;
+  ShumateGridPosition source_position;
+
+  GdkPaintable *paintable;
+  GPtrArray *symbols;
+} RenderJob;
+
+
+static void
+render_job_unref (RenderJob *job)
+{
+  if (job->cancellable_handle != 0)
+    g_cancellable_disconnect (g_task_get_cancellable (job->task), job->cancellable_handle);
+  g_clear_object (&job->cancellable);
+  g_clear_object (&job->task);
+  g_clear_pointer (&job->data, g_bytes_unref);
+  g_clear_object (&job->paintable);
+  g_clear_pointer (&job->symbols, g_ptr_array_unref);
+  g_free (job);
+}
+
+/* The data associated with a shumate_vector_renderer_fill_tile_async() task. */
+typedef struct {
+  ShumateTile *tile;
+  RenderJob *current_job;
+  ShumateDataSourceRequest *req;
+  guint8 completed : 1;
+} TaskData;
+
+static void
+task_data_free (TaskData *data)
+{
+  g_clear_object (&data->tile);
+  g_clear_object (&data->req);
+  g_free (data);
+}
+
+
 static void
 shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
@@ -518,18 +572,36 @@ on_request_notify (ShumateDataSourceRequest *req,
 {
   GTask *task = user_data;
   GBytes *data;
-  ShumateTile *tile = g_task_get_task_data (task);
   ShumateVectorRenderer *self = g_task_get_source_object (task);
 
   if ((data = shumate_data_source_request_get_data (req)))
     {
-      shumate_vector_renderer_render (self,
-                                      tile,
-                                      data,
-                                      shumate_data_source_request_get_x (req),
-                                      shumate_data_source_request_get_y (req),
-                                      shumate_data_source_request_get_zoom_level (req));
+      begin_render (
+        self,
+        task,
+        data,
+        &SHUMATE_GRID_POSITION_INIT (
+          shumate_data_source_request_get_x (req),
+          shumate_data_source_request_get_y (req),
+          shumate_data_source_request_get_zoom_level (req)
+        )
+      );
     }
+}
+
+
+static void
+return_from_task (GTask *task, ShumateDataSourceRequest *req)
+{
+  GError *error;
+  TaskData *data = g_task_get_task_data (task);
+
+  shumate_tile_set_state (data->tile, SHUMATE_STATE_DONE);
+
+  if ((error = shumate_data_source_request_get_error (req)))
+    g_task_return_error (task, g_error_copy (error));
+  else
+    g_task_return_boolean (task, TRUE);
 }
 
 static void
@@ -538,15 +610,12 @@ on_request_notify_completed (ShumateDataSourceRequest *req,
                              gpointer                  user_data)
 {
   g_autoptr(GTask) task = user_data;
-  GError *error;
-  ShumateTile *tile = g_task_get_task_data (task);
+  TaskData *data = g_task_get_task_data (task);
 
-  shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
-
-  if ((error = shumate_data_source_request_get_error (req)))
-    g_task_return_error (task, g_error_copy (error));
+  if (data->current_job != NULL)
+    data->completed = TRUE;
   else
-    g_task_return_boolean (task, TRUE);
+    return_from_task (task, req);
 }
 
 static void
@@ -561,6 +630,7 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
   int x, y, zoom_level;
   g_autoptr(ShumateDataSourceRequest) req = NULL;
   GBytes *data;
+  TaskData *task_data;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (SHUMATE_IS_TILE (tile));
@@ -568,7 +638,10 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
 
   task = g_task_new (self, cancellable, callback, user_data);
   g_task_set_source_tag (task, shumate_vector_renderer_fill_tile_async);
-  g_task_set_task_data (task, g_object_ref (tile), (GDestroyNotify)g_object_unref);
+
+  task_data = g_new0 (TaskData, 1);
+  task_data->tile = g_object_ref (tile);
+  g_task_set_task_data (task, task_data, (GDestroyNotify)task_data_free);
 
   x = shumate_tile_get_x (tile);
   y = shumate_tile_get_y (tile);
@@ -577,15 +650,20 @@ shumate_vector_renderer_fill_tile_async (ShumateMapSource    *map_source,
   get_source_coordinates (self, &x, &y, &zoom_level);
 
   req = shumate_data_source_start_request (self->data_source, x, y, zoom_level, cancellable);
+  task_data->req = g_object_ref (req);
 
   if ((data = shumate_data_source_request_get_data (req)))
-    shumate_vector_renderer_render (self, tile, data, x, y, zoom_level);
+    {
+      begin_render (
+        self,
+        task,
+        data,
+        &SHUMATE_GRID_POSITION_INIT (x, y, zoom_level)
+      );
+    }
 
   if (shumate_data_source_request_is_completed (req))
-    {
-      on_request_notify (req, NULL, task);
-      on_request_notify_completed (req, NULL, g_steal_pointer (&task));
-    }
+    on_request_notify_completed (req, NULL, g_steal_pointer (&task));
   else
     {
       g_signal_connect_object (req, "notify::data", (GCallback)on_request_notify, task, 0);
@@ -607,22 +685,21 @@ shumate_vector_renderer_fill_tile_finish (ShumateMapSource  *map_source,
 }
 
 void
-shumate_vector_renderer_render (ShumateVectorRenderer *self,
-                                ShumateTile           *tile,
-                                GBytes                *tile_data,
-                                int                    source_x,
-                                int                    source_y,
-                                int                    source_zoom_level)
+shumate_vector_renderer_render (ShumateVectorRenderer  *self,
+                                ShumateTile            *tile,
+                                GBytes                 *tile_data,
+                                ShumateGridPosition    *source_position,
+                                GdkPaintable          **paintable,
+                                GPtrArray             **symbols)
 {
   SHUMATE_PROFILE_START ();
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
-  g_autoptr(GdkTexture) texture = NULL;
   cairo_surface_t *surface;
   gconstpointer data;
   gsize len;
-  g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
+  g_autoptr(GPtrArray) symbol_list = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
   float scale_factor;
   g_autofree char *profile_desc = NULL;
@@ -636,14 +713,14 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
   scope.tile_x = shumate_tile_get_x (tile);
   scope.tile_y = shumate_tile_get_y (tile);
   scope.zoom_level = shumate_tile_get_zoom_level (tile);
-  scope.symbols = symbols;
+  scope.symbols = symbol_list;
   scope.sprites = self->sprites;
 
-  if (scope.zoom_level > source_zoom_level)
+  if (scope.zoom_level > source_position->zoom)
     {
-      float s = 1 << ((int)scope.zoom_level - source_zoom_level);
-      scope.overzoom_x = (scope.tile_x - (source_x << ((int)scope.zoom_level - source_zoom_level))) / s;
-      scope.overzoom_y = (scope.tile_y - (source_y << ((int)scope.zoom_level - source_zoom_level))) / s;
+      float s = 1 << ((int)scope.zoom_level - source_position->zoom);
+      scope.overzoom_x = (scope.tile_x - (source_position->x << ((int)scope.zoom_level - source_position->zoom))) / s;
+      scope.overzoom_y = (scope.tile_y - (source_position->y << ((int)scope.zoom_level - source_position->zoom))) / s;
       scope.overzoom_scale = s;
     }
   else
@@ -664,9 +741,8 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
     for (scope.layer_idx = 0; scope.layer_idx < self->layers->len; scope.layer_idx ++)
       shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[scope.layer_idx], &scope);
 
-  texture = texture_new_for_surface (surface);
-  shumate_tile_set_paintable (tile, GDK_PAINTABLE (texture));
-  shumate_tile_set_symbols (tile, symbols);
+  *paintable = GDK_PAINTABLE (texture_new_for_surface (surface));
+  *symbols = g_ptr_array_ref (scope.symbols);
 
   cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
@@ -678,6 +754,108 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
 #else
   g_return_if_reached ();
 #endif
+}
+
+static gboolean
+render_job_finish (RenderJob *job)
+{
+  TaskData *data = g_task_get_task_data (job->task);
+
+  if (!g_cancellable_is_cancelled (job->cancellable))
+    {
+      shumate_tile_set_paintable (data->tile, job->paintable);
+      shumate_tile_set_symbols (data->tile, job->symbols);
+    }
+
+  if (data->completed)
+    return_from_task (job->task, data->req);
+
+  /* Make sure the TaskData knows there's not a current job anymore */
+  if (data->current_job == job)
+    data->current_job = NULL;
+
+  render_job_unref (job);
+  return G_SOURCE_REMOVE;
+}
+
+static void
+thread_func (RenderJob *job)
+{
+  ShumateVectorRenderer *self = g_task_get_source_object (job->task);
+  TaskData *data = g_task_get_task_data (job->task);
+
+  if (!g_cancellable_is_cancelled (job->cancellable))
+    {
+      shumate_vector_renderer_render (
+        self,
+        data->tile,
+        job->data,
+        &job->source_position,
+        &job->paintable,
+        &job->symbols
+      );
+    }
+
+  g_idle_add ((GSourceFunc)render_job_finish, job);
+}
+
+static gboolean
+begin_render (ShumateVectorRenderer  *self,
+              GTask                  *task,
+              GBytes                 *tile_data,
+              ShumateGridPosition    *source_position)
+{
+  g_autoptr(GError) error = NULL;
+  RenderJob *job = NULL;
+  TaskData *data = (TaskData *)g_task_get_task_data (task);
+
+  if (data->current_job != NULL)
+    {
+      g_cancellable_cancel (data->current_job->cancellable);
+      data->current_job = NULL;
+    }
+
+  job = g_new0 (RenderJob, 1);
+  job->cancellable = g_cancellable_new ();
+  job->task = g_object_ref (task);
+  job->data = g_bytes_ref (tile_data);
+  job->source_position = *source_position;
+  data->current_job = job;
+
+  /* If the input cancellable is cancelled, stop the render job. */
+  if (g_task_get_cancellable (task) != NULL)
+    {
+      job->cancellable_handle = g_cancellable_connect (
+        g_task_get_cancellable (task),
+        G_CALLBACK (g_cancellable_cancel),
+        job->cancellable, NULL
+      );
+    }
+
+  if (self->thread_pool == NULL)
+    {
+      self->thread_pool = g_thread_pool_new_full (
+        (GFunc)thread_func,
+        NULL,
+        (GDestroyNotify)render_job_unref,
+        g_get_num_processors () - 1,
+        FALSE,
+        &error
+      );
+      if (self->thread_pool == NULL)
+        {
+          g_critical ("Failed to create thread pool: %s", error->message);
+          return FALSE;
+        }
+    }
+
+  if (!g_thread_pool_push (self->thread_pool, job, &error))
+    {
+      g_critical ("Failed to push job to thread pool: %s", error->message);
+      return FALSE;
+    }
+
+  return TRUE;
 }
 
 
