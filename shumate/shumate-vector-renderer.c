@@ -624,12 +624,14 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
   gsize len;
   g_autoptr(GPtrArray) symbols = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
+  float scale_factor;
   g_autofree char *profile_desc = NULL;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_TILE (tile));
 
   texture_size = shumate_tile_get_size (tile);
+  scale_factor = shumate_tile_get_scale_factor (tile);
   scope.target_size = texture_size;
   scope.tile_x = shumate_tile_get_x (tile);
   scope.tile_y = shumate_tile_get_y (tile);
@@ -651,8 +653,9 @@ shumate_vector_renderer_render (ShumateVectorRenderer *self,
       scope.overzoom_scale = 1;
     }
 
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size, texture_size);
+  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, texture_size * scale_factor, texture_size * scale_factor);
   scope.cr = cairo_create (surface);
+  cairo_scale (scope.cr, scale_factor, scale_factor);
 
   data = g_bytes_get_data (tile_data, &len);
   scope.tile = vector_tile__tile__unpack (NULL, len, data);

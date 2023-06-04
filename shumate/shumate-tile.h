@@ -89,6 +89,11 @@ void shumate_tile_set_fade_in (ShumateTile *self,
 GdkPaintable *shumate_tile_get_paintable (ShumateTile *self);
 void shumate_tile_set_paintable (ShumateTile  *self,
                                  GdkPaintable *paintable);
+
+double shumate_tile_get_scale_factor (ShumateTile *self);
+void shumate_tile_set_scale_factor (ShumateTile *self,
+                                    double       scale_factor);
+
 G_END_DECLS
 
 #endif /* SHUMATE_MAP_TILE_H */

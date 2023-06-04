@@ -292,6 +292,7 @@ recompute_grid (ShumateMapLayer *self)
           if (!tile)
             {
               tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
+              shumate_tile_set_scale_factor (tile, gtk_widget_get_scale_factor (GTK_WIDGET (self)));
               add_tile (self, tile, g_steal_pointer (&pos));
             }
 

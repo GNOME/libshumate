@@ -47,6 +47,8 @@ struct _ShumateTile
   ShumateState state; /* The tile state: loading, validation, done */
   gboolean fade_in;
 
+  double scale_factor;
+
   GdkPaintable *paintable;
   GPtrArray *symbols;
 };
@@ -62,6 +64,7 @@ enum
   PROP_STATE,
   PROP_FADE_IN,
   PROP_PAINTABLE,
+  PROP_SCALE_FACTOR,
   N_PROPERTIES
 };
 
@@ -103,6 +106,10 @@ shumate_tile_get_property (GObject    *object,
 
     case PROP_PAINTABLE:
       g_value_set_object (value, shumate_tile_get_paintable (self));
+      break;
+
+    case PROP_SCALE_FACTOR:
+      g_value_set_double (value, self->scale_factor);
       break;
 
     default:
@@ -149,6 +156,10 @@ shumate_tile_set_property (GObject      *object,
       shumate_tile_set_paintable (self, g_value_get_object (value));
       break;
 
+    case PROP_SCALE_FACTOR:
+      shumate_tile_set_scale_factor (self, g_value_get_double (value));
+      break;
+
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     }
@@ -175,7 +186,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
   object_class->get_property = shumate_tile_get_property;
   object_class->set_property = shumate_tile_set_property;
   object_class->dispose = shumate_tile_dispose;
-  
+
   /**
    * ShumateTile:x:
    *
@@ -269,6 +280,18 @@ shumate_tile_class_init (ShumateTileClass *klass)
                          GDK_TYPE_PAINTABLE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateTile:scale-factor:
+   *
+   * The scale factor of the widget the tile will be displayed in.
+   */
+  obj_properties[PROP_SCALE_FACTOR] =
+    g_param_spec_double ("scale-factor",
+                         "scale-factor",
+                         "scale-factor",
+                         G_MINDOUBLE, G_MAXDOUBLE, 1.0,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
@@ -279,6 +302,7 @@ static void
 shumate_tile_init (ShumateTile *self)
 {
   self->state = SHUMATE_STATE_NONE;
+  self->scale_factor = 1.0;
 }
 
 /**
@@ -580,6 +604,45 @@ shumate_tile_set_paintable (ShumateTile  *self,
   if (g_set_object (&self->paintable, paintable))
     g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_PAINTABLE]);
 }
+
+
+/**
+ * shumate_tile_get_scale_factor:
+ * @self: a [class@Tile]
+ *
+ * Gets the scale factor of the tile.
+ *
+ * Returns: the scale factor
+ */
+double
+shumate_tile_get_scale_factor (ShumateTile *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_TILE (self), 1.0);
+  return self->scale_factor;
+}
+
+
+/**
+ * shumate_tile_set_scale_factor:
+ * @self: the [class@Tile]
+ * @scale_factor: the scale factor
+ *
+ * Sets the scale factor of the tile.
+ */
+void
+shumate_tile_set_scale_factor (ShumateTile *self,
+                               double       scale_factor)
+{
+  g_return_if_fail (SHUMATE_IS_TILE (self));
+  g_return_if_fail (scale_factor >= G_MINDOUBLE);
+
+  if (self->scale_factor == scale_factor)
+    return;
+
+  self->scale_factor = scale_factor;
+  g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_SCALE_FACTOR]);
+}
+
 
 
 void
