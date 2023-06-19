@@ -31,6 +31,8 @@
  *
  * [class@SymbolEvent] implements [iface@Location] so you can get the latitude
  * and longitude of the feature that was clicked.
+ *
+ * Since: 1.1
  */
 
 struct _ShumateSymbolEvent
@@ -129,6 +131,8 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    * ShumateSymbolEvent:layer:
    *
    * The ID of the style layer of the symbol that this event pertains to.
+   *
+   * Since: 1.1
    */
   properties[PROP_LAYER] =
     g_param_spec_string ("layer",
@@ -142,6 +146,8 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    *
    * The ID of the feature that this event pertains to, as it was given in the
    * data source.
+   *
+   * Since: 1.1
    */
   properties[PROP_FEATURE_ID] =
     g_param_spec_string ("feature-id",
@@ -209,6 +215,8 @@ location_interface_init (ShumateLocationInterface *iface)
  * data source layer.
  *
  * Returns: (transfer none): the layer name
+ *
+ * Since: 1.1
  */
 const char *
 shumate_symbol_event_get_layer (ShumateSymbolEvent *self)
@@ -228,6 +236,8 @@ shumate_symbol_event_get_layer (ShumateSymbolEvent *self)
  * formatted as a string here for futureproofing.
  *
  * Returns: (transfer none): the feature ID
+ *
+ * Since: 1.1
  */
 const char *
 shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self)
@@ -248,6 +258,8 @@ shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self)
  * is available.
  *
  * Returns: (transfer none): the tag value, formatted as a string
+ *
+ * Since: 1.1
  */
 const char *
 shumate_symbol_event_get_tag (ShumateSymbolEvent *self,

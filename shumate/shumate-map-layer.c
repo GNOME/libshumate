@@ -671,6 +671,8 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
    * @event: a [class@SymbolEvent] with details about the clicked symbol.
    *
    * Emitted when a symbol in the map layer is clicked.
+   *
+   * Since: 1.1
    */
   signals[SYMBOL_CLICKED] =
     g_signal_new ("symbol-clicked",

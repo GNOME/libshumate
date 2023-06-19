@@ -287,6 +287,8 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
    *
    * Emitted when a symbol in the base map layer (not in overlay layers) is
    * clicked.
+   *
+   * Since: 1.1
    */
   signals[SYMBOL_CLICKED] =
     g_signal_new ("symbol-clicked",

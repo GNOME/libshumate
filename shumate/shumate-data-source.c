@@ -157,6 +157,8 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
    * ShumateDataSource:min-zoom-level:
    *
    * The minimum zoom level
+   *
+   * Since: 1.1
    */
   properties[PROP_MIN_ZOOM_LEVEL] =
     g_param_spec_uint ("min-zoom-level",
@@ -169,6 +171,8 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
    * ShumateDataSource:max-zoom-level:
    *
    * The maximum zoom level
+   *
+   * Since: 1.1
    */
   properties[PROP_MAX_ZOOM_LEVEL] =
     g_param_spec_uint ("max-zoom-level",
@@ -279,6 +283,8 @@ shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,
  *
  * Returns: (transfer full): a [class@DataSourceRequest] object for tracking
  * the request.
+ *
+ * Since: 1.1
  */
 ShumateDataSourceRequest *
 shumate_data_source_start_request (ShumateDataSource         *self,
@@ -300,6 +306,8 @@ shumate_data_source_start_request (ShumateDataSource         *self,
  * Gets the data source's minimum zoom level.
  *
  * Returns: the minimum zoom level this data source supports
+ *
+ * Since: 1.1
  */
 guint
 shumate_data_source_get_min_zoom_level (ShumateDataSource *self)
@@ -317,6 +325,8 @@ shumate_data_source_get_min_zoom_level (ShumateDataSource *self)
  * @zoom_level: the minimum zoom level
  *
  * Sets the data source's minimum zoom level.
+ *
+ * Since: 1.1
  */
 void
 shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
@@ -342,6 +352,8 @@ shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
  * Gets the data source's maximum zoom level.
  *
  * Returns: the maximum zoom level this data source supports
+ *
+ * Since: 1.1
  */
 guint
 shumate_data_source_get_max_zoom_level (ShumateDataSource *self)
@@ -359,6 +371,8 @@ shumate_data_source_get_max_zoom_level (ShumateDataSource *self)
  * @zoom_level: the maximum zoom level
  *
  * Sets the data source's maximum zoom level.
+ *
+ * Since: 1.1
  */
 void
 shumate_data_source_set_max_zoom_level (ShumateDataSource *self,

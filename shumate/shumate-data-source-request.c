@@ -41,6 +41,8 @@
  * [class@DataSource] implementations can use a subclass of
  * [class@DataSourceRequest], but the base class should be sufficient in most
  * cases.
+ *
+ * Since: 1.1
  */
 
 
@@ -162,6 +164,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * ShumateDataSourceRequest:x:
    *
    * The X coordinate of the requested tile.
+   *
+   * Since: 1.1
    */
   properties[PROP_X] =
     g_param_spec_int ("x", "x", "x",
@@ -172,6 +176,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * ShumateDataSourceRequest:y:
    *
    * The Y coordinate of the requested tile.
+   *
+   * Since: 1.1
    */
   properties[PROP_Y] =
     g_param_spec_int ("y", "y", "y",
@@ -182,6 +188,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * ShumateDataSourceRequest:zoom-level:
    *
    * The zoom level of the requested tile.
+   *
+   * Since: 1.1
    */
   properties[PROP_ZOOM_LEVEL] =
     g_param_spec_int ("zoom-level", "zoom-level", "zoom-level",
@@ -193,6 +201,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    *
    * The most recent data for the tile, if available. If an error is emitted,
    * this will be set to %NULL.
+   *
+   * Since: 1.1
    */
   properties[PROP_DATA] =
     g_param_spec_boxed ("data", "data", "data",
@@ -203,6 +213,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * ShumateDataSourceRequest:error:
    *
    * The error that occurred during the request, if any.
+   *
+   * Since: 1.1
    */
   properties[PROP_ERROR] =
     g_param_spec_boxed ("error", "error", "error",
@@ -215,6 +227,8 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * %TRUE if the request has been completed, otherwise %FALSE. A completed
    * request will not receive further updates to either
    * [property@DataSourceRequest:data] or [property@DataSourceRequest:error].
+   *
+   * Since: 1.1
    */
   properties[PROP_COMPLETED] =
     g_param_spec_boolean ("completed", "completed", "completed",
@@ -236,6 +250,8 @@ shumate_data_source_request_init (ShumateDataSourceRequest *self)
  * Gets the X coordinate of the requested tile.
  *
  * Returns: the X coordinate
+ *
+ * Since: 1.1
  */
 int
 shumate_data_source_request_get_x (ShumateDataSourceRequest *self)
@@ -252,6 +268,8 @@ shumate_data_source_request_get_x (ShumateDataSourceRequest *self)
  * Gets the Y coordinate of the requested tile.
  *
  * Returns: the Y coordinate
+ *
+ * Since: 1.1
  */
 int
 shumate_data_source_request_get_y (ShumateDataSourceRequest *self)
@@ -268,6 +286,8 @@ shumate_data_source_request_get_y (ShumateDataSourceRequest *self)
  * Gets the zoom level of the requested tile.
  *
  * Returns: the zoom level
+ *
+ * Since: 1.1
  */
 int
 shumate_data_source_request_get_zoom_level (ShumateDataSourceRequest *self)
@@ -284,6 +304,8 @@ shumate_data_source_request_get_zoom_level (ShumateDataSourceRequest *self)
  * Gets the latest data from the request.
  *
  * Returns: (transfer none) (nullable): The latest data, if any.
+ *
+ * Since: 1.1
  */
 GBytes *
 shumate_data_source_request_get_data (ShumateDataSourceRequest *self)
@@ -300,6 +322,8 @@ shumate_data_source_request_get_data (ShumateDataSourceRequest *self)
  * Gets the latest error from the request.
  *
  * Returns: (transfer none) (nullable): The latest error, if any.
+ *
+ * Since: 1.1
  */
 GError *
 shumate_data_source_request_get_error (ShumateDataSourceRequest *self)
@@ -317,6 +341,8 @@ shumate_data_source_request_get_error (ShumateDataSourceRequest *self)
  * receive new data or errors.
  *
  * Returns: %TRUE if the request is completed, otherwise %FALSE
+ *
+ * Since: 1.1
  */
 gboolean
 shumate_data_source_request_is_completed (ShumateDataSourceRequest *self)
@@ -338,6 +364,8 @@ shumate_data_source_request_is_completed (ShumateDataSourceRequest *self)
  * construct a new request object.
  *
  * Returns: (transfer full): a new [class@DataSourceRequest]
+ *
+ * Since: 1.1
  */
 ShumateDataSourceRequest *
 shumate_data_source_request_new (int x,
@@ -362,6 +390,8 @@ shumate_data_source_request_new (int x,
  *
  * If @complete is %TRUE, then [property@DataSourceRequest:completed] is set to
  * %TRUE as well.
+ *
+ * Since: 1.1
  */
 void
 shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
@@ -403,6 +433,8 @@ shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
  * not be reported.
  *
  * If [property@DataSourceRequest:data] was previously set, it will be cleared.
+ *
+ * Since: 1.1
  */
 void
 shumate_data_source_request_emit_error (ShumateDataSourceRequest *self,
@@ -438,6 +470,8 @@ shumate_data_source_request_emit_error (ShumateDataSourceRequest *self,
  * This can only be called if data has been emitted. If there is no data,
  * use [method@DataSourceRequest.emit_error] instead, which will automatically
  * complete the request.
+ *
+ * Since: 1.1
  */
 void
 shumate_data_source_request_complete (ShumateDataSourceRequest *self)

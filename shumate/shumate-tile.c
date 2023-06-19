@@ -284,6 +284,8 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * ShumateTile:scale-factor:
    *
    * The scale factor of the widget the tile will be displayed in.
+   *
+   * Since: 1.1
    */
   obj_properties[PROP_SCALE_FACTOR] =
     g_param_spec_double ("scale-factor",
@@ -613,6 +615,8 @@ shumate_tile_set_paintable (ShumateTile  *self,
  * Gets the scale factor of the tile.
  *
  * Returns: the scale factor
+ *
+ * Since: 1.1
  */
 double
 shumate_tile_get_scale_factor (ShumateTile *self)
@@ -628,6 +632,8 @@ shumate_tile_get_scale_factor (ShumateTile *self)
  * @scale_factor: the scale factor
  *
  * Sets the scale factor of the tile.
+ *
+ * Since: 1.1
  */
 void
 shumate_tile_set_scale_factor (ShumateTile *self,
