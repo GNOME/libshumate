@@ -154,26 +154,26 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
   klass->start_request = shumate_data_source_real_start_request;
 
   /**
-   * ShumateMapSource:min-zoom-level:
+   * ShumateDataSource:min-zoom-level:
    *
    * The minimum zoom level
    */
   properties[PROP_MIN_ZOOM_LEVEL] =
     g_param_spec_uint ("min-zoom-level",
-                       "Minimum Zoom Level",
-                       "The minimum zoom level",
+                       "min-zoom-level",
+                       "min-zoom-level",
                        0, 30, 0,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
   /**
-   * ShumateMapSource:max-zoom-level:
+   * ShumateDataSource:max-zoom-level:
    *
    * The maximum zoom level
    */
   properties[PROP_MAX_ZOOM_LEVEL] =
     g_param_spec_uint ("max-zoom-level",
-                       "Maximum Zoom Level",
-                       "The maximum zoom level",
+                       "max-zoom-level",
+                       "max-zoom-level",
                        0, 30, 30,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
