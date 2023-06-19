@@ -243,6 +243,7 @@ if generate_gir == true
     install: true,
     install_dir_gir: girdir,
     install_dir_typelib: typelibdir,
+    fatal_warnings: true,
     extra_args: [
       '-DSHUMATE_COMPILATION',
     ]
