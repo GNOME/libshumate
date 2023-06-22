@@ -322,9 +322,15 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
   for (GList *l = self->children; l != NULL; l = l->next)
     {
       ChildInfo *child = (ChildInfo *)l->data;
+      double correct_x = child->bounds.origin.x - self->collision->delta_x;
+      double correct_y = child->bounds.origin.y - self->collision->delta_y;
 
       gtk_snapshot_save (snapshot);
-
+      gtk_snapshot_translate (snapshot,
+                              &GRAPHENE_POINT_INIT (
+                                correct_x - (int) correct_x,
+                                correct_y - (int) correct_y
+                              ));
       gtk_widget_snapshot_child (widget, GTK_WIDGET (child->symbol), snapshot);
       gtk_snapshot_restore (snapshot);
     }
