@@ -39,13 +39,13 @@
 
 typedef struct {
   gpointer tag;
-  float x;
-  float y;
-  float xextent;
-  float yextent;
-  float rotation;
-  float aaxextent;
-  float aayextent;
+  double x;
+  double y;
+  double xextent;
+  double yextent;
+  double rotation;
+  double aaxextent;
+  double aayextent;
 } Box;
 
 typedef struct {
@@ -134,7 +134,7 @@ shumate_vector_collision_free (ShumateVectorCollision *self)
 }
 
 
-static float
+static double
 dot (ShumateVectorPoint *a,
      ShumateVectorPoint *b)
 {
@@ -142,12 +142,12 @@ dot (ShumateVectorPoint *a,
 }
 
 
-static float
+static double
 project (ShumateVectorPoint *point,
          ShumateVectorPoint *axis)
 {
   ShumateVectorPoint tmp;
-  float s = dot (point, axis) / LEN_SQ (axis->x, axis->y);
+  double s = dot (point, axis) / LEN_SQ (axis->x, axis->y);
   tmp = *axis;
   tmp.x *= s;
   tmp.y *= s;
@@ -156,12 +156,12 @@ project (ShumateVectorPoint *point,
 
 
 static ShumateVectorPoint
-corner (float x,
-        float y,
-        float xextent,
-        float yextent,
-        float rot_cos,
-        float rot_sin)
+corner (double x,
+        double y,
+        double xextent,
+        double yextent,
+        double rot_cos,
+        double rot_sin)
 {
   return (ShumateVectorPoint) {
     .x = xextent * rot_cos - yextent * rot_sin + x,
@@ -186,7 +186,7 @@ static gboolean
 rects_intersect (Box *a,
                  Box *b)
 {
-  float cos_a, sin_a, cos_b, sin_b;
+  double cos_a, sin_a, cos_b, sin_b;
   ShumateVectorPoint axes[4], corners_a[4], corners_b[4];
 
   if (!rects_intersect_aa (a, b))
@@ -226,7 +226,7 @@ rects_intersect (Box *a,
     {
       ShumateVectorPoint *axis = &axes[i];
 
-      float proj_a[4], proj_b[4];
+      double proj_a[4], proj_b[4];
 
       /* Project the corners of the rectangles onto the axis */
       for (int j = 0; j < 4; j ++)
@@ -238,10 +238,10 @@ rects_intersect (Box *a,
       /* If the projected points don't overlap, the rectangles don't overlap
        * (i.e. either every item in proj_a is greater than or is less than every
        * item in proj_b). */
-      float min_a = MIN4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
-      float max_a = MAX4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
-      float min_b = MIN4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
-      float max_b = MAX4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
+      double min_a = MIN4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
+      double max_a = MAX4 (proj_a[0], proj_a[1], proj_a[2], proj_a[3]);
+      double min_b = MIN4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
+      double max_b = MAX4 (proj_b[0], proj_b[1], proj_b[2], proj_b[3]);
 
       if (min_a >= max_b || min_b >= max_a)
         return FALSE;
@@ -259,10 +259,10 @@ expand_rect (Box       *a,
     *a = *b;
   else
     {
-      float left = MIN (a->x - a->aaxextent, b->x - b->aaxextent);
-      float right = MAX (a->x + a->aaxextent, b->x + b->aaxextent);
-      float top = MIN (a->y - a->aayextent, b->y - b->aayextent);
-      float bottom = MAX (a->y + a->aayextent, b->y + b->aayextent);
+      double left = MIN (a->x - a->aaxextent, b->x - b->aaxextent);
+      double right = MAX (a->x + a->aaxextent, b->x + b->aaxextent);
+      double top = MIN (a->y - a->aayextent, b->y - b->aayextent);
+      double bottom = MAX (a->y + a->aayextent, b->y + b->aayextent);
       a->x = (left + right) / 2.0;
       a->y = (top + bottom) / 2.0;
       a->xextent = (right - left) / 2.0;
@@ -303,7 +303,7 @@ positive_mod (int i, int n)
 
 
 static int
-row_for_position (float coordinate)
+row_for_position (double coordinate)
 {
   return positive_mod (coordinate, BUCKET_SIZE) * NODES / BUCKET_SIZE;
 }
@@ -362,11 +362,11 @@ detect_collision (ShumateVectorCollision *self,
 
 gboolean
 shumate_vector_collision_check (ShumateVectorCollision *self,
-                                float                   x,
-                                float                   y,
-                                float                   xextent,
-                                float                   yextent,
-                                float                   rotation,
+                                double                  x,
+                                double                  y,
+                                double                  xextent,
+                                double                  yextent,
+                                double                  rotation,
                                 gpointer                tag)
 {
   Box new_bbox = {
@@ -463,9 +463,9 @@ shumate_vector_collision_commit_pending (ShumateVectorCollision *self,
 
 
 static gboolean
-point_intersects_rect_aa (Box   *box,
-                          float  x,
-                          float  y)
+point_intersects_rect_aa (Box    *box,
+                          double  x,
+                          double  y)
 {
   return (x >= box->x - box->aaxextent &&
           x <= box->x + box->aaxextent &&
@@ -475,11 +475,11 @@ point_intersects_rect_aa (Box   *box,
 
 
 static gboolean
-point_intersects_rect (Box   *box,
-                       float  x,
-                       float  y)
+point_intersects_rect (Box    *box,
+                       double  x,
+                       double  y)
 {
-  float x2, y2;
+  double x2, y2;
   x -= box->x;
   y -= box->y;
 
@@ -495,8 +495,8 @@ point_intersects_rect (Box   *box,
 
 gboolean
 shumate_vector_collision_query_point (ShumateVectorCollision *self,
-                                      float                  x,
-                                      float                  y,
+                                      double                 x,
+                                      double                 y,
                                       gpointer              tag)
 {
   for (int i = 0; i < self->bucket_rows_array->len; i ++)
@@ -607,7 +607,7 @@ shumate_vector_collision_visualize (ShumateVectorCollision *self,
   GHashTableIter bucket_rows;
   RTreeBucketRow *bucket_row;
 
-  float width[4] = { 1, 1, 1, 1 };
+  double width[4] = { 1, 1, 1, 1 };
   GdkRGBA color[4], color2[4];
 
   gdk_rgba_parse (&color[0], "#FF0000");

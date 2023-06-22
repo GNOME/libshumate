@@ -30,10 +30,10 @@ struct _ShumateVectorSymbolContainer
   GList *children;
   ShumateVectorCollision *collision;
 
-  float last_rotation;
-  float last_zoom;
-  float last_center_x, last_center_y;
-  float last_width, last_height;
+  double last_rotation;
+  double last_zoom;
+  double last_center_x, last_center_y;
+  double last_width, last_height;
   gboolean labels_changed : 1;
 };
 
@@ -64,8 +64,8 @@ typedef struct {
   ShumateVectorSymbolInfo *symbol_info;
 
   // These are coordinates [0, 1) within the tile
-  float x;
-  float y;
+  double x;
+  double y;
 
   int tile_x;
   int tile_y;
@@ -185,17 +185,17 @@ shumate_vector_symbol_container_set_property (GObject      *object,
 }
 
 static void
-rotate_around_origin (float *x,
-                      float *y,
-                      float  angle)
+rotate_around_origin (double *x,
+                      double *y,
+                      double  angle)
 {
   /* Rotate (x, y) around (0, 0) */
 
   if (angle == 0)
     return;
 
-  float old_x = *x;
-  float old_y = *y;
+  double old_x = *x;
+  double old_y = *y;
 
   *x = cosf (angle) * old_x - sinf (angle) * old_y;
   *y = sinf (angle) * old_x + cosf (angle) * old_y;
@@ -203,16 +203,16 @@ rotate_around_origin (float *x,
 
 
 static void
-rotate_around_center (float *x,
-                      float *y,
-                      float  width,
-                      float  height,
-                      float  angle)
+rotate_around_center (double *x,
+                      double *y,
+                      double  width,
+                      double  height,
+                      double  angle)
 {
   /* Rotate (x, y) around (width / 2, height / 2) */
 
-  float center_x = width / 2.0;
-  float center_y = height / 2.0;
+  double center_x = width / 2.0;
+  double center_y = height / 2.0;
 
   *x -= center_x;
   *y -= center_y;
@@ -232,12 +232,12 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
 
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
   GtkAllocation alloc;
-  float tile_size = shumate_map_source_get_tile_size (self->map_source);
+  double tile_size = shumate_map_source_get_tile_size (self->map_source);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  float zoom_level = shumate_viewport_get_zoom_level (viewport);
-  float rotation = shumate_viewport_get_rotation (viewport);
-  float center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
-  float center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double rotation = shumate_viewport_get_rotation (viewport);
+  double center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
+  double center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
 
   gboolean recalc = self->labels_changed
                     || self->last_zoom != zoom_level
@@ -263,9 +263,9 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   for (GList *l = self->children; l != NULL; l = l->next)
     {
       ChildInfo *child = l->data;
-      float tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
-      float x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
-      float y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
+      double tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
+      double x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
+      double y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
 
       rotate_around_center (&x, &y, width, height, rotation);
 

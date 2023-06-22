@@ -30,18 +30,18 @@ typedef struct {
   GPtrArray *bucket_rows_array;
   GArray *pending_boxes;
 
-  float delta_x, delta_y;
+  double delta_x, delta_y;
 } ShumateVectorCollision;
 
 ShumateVectorCollision *shumate_vector_collision_new ();
 void shumate_vector_collision_free (ShumateVectorCollision *self);
 
 gboolean shumate_vector_collision_check (ShumateVectorCollision *self,
-                                         float                   x,
-                                         float                   y,
-                                         float                   xextent,
-                                         float                   yextent,
-                                         float                   rotation,
+                                         double                  x,
+                                         double                  y,
+                                         double                  xextent,
+                                         double                  yextent,
+                                         double                  rotation,
                                          gpointer                tag);
 int shumate_vector_collision_save_pending (ShumateVectorCollision *self);
 void shumate_vector_collision_rollback_pending (ShumateVectorCollision *self,
@@ -50,8 +50,8 @@ void shumate_vector_collision_commit_pending (ShumateVectorCollision *self,
                                               graphene_rect_t         *bounds_out);
 
 gboolean shumate_vector_collision_query_point (ShumateVectorCollision *self,
-                                               float                   x,
-                                               float                   y,
+                                               double                  x,
+                                               double                  y,
                                                gpointer                tag);
 
 void shumate_vector_collision_clear (ShumateVectorCollision *self);

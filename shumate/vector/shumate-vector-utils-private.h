@@ -24,8 +24,8 @@ typedef struct _ShumateVectorLineString ShumateVectorLineString;
 typedef struct _ShumateVectorPointIter ShumateVectorPointIter;
 
 struct _ShumateVectorPoint {
-  float x;
-  float y;
+  double x;
+  double y;
 };
 
 struct _ShumateVectorLineString {
@@ -37,7 +37,7 @@ struct _ShumateVectorPointIter {
   gsize num_points;
   ShumateVectorPoint *points;
   gsize current_point;
-  float distance;
+  double distance;
   guint reversed : 1;
 };
 

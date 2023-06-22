@@ -37,7 +37,7 @@ struct _ShumateVectorSymbol
   int layout_width, layout_height;
 
   graphene_rect_t bounds;
-  float x, y;
+  double x, y;
 
   ShumateVectorPoint midpoint;
   double midpoint_angle;
@@ -502,10 +502,10 @@ shumate_vector_symbol_get_request_mode (GtkWidget *widget)
 
 static void
 add_anchor_offset (ShumateVectorAnchor anchor,
-                   float *offset_x,
-                   float *offset_y,
-                   float width,
-                   float height)
+                   double *offset_x,
+                   double *offset_y,
+                   double width,
+                   double height)
 {
   if (anchor == SHUMATE_VECTOR_ANCHOR_LEFT
       || anchor == SHUMATE_VECTOR_ANCHOR_TOP_LEFT
@@ -556,14 +556,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
   if (self->icon)
     {
-      float angle = 0;
-      float icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
+      double angle = 0;
+      double icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
                          * self->symbol_info->details->icon_size;
-      float icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+      double icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
 
-      float offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
-      float offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
+      double offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
+      double offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
 
       add_anchor_offset (self->symbol_info->details->icon_anchor,
                          &offset_x, &offset_y,
@@ -593,7 +593,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
   if (self->glyphs)
     {
-      float length = self->layout_width / tile_size_for_zoom;
+      double length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
       double avg_angle;
 
@@ -626,7 +626,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
            * advanced in the point iter */
           if (glyph->node != NULL)
             {
-              float angle;
+              double angle;
 
               if (self->symbol_info->details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_VIEWPORT_GLYPH)
                 angle = -rotation;
@@ -658,9 +658,9 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
     }
   else if (self->glyphs_node)
     {
-      float angle = 0;
-      float offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
-      float offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
+      double angle = 0;
+      double offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
+      double offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
 
       add_anchor_offset (self->symbol_info->details->text_anchor,
                          &offset_x, &offset_y,
@@ -758,17 +758,17 @@ shumate_vector_symbol_get_symbol_info (ShumateVectorSymbol *self)
 }
 
 static void
-rotate_around_center (float *x,
-                      float *y,
-                      float  angle)
+rotate_around_center (double *x,
+                      double *y,
+                      double  angle)
 {
   /* Rotate (x, y) around (0, 0) */
 
   if (angle == 0)
     return;
 
-  float old_x = *x;
-  float old_y = *y;
+  double old_x = *x;
+  double old_y = *y;
 
   *x = cosf (angle) * old_x - sinf (angle) * old_y;
   *y = sinf (angle) * old_x + cosf (angle) * old_y;
@@ -778,13 +778,13 @@ rotate_around_center (float *x,
 gboolean
 shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                            ShumateVectorCollision *collision,
-                                           float                   x,
-                                           float                   y,
-                                           float                   tile_size_for_zoom,
-                                           float                   rotation,
+                                           double                  x,
+                                           double                  y,
+                                           double                  tile_size_for_zoom,
+                                           double                  rotation,
                                            graphene_rect_t        *bounds_out)
 {
-  float yextent = self->symbol_info->details->text_size / 2.0;
+  double yextent = self->symbol_info->details->text_size / 2.0;
   gboolean check;
   ShumateVectorPointIter iter;
   ShumateVectorPoint point;
@@ -803,8 +803,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
   if (self->glyphs != NULL)
     {
-      float line_length = self->symbol_info->line_length;
-      float length = self->layout_width / tile_size_for_zoom;
+      double line_length = self->symbol_info->line_length;
+      double length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
 
       g_assert (self->symbol_info->line != NULL);
@@ -817,7 +817,7 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
       do
         {
-          float xextent = MIN (length, shumate_vector_point_iter_get_segment_length (&iter) - iter.distance) * tile_size_for_zoom / 2;
+          double xextent = MIN (length, shumate_vector_point_iter_get_segment_length (&iter) - iter.distance) * tile_size_for_zoom / 2;
 
           if (shumate_vector_point_iter_is_at_end (&iter))
             return FALSE;
@@ -848,9 +848,9 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
   else if (self->glyphs_node != NULL)
     {
       ShumateVectorAnchor anchor = self->symbol_info->details->text_anchor;
-      float angle = 0;
-      float offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
-      float offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
+      double angle = 0;
+      double offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
+      double offset_y = self->symbol_info->details->text_offset_y * self->symbol_info->details->text_size;
 
       add_anchor_offset (anchor, &offset_x, &offset_y, self->layout_width, self->layout_height);
 
@@ -875,13 +875,13 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
   if (self->icon)
     {
-      float angle = 0;
-      float icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
+      double angle = 0;
+      double icon_width = gdk_pixbuf_get_width (self->symbol_info->details->icon_image)
                          * self->symbol_info->details->icon_size;
-      float icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
+      double icon_height = gdk_pixbuf_get_height (self->symbol_info->details->icon_image)
                           * self->symbol_info->details->icon_size;
-      float offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
-      float offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
+      double offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
+      double offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
 
       add_anchor_offset (self->symbol_info->details->icon_anchor, &offset_x, &offset_y, icon_width, icon_height);
 

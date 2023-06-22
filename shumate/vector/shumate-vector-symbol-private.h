@@ -32,9 +32,9 @@ ShumateVectorSymbolInfo *shumate_vector_symbol_get_symbol_info (ShumateVectorSym
 
 gboolean shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
                                                     ShumateVectorCollision *collision,
-                                                    float                   x,
-                                                    float                   y,
-                                                    float                   zoom_level,
-                                                    float                   rotation,
+                                                    double                  x,
+                                                    double                  y,
+                                                    double                  zoom_level,
+                                                    double                  rotation,
                                                     graphene_rect_t        *bounds_out);
 G_END_DECLS
