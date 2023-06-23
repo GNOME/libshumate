@@ -6,7 +6,7 @@ fedora:
   stage: build
   image: registry.gitlab.gnome.org/gnome/gtk/fedora:v46
   script:
-    - sudo dnf install -y vala sqlite-devel libsoup3-devel gtk4-devel protobuf-c-devel gcovr python3-packaging
+    - sudo dnf install -y vala sqlite-devel libsoup3-devel gtk4-devel protobuf-c-devel gcovr python3-packaging gperf
     - meson setup _build -Db_coverage=true -Dgtk_doc=true
     - xvfb-run ninja -C _build test
     - mv _build/docs/libshumate-1.0 docs

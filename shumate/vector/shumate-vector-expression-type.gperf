@@ -1,0 +1,76 @@
+%{
+#include "vector/shumate-vector-expression-type-private.h"
+#define EXACT(c) .expect_exprs = c, .expect_exprs_set = 1
+#define GE(c) .expect_ge_exprs = c, .expect_ge_exprs_set = 1
+#define LE(c) .expect_le_exprs = c, .expect_le_exprs_set = 1
+%}
+struct _ExprInfo
+{
+  /* Keep the struct definition in shumate-vector-expression-type-private.h
+    in sync! */
+
+  const char *name;
+  ExprType type;
+
+  int expect_exprs;
+  int expect_ge_exprs;
+  int expect_le_exprs;
+
+  gboolean expect_exprs_set : 1;
+  gboolean expect_ge_exprs_set : 1;
+  gboolean expect_le_exprs_set : 1;
+  gboolean lookup_first_arg : 1;
+};
+%%
+format, EXPR_FORMAT
+image, EXPR_IMAGE, EXACT(1)
+literal, EXPR_TYPE_LITERAL, EXACT(1)
+id, EXPR_ID, EXACT(0)
+geometry-type, EXPR_GEOMETRY_TYPE, EXACT(0)
+get, EXPR_GET, EXACT(1)
+has, EXPR_HAS, EXACT(1)
+!has, EXPR_NOT_HAS, EXACT(1)
+in, EXPR_IN, GE(1), .lookup_first_arg = TRUE
+!in, EXPR_NOT_IN, GE(1), .lookup_first_arg = TRUE
+!, EXPR_NOT, EXACT(1)
+!=, EXPR_NE, EXACT(2), .lookup_first_arg = TRUE
+<, EXPR_LT, EXACT(2), .lookup_first_arg = TRUE
+<=, EXPR_LE, EXACT(2), .lookup_first_arg = TRUE
+==, EXPR_EQ, EXACT(2), .lookup_first_arg = TRUE
+>, EXPR_GT, EXACT(2), .lookup_first_arg = TRUE
+>=, EXPR_GE, EXACT(2), .lookup_first_arg = TRUE
+all, EXPR_ALL
+any, EXPR_ANY
+none, EXPR_NONE
+case, EXPR_CASE
+coalesce, EXPR_COALESCE
+let, EXPR_LET
+var, EXPR_VAR
+concat, EXPR_CONCAT
+downcase, EXPR_DOWNCASE, EXACT(1)
+upcase, EXPR_UPCASE, EXACT(1)
+-, EXPR_SUB, GE(1), LE(2)
+*, EXPR_MUL, GE(1)
+/, EXPR_DIV, EXACT(2)
+"%", EXPR_REM, EXACT(2)
+^, EXPR_POW, EXACT(2)
++, EXPR_ADD, GE(1)
+abs, EXPR_ABS, EXACT(1)
+acos, EXPR_ACOS, EXACT(1)
+asin, EXPR_ASIN, EXACT(1)
+atan, EXPR_ATAN, EXACT(1)
+ceil, EXPR_CEIL, EXACT(1)
+cos, EXPR_COS, EXACT(1)
+e, EXPR_E, EXACT(0)
+floor, EXPR_FLOOR, EXACT(1)
+ln, EXPR_LN, EXACT(1)
+ln2, EXPR_LN2, EXACT(0)
+log10, EXPR_LOG10, EXACT(1)
+log2, EXPR_LOG2, EXACT(1)
+max, EXPR_MAX, GE(1)
+min, EXPR_MIN, GE(1)
+pi, EXPR_PI, EXACT(0)
+round, EXPR_ROUND, EXACT(1)
+sin, EXPR_SIN, EXACT(1)
+sqrt, EXPR_SQRT, EXACT(1)
+tan, EXPR_TAN, EXACT(1)

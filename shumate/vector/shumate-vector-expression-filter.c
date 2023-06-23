@@ -19,56 +19,7 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-filter-private.h"
 #include "shumate-vector-expression-literal-private.h"
-
-typedef enum {
-  EXPR_NOT,
-  EXPR_NONE,
-  EXPR_ANY,
-  EXPR_ALL,
-  EXPR_HAS,
-  EXPR_NOT_HAS,
-  EXPR_GET,
-  EXPR_IN,
-  EXPR_NOT_IN,
-  EXPR_EQ,
-  EXPR_NE,
-  EXPR_GT,
-  EXPR_LT,
-  EXPR_GE,
-  EXPR_LE,
-  EXPR_CASE,
-  EXPR_COALESCE,
-  EXPR_IMAGE,
-
-  EXPR_FORMAT,
-
-  EXPR_CONCAT,
-  EXPR_DOWNCASE,
-  EXPR_UPCASE,
-
-  EXPR_ADD,
-  EXPR_SUB,
-  EXPR_MUL,
-  EXPR_DIV,
-  EXPR_REM,
-  EXPR_POW,
-  EXPR_ABS,
-  EXPR_ACOS,
-  EXPR_ASIN,
-  EXPR_ATAN,
-  EXPR_CEIL,
-  EXPR_COS,
-  EXPR_FLOOR,
-  EXPR_LN,
-  EXPR_LOG10,
-  EXPR_LOG2,
-  EXPR_MAX,
-  EXPR_MIN,
-  EXPR_ROUND,
-  EXPR_SIN,
-  EXPR_SQRT,
-  EXPR_TAN,
-} ExpressionType;
+#include "shumate-vector-expression-type-private.h"
 
 struct _ShumateVectorExpressionFilter
 {
@@ -98,6 +49,9 @@ format_expression_part_free (FormatExpressionPart *part)
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (FormatExpressionPart, format_expression_part_free);
 
 
+const ExprInfo *shumate_vector_expression_type_lookup (register const char *str, register size_t len);
+
+
 ShumateVectorExpression *
 shumate_vector_expression_filter_from_json_array (JsonArray                       *array,
                                                   ShumateVectorExpressionContext  *ctx,
@@ -106,10 +60,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
   g_autoptr(ShumateVectorExpressionFilter) self = NULL;
   JsonNode *op_node;
   const char *op;
-  gboolean lookup_first_arg = TRUE;
-  int expect_exprs = -1;
-  int expect_ge_exprs = -1;
-  int expect_le_exprs = -1;
+  const ExprInfo *info;
 
   if (json_array_get_length (array) == 0)
     {
@@ -131,435 +82,9 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
     }
 
   op = json_node_get_string (op_node);
+  info = shumate_vector_expression_type_lookup (op, strlen (op));
 
-  if (g_strcmp0 ("literal", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-      JsonNode *arg;
-
-      if (json_array_get_length (array) != 2)
-        {
-          g_set_error (error,
-                      SHUMATE_STYLE_ERROR,
-                      SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                      "Operator `literal` expected exactly 1 argument, got %d",
-                      json_array_get_length (array) - 1);
-          return NULL;
-        }
-
-      arg = json_array_get_element (array, 1);
-
-      if (!shumate_vector_value_set_from_json_literal (&value, arg, error))
-        return NULL;
-
-      return shumate_vector_expression_literal_new (&value);
-    }
-  else if (g_strcmp0 ("let", op) == 0)
-    {
-      g_auto(ShumateVectorExpressionContext) child_ctx = {0};
-      ShumateVectorExpression *child_expr = NULL;
-
-      if (json_array_get_length (array) % 2 != 0)
-        {
-          g_set_error (error,
-                      SHUMATE_STYLE_ERROR,
-                      SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                      "Operator `let` expected an odd number of arguments, got %d",
-                      json_array_get_length (array) - 1);
-          return NULL;
-        }
-
-      child_ctx.parent = ctx;
-      child_ctx.variables = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
-
-      for (int i = 1, n = json_array_get_length (array); i < n - 1; i += 2)
-        {
-          JsonNode *name_node;
-          ShumateVectorExpression *expr = NULL;
-
-          name_node = json_array_get_element (array, i);
-          if (!JSON_NODE_HOLDS_VALUE (name_node) || json_node_get_value_type (name_node) != G_TYPE_STRING)
-            {
-              g_set_error (error,
-                           SHUMATE_STYLE_ERROR,
-                           SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                           "Expected variable name to be a string (at index %d)",
-                           i);
-              return NULL;
-            }
-
-          expr = shumate_vector_expression_from_json (
-            json_array_get_element (array, i + 1),
-            &child_ctx,
-            error
-          );
-          if (expr == NULL)
-            return NULL;
-
-          g_hash_table_insert (child_ctx.variables,
-                               (char *)json_node_get_string (name_node),
-                               expr);
-        }
-
-      child_expr = shumate_vector_expression_from_json (
-        json_array_get_element (array, json_array_get_length (array) - 1),
-        &child_ctx,
-        error
-      );
-      return child_expr;
-    }
-  else if (g_strcmp0 ("var", op) == 0)
-    {
-      JsonNode *arg_node;
-      const char *variable = NULL;
-
-      if (json_array_get_length (array) != 2)
-        {
-          g_set_error (error,
-                       SHUMATE_STYLE_ERROR,
-                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                       "Operator `var` expected exactly one argument, got %d",
-                       json_array_get_length (array) - 1);
-          return NULL;
-        }
-
-      arg_node = json_array_get_element (array, 1);
-      if (!JSON_NODE_HOLDS_VALUE (arg_node) || json_node_get_value_type (arg_node) != G_TYPE_STRING)
-        {
-          g_set_error (error,
-                       SHUMATE_STYLE_ERROR,
-                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                       "Operator `var` expected a string literal");
-          return NULL;
-        }
-
-      variable = json_node_get_string (arg_node);
-
-      for (ShumateVectorExpressionContext *c = ctx; c != NULL; c = c->parent)
-        {
-          ShumateVectorExpression *expr = g_hash_table_lookup (c->variables, variable);
-          if (expr != NULL)
-            return g_object_ref (expr);
-        }
-
-      g_set_error (error,
-                   SHUMATE_STYLE_ERROR,
-                   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                   "Variable `%s` not found",
-                   variable);
-      return NULL;
-    }
-  else if (g_strcmp0 ("e", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-      shumate_vector_value_set_number (&value, G_E);
-      return shumate_vector_expression_literal_new (&value);
-    }
-  else if (g_strcmp0 ("pi", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-      shumate_vector_value_set_number (&value, G_PI);
-      return shumate_vector_expression_literal_new (&value);
-    }
-  else if (g_strcmp0 ("ln2", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-      shumate_vector_value_set_number (&value, G_LN2);
-      return shumate_vector_expression_literal_new (&value);
-    }
-  else if (g_strcmp0 ("format", op) == 0)
-    {
-      self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
-      self->type = EXPR_FORMAT;
-      g_ptr_array_set_free_func (self->expressions, (GDestroyNotify)format_expression_part_free);
-
-      for (int i = 1, n = json_array_get_length (array); i < n;)
-        {
-          JsonNode *arg_node = json_array_get_element (array, i);
-          JsonNode *format_node = NULL;
-          FormatExpressionPart *part = g_new0 (FormatExpressionPart, 1);
-
-          g_ptr_array_add (self->expressions, part);
-
-          part->string = shumate_vector_expression_from_json (arg_node, ctx, error);
-          if (part->string == NULL)
-            return NULL;
-
-          i ++;
-          if (i >= n)
-            break;
-
-          format_node = json_array_get_element (array, i);
-          if (JSON_NODE_HOLDS_OBJECT (format_node))
-            {
-              JsonObject *format_object = json_node_get_object (format_node);
-
-              i ++;
-
-              if (!(part->text_color = shumate_vector_expression_from_json (json_object_get_member (format_object, "text-color"), ctx, error)))
-                return NULL;
-
-              if (!(part->font_scale = shumate_vector_expression_from_json (json_object_get_member (format_object, "font-scale"), ctx, error)))
-                return NULL;
-            }
-        }
-
-      return (ShumateVectorExpression *)g_steal_pointer (&self);
-    }
-
-  self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
-
-  if (g_strcmp0 ("!", op) == 0)
-    {
-      self->type = EXPR_NOT;
-      expect_exprs = 1;
-    }
-  else if (g_strcmp0 ("none", op) == 0)
-    self->type = EXPR_NONE;
-  else if (g_strcmp0 ("any", op) == 0)
-    self->type = EXPR_ANY;
-  else if (g_strcmp0 ("all", op) == 0)
-    self->type = EXPR_ALL;
-  else if (g_strcmp0 ("has", op) == 0)
-    {
-      self->type = EXPR_HAS;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("!has", op) == 0)
-    {
-      self->type = EXPR_NOT_HAS;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("get", op) == 0)
-    {
-      self->type = EXPR_GET;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("in", op) == 0)
-    {
-      self->type = EXPR_IN;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("!in", op) == 0)
-    {
-      self->type = EXPR_NOT_IN;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("==", op) == 0)
-    {
-      self->type = EXPR_EQ;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("!=", op) == 0)
-    {
-      self->type = EXPR_NE;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 (">", op) == 0)
-    {
-      self->type = EXPR_GT;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("<", op) == 0)
-    {
-      self->type = EXPR_LT;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 (">=", op) == 0)
-    {
-      self->type = EXPR_GE;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("<=", op) == 0)
-    {
-      self->type = EXPR_LE;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("zoom", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-
-      self->type = EXPR_GET;
-      expect_exprs = 0;
-
-      shumate_vector_value_set_string (&value, "zoom");
-      g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
-    }
-  else if (g_strcmp0 ("geometry-type", op) == 0)
-    {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-
-      self->type = EXPR_GET;
-      expect_exprs = 0;
-
-      shumate_vector_value_set_string (&value, "$type");
-      g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
-    }
-  else if (g_strcmp0 ("case", op) == 0)
-    {
-      self->type = EXPR_CASE;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("coalesce", op) == 0)
-    {
-      self->type = EXPR_COALESCE;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("concat", op) == 0)
-    {
-      self->type = EXPR_CONCAT;
-      expect_ge_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("downcase", op) == 0)
-    {
-      self->type = EXPR_DOWNCASE;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("upcase", op) == 0)
-    {
-      self->type = EXPR_UPCASE;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("+", op) == 0)
-    {
-      self->type = EXPR_ADD;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("-", op) == 0)
-    {
-      self->type = EXPR_SUB;
-      expect_ge_exprs = 1;
-      expect_le_exprs = 2;
-    }
-  else if (g_strcmp0 ("*", op) == 0)
-    {
-      self->type = EXPR_MUL;
-      expect_ge_exprs = 1;
-    }
-  else if (g_strcmp0 ("/", op) == 0)
-    {
-      self->type = EXPR_DIV;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("%", op) == 0)
-    {
-      self->type = EXPR_REM;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("^", op) == 0)
-    {
-      self->type = EXPR_POW;
-      expect_exprs = 2;
-    }
-  else if (g_strcmp0 ("abs", op) == 0)
-    {
-      self->type = EXPR_ABS;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("acos", op) == 0)
-    {
-      self->type = EXPR_ACOS;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("asin", op) == 0)
-    {
-      self->type = EXPR_ASIN;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("atan", op) == 0)
-    {
-      self->type = EXPR_ATAN;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("ceil", op) == 0)
-    {
-      self->type = EXPR_CEIL;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("cos", op) == 0)
-    {
-      self->type = EXPR_COS;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("floor", op) == 0)
-    {
-      self->type = EXPR_FLOOR;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("ln", op) == 0)
-    {
-      self->type = EXPR_LN;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("log10", op) == 0)
-    {
-      self->type = EXPR_LOG10;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("log2", op) == 0)
-    {
-      self->type = EXPR_LOG2;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("max", op) == 0)
-    {
-      self->type = EXPR_MAX;
-      expect_ge_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("min", op) == 0)
-    {
-      self->type = EXPR_MIN;
-      expect_ge_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("round", op) == 0)
-    {
-      self->type = EXPR_ROUND;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("sin", op) == 0)
-    {
-      self->type = EXPR_SIN;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("sqrt", op) == 0)
-    {
-      self->type = EXPR_SQRT;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("tan", op) == 0)
-    {
-      self->type = EXPR_TAN;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else if (g_strcmp0 ("image", op) == 0)
-    {
-      self->type = EXPR_IMAGE;
-      expect_exprs = 1;
-      lookup_first_arg = FALSE;
-    }
-  else
+  if (info == NULL)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
@@ -568,33 +93,224 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       return FALSE;
     }
 
-  if (expect_exprs > -1 && json_array_get_length (array) - 1 != expect_exprs)
+  /* Expressions that don't use the child expressions array */
+  switch (info->type)
+    {
+      case EXPR_FORMAT:
+        {
+          self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+          self->type = EXPR_FORMAT;
+          g_ptr_array_set_free_func (self->expressions, (GDestroyNotify)format_expression_part_free);
+
+          for (int i = 1, n = json_array_get_length (array); i < n;)
+            {
+              JsonNode *arg_node = json_array_get_element (array, i);
+              JsonNode *format_node = NULL;
+              FormatExpressionPart *part = g_new0 (FormatExpressionPart, 1);
+
+              g_ptr_array_add (self->expressions, part);
+
+              part->string = shumate_vector_expression_from_json (arg_node, ctx, error);
+              if (part->string == NULL)
+                return NULL;
+
+              i ++;
+              if (i >= n)
+                break;
+
+              format_node = json_array_get_element (array, i);
+              if (JSON_NODE_HOLDS_OBJECT (format_node))
+                {
+                  JsonObject *format_object = json_node_get_object (format_node);
+
+                  i ++;
+
+                  if (!(part->text_color = shumate_vector_expression_from_json (json_object_get_member (format_object, "text-color"), ctx, error)))
+                    return NULL;
+
+                  if (!(part->font_scale = shumate_vector_expression_from_json (json_object_get_member (format_object, "font-scale"), ctx, error)))
+                    return NULL;
+                }
+            }
+
+          return (ShumateVectorExpression *)g_steal_pointer (&self);
+        }
+
+      case EXPR_TYPE_LITERAL:
+        {
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+          JsonNode *arg;
+
+          if (json_array_get_length (array) != 2)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `literal` expected exactly 1 argument, got %d",
+                          json_array_get_length (array) - 1);
+              return NULL;
+            }
+
+          arg = json_array_get_element (array, 1);
+
+          if (!shumate_vector_value_set_from_json_literal (&value, arg, error))
+            return NULL;
+
+          return shumate_vector_expression_literal_new (&value);
+        }
+
+      case EXPR_LET:
+        {
+          g_auto(ShumateVectorExpressionContext) child_ctx = {0};
+          ShumateVectorExpression *child_expr = NULL;
+
+          if (json_array_get_length (array) % 2 != 0)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `let` expected an odd number of arguments, got %d",
+                          json_array_get_length (array) - 1);
+              return NULL;
+            }
+
+          child_ctx.parent = ctx;
+          child_ctx.variables = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
+
+          for (int i = 1, n = json_array_get_length (array); i < n - 1; i += 2)
+            {
+              JsonNode *name_node;
+              ShumateVectorExpression *expr = NULL;
+
+              name_node = json_array_get_element (array, i);
+              if (!JSON_NODE_HOLDS_VALUE (name_node) || json_node_get_value_type (name_node) != G_TYPE_STRING)
+                {
+                  g_set_error (error,
+                              SHUMATE_STYLE_ERROR,
+                              SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                              "Expected variable name to be a string (at index %d)",
+                              i);
+                  return NULL;
+                }
+
+              expr = shumate_vector_expression_from_json (
+                json_array_get_element (array, i + 1),
+                &child_ctx,
+                error
+              );
+              if (expr == NULL)
+                return NULL;
+
+              g_hash_table_insert (child_ctx.variables,
+                                  (char *)json_node_get_string (name_node),
+                                  expr);
+            }
+
+          child_expr = shumate_vector_expression_from_json (
+            json_array_get_element (array, json_array_get_length (array) - 1),
+            &child_ctx,
+            error
+          );
+          return child_expr;
+        }
+
+      case EXPR_VAR:
+        {
+          JsonNode *arg_node;
+          const char *variable = NULL;
+
+          if (json_array_get_length (array) != 2)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `var` expected exactly one argument, got %d",
+                          json_array_get_length (array) - 1);
+              return NULL;
+            }
+
+          arg_node = json_array_get_element (array, 1);
+          if (!JSON_NODE_HOLDS_VALUE (arg_node) || json_node_get_value_type (arg_node) != G_TYPE_STRING)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `var` expected a string literal");
+              return NULL;
+            }
+
+          variable = json_node_get_string (arg_node);
+
+          for (ShumateVectorExpressionContext *c = ctx; c != NULL; c = c->parent)
+            {
+              ShumateVectorExpression *expr = g_hash_table_lookup (c->variables, variable);
+              if (expr != NULL)
+                return g_object_ref (expr);
+            }
+
+          g_set_error (error,
+                      SHUMATE_STYLE_ERROR,
+                      SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                      "Variable `%s` not found",
+                      variable);
+          return NULL;
+        }
+
+      case EXPR_E:
+        {
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+          shumate_vector_value_set_number (&value, G_E);
+          return shumate_vector_expression_literal_new (&value);
+        }
+
+      case EXPR_LN2:
+        {
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+          shumate_vector_value_set_number (&value, G_LN2);
+          return shumate_vector_expression_literal_new (&value);
+        }
+
+      case EXPR_PI:
+        {
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+          shumate_vector_value_set_number (&value, G_PI);
+          return shumate_vector_expression_literal_new (&value);
+        }
+
+      default:
+        break;
+    }
+
+  self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+  self->type = info->type;
+
+  if (info->expect_exprs_set && json_array_get_length (array) - 1 != info->expect_exprs)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
                    SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
                    "Operator `%s` expected exactly %d arguments, got %d",
-                   op, expect_exprs, json_array_get_length (array) - 1);
+                   op, info->expect_exprs, json_array_get_length (array) - 1);
       return FALSE;
     }
 
-  if (expect_ge_exprs > 0 && json_array_get_length (array) - 1 < expect_ge_exprs)
+  if (info->expect_ge_exprs_set && json_array_get_length (array) - 1 < info->expect_ge_exprs)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
                    SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
                    "Operator `%s` expected at least %d arguments, got %d",
-                   op, expect_ge_exprs, json_array_get_length (array) - 1);
+                   op, info->expect_ge_exprs, json_array_get_length (array) - 1);
       return FALSE;
     }
 
-  if (expect_le_exprs > -1 && json_array_get_length (array) - 1 > expect_le_exprs)
+  if (info->expect_le_exprs_set && json_array_get_length (array) - 1 > info->expect_le_exprs)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
                    SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
                    "Operator `%s` expected at most %d arguments, got %d",
-                   op, expect_le_exprs, json_array_get_length (array) - 1);
+                   op, info->expect_le_exprs, json_array_get_length (array) - 1);
       return FALSE;
     }
 
@@ -604,7 +320,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       g_autoptr(ShumateVectorExpression) expr = NULL;
 
       if (i == 1
-          && lookup_first_arg
+          && info->lookup_first_arg
           && JSON_NODE_HOLDS_VALUE (arg)
           && json_node_get_value_type (arg) == G_TYPE_STRING)
         {
@@ -1258,6 +974,40 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
           shumate_vector_value_set_formatted (out, format_parts);
           return TRUE;
         }
+
+    case EXPR_GEOMETRY_TYPE:
+      if (scope->feature == NULL)
+        {
+          shumate_vector_value_unset (out);
+          return TRUE;
+        }
+
+      switch (scope->feature->type)
+        {
+        case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
+          shumate_vector_value_set_string (out, "Point");
+          return TRUE;
+        case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
+          shumate_vector_value_set_string (out, "LineString");
+          return TRUE;
+        case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
+          shumate_vector_value_set_string (out, "Polygon");
+          return TRUE;
+        default:
+          shumate_vector_value_unset (out);
+          return TRUE;
+        }
+
+    case EXPR_ID:
+      if (!scope->feature || !scope->feature->has_id)
+        shumate_vector_value_unset (out);
+      else
+        shumate_vector_value_set_number (out, scope->feature->id);
+      return TRUE;
+
+    case EXPR_ZOOM:
+      shumate_vector_value_set_number (out, scope->zoom_level);
+      return TRUE;
 
     default:
       g_assert_not_reached ();
