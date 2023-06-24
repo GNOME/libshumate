@@ -328,12 +328,25 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
            * convert it to a GET expression so we can do things like
            * ["==", "admin_level", 2] */
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+          const char *string = json_node_get_string (arg);
 
-          expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
-          ((ShumateVectorExpressionFilter *)expr)->type = EXPR_GET;
-
-          shumate_vector_value_set_string (&value, json_node_get_string (arg));
-          g_ptr_array_add (((ShumateVectorExpressionFilter *)expr)->expressions, shumate_vector_expression_literal_new (&value));
+          if (g_strcmp0 ("zoom", string) == 0)
+            {
+              expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+              ((ShumateVectorExpressionFilter *)expr)->type = EXPR_ZOOM;
+            }
+          else if (g_strcmp0 ("$type", string) == 0)
+            {
+              expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+              ((ShumateVectorExpressionFilter *)expr)->type = EXPR_GEOMETRY_TYPE;
+            }
+          else
+            {
+              expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+              ((ShumateVectorExpressionFilter *)expr)->type = EXPR_GET;
+              shumate_vector_value_set_string (&value, json_node_get_string (arg));
+              g_ptr_array_add (((ShumateVectorExpressionFilter *)expr)->expressions, shumate_vector_expression_literal_new (&value));
+            }
         }
       else if (!(expr = shumate_vector_expression_from_json (arg, ctx, error)))
         return NULL;

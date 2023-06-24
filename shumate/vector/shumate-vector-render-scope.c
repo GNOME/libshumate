@@ -267,33 +267,8 @@ shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const 
 {
   shumate_vector_value_unset (value);
 
-  if (g_strcmp0 (variable, "zoom") == 0)
-    {
-      shumate_vector_value_set_number (value, self->zoom_level);
-      return;
-    }
-
   if (self->feature == NULL)
     return;
-
-  if (g_strcmp0 ("$type", variable) == 0)
-    {
-      switch (self->feature->type)
-        {
-        case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
-          shumate_vector_value_set_string (value, "Point");
-          return;
-        case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
-          shumate_vector_value_set_string (value, "LineString");
-          return;
-        case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
-          shumate_vector_value_set_string (value, "Polygon");
-          return;
-        default:
-          shumate_vector_value_unset (value);
-          return;
-        }
-    }
 
   for (int i = 1; i < self->feature->n_tags; i += 2)
     {
