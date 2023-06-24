@@ -25,13 +25,17 @@ struct _ExprInfo
 format, EXPR_FORMAT
 image, EXPR_IMAGE, EXACT(1)
 literal, EXPR_TYPE_LITERAL, EXACT(1)
-id, EXPR_ID, EXACT(0)
 geometry-type, EXPR_GEOMETRY_TYPE, EXACT(0)
+id, EXPR_ID, EXACT(0)
+at, EXPR_AT, EXACT(2)
 get, EXPR_GET, EXACT(1)
 has, EXPR_HAS, EXACT(1)
 !has, EXPR_NOT_HAS, EXACT(1)
 in, EXPR_IN, GE(1), .lookup_first_arg = TRUE
 !in, EXPR_NOT_IN, GE(1), .lookup_first_arg = TRUE
+index-of, EXPR_INDEX_OF, GE(2), LE(3)
+length, EXPR_LENGTH, EXACT(1)
+slice, EXPR_SLICE, GE(2), LE(3)
 !, EXPR_NOT, EXACT(1)
 !=, EXPR_NE, EXACT(2), .lookup_first_arg = TRUE
 <, EXPR_LT, EXACT(2), .lookup_first_arg = TRUE

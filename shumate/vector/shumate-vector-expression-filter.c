@@ -560,12 +560,20 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       for (int i = 1; i < n_expressions; i ++)
         {
           shumate_vector_expression_eval (expressions[i], scope, &value2);
-          if (
-              shumate_vector_value_equal (&value, &value2)
-              || shumate_vector_value_array_contains (&value2, &value))
+
+          if (shumate_vector_value_equal (&value, &value2))
             {
               shumate_vector_value_set_boolean (out, TRUE ^ inverted);
               return TRUE;
+            }
+          else if (value2.type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
+            {
+              for (int i = 0, n = value2.array->len; i < n; i ++)
+                if (shumate_vector_value_equal (&value, g_ptr_array_index (value2.array, i)))
+                  {
+                    shumate_vector_value_set_boolean (out, TRUE ^ inverted);
+                    return TRUE;
+                  }
             }
         }
 
@@ -1047,6 +1055,185 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
     case EXPR_ZOOM:
       shumate_vector_value_set_number (out, scope->zoom_level);
       return TRUE;
+
+    case EXPR_AT:
+      {
+        GPtrArray *array;
+        g_assert (n_expressions == 2);
+
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        if (!shumate_vector_value_get_number (&value, &number))
+          return FALSE;
+
+        if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+          return FALSE;
+        if (!(array = shumate_vector_value_get_array (&value2)))
+          return FALSE;
+
+        if (number < 0 || number >= array->len || number != (int)number)
+          return FALSE;
+
+        shumate_vector_value_copy (g_ptr_array_index (array, (int)number), out);
+        return TRUE;
+      }
+
+    case EXPR_INDEX_OF:
+      g_assert (n_expressions == 2 || n_expressions == 3);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+
+      if (n_expressions == 3)
+        {
+          if (!shumate_vector_expression_eval (expressions[2], scope, &value2))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value2, &number))
+            return FALSE;
+          if (number != (int)number || number < 0)
+            return FALSE;
+        }
+      else
+        number = 0;
+
+      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+        return FALSE;
+
+      switch (value2.type)
+        {
+          case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+            {
+              const char *string;
+              const char *substring;
+              const char *found;
+
+              shumate_vector_value_get_string (&value2, &string);
+              if (!shumate_vector_value_get_string (&value, &substring))
+                return FALSE;
+
+              number = MIN (number, g_utf8_strlen (string, -1));
+              found = strstr (g_utf8_offset_to_pointer (string, (int)number), substring);
+
+              if (found == NULL)
+                shumate_vector_value_set_number (out, -1);
+              else
+                shumate_vector_value_set_number (out, g_utf8_pointer_to_offset (string, found));
+
+              return TRUE;
+            }
+
+          case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+            {
+              GPtrArray *array = shumate_vector_value_get_array (&value2);
+
+              for (; number < array->len; number ++)
+                {
+                  if (shumate_vector_value_equal (g_ptr_array_index (array, (int)number), &value))
+                    {
+                      shumate_vector_value_set_number (out, number);
+                      return TRUE;
+                    }
+                }
+
+              shumate_vector_value_set_number (out, -1);
+              return TRUE;
+            }
+
+          default:
+            return FALSE;
+        }
+
+    case EXPR_LENGTH:
+      g_assert (n_expressions == 1);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+
+      switch (value.type)
+        {
+        case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+          {
+            const char *string;
+            shumate_vector_value_get_string (&value, &string);
+            shumate_vector_value_set_number (out, g_utf8_strlen (string, -1));
+            return TRUE;
+          }
+
+        case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+          {
+            GPtrArray *array = shumate_vector_value_get_array (&value);
+            shumate_vector_value_set_number (out, array->len);
+            return TRUE;
+          }
+
+        default:
+          return FALSE;
+        }
+
+    case EXPR_SLICE:
+      g_assert (n_expressions == 2 || n_expressions == 3);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+
+      if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
+        return FALSE;
+      if (!shumate_vector_value_get_number (&value2, &number))
+        return FALSE;
+      if (number != (int)number || number < 0)
+        return FALSE;
+
+      if (n_expressions == 3)
+        {
+          if (!shumate_vector_expression_eval (expressions[2], scope, &value2))
+            return FALSE;
+          if (!shumate_vector_value_get_number (&value2, &number2))
+            return FALSE;
+          if (number2 != (int)number2 || number2 < 0)
+            return FALSE;
+        }
+      else
+        number2 = G_MAXDOUBLE;
+
+      switch (value.type)
+        {
+        case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+          {
+            const char *input;
+            const char *start, *end;
+
+            shumate_vector_value_get_string (&value, &input);
+            number2 = MIN (number2, g_utf8_strlen (input, -1));
+
+            start = g_utf8_offset_to_pointer (input, (int)number);
+            end = g_utf8_offset_to_pointer (input, (int)number2);
+
+            string = g_strndup (start, end - start);
+            shumate_vector_value_set_string (out, string);
+            return TRUE;
+          }
+
+        case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+          {
+            GPtrArray *array = shumate_vector_value_get_array (&value);
+
+            number2 = MIN (number2, array->len);
+
+            shumate_vector_value_start_array (out);
+            for (; number < number2; number ++)
+              {
+                shumate_vector_value_copy (
+                  g_ptr_array_index (array, (int)number),
+                  &value2
+                );
+                shumate_vector_value_array_append (out, &value2);
+              }
+            return TRUE;
+          }
+
+        default:
+          return FALSE;
+        }
 
     default:
       g_assert_not_reached ();

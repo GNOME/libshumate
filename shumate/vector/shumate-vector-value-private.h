@@ -91,7 +91,7 @@ gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *colo
 
 void shumate_vector_value_start_array (ShumateVectorValue *self);
 void shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element);
-gboolean shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValue *element);
+GPtrArray *shumate_vector_value_get_array (ShumateVectorValue *self);
 
 void shumate_vector_value_set_image (ShumateVectorValue *self, GdkPixbuf *image, const char *image_name);
 gboolean shumate_vector_value_get_image (ShumateVectorValue *self, GdkPixbuf **image);

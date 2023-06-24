@@ -309,18 +309,15 @@ shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue 
 }
 
 
-gboolean
-shumate_vector_value_array_contains (ShumateVectorValue *self, ShumateVectorValue *element)
+GPtrArray *
+shumate_vector_value_get_array (ShumateVectorValue *self)
 {
   if (self->type != SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
-    return FALSE;
+    return NULL;
 
-  for (int i = 0, n = self->array->len; i < n; i ++)
-    if (shumate_vector_value_equal (element, g_ptr_array_index (self->array, i)))
-      return TRUE;
-
-  return FALSE;
+  return self->array;
 }
+
 
 void
 shumate_vector_value_set_image (ShumateVectorValue *self,

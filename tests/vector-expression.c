@@ -221,6 +221,23 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"<=\", [\"literal\", \"apples\"], \"oranges\"]"));
   g_assert_true (filter ("[\">=\", [\"literal\", \"apples\"], \"apples\"]"));
   g_assert_true (filter ("[\"<=\", [\"literal\", \"oranges\"], \"oranges\"]"));
+
+  g_assert_true (filter ("[\"==\", [\"at\", 0, [\"literal\", [\"a\", \"b\", \"c\"]]], \"a\"]"));
+  g_assert_true (filter ("[\"==\", [\"at\", 1, [\"literal\", [\"a\", \"b\", \"c\"]]], \"b\"]"));
+  g_assert_false (filter ("[\"==\", [\"at\", 3, [\"literal\", [\"a\", \"b\", \"c\"]]], null]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", 2, [\"literal\", [1, 2, 3]]], 1]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", 4, [\"literal\", [1, 2, 3]]], -1]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", \"!\", \"Hello, \U0001F30E!\"], 8]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", \"world\", \"Hello, world!\"], 7]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", \"WORLD\", \"Hello, world!\"], -1]"));
+  g_assert_true (filter ("[\"==\", [\"index-of\", \"Hello\", \"Hello, world!\", 1], -1]"));
+  g_assert_true (filter ("[\"==\", [\"length\", [\"literal\", []]], 0]"));
+  g_assert_true (filter ("[\"==\", [\"length\", [\"literal\", [\"a\", \"b\", \"c\"]]], 3]"));
+  g_assert_true (filter ("[\"==\", [\"length\", \"Hello, \U0001F30E!\"], 9]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 0, 2], [\"literal\", [\"a\", \"b\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 1, 2], [\"literal\", [\"b\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7], \"\U0001F30E!\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7, 8], \"\U0001F30E\"]"));
 }
 
 
@@ -372,10 +389,7 @@ test_vector_expression_array ()
 
   shumate_vector_value_start_array (&array1);
   shumate_vector_value_array_append (&array1, &element1);
-  g_assert_false (shumate_vector_value_array_contains (&array1, &element2));
-
   shumate_vector_value_array_append (&array1, &element2);
-  g_assert_true (shumate_vector_value_array_contains (&array1, &element2));
 
   string = shumate_vector_value_as_string (&array1);
   g_assert_cmpstr (string, ==, "[Hello, world!, true]");
