@@ -44,10 +44,10 @@ shumate_vector_background_layer_create_from_json (JsonObject *object, GError **e
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "background-color"), NULL, error)))
+      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "background-color"), error)))
         return NULL;
 
-      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "background-opacity"), NULL, error)))
+      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "background-opacity"), error)))
         return NULL;
     }
 

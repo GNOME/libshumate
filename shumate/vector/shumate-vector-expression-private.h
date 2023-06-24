@@ -46,9 +46,8 @@ struct _ShumateVectorExpressionClass
                     ShumateVectorValue       *out);
 };
 
-ShumateVectorExpression *shumate_vector_expression_from_json (JsonNode                        *json,
-                                                              ShumateVectorExpressionContext  *ctx,
-                                                              GError                         **error);
+ShumateVectorExpression *shumate_vector_expression_from_json (JsonNode  *json,
+                                                              GError   **error);
 ShumateVectorExpression *shumate_vector_expression_filter_from_format (const char *format,
                                                                        GError **error);
 

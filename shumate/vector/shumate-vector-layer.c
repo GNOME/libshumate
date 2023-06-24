@@ -81,7 +81,7 @@ shumate_vector_layer_create_from_json (JsonObject *object, GError **error)
   filter = json_object_get_member (object, "filter");
   if (filter != NULL)
     {
-      if (!(priv->filter = shumate_vector_expression_from_json (filter, NULL, error)))
+      if (!(priv->filter = shumate_vector_expression_from_json (filter, error)))
         return NULL;
     }
 

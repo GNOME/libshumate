@@ -58,7 +58,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
     {
       JsonObject *paint = json_object_get_object_member (object, "paint");
 
-      layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), NULL, error);
+      layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), error);
       if (layer->text_color == NULL)
         return NULL;
     }
@@ -71,11 +71,11 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       JsonNode *text_offset_node;
       JsonArray *text_font;
 
-      layer->icon_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-anchor"), NULL, error);
+      layer->icon_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-anchor"), error);
       if (layer->icon_anchor == NULL)
         return NULL;
 
-      layer->icon_image = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-image"), NULL, error);
+      layer->icon_image = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-image"), error);
       if (layer->icon_image == NULL)
         return NULL;
 
@@ -100,23 +100,23 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->icon_offset_y = json_array_get_double_element (icon_offset, 1);
         }
 
-      layer->icon_size = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-size"), NULL, error);
+      layer->icon_size = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-size"), error);
       if (layer->icon_size == NULL)
         return NULL;
 
-      layer->icon_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-rotation-alignment"), NULL, error);
+      layer->icon_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-rotation-alignment"), error);
       if (layer->icon_rotation_alignment == NULL)
         return NULL;
 
-      layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), NULL, error);
+      layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), error);
       if (layer->text_field == NULL)
         return NULL;
 
-      layer->text_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "text-anchor"), NULL, error);
+      layer->text_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "text-anchor"), error);
       if (layer->text_anchor == NULL)
         return NULL;
 
-      layer->text_keep_upright = shumate_vector_expression_from_json (json_object_get_member (layout, "text-keep-upright"), NULL, error);
+      layer->text_keep_upright = shumate_vector_expression_from_json (json_object_get_member (layout, "text-keep-upright"), error);
       if (layer->text_keep_upright == NULL)
         return NULL;
 
@@ -141,7 +141,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->text_offset_y = json_array_get_double_element (text_offset, 1);
         }
 
-      layer->text_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "text-rotation-alignment"), NULL, error);
+      layer->text_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "text-rotation-alignment"), error);
       if (layer->text_rotation_alignment == NULL)
         return NULL;
 
@@ -161,23 +161,23 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->text_fonts = g_strjoinv (", ", fonts);
         }
 
-      layer->symbol_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-placement"), NULL, error);
+      layer->symbol_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-placement"), error);
       if (layer->symbol_placement == NULL)
         return NULL;
 
-      layer->symbol_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-spacing"), NULL, error);
+      layer->symbol_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-spacing"), error);
       if (layer->symbol_spacing == NULL)
         return NULL;
 
-      layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), NULL, error);
+      layer->text_size = shumate_vector_expression_from_json (json_object_get_member (layout, "text-size"), error);
       if (layer->text_size == NULL)
         return NULL;
 
-      layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), NULL, error);
+      layer->text_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "text-padding"), error);
       if (layer->text_padding == NULL)
         return NULL;
 
-      layer->symbol_sort_key = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-sort-key"), NULL, error);
+      layer->symbol_sort_key = shumate_vector_expression_from_json (json_object_get_member (layout, "symbol-sort-key"), error);
       if (layer->symbol_sort_key == NULL)
         return NULL;
     }
@@ -192,7 +192,7 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
        * mouseleave and setting the cursor on the whole map via JS.
        *
        * See gdk_cursor_new_from_name for possible values. */
-      layer->cursor = shumate_vector_expression_from_json (json_object_get_member (metadata, "libshumate:cursor"), NULL, error);
+      layer->cursor = shumate_vector_expression_from_json (json_object_get_member (metadata, "libshumate:cursor"), error);
       if (layer->cursor == NULL)
         return NULL;
     }

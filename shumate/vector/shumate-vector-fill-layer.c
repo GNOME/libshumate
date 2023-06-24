@@ -47,13 +47,13 @@ shumate_vector_fill_layer_create_from_json (JsonObject *object, GError **error)
       if (!shumate_vector_json_get_object (paint_node, &paint, error))
         return NULL;
 
-      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-color"), NULL, error)))
+      if (!(layer->color = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-color"), error)))
         return NULL;
 
-      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-opacity"), NULL, error)))
+      if (!(layer->opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-opacity"), error)))
         return NULL;
 
-      if (!(layer->pattern = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-pattern"), NULL, error)))
+      if (!(layer->pattern = shumate_vector_expression_from_json (json_object_get_member (paint, "fill-pattern"), error)))
         return NULL;
     }
 
