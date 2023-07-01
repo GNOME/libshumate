@@ -238,6 +238,12 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 1, 2], [\"literal\", [\"b\"]]]"));
   g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7], \"\U0001F30E!\"]"));
   g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7, 8], \"\U0001F30E\"]"));
+
+  g_assert_true (filter ("[\"==\", [\"literal\", \"hello\"], \"HELLO\", [\"collator\", {\"case-sensitive\": false}]]"));
+  g_assert_true (filter ("[\"!=\", [\"literal\", \"hello\"], \"HELLO\", [\"collator\", {\"case-sensitive\": true}]]"));
+  g_assert_true (filter ("[\">\", [\"literal\", \"hello\"], \"a\", [\"collator\", {}]]"));
+  g_assert_true (filter ("[\"<\", [\"literal\", \"a\"], \"hello\", [\"collator\", {}]]"));
+  g_assert_true (filter ("[\"!=\", [\"resolved-locale\", [\"collator\", {}]], \"foo\"]"));
 }
 
 
@@ -324,7 +330,7 @@ test_vector_expression_filter_errors (void)
 {
   filter_expect_error ("[\"not an operator\"]");
   filter_expect_error ("[\"in\"]");
-  filter_expect_error ("[\"==\", 0, 1, 2]");
+  filter_expect_error ("[\"==\", 0, 1, 2, 3]");
   filter_expect_error ("[]");
   filter_expect_error ("[[]]");
 

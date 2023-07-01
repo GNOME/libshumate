@@ -22,6 +22,7 @@ struct _ExprInfo
   gboolean lookup_first_arg : 1;
 };
 %%
+collator, EXPR_COLLATOR
 format, EXPR_FORMAT
 image, EXPR_IMAGE, EXACT(1)
 literal, EXPR_TYPE_LITERAL, EXACT(1)
@@ -37,12 +38,12 @@ index-of, EXPR_INDEX_OF, GE(2), LE(3)
 length, EXPR_LENGTH, EXACT(1)
 slice, EXPR_SLICE, GE(2), LE(3)
 !, EXPR_NOT, EXACT(1)
-!=, EXPR_NE, EXACT(2), .lookup_first_arg = TRUE
-<, EXPR_LT, EXACT(2), .lookup_first_arg = TRUE
-<=, EXPR_LE, EXACT(2), .lookup_first_arg = TRUE
-==, EXPR_EQ, EXACT(2), .lookup_first_arg = TRUE
->, EXPR_GT, EXACT(2), .lookup_first_arg = TRUE
->=, EXPR_GE, EXACT(2), .lookup_first_arg = TRUE
+!=, EXPR_NE, GE(2), LE(3), .lookup_first_arg = TRUE
+<, EXPR_LT, GE(2), LE(3), .lookup_first_arg = TRUE
+<=, EXPR_LE, GE(2), LE(3), .lookup_first_arg = TRUE
+==, EXPR_EQ, GE(2), LE(3), .lookup_first_arg = TRUE
+>, EXPR_GT, GE(2), LE(3), .lookup_first_arg = TRUE
+>=, EXPR_GE, GE(2), LE(3), .lookup_first_arg = TRUE
 all, EXPR_ALL
 any, EXPR_ANY
 none, EXPR_NONE
@@ -52,6 +53,7 @@ let, EXPR_LET
 var, EXPR_VAR
 concat, EXPR_CONCAT
 downcase, EXPR_DOWNCASE, EXACT(1)
+resolved-locale, EXPR_RESOLVED_LOCALE
 upcase, EXPR_UPCASE, EXACT(1)
 -, EXPR_SUB, GE(1), LE(2)
 *, EXPR_MUL, GE(1)

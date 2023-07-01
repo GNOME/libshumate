@@ -371,6 +371,26 @@ shumate_vector_format_part_free (ShumateVectorFormatPart *format_part)
   g_free (format_part);
 }
 
+void
+shumate_vector_value_set_collator (ShumateVectorValue    *self,
+                                   ShumateVectorCollator *collator)
+{
+  shumate_vector_value_unset (self);
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_COLLATOR;
+  self->collator = *collator;
+}
+
+gboolean
+shumate_vector_value_get_collator (ShumateVectorValue    *self,
+                                   ShumateVectorCollator *collator)
+{
+  if (self->type != SHUMATE_VECTOR_VALUE_TYPE_COLLATOR)
+    return FALSE;
+
+  *collator = self->collator;
+  return TRUE;
+}
+
 gboolean
 shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 {

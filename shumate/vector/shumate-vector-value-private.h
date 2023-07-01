@@ -32,6 +32,7 @@ typedef enum {
   SHUMATE_VECTOR_VALUE_TYPE_ARRAY,
   SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE,
   SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING,
+  SHUMATE_VECTOR_VALUE_TYPE_COLLATOR,
 } ShumateVectorValueType;
 
 typedef struct {
@@ -42,6 +43,10 @@ typedef struct {
   gboolean has_text_color : 1;
   gboolean has_font_scale : 1;
 } ShumateVectorFormatPart;
+
+typedef struct {
+  guint8 case_sensitive : 1;
+} ShumateVectorCollator;
 
 typedef struct {
   ShumateVectorValueType type;
@@ -60,6 +65,7 @@ typedef struct {
       char *image_name;
     };
     GPtrArray *formatted_string;
+    ShumateVectorCollator collator;
   };
 } ShumateVectorValue;
 
@@ -100,6 +106,9 @@ void shumate_vector_value_set_formatted (ShumateVectorValue *self, GPtrArray *fo
 gboolean shumate_vector_value_get_formatted (ShumateVectorValue *self, GPtrArray **format_parts);
 void shumate_vector_format_part_free (ShumateVectorFormatPart *self);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorFormatPart, shumate_vector_format_part_free)
+
+void shumate_vector_value_set_collator (ShumateVectorValue *self, ShumateVectorCollator *collator);
+gboolean shumate_vector_value_get_collator (ShumateVectorValue *self, ShumateVectorCollator *collator);
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
 

@@ -122,6 +122,44 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
   /* Expressions that don't use the child expressions array */
   switch (info->type)
     {
+      case EXPR_COLLATOR:
+        {
+          JsonNode *node;
+          JsonObject *object;
+          ShumateVectorExpression *child = NULL;
+
+          if (json_array_get_length (array) != 2)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `collator` expected exactly 1 argument, got %d",
+                          json_array_get_length (array) - 1);
+              return NULL;
+            }
+
+          node = json_array_get_element (array, 1);
+          if (!JSON_NODE_HOLDS_OBJECT (node))
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `collator` expected an object");
+              return NULL;
+            }
+
+          object = json_node_get_object (node);
+
+          self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+          self->type = EXPR_COLLATOR;
+
+          if (!(child = filter_from_array_or_literal (json_object_get_member (object, "case-sensitive"), ctx, error)))
+            return NULL;
+          g_ptr_array_add (self->expressions, child);
+
+          return (ShumateVectorExpression *)g_steal_pointer (&self);
+        }
+
       case EXPR_FORMAT:
         {
           self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
@@ -471,11 +509,13 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
   ShumateVectorExpressionFilter *self = (ShumateVectorExpressionFilter *)expr;
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
   g_auto(ShumateVectorValue) value2 = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) value3 = SHUMATE_VECTOR_VALUE_INIT;
   gboolean inverted = FALSE;
   gboolean boolean;
   double number, number2;
   g_autofree char *string = NULL;
   ShumateVectorExpression **expressions = (ShumateVectorExpression **)self->expressions->pdata;
+  ShumateVectorCollator collator;
   guint n_expressions = self->expressions->len;
 
   switch (self->type)
@@ -584,15 +624,43 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       inverted = TRUE;
       G_GNUC_FALLTHROUGH;
     case EXPR_EQ:
-      g_assert (n_expressions == 2);
+      g_assert (n_expressions == 2 || n_expressions == 3);
 
       if (!shumate_vector_expression_eval (expressions[0], scope, &value))
         return FALSE;
       if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
         return FALSE;
 
-      shumate_vector_value_set_boolean (out, shumate_vector_value_equal (&value, &value2) ^ inverted);
-      return TRUE;
+      if (n_expressions == 3)
+        {
+          const char *str1, *str2;
+          g_autofree char *str1_auto = NULL;
+          g_autofree char *str2_auto = NULL;
+
+          if (!shumate_vector_value_get_string (&value, &str1))
+            return FALSE;
+          if (!shumate_vector_value_get_string (&value2, &str2))
+            return FALSE;
+
+          if (!shumate_vector_expression_eval (expressions[2], scope, &value3))
+            return FALSE;
+          if (!shumate_vector_value_get_collator (&value3, &collator))
+            return FALSE;
+
+          if (!collator.case_sensitive)
+            {
+              str1 = str1_auto = g_utf8_casefold (str1, -1);
+              str2 = str2_auto = g_utf8_casefold (str2, -1);
+            }
+
+          shumate_vector_value_set_boolean (out, (g_utf8_collate (str1, str2) == 0) ^ inverted);
+          return TRUE;
+        }
+      else
+        {
+          shumate_vector_value_set_boolean (out, shumate_vector_value_equal (&value, &value2) ^ inverted);
+          return TRUE;
+        }
 
     case EXPR_LT:
     case EXPR_GT:
@@ -601,14 +669,36 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       {
         int cmp;
         const char *str, *str2;
-        g_assert (n_expressions == 2);
+        g_autofree char *str_auto = NULL;
+        g_autofree char *str2_auto = NULL;
+        g_assert (n_expressions == 2 || n_expressions == 3);
 
         if (!shumate_vector_expression_eval (expressions[0], scope, &value))
           return FALSE;
         if (!shumate_vector_expression_eval (expressions[1], scope, &value2))
           return FALSE;
 
-        if (shumate_vector_value_get_number (&value, &number))
+        if (n_expressions == 3)
+          {
+            if (!shumate_vector_expression_eval (expressions[2], scope, &value3))
+              return FALSE;
+            if (!shumate_vector_value_get_collator (&value3, &collator))
+              return FALSE;
+
+            if (!shumate_vector_value_get_string (&value, &str))
+              return FALSE;
+            if (!shumate_vector_value_get_string (&value2, &str2))
+              return FALSE;
+
+            if (!collator.case_sensitive)
+              {
+                str = str_auto = g_utf8_casefold (str, -1);
+                str2 = str2_auto = g_utf8_casefold (str2, -1);
+              }
+
+            cmp = g_utf8_collate (str, str2);
+          }
+        else if (shumate_vector_value_get_number (&value, &number))
           {
             if (!shumate_vector_value_get_number (&value2, &number2))
               return FALSE;
@@ -725,6 +815,30 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         string_down = g_utf8_strdown (str, -1);
 
         shumate_vector_value_set_string (out, string_down);
+        return TRUE;
+      }
+
+    case EXPR_RESOLVED_LOCALE:
+      {
+        g_autofree char *locale = NULL;
+
+        g_assert (n_expressions == 1);
+
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        if (!shumate_vector_value_get_collator (&value, &collator))
+          return FALSE;
+
+        locale = g_strdup (g_get_language_names ()[0]);
+
+        /* if there is an encoding at the end, remove it */
+        if (strchr (locale, '.'))
+          *strchr (locale, '.') = '\0';
+
+        /* replace _ with - */
+        g_strdelimit (locale, "_", '-');
+
+        shumate_vector_value_set_string (out, locale);
         return TRUE;
       }
 
@@ -947,6 +1061,13 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
           shumate_vector_value_set_image (out, pixbuf, string);
           return TRUE;
         }
+
+    case EXPR_COLLATOR:
+      g_assert (n_expressions == 1);
+
+      collator.case_sensitive = shumate_vector_expression_eval_boolean (expressions[0], scope, FALSE);
+      shumate_vector_value_set_collator (out, &collator);
+      return TRUE;
 
     case EXPR_FORMAT:
         {

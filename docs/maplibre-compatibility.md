@@ -573,7 +573,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-collator">collator</a></td>
-    <td>❌ Not supported</td>
+    <td>Only the case-sensitive property is supported. The locale property is always set to the current locale and may not be changed.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-format">format</a></td>
@@ -696,27 +696,27 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#!=">!=</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#<">&lt;</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#<=">&lt;=</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#==">==</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#&gt;">&gt;</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#&gt;=">&gt;=</a></td>
-    <td>Does not support the collator argument.</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#all">all</a></td>
@@ -797,7 +797,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#resolved-locale">resolved-locale</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#upcase">upcase</a></td>
