@@ -28,5 +28,7 @@ G_DECLARE_FINAL_TYPE (ShumateVectorExpressionFilter, shumate_vector_expression_f
 ShumateVectorExpression *shumate_vector_expression_filter_from_json_array (JsonArray                       *array,
                                                                            ShumateVectorExpressionContext  *ctx,
                                                                            GError                         **error);
-
+ShumateVectorExpression *shumate_vector_expression_filter_from_array_or_literal (JsonNode                        *node,
+                                                                                 ShumateVectorExpressionContext  *ctx,
+                                                                                 GError                         **error);
 G_END_DECLS

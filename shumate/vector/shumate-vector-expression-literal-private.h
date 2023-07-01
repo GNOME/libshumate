@@ -19,6 +19,7 @@
 
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-expression-private.h"
+#include "shumate-vector-expression-filter-private.h"
 
 G_BEGIN_DECLS
 

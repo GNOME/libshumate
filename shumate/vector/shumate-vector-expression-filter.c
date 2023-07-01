@@ -19,6 +19,7 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-filter-private.h"
 #include "shumate-vector-expression-literal-private.h"
+#include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-type-private.h"
 
 struct _ShumateVectorExpressionFilter
@@ -52,10 +53,10 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FormatExpressionPart, format_expression_part_free
 const ExprInfo *shumate_vector_expression_type_lookup (register const char *str, register size_t len);
 
 
-static ShumateVectorExpression *
-filter_from_array_or_literal (JsonNode                        *node,
-                              ShumateVectorExpressionContext  *ctx,
-                              GError                         **error)
+ShumateVectorExpression *
+shumate_vector_expression_filter_from_array_or_literal (JsonNode                        *node,
+                                                        ShumateVectorExpressionContext  *ctx,
+                                                        GError                         **error)
 {
   if (node == NULL || JSON_NODE_HOLDS_NULL (node))
     return shumate_vector_expression_literal_new (&SHUMATE_VECTOR_VALUE_INIT);
@@ -153,7 +154,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
           self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
           self->type = EXPR_COLLATOR;
 
-          if (!(child = filter_from_array_or_literal (json_object_get_member (object, "case-sensitive"), ctx, error)))
+          if (!(child = shumate_vector_expression_filter_from_array_or_literal (json_object_get_member (object, "case-sensitive"), ctx, error)))
             return NULL;
           g_ptr_array_add (self->expressions, child);
 
@@ -174,7 +175,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 
               g_ptr_array_add (self->expressions, part);
 
-              part->string = filter_from_array_or_literal (arg_node, ctx, error);
+              part->string = shumate_vector_expression_filter_from_array_or_literal (arg_node, ctx, error);
               if (part->string == NULL)
                 return NULL;
 
@@ -189,10 +190,10 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 
                   i ++;
 
-                  if (!(part->text_color = filter_from_array_or_literal (json_object_get_member (format_object, "text-color"), ctx, error)))
+                  if (!(part->text_color = shumate_vector_expression_filter_from_array_or_literal (json_object_get_member (format_object, "text-color"), ctx, error)))
                     return NULL;
 
-                  if (!(part->font_scale = filter_from_array_or_literal (json_object_get_member (format_object, "font-scale"), ctx, error)))
+                  if (!(part->font_scale = shumate_vector_expression_filter_from_array_or_literal (json_object_get_member (format_object, "font-scale"), ctx, error)))
                     return NULL;
                 }
             }
@@ -222,6 +223,9 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 
           return shumate_vector_expression_literal_new (&value);
         }
+
+      case EXPR_INTERPOLATE:
+        return shumate_vector_expression_interpolate_from_json_array (array, ctx, error);
 
       case EXPR_LET:
         {
@@ -257,7 +261,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
                   return NULL;
                 }
 
-              expr = filter_from_array_or_literal (
+              expr = shumate_vector_expression_filter_from_array_or_literal (
                 json_array_get_element (array, i + 1),
                 &child_ctx,
                 error
@@ -270,7 +274,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
                                   expr);
             }
 
-          child_expr = filter_from_array_or_literal (
+          child_expr = shumate_vector_expression_filter_from_array_or_literal (
             json_array_get_element (array, json_array_get_length (array) - 1),
             &child_ctx,
             error
@@ -412,7 +416,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
               g_ptr_array_add (((ShumateVectorExpressionFilter *)expr)->expressions, shumate_vector_expression_literal_new (&value));
             }
         }
-      else if (!(expr = filter_from_array_or_literal (arg, ctx, error)))
+      else if (!(expr = shumate_vector_expression_filter_from_array_or_literal (arg, ctx, error)))
         return NULL;
 
       g_ptr_array_add (self->expressions, g_steal_pointer (&expr));

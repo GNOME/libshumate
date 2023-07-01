@@ -27,5 +27,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (ShumateVectorExpressionInterpolate, shumate_vector_expression_interpolate, SHUMATE, VECTOR_EXPRESSION_INTERPOLATE, ShumateVectorExpression)
 
 ShumateVectorExpression *shumate_vector_expression_interpolate_from_json_obj (JsonObject *object, GError **error);
+ShumateVectorExpression *shumate_vector_expression_interpolate_from_json_array (JsonArray *array,
+                                                                                ShumateVectorExpressionContext *ctx,
+                                                                                GError **error);
 
 G_END_DECLS

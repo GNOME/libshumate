@@ -56,6 +56,8 @@ typedef enum {
   EXPR_COALESCE,
   EXPR_MATCH,
 
+  EXPR_INTERPOLATE,
+
   EXPR_LET,
   EXPR_VAR,
 

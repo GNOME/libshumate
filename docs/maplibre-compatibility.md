@@ -752,7 +752,7 @@ evaluated at integer zoom levels only.
 <table>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#interpolate">interpolate</a></td>
-    <td>❌ Not supported</td>
+    <td>Only linear and exponential interpolation is supported.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#interpolate-hcl">interpolate-hcl</a></td>

@@ -44,15 +44,9 @@ test_vector_expression_literal (void)
 
 
 static void
-test_vector_expression_interpolate (void)
+check_interpolate (ShumateVectorExpression *expression)
 {
-  g_autoptr(GError) error = NULL;
-  g_autoptr(JsonNode) node = json_from_string ("{\"stops\": [[12, 1], [13, 2], [14, 5], [16, 9]]}", NULL);
-  g_autoptr(ShumateVectorExpression) expression;
   ShumateVectorRenderScope scope;
-
-  expression = shumate_vector_expression_from_json (node, &error);
-  g_assert_no_error (error);
 
   /* Test that exact stop values work */
   scope.zoom_level = 12;
@@ -77,18 +71,42 @@ test_vector_expression_interpolate (void)
   g_assert_cmpfloat (7.0, ==, shumate_vector_expression_eval_number (expression, &scope, -10000.0));
 }
 
-
 static void
-test_vector_expression_interpolate_color (void)
+test_vector_expression_interpolate (void)
 {
   g_autoptr(GError) error = NULL;
-  g_autoptr(JsonNode) node = json_from_string ("{\"stops\": [[12, \"#00224466\"], [13, \"#88AACCEE\"]]}", NULL);
+  g_autoptr(JsonNode) node = json_from_string ("{\"stops\": [[12, 1], [13, 2], [14, 5], [16, 9]]}", NULL);
   g_autoptr(ShumateVectorExpression) expression;
-  ShumateVectorRenderScope scope;
-  GdkRGBA color, correct_color;
+
+  g_assert_nonnull (node);
 
   expression = shumate_vector_expression_from_json (node, &error);
   g_assert_no_error (error);
+
+  check_interpolate (expression);
+}
+
+static void
+test_vector_expression_interpolate_filter (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string ("[\"interpolate\", [\"linear\"], [\"zoom\"], 12, 1, 13, 2, 14, 5, 16, 9]", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+
+  g_assert_nonnull (node);
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+
+  check_interpolate (expression);
+}
+
+
+static void
+check_interpolate_color (ShumateVectorExpression *expression)
+{
+  ShumateVectorRenderScope scope;
+  GdkRGBA color, correct_color;
 
   /* Test that exact stop values work */
   scope.zoom_level = 12;
@@ -105,6 +123,36 @@ test_vector_expression_interpolate_color (void)
   shumate_vector_expression_eval_color (expression, &scope, &color);
   gdk_rgba_parse (&correct_color, "#88AACCEE");
   g_assert_true (gdk_rgba_equal (&color, &correct_color));
+}
+
+static void
+test_vector_expression_interpolate_color (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string ("{\"stops\": [[12, \"#00224466\"], [13, \"#88AACCEE\"]]}", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+
+  g_assert_nonnull (node);
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+
+  check_interpolate_color (expression);
+}
+
+static void
+test_vector_expression_interpolate_color_filter (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string ("[\"interpolate\", [\"linear\"], [\"zoom\"], 12, \"#00224466\", 13, \"#88AACCEE\"]", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+
+  g_assert_nonnull (node);
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+
+  check_interpolate_color (expression);
 }
 
 
@@ -484,7 +532,9 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/parse", test_vector_expression_parse);
   g_test_add_func ("/vector/expression/literal", test_vector_expression_literal);
   g_test_add_func ("/vector/expression/interpolate", test_vector_expression_interpolate);
+  g_test_add_func ("/vector/expression/interpolate-filter", test_vector_expression_interpolate_filter);
   g_test_add_func ("/vector/expression/interpolate-color", test_vector_expression_interpolate_color);
+  g_test_add_func ("/vector/expression/interpolate-color-filter", test_vector_expression_interpolate_color_filter);
   g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
   g_test_add_func ("/vector/expression/variable-binding", test_vector_expression_variable_binding);
   g_test_add_func ("/vector/expression/image", test_vector_expression_image);

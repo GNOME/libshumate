@@ -50,6 +50,7 @@ none, EXPR_NONE
 case, EXPR_CASE
 coalesce, EXPR_COALESCE
 match, EXPR_MATCH, GE(2)
+interpolate, EXPR_INTERPOLATE
 let, EXPR_LET
 var, EXPR_VAR
 concat, EXPR_CONCAT
@@ -81,3 +82,4 @@ round, EXPR_ROUND, EXACT(1)
 sin, EXPR_SIN, EXACT(1)
 sqrt, EXPR_SQRT, EXACT(1)
 tan, EXPR_TAN, EXACT(1)
+zoom, EXPR_ZOOM
