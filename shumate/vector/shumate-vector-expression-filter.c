@@ -782,6 +782,39 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       shumate_vector_value_unset (out);
       return TRUE;
 
+    case EXPR_MATCH:
+      g_assert (n_expressions >= 2);
+
+      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+        return FALSE;
+
+      for (int i = 1; i < n_expressions; i += 2)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value2))
+            return FALSE;
+
+          if (i + 1 == n_expressions)
+            {
+              /* fallback value */
+              shumate_vector_value_copy (&value2, out);
+              return TRUE;
+            }
+          else
+            {
+              if (shumate_vector_value_equal (&value, &value2))
+                {
+                  if (!shumate_vector_expression_eval (expressions[i + 1], scope, &value))
+                    return FALSE;
+
+                  shumate_vector_value_copy (&value, out);
+                  return TRUE;
+                }
+            }
+        }
+
+      /* no case matched and there was no fallback */
+      return FALSE;
+
     case EXPR_CONCAT:
       {
         g_autoptr(GString) string_builder = g_string_new ("");

@@ -738,7 +738,8 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#match">match</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported. The fallback argument is optional in libshumate; if no case matches,
+    then the expression fails to evaluate.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#within">within</a></td>

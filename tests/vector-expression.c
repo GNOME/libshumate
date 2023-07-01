@@ -179,6 +179,8 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"case\", true, 0, 1], 0]"));
   g_assert_true (filter ("[\"==\", [\"case\", false, 0, 1], 1]"));
   g_assert_true (filter ("[\"==\", [\"case\", false, 0, true, 2], 2]"));
+  g_assert_true (filter ("[\"==\", [\"match\", \"a\", \"b\", 2, \"c\", 3, \"a\", 1, 0], 1]"));
+  g_assert_true (filter ("[\"==\", [\"match\", \"b\", 2], 2]"));
 
   g_assert_true (filter ("[\"==\", [\"+\", 3, 1, 7], 11]"));
   g_assert_true (filter ("[\"==\", [\"-\", 3, 1], 2]"));

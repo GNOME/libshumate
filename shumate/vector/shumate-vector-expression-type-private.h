@@ -54,6 +54,7 @@ typedef enum {
   EXPR_NONE,
   EXPR_CASE,
   EXPR_COALESCE,
+  EXPR_MATCH,
 
   EXPR_LET,
   EXPR_VAR,
