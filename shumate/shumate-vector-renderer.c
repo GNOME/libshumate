@@ -799,6 +799,13 @@ thread_func (RenderJob *job)
   g_idle_add ((GSourceFunc)render_job_finish, job);
 }
 
+static void
+chain_cancel (GCancellable *source,
+              GCancellable *dest)
+{
+  g_cancellable_cancel (dest);
+}
+
 static gboolean
 begin_render (ShumateVectorRenderer  *self,
               GTask                  *task,
@@ -827,8 +834,8 @@ begin_render (ShumateVectorRenderer  *self,
     {
       job->cancellable_handle = g_cancellable_connect (
         g_task_get_cancellable (task),
-        G_CALLBACK (g_cancellable_cancel),
-        job->cancellable, NULL
+        G_CALLBACK (chain_cancel),
+        job, NULL
       );
     }
 
