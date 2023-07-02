@@ -53,6 +53,11 @@ struct _ShumateMapLayer
   gint64 profile_all_tiles_filled_begin;
   gint64 profile_all_tiles_done_begin;
 
+  guint defer_callback_id;
+  double defer_latitude_y, defer_longitude_x, defer_zoom_level;
+  gint64 defer_frame_time;
+  gboolean deferring;
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorSymbolContainer *symbols;
 #endif
@@ -214,6 +219,68 @@ remove_tile (ShumateMapLayer     *self,
   g_signal_handlers_disconnect_by_func (tile, on_tile_notify_state, self);
 }
 
+static gboolean
+defer_tick_callback (GtkWidget     *widget,
+                     GdkFrameClock *frame_clock,
+                     gpointer       user_data)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
+  self->defer_callback_id = 0;
+
+  recompute_grid (self);
+  return G_SOURCE_REMOVE;
+}
+
+static gboolean
+should_defer (ShumateMapLayer *self)
+{
+  /* If the map is moving quickly, we may defer loading tiles until it slows back
+     down. That way, we don't waste resources loading tiles that will likely be gone
+     before they are done loading. */
+
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  ShumateMapSource *map_source = self->map_source;
+  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double tile_size = shumate_map_source_get_tile_size_at_zoom (map_source, zoom_level);
+  double map_height = shumate_map_source_get_row_count (map_source, zoom_level) * tile_size;
+  double map_width = shumate_map_source_get_column_count (map_source, zoom_level) * tile_size;
+
+  double longitude_x = shumate_map_source_get_x (map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
+  double latitude_y = shumate_map_source_get_y (map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+
+  double delta_x = self->defer_longitude_x * map_width - longitude_x;
+  double delta_y = self->defer_latitude_y * map_height - latitude_y;
+  double velocity = sqrt (delta_x * delta_x + delta_y * delta_y);
+  double width = gtk_widget_get_width (GTK_WIDGET (self));
+  double height = gtk_widget_get_height (GTK_WIDGET (self));
+  double diagonal = sqrt (width * width + height * height);
+  double zoom_velocity = self->defer_zoom_level - zoom_level;
+
+  gint64 frame_time = gdk_frame_clock_get_frame_time (gtk_widget_get_frame_clock (GTK_WIDGET (self)));
+
+  /* Only compare between frames, otherwise we might mistakenly think the
+     velocity is 0. */
+  if (frame_time == self->defer_frame_time)
+    return self->deferring;
+
+  if (velocity > diagonal * 0.25 || fabs (zoom_velocity) > 0.25)
+    {
+      if (self->defer_callback_id == 0)
+        self->defer_callback_id = gtk_widget_add_tick_callback (GTK_WIDGET (self), defer_tick_callback, NULL, NULL);
+
+      self->deferring = TRUE;
+    }
+  else
+    self->deferring = FALSE;
+
+  self->defer_latitude_y = latitude_y / map_height;
+  self->defer_longitude_x = longitude_x / map_width;
+  self->defer_zoom_level = shumate_viewport_get_zoom_level (viewport);
+  self->defer_frame_time = frame_time;
+
+  return self->deferring;
+}
+
 static void
 recompute_grid (ShumateMapLayer *self)
 {
@@ -255,6 +322,8 @@ recompute_grid (ShumateMapLayer *self)
   int required_columns = tile_final_column - tile_initial_column;
   int required_rows = tile_final_row - tile_initial_row;
 
+  gboolean defer = should_defer (self);
+
   gboolean all_filled = TRUE, all_done = TRUE;
 
   /* First, remove all the tiles that aren't in bounds, or that are on the
@@ -289,17 +358,17 @@ recompute_grid (ShumateMapLayer *self)
 
           n_tiles ++;
 
-          if (!tile)
+          if (!tile && !defer)
             {
               tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
               shumate_tile_set_scale_factor (tile, gtk_widget_get_scale_factor (GTK_WIDGET (self)));
               add_tile (self, tile, g_steal_pointer (&pos));
             }
 
-          if (shumate_tile_get_paintable (tile) == NULL)
+          if (tile == NULL || shumate_tile_get_paintable (tile) == NULL)
             all_filled = FALSE;
 
-          if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+          if (tile == NULL || shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
             all_done = FALSE;
         }
     }
