@@ -53,7 +53,6 @@ cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
 introspection_req = '>= 0.6.3'
 vala_req = '>= 0.11.0'
-gtk_doc_req = '>= 1.9'
 json_glib_req = '>= 1.6'
 
 glib_dep = dependency('glib-2.0', version: glib_req)
@@ -70,7 +69,6 @@ endif
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
-gtk_doc_dep = dependency('gtk-doc', version: gtk_doc_req, required: false)
 
 libsysprof_capture_dep = dependency('sysprof-capture-4',
   required: get_option('sysprof'),
