@@ -9,7 +9,7 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "tiles": ["https://tiles.maps.jwestman.net/data/streets_v3/{z}/{x}/{y}.pbf"],
+      "tiles": ["https://tileserver.gnome.org/data/v3/{z}/{x}/{y}.pbf"],
       "minzoom": 0,
       "maxzoom": 14
     }
