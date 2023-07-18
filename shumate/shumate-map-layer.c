@@ -296,8 +296,12 @@ should_defer (ShumateMapLayer *self)
   double diagonal = sqrt (width * width + height * height);
   double zoom_velocity = self->defer_zoom_level - zoom_level;
 
-  gint64 frame_time = gdk_frame_clock_get_frame_time (gtk_widget_get_frame_clock (GTK_WIDGET (self)));
+  gint64 frame_time;
 
+  if (!gtk_widget_get_realized (GTK_WIDGET (self)))
+    return FALSE;
+
+  frame_time = gdk_frame_clock_get_frame_time (gtk_widget_get_frame_clock (GTK_WIDGET (self)));
   /* Only compare between frames, otherwise we might mistakenly think the
      velocity is 0. */
   if (frame_time == self->defer_frame_time)
