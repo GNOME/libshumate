@@ -1,4 +1,8 @@
 =====================
+Version 1.0.5
+ - Don't defer frame clock when widget is unrealized
+
+=====================
 Version 1.0.4
 =====================
  - Throttle tile download during animations
