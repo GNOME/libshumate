@@ -30,6 +30,7 @@ G_DECLARE_FINAL_TYPE (ShumateSymbolEvent, shumate_symbol_event, SHUMATE, SYMBOL_
 
 const char *shumate_symbol_event_get_layer (ShumateSymbolEvent *self);
 const char *shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self);
+const GStrv shumate_symbol_event_get_keys (ShumateSymbolEvent *self);
 const char *shumate_symbol_event_get_tag (ShumateSymbolEvent *self,
                                           const char         *tag_name);
 

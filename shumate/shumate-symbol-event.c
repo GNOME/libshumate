@@ -247,6 +247,23 @@ shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self)
 }
 
 /**
+ * shumate_symbol_event_get_keys:
+ * @self: a [class@SymbolEvent]
+ *
+ * Gets a list of the keys of the source feature's tags.
+ *
+ * Returns: (transfer container): a list of the tag keys
+ *
+ * Since: 1.1
+ */
+const GStrv
+shumate_symbol_event_get_keys (ShumateSymbolEvent *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_SYMBOL_EVENT (self), NULL);
+  return (GStrv)g_hash_table_get_keys_as_array (self->tags, NULL);
+}
+
+/**
  * shumate_symbol_event_get_tag:
  * @self: a [class@SymbolEvent]
  * @tag_name: the tag to get
