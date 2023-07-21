@@ -52,6 +52,7 @@ typedef enum {
 
 typedef struct {
   char *layer;
+  char *source_layer;
   char *feature_id;
 
   ShumateVectorAnchor icon_anchor;

@@ -735,6 +735,7 @@ on_clicked (ShumateVectorSymbol *self,
             GtkGestureClick     *click)
 {
   g_autoptr(ShumateSymbolEvent) event = shumate_symbol_event_new (self->symbol_info->details->layer,
+                                                                  self->symbol_info->details->source_layer,
                                                                   self->symbol_info->details->feature_id,
                                                                   self->symbol_info->details->tags);
   g_signal_emit (self, signals[CLICKED], 0, event);

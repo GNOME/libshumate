@@ -40,6 +40,7 @@ struct _ShumateSymbolEvent
   GObject parent_instance;
 
   char *layer;
+  char *source_layer;
   char *feature_id;
   double lat, lon;
   GHashTable *tags;
@@ -53,6 +54,7 @@ G_DEFINE_FINAL_TYPE_WITH_CODE (ShumateSymbolEvent, shumate_symbol_event, G_TYPE_
 enum {
   PROP_0,
   PROP_LAYER,
+  PROP_SOURCE_LAYER,
   PROP_FEATURE_ID,
   N_PROPS,
 
@@ -68,6 +70,7 @@ shumate_symbol_event_finalize (GObject *object)
   ShumateSymbolEvent *self = (ShumateSymbolEvent *)object;
 
   g_clear_pointer (&self->layer, g_free);
+  g_clear_pointer (&self->source_layer, g_free);
   g_clear_pointer (&self->feature_id, g_free);
   g_clear_pointer (&self->tags, g_hash_table_unref);
 
@@ -86,6 +89,9 @@ shumate_symbol_event_get_property (GObject    *object,
     {
     case PROP_LAYER:
       g_value_set_string (value, self->layer);
+      break;
+    case PROP_SOURCE_LAYER:
+      g_value_set_string (value, self->source_layer);
       break;
     case PROP_FEATURE_ID:
       g_value_set_string (value, self->feature_id);
@@ -138,6 +144,18 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
     g_param_spec_string ("layer",
                          "layer",
                          "layer",
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateSymbolEvent:source-layer:
+   *
+   * The ID of the source layer of the symbol that this event pertains to.
+   */
+  properties[PROP_SOURCE_LAYER] =
+    g_param_spec_string ("source-layer",
+                         "source-layer",
+                         "source-layer",
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
@@ -226,6 +244,24 @@ shumate_symbol_event_get_layer (ShumateSymbolEvent *self)
 }
 
 /**
+ * shumate_symbol_event_get_source_layer:
+ * @self: a [class@SymbolEvent]
+ *
+ * Gets the name of the source layer the clicked feature is in,
+ * as named in the vector tile schema.
+ *
+ * Returns: (transfer none): the layer name
+ *
+ * Since: 1.1
+ */
+const char *
+shumate_symbol_event_get_source_layer (ShumateSymbolEvent *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_SYMBOL_EVENT (self), NULL);
+  return self->source_layer;
+}
+
+/**
  * shumate_symbol_event_get_feature_id:
  * @self: a [class@SymbolEvent]
  *
@@ -288,12 +324,14 @@ shumate_symbol_event_get_tag (ShumateSymbolEvent *self,
 
 ShumateSymbolEvent *
 shumate_symbol_event_new (const char *layer,
+                          const char *source_layer,
                           const char *feature_id,
                           GHashTable *tags)
 {
   ShumateSymbolEvent *self = g_object_new (SHUMATE_TYPE_SYMBOL_EVENT, NULL);
 
   self->layer = g_strdup (layer);
+  self->source_layer = g_strdup (source_layer);
   self->feature_id = g_strdup (feature_id);
   self->tags = g_hash_table_ref (tags);
 

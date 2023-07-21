@@ -396,6 +396,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   *details = (ShumateVectorSymbolDetails) {
     .ref_count = 1,
     .layer = g_strdup (shumate_vector_layer_get_id (layer)),
+    .source_layer = g_strdup (scope->layer->name),
     .feature_id = g_strdup (feature_id),
     .tags = g_hash_table_ref (tags),
 

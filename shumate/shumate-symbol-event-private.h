@@ -20,6 +20,7 @@
 #include "shumate-symbol-event.h"
 
 ShumateSymbolEvent *shumate_symbol_event_new (const char *layer,
+                                              const char *source_layer,
                                               const char *feature_id,
                                               GHashTable *tags);
 
