@@ -2,13 +2,13 @@
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
 #
-# Yuri Chornoivan <yurchor@ukr.net>, 2022.
+# Yuri Chornoivan <yurchor@ukr.net>, 2022, 2023.
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-05-14 20:58+0000\n"
-"PO-Revision-Date: 2022-05-15 09:00+0300\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-07-28 20:52+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -19,22 +19,34 @@ msgstr ""
 "%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Lokalize 20.12.0\n"
 
-#: shumate/shumate-scale.c:196
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Збільшити"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Зменшити"
+
+#. m is the unit for meters
+#: shumate/shumate-scale.c:197
 #, c-format
 msgid "%d m"
 msgstr "%d м"
 
-#: shumate/shumate-scale.c:198
+#. km is the unit for kilometers
+#: shumate/shumate-scale.c:200
 #, c-format
 msgid "%d km"
 msgstr "%d км"
 
-#: shumate/shumate-scale.c:203
+#. ft is the unit for feet
+#: shumate/shumate-scale.c:206
 #, c-format
 msgid "%d ft"
 msgstr "%d футів"
 
-#: shumate/shumate-scale.c:205
+#. mi is the unit for miles
+#: shumate/shumate-scale.c:209
 #, c-format
 msgid "%d mi"
 msgstr "%d милі"
