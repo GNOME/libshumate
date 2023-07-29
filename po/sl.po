@@ -2,14 +2,14 @@
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
 #
-# Matej Urbančič <mateju@src.gnome.org>, 2022–.
+# Matej Urbančič <mateju@src.gnome.org>, 2022–2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-05-19 08:36+0000\n"
-"PO-Revision-Date: 2022-05-22 21:12+0200\n"
+"POT-Creation-Date: 2023-07-29 06:42+0000\n"
+"PO-Revision-Date: 2023-07-29 15:43+0200\n"
 "Last-Translator: Matej Urbančič <mateju@src.gnome.org>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups."
 "com>\n"
@@ -21,6 +21,14 @@ msgstr ""
 "n%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: Poedit 3.0.1\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Približaj"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Oddalji"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
