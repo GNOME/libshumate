@@ -1,14 +1,14 @@
 # Portuguese translation for libshumate.
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
-# Hugo Carvalho <hugokarvalho@hotmail.com>, 2022.
+# Hugo Carvalho <hugokarvalho@hotmail.com>, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-05-15 12:10+0000\n"
-"PO-Revision-Date: 2022-05-17 16:26+0100\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-08-04 17:16+0100\n"
 "Last-Translator: Hugo Carvalho <hugokarvalho@hotmail.com>\n"
 "Language-Team: Portuguese <pt@li.org>\n"
 "Language: pt\n"
@@ -16,7 +16,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Aumentar"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Reduzir"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
