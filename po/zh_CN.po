@@ -1,14 +1,14 @@
 # Chinese (China) translation for libshumate.
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
-# lumingzh <lumingzh@qq.com>, 2022.
+# lumingzh <lumingzh@qq.com>, 2022-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-05-19 08:36+0000\n"
-"PO-Revision-Date: 2022-05-28 22:39+0800\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-08-07 16:50+0800\n"
 "Last-Translator: lumingzh <lumingzh@qq.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -17,6 +17,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Gtranslator 42.0\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "放大"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "缩小"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
