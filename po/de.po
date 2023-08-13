@@ -3,21 +3,30 @@
 # This file is distributed under the same license as the libshumate package.
 # Jürgen Benvenuti <gastornis@posteo.org>, 2022.
 # Tim Sabsch <tim@sabsch.com>, 2022.
+# Philipp Kiemle <philipp.kiemle@gmail.com>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-08-18 17:25+0000\n"
-"PO-Revision-Date: 2022-09-04 16:30+0200\n"
-"Last-Translator: Tim Sabsch <tim@sabsch.com>\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-08-08 10:03+0200\n"
+"Last-Translator: Philipp Kiemle <philipp.kiemle@gmail.com>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Ansicht vergrößern"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Ansicht verkleinern"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
