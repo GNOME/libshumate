@@ -1449,34 +1449,43 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         }
 
     case EXPR_GEOMETRY_TYPE:
-      if (scope->feature == NULL)
-        {
-          shumate_vector_value_unset (out);
-          return TRUE;
-        }
+      {
+        VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (scope->reader);
 
-      switch (scope->feature->type)
-        {
-        case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
-          shumate_vector_value_set_string (out, "Point");
-          return TRUE;
-        case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
-          shumate_vector_value_set_string (out, "LineString");
-          return TRUE;
-        case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
-          shumate_vector_value_set_string (out, "Polygon");
-          return TRUE;
-        default:
-          shumate_vector_value_unset (out);
-          return TRUE;
-        }
+        if (feature == NULL)
+          {
+            shumate_vector_value_unset (out);
+            return TRUE;
+          }
+
+        switch (feature->type)
+          {
+          case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
+            shumate_vector_value_set_string (out, "Point");
+            return TRUE;
+          case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
+            shumate_vector_value_set_string (out, "LineString");
+            return TRUE;
+          case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
+            shumate_vector_value_set_string (out, "Polygon");
+            return TRUE;
+          default:
+            shumate_vector_value_unset (out);
+            return TRUE;
+          }
+
+      }
 
     case EXPR_ID:
-      if (!scope->feature || !scope->feature->has_id)
-        shumate_vector_value_unset (out);
-      else
-        shumate_vector_value_set_number (out, scope->feature->id);
-      return TRUE;
+      {
+        VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (scope->reader);
+
+        if (!feature || !feature->has_id)
+          shumate_vector_value_unset (out);
+        else
+          shumate_vector_value_set_number (out, feature->id);
+        return TRUE;
+      }
 
     case EXPR_ZOOM:
       shumate_vector_value_set_number (out, scope->zoom_level);
@@ -1693,14 +1702,18 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       inverted = TRUE;
       G_GNUC_FALLTHROUGH;
     case EXPR_FAST_GEOMETRY_TYPE:
-      if (scope->feature == NULL)
-        {
-          shumate_vector_value_unset (out);
-          return TRUE;
-        }
+      {
+        VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (scope->reader);
 
-      shumate_vector_value_set_boolean (out, (self->fast_geometry_type == scope->feature->type) ^ inverted);
-      return TRUE;
+        if (feature == NULL)
+          {
+            shumate_vector_value_unset (out);
+            return TRUE;
+          }
+
+        shumate_vector_value_set_boolean (out, (self->fast_geometry_type == feature->type) ^ inverted);
+        return TRUE;
+      }
 
     default:
       g_assert_not_reached ();

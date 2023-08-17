@@ -23,24 +23,6 @@ enum {
   CLOSE_PATH = 7,
 };
 
-/* Sets the current layer by name. */
-gboolean
-shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name)
-{
-  for (int i = 0; i < self->tile->n_layers; i ++)
-    {
-      VectorTile__Tile__Layer *layer = self->tile->layers[i];
-      if (g_strcmp0 (layer->name, layer_name) == 0)
-        {
-          self->layer = layer;
-          return TRUE;
-        }
-    }
-
-  self->layer = NULL;
-  return FALSE;
-}
-
 static int
 zigzag (guint value)
 {
@@ -49,25 +31,28 @@ zigzag (guint value)
 
 static void
 apply_transforms (ShumateVectorRenderScope *self,
+                  float                     extent,
                   float                    *x,
                   float                    *y)
 {
-  *x = ((*x / self->layer->extent) - self->overzoom_x) * self->overzoom_scale;
-  *y = ((*y / self->layer->extent) - self->overzoom_y) * self->overzoom_scale;
+  *x = ((*x / extent) - self->overzoom_x) * self->overzoom_scale;
+  *y = ((*y / extent) - self->overzoom_y) * self->overzoom_scale;
 }
 
 /* Draws the current feature as a path onto the scope's cairo context. */
 void
 shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
 {
-  g_return_if_fail (self->feature != NULL);
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
+
+  g_return_if_fail (feature != NULL);
 
   cairo_new_path (self->cr);
   cairo_move_to (self->cr, 0, 0);
 
-  for (int i = 0; i < self->feature->n_geometry; i ++)
+  for (int i = 0; i < feature->n_geometry; i ++)
     {
-      int cmd = self->feature->geometry[i];
+      int cmd = feature->geometry[i];
       double dx, dy;
 
       /* See https://github.com/mapbox/vector-tile-spec/tree/master/2.1#43-geometry-encoding */
@@ -78,15 +63,15 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
         {
           switch (op) {
           case MOVE_TO:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
-            dx = zigzag (self->feature->geometry[++i]);
-            dy = zigzag (self->feature->geometry[++i]);
+            g_return_if_fail (i + 2 < feature->n_geometry);
+            dx = zigzag (feature->geometry[++i]);
+            dy = zigzag (feature->geometry[++i]);
             cairo_rel_move_to (self->cr, dx, dy);
             break;
           case LINE_TO:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
-            dx = zigzag (self->feature->geometry[++i]);
-            dy = zigzag (self->feature->geometry[++i]);
+            g_return_if_fail (i + 2 < feature->n_geometry);
+            dx = zigzag (feature->geometry[++i]);
+            dy = zigzag (feature->geometry[++i]);
             cairo_rel_line_to (self->cr, dx, dy);
             break;
           case CLOSE_PATH:
@@ -107,14 +92,16 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 {
   GPtrArray *lines = g_ptr_array_new ();
   ShumateVectorLineString *current_line = NULL;
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
   float x = 0, y = 0;
   float x_tf, y_tf;
 
-  g_return_val_if_fail (self->feature != NULL, NULL);
+  g_return_val_if_fail (feature != NULL, NULL);
 
-  for (int i = 0; i < self->feature->n_geometry; i ++)
+  for (int i = 0; i < feature->n_geometry; i ++)
     {
-      int cmd = self->feature->geometry[i];
+      int cmd = feature->geometry[i];
       double start_x = 0, start_y = 0;
 
       int op = cmd & 0x7;
@@ -127,7 +114,7 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
         {
           switch (op) {
           case MOVE_TO:
-            g_return_val_if_fail (i + 2 < self->feature->n_geometry, NULL);
+            g_return_val_if_fail (i + 2 < feature->n_geometry, NULL);
 
             if (current_line != NULL)
               g_ptr_array_add (lines, current_line);
@@ -136,12 +123,12 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
             current_line->points = g_new (ShumateVectorPoint, 1);
             current_line->n_points = 1;
 
-            x += zigzag (self->feature->geometry[++i]);
-            y += zigzag (self->feature->geometry[++i]);
+            x += zigzag (feature->geometry[++i]);
+            y += zigzag (feature->geometry[++i]);
 
             x_tf = x;
             y_tf = y;
-            apply_transforms (self, &x_tf, &y_tf);
+            apply_transforms (self, layer->extent, &x_tf, &y_tf);
 
             start_x = x_tf;
             start_y = y_tf;
@@ -152,15 +139,15 @@ shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
             };
             break;
           case LINE_TO:
-            g_return_val_if_fail (i + 2 < self->feature->n_geometry, NULL);
+            g_return_val_if_fail (i + 2 < feature->n_geometry, NULL);
             g_return_val_if_fail (current_line != NULL, NULL);
 
-            x += zigzag (self->feature->geometry[++i]);
-            y += zigzag (self->feature->geometry[++i]);
+            x += zigzag (feature->geometry[++i]);
+            y += zigzag (feature->geometry[++i]);
 
             x_tf = x;
             y_tf = y;
-            apply_transforms (self, &x_tf, &y_tf);
+            apply_transforms (self, layer->extent, &x_tf, &y_tf);
 
             current_line->points[current_line->n_points++] = (ShumateVectorPoint) {
               .x = x_tf,
@@ -195,6 +182,8 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
                                         float                    *max_x,
                                         float                    *max_y)
 {
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
   double x = 0, y = 0;
 
   *min_x = G_MAXFLOAT;
@@ -202,11 +191,11 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
   *max_x = G_MINFLOAT;
   *max_y = G_MINFLOAT;
 
-  g_return_if_fail (self->feature != NULL);
+  g_return_if_fail (feature != NULL);
 
-  for (int i = 0; i < self->feature->n_geometry; i ++)
+  for (int i = 0; i < feature->n_geometry; i ++)
     {
-      int cmd = self->feature->geometry[i];
+      int cmd = feature->geometry[i];
 
       /* See https://github.com/mapbox/vector-tile-spec/tree/master/2.1#43-geometry-encoding */
       int op = cmd & 0x7;
@@ -216,14 +205,14 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
         {
           switch (op) {
           case 1:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
-            x += zigzag (self->feature->geometry[++i]);
-            y += zigzag (self->feature->geometry[++i]);
+            g_return_if_fail (i + 2 < feature->n_geometry);
+            x += zigzag (feature->geometry[++i]);
+            y += zigzag (feature->geometry[++i]);
             break;
           case 2:
-            g_return_if_fail (i + 2 < self->feature->n_geometry);
-            x += zigzag (self->feature->geometry[++i]);
-            y += zigzag (self->feature->geometry[++i]);
+            g_return_if_fail (i + 2 < feature->n_geometry);
+            x += zigzag (feature->geometry[++i]);
+            y += zigzag (feature->geometry[++i]);
             break;
           case 7:
             break;
@@ -238,16 +227,17 @@ shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,
         }
     }
 
-  apply_transforms (self, min_x, min_y);
-  apply_transforms (self, max_x, max_y);
+  apply_transforms (self, layer->extent, min_x, min_y);
+  apply_transforms (self, layer->extent, max_x, max_y);
 }
 
 
 ShumateVectorGeometryType
 shumate_vector_render_scope_get_geometry_type (ShumateVectorRenderScope *self)
 {
-  g_return_val_if_fail (self->feature != NULL, 0);
-  return (ShumateVectorGeometryType) self->feature->type;
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
+  g_return_val_if_fail (feature != NULL, 0);
+  return (ShumateVectorGeometryType) feature->type;
 }
 
 void
@@ -265,25 +255,12 @@ shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
 void
 shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value)
 {
-  shumate_vector_value_unset (value);
+  g_auto(GValue) gvalue = G_VALUE_INIT;
 
-  if (self->feature == NULL)
-    return;
-
-  for (int i = 1; i < self->feature->n_tags; i += 2)
-    {
-      int key = self->feature->tags[i - 1];
-      int val = self->feature->tags[i];
-
-      if (key >= self->layer->n_keys || val >= self->layer->n_values)
-        return;
-
-      if (g_strcmp0 (self->layer->keys[key], variable) == 0)
-        {
-          shumate_vector_value_set_from_feature_value (value, self->layer->values[val]);
-          return;
-        }
-    }
+  if (shumate_vector_reader_iter_get_feature_tag (self->reader, variable, &gvalue))
+    shumate_vector_value_set_from_g_value (value, &gvalue);
+  else
+    shumate_vector_value_unset (value);
 }
 
 
@@ -292,17 +269,23 @@ shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self)
 {
   g_autoptr(GHashTable) tags = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
 
-  for (int i = 1; i < self->feature->n_tags; i += 2)
+  for (int i = 1; i < feature->n_tags; i += 2)
     {
-      int key = self->feature->tags[i - 1];
-      int val = self->feature->tags[i];
+      g_auto(GValue) gvalue = G_VALUE_INIT;
+      int key = feature->tags[i - 1];
+      int val = feature->tags[i];
 
-      if (key >= self->layer->n_keys || val >= self->layer->n_values)
+      if (key >= layer->n_keys || val >= layer->n_values)
         continue;
 
-      shumate_vector_value_set_from_feature_value (&value, self->layer->values[val]);
-      g_hash_table_insert (tags, g_strdup (self->layer->keys[key]), shumate_vector_value_as_string (&value));
+      if (shumate_vector_reader_iter_get_feature_tag (self->reader, layer->keys[key], &gvalue))
+        shumate_vector_value_set_from_g_value (&value, &gvalue);
+      else
+        shumate_vector_value_unset (&value);
+      g_hash_table_insert (tags, g_strdup (layer->keys[key]), shumate_vector_value_as_string (&value));
     }
 
   return g_steal_pointer (&tags);

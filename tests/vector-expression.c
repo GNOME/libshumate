@@ -338,21 +338,20 @@ test_vector_expression_feature_filter (void)
 {
   GError *error = NULL;
   g_autoptr(GBytes) vector_data = NULL;
-  gconstpointer data;
-  gsize len;
+  g_autoptr(ShumateVectorReader) reader = NULL;
   ShumateVectorRenderScope scope;
 
   vector_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
 
-  data = g_bytes_get_data (vector_data, &len);
-  scope.tile = vector_tile__tile__unpack (NULL, len, data);
-  g_assert_nonnull (scope.tile);
+  reader = shumate_vector_reader_new (vector_data);
+  scope.reader = shumate_vector_reader_iterate (reader);
+  g_assert_nonnull (scope.reader);
 
   scope.zoom_level = 10;
 
-  g_assert_true (shumate_vector_render_scope_find_layer (&scope, "helloworld"));
-  scope.feature = scope.layer->features[0];
+  g_assert_true (shumate_vector_reader_iter_read_layer_by_name (scope.reader, "helloworld"));
+  g_assert_true (shumate_vector_reader_iter_next_feature (scope.reader));
 
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"name\", \"Hello, world!\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"get\", \"name\"], \"Hello, world!\"]"));
@@ -379,7 +378,7 @@ test_vector_expression_feature_filter (void)
   g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"concat\", \"Hello, world!\"], \"Hello, world!\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"!=\", [\"concat\", \"Hello, world!\"], \"HELLO, WORLD!\"]"));
 
-  vector_tile__tile__free_unpacked (scope.tile, NULL);
+  g_clear_object (&scope.reader);
 }
 
 
@@ -416,8 +415,7 @@ test_vector_expression_format ()
 {
   GError *error = NULL;
   g_autoptr(GBytes) vector_data = NULL;
-  gconstpointer data;
-  gsize len;
+  g_autoptr(ShumateVectorReader) reader = NULL;
   ShumateVectorRenderScope scope;
   g_autoptr(JsonNode) node = json_from_string ("\"***** {name} *****\"", NULL);
   g_autoptr(ShumateVectorExpression) expression;
@@ -429,19 +427,19 @@ test_vector_expression_format ()
   vector_data = g_resources_lookup_data ("/org/gnome/shumate/Tests/0.pbf", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   g_assert_no_error (error);
 
-  data = g_bytes_get_data (vector_data, &len);
-  scope.tile = vector_tile__tile__unpack (NULL, len, data);
-  g_assert_nonnull (scope.tile);
+  reader = shumate_vector_reader_new (vector_data);
+  scope.reader = shumate_vector_reader_iterate (reader);
+  g_assert_nonnull (scope.reader);
 
   scope.zoom_level = 10;
 
-  g_assert_true (shumate_vector_render_scope_find_layer (&scope, "helloworld"));
-  scope.feature = scope.layer->features[0];
+  g_assert_true (shumate_vector_reader_iter_read_layer_by_name (scope.reader, "helloworld"));
+  g_assert_true (shumate_vector_reader_iter_next_feature (scope.reader));
 
   result = shumate_vector_expression_eval_string (expression, &scope, NULL);
   g_assert_cmpstr (result, ==, "***** Hello, world! *****");
 
-  vector_tile__tile__free_unpacked (scope.tile, NULL);
+  g_clear_object (&scope.reader);
 }
 
 

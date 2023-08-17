@@ -23,6 +23,7 @@
 #include "../shumate-vector-sprite-sheet.h"
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
+#include "../shumate-vector-reader-iter-private.h"
 
 typedef enum {
   SHUMATE_VECTOR_GEOMETRY_POINT = VECTOR_TILE__TILE__GEOM_TYPE__POINT,
@@ -46,13 +47,10 @@ typedef struct {
 
   float overzoom_x, overzoom_y, overzoom_scale;
 
-  VectorTile__Tile *tile;
-  VectorTile__Tile__Layer *layer;
-  VectorTile__Tile__Feature *feature;
+  ShumateVectorReaderIter *reader;
 } ShumateVectorRenderScope;
 
 
-gboolean shumate_vector_render_scope_find_layer (ShumateVectorRenderScope *self, const char *layer_name);
 void shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self);
 void shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self, double *x, double *y);
 void shumate_vector_render_scope_get_bounds (ShumateVectorRenderScope *self,

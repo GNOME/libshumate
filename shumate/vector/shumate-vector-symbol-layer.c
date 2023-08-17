@@ -346,6 +346,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autoptr(ShumateVectorSymbolDetails) details = NULL;
   g_autoptr(ShumateVectorSprite) icon_image = shumate_vector_expression_eval_image (self->icon_image, scope);
   ShumateVectorGeometryType geometry_type = shumate_vector_render_scope_get_geometry_type (scope);
+  VectorTile__Tile__Layer *layer_struct = shumate_vector_reader_iter_get_layer_struct (scope->reader);
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (scope->reader);
   double x, y;
 
   shumate_vector_expression_eval (self->text_field, scope, &value);
@@ -393,7 +395,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
         : SHUMATE_VECTOR_ALIGNMENT_MAP;
     }
 
-  feature_id = g_strdup_printf ("%ld", scope->feature->id);
+  feature_id = g_strdup_printf ("%ld", feature->id);
   cursor = shumate_vector_expression_eval_string (self->cursor, scope, NULL);
 
   tags = shumate_vector_render_scope_create_tag_table (scope);
@@ -402,7 +404,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   *details = (ShumateVectorSymbolDetails) {
     .ref_count = 1,
     .layer = g_strdup (shumate_vector_layer_get_id (layer)),
-    .source_layer = g_strdup (scope->layer->name),
+    .source_layer = g_strdup (layer_struct->name),
     .feature_id = g_strdup (feature_id),
     .tags = g_hash_table_ref (tags),
 

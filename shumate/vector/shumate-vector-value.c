@@ -113,28 +113,6 @@ shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *v
 
 
 void
-shumate_vector_value_set_from_feature_value (ShumateVectorValue *self, VectorTile__Tile__Value *value)
-{
-  if (value->has_int_value)
-    shumate_vector_value_set_number (self, value->int_value);
-  else if (value->has_uint_value)
-    shumate_vector_value_set_number (self, value->uint_value);
-  else if (value->has_sint_value)
-    shumate_vector_value_set_number (self, value->sint_value);
-  else if (value->has_float_value)
-    shumate_vector_value_set_number (self, value->float_value);
-  else if (value->has_double_value)
-    shumate_vector_value_set_number (self, value->double_value);
-  else if (value->has_bool_value)
-    shumate_vector_value_set_boolean (self, value->bool_value);
-  else if (value->string_value != NULL)
-    shumate_vector_value_set_string (self, value->string_value);
-  else
-    shumate_vector_value_unset (self);
-}
-
-
-void
 shumate_vector_value_free (ShumateVectorValue *self)
 {
   shumate_vector_value_unset (self);

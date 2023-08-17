@@ -136,26 +136,25 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
   if (scope->zoom_level < priv->minzoom || scope->zoom_level > priv->maxzoom)
     return;
 
-  scope->feature = NULL;
-
   if (priv->source_layer == NULL)
     /* Style layers with no source layer are rendered once */
     SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
-  else if (shumate_vector_render_scope_find_layer (scope, priv->source_layer))
+  else if (shumate_vector_reader_iter_read_layer_by_name (scope->reader, priv->source_layer))
     {
       /* Style layers with a source layer are rendered once for each feature
        * in that layer, if it exists */
 
+      VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (scope->reader);
+
       cairo_save (scope->cr);
 
-      scope->scale = (double) scope->layer->extent / scope->target_size / scope->overzoom_scale;
+      scope->scale = (double) layer->extent / scope->target_size / scope->overzoom_scale;
       cairo_scale (scope->cr, 1.0 / scope->scale, 1.0 / scope->scale);
 
-      cairo_translate (scope->cr, -scope->overzoom_x * scope->layer->extent, -scope->overzoom_y * scope->layer->extent);
+      cairo_translate (scope->cr, -scope->overzoom_x * layer->extent, -scope->overzoom_y * layer->extent);
 
-      for (int j = 0; j < scope->layer->n_features; j ++)
+      while (shumate_vector_reader_iter_next_feature (scope->reader))
         {
-          scope->feature = scope->layer->features[j];
           if (priv->filter == NULL || shumate_vector_expression_eval_boolean (priv->filter, scope, FALSE))
             SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
         }

@@ -516,3 +516,62 @@ shumate_vector_line_string_simplify (ShumateVectorLineString *linestring)
 
   return result;
 }
+
+static int
+zigzag (guint value)
+{
+  return (value >> 1) ^ (-(value & 1));
+}
+
+gboolean
+shumate_vector_geometry_iter (ShumateVectorGeometryIter *iter)
+{
+  int cmd;
+
+  if (iter->j >= iter->repeat)
+    {
+      iter->j = 0;
+
+      if (iter->i >= iter->feature->n_geometry)
+        return FALSE;
+
+      cmd = iter->feature->geometry[iter->i];
+      iter->i ++;
+
+      iter->op = cmd & 0x7;
+      iter->repeat = cmd >> 3;
+    }
+
+  switch (iter->op)
+    {
+    case 1:
+      // move_to
+    case 2:
+      // line_to
+
+      if (iter->i + 2 >= iter->feature->n_geometry)
+        return FALSE;
+
+      iter->dx = zigzag (iter->feature->geometry[iter->i]);
+      iter->dy = zigzag (iter->feature->geometry[iter->i + 1]);
+      iter->x += iter->dx;
+      iter->y += iter->dy;
+
+      if (iter->op == 1)
+        {
+          iter->start_x = iter->x;
+          iter->start_y = iter->y;
+        }
+
+      iter->i += 2;
+      break;
+
+    case 7:
+      // close_path
+      iter->x = iter->start_x;
+      iter->y = iter->start_y;
+      break;
+    }
+
+  iter->j ++;
+}

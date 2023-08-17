@@ -19,6 +19,8 @@
 #include "shumate-tile-downloader.h"
 #include "shumate-tile-private.h"
 #include "shumate-profiling-private.h"
+#include "shumate-vector-reader.h"
+#include "shumate-vector-reader-iter.h"
 
 /**
  * ShumateVectorRenderer:
@@ -770,12 +772,11 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
   cairo_surface_t *surface;
-  gconstpointer data;
-  gsize len;
   g_autoptr(GPtrArray) symbol_list = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
   int texture_size;
   g_autofree char *profile_desc = NULL;
   g_autoptr(ShumateVectorSpriteSheet) sprites = NULL;
+  g_autoptr(ShumateVectorReader) reader = NULL;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_TILE (tile));
@@ -817,10 +818,10 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   scope.cr = cairo_create (surface);
   cairo_scale (scope.cr, scope.scale_factor, scope.scale_factor);
 
-  data = g_bytes_get_data (tile_data, &len);
-  scope.tile = vector_tile__tile__unpack (NULL, len, data);
+  reader = shumate_vector_reader_new (tile_data);
+  scope.reader = shumate_vector_reader_iterate (reader);
 
-  if (scope.tile != NULL)
+  if (scope.reader != NULL)
     for (scope.layer_idx = 0; scope.layer_idx < self->layers->len; scope.layer_idx ++)
       shumate_vector_layer_render ((ShumateVectorLayer *)self->layers->pdata[scope.layer_idx], &scope);
 
@@ -829,7 +830,7 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
 
   cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
-  vector_tile__tile__free_unpacked (scope.tile, NULL);
+  g_clear_object (&scope.reader);
 
   profile_desc = g_strdup_printf ("(%d, %d) @ %f", scope.tile_x, scope.tile_y, scope.zoom_level);
   SHUMATE_PROFILE_END (profile_desc);

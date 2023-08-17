@@ -18,6 +18,7 @@
 #pragma once
 
 #include <json-glib/json-glib.h>
+#include "vector_tile.pb-c.h"
 
 typedef struct _ShumateVectorPoint ShumateVectorPoint;
 typedef struct _ShumateVectorLineString ShumateVectorLineString;
@@ -102,3 +103,20 @@ void   shumate_vector_line_string_bounds              (ShumateVectorLineString *
 GPtrArray *shumate_vector_line_string_simplify        (ShumateVectorLineString *linestring);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorLineString, shumate_vector_line_string_free)
+
+typedef enum {
+  SHUMATE_VECTOR_GEOMETRY_OP_MOVE_TO = 1,
+  SHUMATE_VECTOR_GEOMETRY_OP_LINE_TO = 2,
+  SHUMATE_VECTOR_GEOMETRY_OP_CLOSE_PATH = 7,
+} ShumateVectorGeometryOp;
+
+typedef struct {
+  VectorTile__Tile__Feature *feature;
+  int i, j;
+  int op, repeat;
+  int x, y;
+  int dx, dy;
+  int start_x, start_y;
+} ShumateVectorGeometryIter;
+
+gboolean shumate_vector_geometry_iter (ShumateVectorGeometryIter *iter);
