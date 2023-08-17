@@ -117,6 +117,7 @@ typedef struct {
   int x, y;
   int dx, dy;
   int start_x, start_y;
+  int cursor_x, cursor_y;
 } ShumateVectorGeometryIter;
 
 gboolean shumate_vector_geometry_iter (ShumateVectorGeometryIter *iter);

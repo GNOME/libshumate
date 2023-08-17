@@ -687,6 +687,9 @@ shumate_vector_reader_iter_get_feature_point (ShumateVectorReaderIter *self,
  * Only polygon or multipolygon features can contain a point. For all
  * other feature types, this function returns %FALSE.
  *
+ * If the point is on the border of the polygon, this function may return
+ * either %TRUE or %FALSE.
+ *
  * Returns: %TRUE if the feature contains the point, %FALSE otherwise.
  *
  * Since: 1.2
@@ -701,9 +704,7 @@ shumate_vector_reader_iter_feature_contains_point (ShumateVectorReaderIter *self
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorGeometryIter iter = {0};
   int prev_x = 0, prev_y = 0;
-  int intersections = 0;
-  int current_ring_intersections = 0;
-  double area;
+  int winding_number = 0;
 
   g_return_val_if_fail (self->feature != NULL, FALSE);
 
@@ -712,55 +713,35 @@ shumate_vector_reader_iter_feature_contains_point (ShumateVectorReaderIter *self
 
   iter.feature = self->feature;
 
-  /* See <https://en.wikipedia.org/wiki/Point_in_polygon#Ray_casting_algorithm> */
+  /* See <https://web.archive.org/web/20130126163405/http://geomalgorithms.com/a03-_inclusion.html>.
+     I chose the winding algorithm because it has fewer edge cases. */
 
   while (shumate_vector_geometry_iter (&iter))
     {
       switch (iter.op)
         {
           case SHUMATE_VECTOR_GEOMETRY_OP_MOVE_TO:
-            prev_x = iter.x;
-            prev_y = iter.y;
             break;
           case SHUMATE_VECTOR_GEOMETRY_OP_LINE_TO:
           case SHUMATE_VECTOR_GEOMETRY_OP_CLOSE_PATH:
-            /* Shoelace algorithm to distinguish interior/exterior rings.
-               The polygons of a multipolygon might intersect, so we need
-               to count their intersections separately. */
-            area = (double) prev_x * iter.y - (double) iter.x * prev_y;
-
-            if ((prev_x < x && iter.x >= x) || (prev_x > x && iter.x <= x))
+            if (prev_y <= y && iter.y > y)
               {
-                double slope = (double) (iter.y - prev_y) / (iter.x - prev_x);
-                double y_intercept = prev_y - slope * prev_x;
-                double y_at_x = slope * x + y_intercept;
-
-                if (y_at_x >= y)
-                  current_ring_intersections ++;
+                if ((iter.x - prev_x) * (y - prev_y) > (iter.y - prev_y) * (x - prev_x))
+                  winding_number ++;
               }
-
-            if (iter.op == SHUMATE_VECTOR_GEOMETRY_OP_CLOSE_PATH)
+            else if (prev_y > y && iter.y <= y)
               {
-                if (area > 0)
-                  {
-                    /* This was an exterior ring. Check the previous polygon
-                       to see if it contained the point. */
-                    if (intersections % 2 == 1)
-                      return TRUE;
-                    intersections = 0;
-                  }
-
-                intersections += current_ring_intersections;
-                current_ring_intersections = 0;
+                if ((iter.x - prev_x) * (y - prev_y) < (iter.y - prev_y) * (x - prev_x))
+                  winding_number --;
               }
-
-            prev_x = iter.x;
-            prev_y = iter.y;
             break;
         }
+
+      prev_x = iter.x;
+      prev_y = iter.y;
     }
 
-  return intersections % 2 == 1;
+  return winding_number != 0;
 #else
   return FALSE;
 #endif

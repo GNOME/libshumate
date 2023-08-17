@@ -544,20 +544,19 @@ shumate_vector_geometry_iter (ShumateVectorGeometryIter *iter)
 
   switch (iter->op)
     {
-    case 1:
-      // move_to
-    case 2:
-      // line_to
-
-      if (iter->i + 2 >= iter->feature->n_geometry)
+    case SHUMATE_VECTOR_GEOMETRY_OP_MOVE_TO:
+    case SHUMATE_VECTOR_GEOMETRY_OP_LINE_TO:
+      if (iter->i + 1 >= iter->feature->n_geometry)
         return FALSE;
 
       iter->dx = zigzag (iter->feature->geometry[iter->i]);
       iter->dy = zigzag (iter->feature->geometry[iter->i + 1]);
-      iter->x += iter->dx;
-      iter->y += iter->dy;
+      iter->cursor_x += iter->dx;
+      iter->cursor_y += iter->dy;
+      iter->x = iter->cursor_x;
+      iter->y = iter->cursor_y;
 
-      if (iter->op == 1)
+      if (iter->op == SHUMATE_VECTOR_GEOMETRY_OP_MOVE_TO)
         {
           iter->start_x = iter->x;
           iter->start_y = iter->y;
@@ -566,12 +565,14 @@ shumate_vector_geometry_iter (ShumateVectorGeometryIter *iter)
       iter->i += 2;
       break;
 
-    case 7:
-      // close_path
+    case SHUMATE_VECTOR_GEOMETRY_OP_CLOSE_PATH:
+      iter->dx = iter->start_x - iter->x;
+      iter->dy = iter->start_y - iter->y;
       iter->x = iter->start_x;
       iter->y = iter->start_y;
       break;
     }
 
   iter->j ++;
+  return TRUE;
 }
