@@ -352,7 +352,7 @@ start_request (ShumateDataSource *data_source,
   data = g_new0 (FillTileData, 1);
   data->self = g_object_ref (self);
   data->req = g_object_ref (req);
-  data->cancellable = g_object_ref (cancellable);
+  data->cancellable = cancellable ? g_object_ref (cancellable) : NULL;
 
   shumate_file_cache_get_tile_async (self->cache, x, y, zoom_level, cancellable, on_file_cache_get_tile, data);
 
