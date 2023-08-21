@@ -297,23 +297,22 @@ shumate_vector_symbol_constructed (GObject *object)
                 shape = get_shape_from_glyph_item (current_item);
                 if (shape != NULL)
                   {
-                    g_autoptr(GdkTexture) texture = gdk_texture_new_for_pixbuf (shape->data);
-                    g_autoptr(GskRenderNode) node = NULL;
+                    ShumateVectorSprite *sprite = shape->data;
                     PangoRectangle extents;
 
                     pango_layout_iter_get_run_extents (iter, &extents, NULL);
 
-                    node = gsk_texture_node_new (
-                      texture,
-                      &GRAPHENE_RECT_INIT (
-                        PANGO_PIXELS (extents.x),
-                        PANGO_PIXELS (extents.y),
-                        PANGO_PIXELS (extents.width),
-                        PANGO_PIXELS (extents.height)
-                      )
-                    );
-
-                    gtk_snapshot_append_node (snapshot, node);
+                    gtk_snapshot_save (snapshot);
+                    gtk_snapshot_translate (snapshot,
+                                            &GRAPHENE_POINT_INIT (
+                                              PANGO_PIXELS (extents.x),
+                                              PANGO_PIXELS (extents.y)
+                                            ));
+                    gdk_paintable_snapshot (GDK_PAINTABLE (sprite),
+                                            snapshot,
+                                            PANGO_PIXELS (extents.width),
+                                            PANGO_PIXELS (extents.height));
+                    gtk_snapshot_restore (snapshot);
                   }
               } while (pango_layout_iter_next_run (iter));
             }
