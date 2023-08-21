@@ -65,7 +65,7 @@ typedef struct {
   /* Array of ShumateVectorFormatPart */
   GPtrArray *formatted_text;
   ShumateVectorAnchor text_anchor;
-  GdkRGBA text_color;
+  GdkRGBA text_color, icon_color;
   double text_size;
   double text_padding;
   char *text_font;

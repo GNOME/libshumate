@@ -22,6 +22,13 @@
  *
  * A sprite used to draw textures or icons.
  *
+ * ## Symbolic icons
+ *
+ * If a sprite is created from a [iface@Gtk.SymbolicPaintable] source, such
+ * as a symbolic icon, then when the sprite is part of a symbol layer it
+ * will be drawn using the icon-color property (or the text color, if the
+ * sprite is part of a formatted string).
+ *
  * Since: 1.1
  */
 
@@ -39,9 +46,11 @@ struct _ShumateVectorSprite
 };
 
 static void shumate_vector_sprite_paintable_iface_init (GdkPaintableInterface *iface);
+static void shumate_vector_sprite_symbolic_paintable_iface_init (GtkSymbolicPaintableInterface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (ShumateVectorSprite, shumate_vector_sprite, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (GDK_TYPE_PAINTABLE, shumate_vector_sprite_paintable_iface_init))
+                         G_IMPLEMENT_INTERFACE (GDK_TYPE_PAINTABLE, shumate_vector_sprite_paintable_iface_init)
+                         G_IMPLEMENT_INTERFACE (GTK_TYPE_SYMBOLIC_PAINTABLE, shumate_vector_sprite_symbolic_paintable_iface_init))
 
 enum {
   PROP_0,
@@ -215,10 +224,13 @@ shumate_vector_sprite_get_intrinsic_height (GdkPaintable *paintable)
 }
 
 static void
-shumate_vector_sprite_snapshot (GdkPaintable *paintable,
-                                GdkSnapshot  *snapshot,
-                                double        width,
-                                double        height)
+do_snapshot (GdkPaintable  *paintable,
+             GdkSnapshot   *snapshot,
+             double         width,
+             double         height,
+             gboolean       symbolic,
+             const GdkRGBA  *colors,
+             gsize          n_colors)
 {
   ShumateVectorSprite *self = SHUMATE_VECTOR_SPRITE (paintable);
 
@@ -236,16 +248,53 @@ shumate_vector_sprite_snapshot (GdkPaintable *paintable,
                                 -self->source_rect.y * (height / self->source_rect.height)
                               ));
 
+      width = paintable_width * (width / self->source_rect.width);
+      height = paintable_height * (height / self->source_rect.height);
+
       gdk_paintable_snapshot (self->source_paintable,
                               snapshot,
                               paintable_width * (width / self->source_rect.width),
                               paintable_height * (height / self->source_rect.height));
-
-      gtk_snapshot_pop (snapshot);
-      gtk_snapshot_restore (snapshot);
     }
-  else
-    gdk_paintable_snapshot (self->source_paintable, snapshot, width, height);
+
+    if (symbolic && GTK_IS_SYMBOLIC_PAINTABLE (self->source_paintable))
+      gtk_symbolic_paintable_snapshot_symbolic (GTK_SYMBOLIC_PAINTABLE (self->source_paintable),
+                                                snapshot,
+                                                width,
+                                                height,
+                                                colors,
+                                                n_colors);
+    else
+      gdk_paintable_snapshot (self->source_paintable,
+                              snapshot,
+                              width,
+                              height);
+
+    if (self->source_rect_set)
+      {
+        gtk_snapshot_pop (snapshot);
+        gtk_snapshot_restore (snapshot);
+      }
+}
+
+static void
+shumate_vector_sprite_snapshot_symbolic (GtkSymbolicPaintable *paintable,
+                                         GdkSnapshot          *snapshot,
+                                         double                width,
+                                         double                height,
+                                         const GdkRGBA        *colors,
+                                         gsize                 n_colors)
+{
+  do_snapshot (GDK_PAINTABLE (paintable), snapshot, width, height, TRUE, colors, n_colors);
+}
+
+static void
+shumate_vector_sprite_snapshot (GdkPaintable *paintable,
+                                GdkSnapshot  *snapshot,
+                                double        width,
+                                double        height)
+{
+  do_snapshot (GDK_PAINTABLE (paintable), snapshot, width, height, FALSE, NULL, 0);
 }
 
 static void
@@ -334,7 +383,6 @@ static void
 shumate_vector_sprite_init (ShumateVectorSprite *self)
 {
   self->scale_factor = 1;
-
 }
 
 static void
@@ -344,6 +392,12 @@ shumate_vector_sprite_paintable_iface_init (GdkPaintableInterface *iface)
   iface->get_intrinsic_width = shumate_vector_sprite_get_intrinsic_width;
   iface->get_intrinsic_height = shumate_vector_sprite_get_intrinsic_height;
   iface->snapshot = shumate_vector_sprite_snapshot;
+}
+
+static void
+shumate_vector_sprite_symbolic_paintable_iface_init (GtkSymbolicPaintableInterface *iface)
+{
+  iface->snapshot_symbolic = shumate_vector_sprite_snapshot_symbolic;
 }
 
 /**

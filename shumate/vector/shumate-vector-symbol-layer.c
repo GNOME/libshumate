@@ -27,6 +27,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorLayer parent_instance;
 
   ShumateVectorExpression *icon_anchor;
+  ShumateVectorExpression *icon_color;
   ShumateVectorExpression *icon_image;
   ShumateVectorExpression *icon_rotation_alignment;
   ShumateVectorExpression *icon_size;
@@ -57,6 +58,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
   if (json_object_has_member (object, "paint"))
     {
       JsonObject *paint = json_object_get_object_member (object, "paint");
+
+      layer->icon_color = shumate_vector_expression_from_json (json_object_get_member (paint, "icon-color"), error);
+      if (layer->icon_color == NULL)
+        return NULL;
 
       layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), error);
       if (layer->text_color == NULL)
@@ -207,6 +212,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (object);
 
   g_clear_object (&self->icon_anchor);
+  g_clear_object (&self->icon_color);
   g_clear_object (&self->icon_image);
   g_clear_object (&self->icon_rotation_alignment);
   g_clear_object (&self->icon_size);
@@ -428,6 +434,9 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .tile_y = scope->tile_y,
     .tile_zoom_level = scope->zoom_level,
   };
+
+  details->icon_color = SHUMATE_VECTOR_COLOR_BLACK;
+  shumate_vector_expression_eval_color (self->icon_color, scope, &details->icon_color);
 
   details->text_color = SHUMATE_VECTOR_COLOR_BLACK;
   shumate_vector_expression_eval_color (self->text_color, scope, &details->text_color);

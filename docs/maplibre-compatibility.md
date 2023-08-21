@@ -308,7 +308,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-icon-color">icon-color</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported. Only works for symbolic icons.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-icon-halo-blur">icon-halo-blur</a></td>

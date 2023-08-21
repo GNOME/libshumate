@@ -68,6 +68,7 @@ typedef struct {
   GskRenderNode *node;
   ShumateVectorSprite *sprite;
   double width;
+  GdkRGBA icon_color;
 } Glyph;
 
 static void
@@ -241,6 +242,7 @@ shumate_vector_symbol_constructed (GObject *object)
                   .node = NULL,
                   .width = shape->logical_rect.width / (double) PANGO_SCALE,
                 };
+                get_color_from_glyph_item (current_item, &glyph.icon_color);
                 g_array_append_vals (self->glyphs, &glyph, 1);
               }
             else
@@ -299,8 +301,10 @@ shumate_vector_symbol_constructed (GObject *object)
                   {
                     ShumateVectorSprite *sprite = shape->data;
                     PangoRectangle extents;
+                    GdkRGBA color;
 
                     pango_layout_iter_get_run_extents (iter, &extents, NULL);
+                    get_color_from_glyph_item (current_item, &color);
 
                     gtk_snapshot_save (snapshot);
                     gtk_snapshot_translate (snapshot,
@@ -308,10 +312,14 @@ shumate_vector_symbol_constructed (GObject *object)
                                               PANGO_PIXELS (extents.x),
                                               PANGO_PIXELS (extents.y)
                                             ));
-                    gdk_paintable_snapshot (GDK_PAINTABLE (sprite),
-                                            snapshot,
-                                            PANGO_PIXELS (extents.width),
-                                            PANGO_PIXELS (extents.height));
+                    gtk_symbolic_paintable_snapshot_symbolic (
+                      GTK_SYMBOLIC_PAINTABLE (sprite),
+                      snapshot,
+                      PANGO_PIXELS (extents.width),
+                      PANGO_PIXELS (extents.height),
+                      &color,
+                      1
+                    );
                     gtk_snapshot_restore (snapshot);
                   }
               } while (pango_layout_iter_next_run (iter));
@@ -579,9 +587,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 -icon_width / 2.0 + offset_x,
                                 -icon_height / 2.0 + offset_y
                               ));
-      gdk_paintable_snapshot (GDK_PAINTABLE (self->symbol_info->details->icon_image),
-                              snapshot,
-                              icon_width, icon_height);
+      gtk_symbolic_paintable_snapshot_symbolic (
+        GTK_SYMBOLIC_PAINTABLE (self->symbol_info->details->icon_image),
+        snapshot,
+        icon_width,
+        icon_height,
+        &self->symbol_info->details->icon_color,
+        1
+      );
       gtk_snapshot_restore (snapshot);
     }
 
@@ -649,7 +662,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                   int width = shumate_vector_sprite_get_width (glyph->sprite);
                   int height = shumate_vector_sprite_get_height (glyph->sprite);
                   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (0, -height));
-                  gdk_paintable_snapshot (GDK_PAINTABLE (glyph->sprite), snapshot, width, height);
+                  gtk_symbolic_paintable_snapshot_symbolic (
+                    GTK_SYMBOLIC_PAINTABLE (glyph->sprite),
+                    snapshot,
+                    width,
+                    height,
+                    &glyph->icon_color,
+                    1
+                  );
                 }
 
               gtk_snapshot_restore (snapshot);
