@@ -1,7 +1,7 @@
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
-#include "shumate/vector/shumate-vector-expression-literal-private.h"
 #include "shumate/vector/shumate-vector-expression-interpolate-private.h"
+#include "shumate/vector/shumate-vector-expression-filter-private.h"
 
 
 static void
@@ -20,11 +20,11 @@ test_vector_expression_parse (void)
 
   expr2 = shumate_vector_expression_from_json (node2, &error);
   g_assert_no_error (error);
-  g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_LITERAL (expr2));
+  g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_FILTER (expr2));
 
   expr3 = shumate_vector_expression_from_json (NULL, &error);
   g_assert_no_error (error);
-  g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_LITERAL (expr3));
+  g_assert_true (SHUMATE_IS_VECTOR_EXPRESSION_FILTER (expr3));
 }
 
 
@@ -36,7 +36,7 @@ test_vector_expression_literal (void)
   double result;
 
   shumate_vector_value_set_number (&value, 3.1415);
-  expr = shumate_vector_expression_literal_new (&value);
+  expr = shumate_vector_expression_filter_from_literal (&value);
 
   result = shumate_vector_expression_eval_number (expr, NULL, -10);
   g_assert_cmpfloat (3.1415, ==, result);

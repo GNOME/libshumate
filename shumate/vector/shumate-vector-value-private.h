@@ -112,5 +112,6 @@ void shumate_vector_value_set_collator (ShumateVectorValue *self, ShumateVectorC
 gboolean shumate_vector_value_get_collator (ShumateVectorValue *self, ShumateVectorCollator *collator);
 
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
+gint shumate_vector_value_hash (ShumateVectorValue *self);
 
 char *shumate_vector_value_as_string (ShumateVectorValue *self);

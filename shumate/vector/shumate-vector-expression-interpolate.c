@@ -17,7 +17,7 @@
 
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-interpolate-private.h"
-#include "shumate-vector-expression-literal-private.h"
+#include "shumate-vector-expression-filter-private.h"
 #include "shumate-vector-utils-private.h"
 
 typedef struct {
@@ -109,7 +109,7 @@ shumate_vector_expression_interpolate_from_json_obj (JsonObject *object, GError 
 
           stop = g_new0 (Stop, 1);
           stop->point = json_node_get_double (point_node);
-          stop->expr = shumate_vector_expression_literal_new (&value);
+          stop->expr = shumate_vector_expression_filter_from_literal (&value);
 
           g_ptr_array_add (self->stops, stop);
         }

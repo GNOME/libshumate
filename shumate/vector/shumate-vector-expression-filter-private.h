@@ -31,4 +31,6 @@ ShumateVectorExpression *shumate_vector_expression_filter_from_json_array (JsonA
 ShumateVectorExpression *shumate_vector_expression_filter_from_array_or_literal (JsonNode                        *node,
                                                                                  ShumateVectorExpressionContext  *ctx,
                                                                                  GError                         **error);
+ShumateVectorExpression *shumate_vector_expression_filter_from_literal (ShumateVectorValue *value);
+
 G_END_DECLS

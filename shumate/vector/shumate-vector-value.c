@@ -391,6 +391,41 @@ shumate_vector_value_get_collator (ShumateVectorValue    *self,
   return TRUE;
 }
 
+gint
+shumate_vector_value_hash (ShumateVectorValue *self)
+{
+  switch (self->type)
+    {
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+      return 0;
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+      return g_direct_hash (&self->number);
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+      return g_direct_hash (&self->boolean);
+    case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+      return g_str_hash (self->string);
+    case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
+      return gdk_rgba_hash (&self->color);
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+      {
+        guint hash = 0;
+
+        for (int i = 0; i < self->array->len; i ++)
+          hash ^= shumate_vector_value_hash (g_ptr_array_index (self->array, i));
+
+        return hash;
+      }
+    case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+      return g_str_hash (self->image_name);
+    case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLLATOR:
+      /* Not supported */
+      return 0;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
 gboolean
 shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 {
@@ -421,6 +456,7 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
     case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
       return g_strcmp0 (a->image_name, b->image_name) == 0;
     case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLLATOR:
       /* Not supported */
       return FALSE;
     default:

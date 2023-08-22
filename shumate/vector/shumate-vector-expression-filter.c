@@ -18,7 +18,6 @@
 
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-expression-filter-private.h"
-#include "shumate-vector-expression-literal-private.h"
 #include "shumate-vector-expression-interpolate-private.h"
 #include "shumate-vector-expression-type-private.h"
 
@@ -27,7 +26,23 @@ struct _ShumateVectorExpressionFilter
   ShumateVectorExpression parent_instance;
 
   ExpressionType type;
+
   GPtrArray *expressions;
+
+  union {
+    ShumateVectorValue value;
+    GPtrArray *format_parts;
+    char *fast_get_key;
+    struct {
+      char *key;
+      GHashTable *haystack;
+    } fast_in;
+    struct {
+      ShumateVectorValue value;
+      char *key;
+    } fast_eq;
+    guint8 fast_geometry_type;
+  };
 };
 
 typedef struct {
@@ -53,19 +68,35 @@ G_DEFINE_AUTOPTR_CLEANUP_FUNC (FormatExpressionPart, format_expression_part_free
 const ExprInfo *shumate_vector_expression_type_lookup (register const char *str, register size_t len);
 
 
+static ShumateVectorExpression *optimize (ShumateVectorExpressionFilter *self);
+
+
+ShumateVectorExpression *
+shumate_vector_expression_filter_from_literal (ShumateVectorValue *value)
+{
+  g_autoptr(ShumateVectorExpressionFilter) self = NULL;
+
+  self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+  self->type = EXPR_LITERAL;
+  shumate_vector_value_copy (value, &self->value);
+
+  return (ShumateVectorExpression *)g_steal_pointer (&self);
+}
+
+
 ShumateVectorExpression *
 shumate_vector_expression_filter_from_array_or_literal (JsonNode                        *node,
                                                         ShumateVectorExpressionContext  *ctx,
                                                         GError                         **error)
 {
   if (node == NULL || JSON_NODE_HOLDS_NULL (node))
-    return shumate_vector_expression_literal_new (&SHUMATE_VECTOR_VALUE_INIT);
+    return shumate_vector_expression_filter_from_literal (&SHUMATE_VECTOR_VALUE_INIT);
   else if (JSON_NODE_HOLDS_VALUE (node))
     {
       g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
       if (!shumate_vector_value_set_from_json_literal (&value, node, error))
         return NULL;
-      return shumate_vector_expression_literal_new (&value);
+      return shumate_vector_expression_filter_from_literal (&value);
     }
   else if (JSON_NODE_HOLDS_ARRAY (node))
     return shumate_vector_expression_filter_from_json_array (json_node_get_array (node), ctx, error);
@@ -153,6 +184,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 
           self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
           self->type = EXPR_COLLATOR;
+          self->expressions = g_ptr_array_new_with_free_func (g_object_unref);
 
           if (!(child = shumate_vector_expression_filter_from_array_or_literal (json_object_get_member (object, "case-sensitive"), ctx, error)))
             return NULL;
@@ -165,7 +197,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
         {
           self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
           self->type = EXPR_FORMAT;
-          g_ptr_array_set_free_func (self->expressions, (GDestroyNotify)format_expression_part_free);
+          self->format_parts = g_ptr_array_new_with_free_func ((GDestroyNotify)format_expression_part_free);
 
           for (int i = 1, n = json_array_get_length (array); i < n;)
             {
@@ -173,7 +205,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
               JsonNode *format_node = NULL;
               FormatExpressionPart *part = g_new0 (FormatExpressionPart, 1);
 
-              g_ptr_array_add (self->expressions, part);
+              g_ptr_array_add (self->format_parts, part);
 
               part->string = shumate_vector_expression_filter_from_array_or_literal (arg_node, ctx, error);
               if (part->string == NULL)
@@ -221,7 +253,7 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
           if (!shumate_vector_value_set_from_json_literal (&value, arg, error))
             return NULL;
 
-          return shumate_vector_expression_literal_new (&value);
+          return shumate_vector_expression_filter_from_literal (&value);
         }
 
       case EXPR_INTERPOLATE:
@@ -328,21 +360,21 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
         {
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
           shumate_vector_value_set_number (&value, G_E);
-          return shumate_vector_expression_literal_new (&value);
+          return shumate_vector_expression_filter_from_literal (&value);
         }
 
       case EXPR_LN2:
         {
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
           shumate_vector_value_set_number (&value, G_LN2);
-          return shumate_vector_expression_literal_new (&value);
+          return shumate_vector_expression_filter_from_literal (&value);
         }
 
       case EXPR_PI:
         {
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
           shumate_vector_value_set_number (&value, G_PI);
-          return shumate_vector_expression_literal_new (&value);
+          return shumate_vector_expression_filter_from_literal (&value);
         }
 
       default:
@@ -411,18 +443,19 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
           else
             {
               expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
-              ((ShumateVectorExpressionFilter *)expr)->type = EXPR_GET;
-              shumate_vector_value_set_string (&value, json_node_get_string (arg));
-              g_ptr_array_add (((ShumateVectorExpressionFilter *)expr)->expressions, shumate_vector_expression_literal_new (&value));
+              ((ShumateVectorExpressionFilter *)expr)->type = EXPR_FAST_GET;
+              ((ShumateVectorExpressionFilter *)expr)->fast_get_key = g_strdup (string);
             }
         }
       else if (!(expr = shumate_vector_expression_filter_from_array_or_literal (arg, ctx, error)))
         return NULL;
 
+      if (self->expressions == NULL)
+        self->expressions = g_ptr_array_new_with_free_func (g_object_unref);
       g_ptr_array_add (self->expressions, g_steal_pointer (&expr));
     }
 
-  return (ShumateVectorExpression *)g_steal_pointer (&self);
+  return optimize (g_steal_pointer (&self));
 }
 
 
@@ -437,11 +470,12 @@ shumate_vector_expression_filter_from_format (const char *format, GError **error
     {
       g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
       shumate_vector_value_set_string (&value, format);
-      return shumate_vector_expression_literal_new (&value);
+      return shumate_vector_expression_filter_from_literal (&value);
     }
 
   self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
   self->type = EXPR_CONCAT;
+  self->expressions = g_ptr_array_new_with_free_func (g_object_unref);
 
   /* Ensure the braces in the format string are balanced and not nested */
   for (int i = 0, n = strlen (format); i < n; i ++)
@@ -475,17 +509,16 @@ shumate_vector_expression_filter_from_format (const char *format, GError **error
       if (strlen (parts[i]) > 0)
         {
           shumate_vector_value_set_string (&value, parts[i]);
-          g_ptr_array_add (self->expressions, shumate_vector_expression_literal_new (&value));
+          g_ptr_array_add (self->expressions, shumate_vector_expression_filter_from_literal (&value));
         }
       i ++;
 
       if (parts[i] == NULL)
         break;
 
-      shumate_vector_value_set_string (&value, parts[i]);
       get_expr = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
-      get_expr->type = EXPR_GET;
-      g_ptr_array_add (get_expr->expressions, shumate_vector_expression_literal_new (&value));
+      get_expr->type = EXPR_FAST_GET;
+      get_expr->fast_get_key = g_strdup (parts[i]);
       g_ptr_array_add (self->expressions, g_steal_pointer (&get_expr));
       i ++;
     }
@@ -494,12 +527,164 @@ shumate_vector_expression_filter_from_format (const char *format, GError **error
 }
 
 
+static ShumateVectorExpression *
+optimize (ShumateVectorExpressionFilter *self)
+{
+  switch (self->type)
+    {
+    case EXPR_EQ:
+    case EXPR_NE:
+      {
+        ShumateVectorExpressionFilter *key_expr, *value_expr;
+
+        if (self->expressions->len != 2)
+          break;
+
+        key_expr = self->expressions->pdata[0];
+        value_expr = self->expressions->pdata[1];
+
+        if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (key_expr) || !SHUMATE_IS_VECTOR_EXPRESSION_FILTER (value_expr))
+          break;
+        if (value_expr->type != EXPR_LITERAL)
+          break;
+
+        switch (key_expr->type)
+          {
+          case EXPR_FAST_GET:
+            self->type = self->type == EXPR_EQ ? EXPR_FAST_EQ : EXPR_FAST_NE;
+            self->fast_eq.key = g_strdup (key_expr->fast_get_key);
+            shumate_vector_value_copy (&value_expr->value, &self->fast_eq.value);
+            g_clear_pointer (&self->expressions, g_ptr_array_unref);
+            break;
+          case EXPR_GEOMETRY_TYPE:
+            {
+              const char *geometry_type;
+              guint8 geometry_type_int;
+              if (!shumate_vector_value_get_string (&value_expr->value, &geometry_type))
+                break;
+
+              if (g_strcmp0 (geometry_type, "Point") == 0)
+                geometry_type_int = VECTOR_TILE__TILE__GEOM_TYPE__POINT;
+              else if (g_strcmp0 (geometry_type, "LineString") == 0)
+                geometry_type_int = VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING;
+              else if (g_strcmp0 (geometry_type, "Polygon") == 0)
+                geometry_type_int = VECTOR_TILE__TILE__GEOM_TYPE__POLYGON;
+              else
+                break;
+
+              self->type = self->type == EXPR_EQ ? EXPR_FAST_GEOMETRY_TYPE : EXPR_FAST_NOT_GEOMETRY_TYPE;
+              self->fast_geometry_type = geometry_type_int;
+              g_clear_pointer (&self->expressions, g_ptr_array_unref);
+              break;
+            }
+          default:
+            break;
+          }
+
+        break;
+      }
+
+    case EXPR_GET:
+    case EXPR_HAS:
+    case EXPR_NOT_HAS:
+      {
+        ShumateVectorExpressionFilter *key_expr = self->expressions->pdata[0];
+        const char *key;
+
+        if (self->expressions->len != 1)
+          break;
+
+        if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (key_expr))
+          break;
+        if (key_expr->type != EXPR_LITERAL)
+          break;
+
+        if (shumate_vector_value_get_string (&key_expr->value, &key))
+          {
+            self->type = (self->type == EXPR_GET) ? EXPR_FAST_GET : (self->type == EXPR_HAS) ? EXPR_FAST_HAS : EXPR_FAST_NOT_HAS;
+            self->fast_get_key = g_strdup (key);
+            g_clear_pointer (&self->expressions, g_ptr_array_unref);
+          }
+        break;
+      }
+
+    case EXPR_IN:
+    case EXPR_NOT_IN:
+      {
+        ShumateVectorExpressionFilter *key_expr, *array_expr;
+
+        if (self->expressions->len != 2)
+          break;
+
+        key_expr = self->expressions->pdata[0];
+        array_expr = self->expressions->pdata[1];
+
+        if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (key_expr) || !SHUMATE_IS_VECTOR_EXPRESSION_FILTER (array_expr))
+          break;
+        if (key_expr->type != EXPR_FAST_GET)
+          break;
+        if (array_expr->type != EXPR_LITERAL)
+          break;
+        if (array_expr->value.type != SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
+          break;
+
+        self->type = self->type == EXPR_IN ? EXPR_FAST_IN : EXPR_FAST_NOT_IN;
+        self->fast_in.key = g_strdup (key_expr->fast_get_key);
+
+        self->fast_in.haystack = g_hash_table_new_full (
+          (GHashFunc)shumate_vector_value_hash, (GEqualFunc)shumate_vector_value_equal, (GDestroyNotify)shumate_vector_value_free, NULL
+        );
+        for (int i = 0, n = array_expr->value.array->len; i < n; i ++)
+          {
+            ShumateVectorValue *value = g_new0 (ShumateVectorValue, 1);
+            shumate_vector_value_copy (g_ptr_array_index (array_expr->value.array, i), value);
+            g_hash_table_add (self->fast_in.haystack, value);
+          }
+
+        g_clear_pointer (&self->expressions, g_ptr_array_unref);
+
+        break;
+      }
+
+    default:
+      break;
+    }
+
+  return (ShumateVectorExpression *)self;
+}
+
+
 static void
 shumate_vector_expression_filter_finalize (GObject *object)
 {
   ShumateVectorExpressionFilter *self = (ShumateVectorExpressionFilter *)object;
 
-  g_clear_pointer (&self->expressions, g_ptr_array_unref);
+  switch (self->type)
+    {
+    case EXPR_LITERAL:
+      shumate_vector_value_unset (&self->value);
+      break;
+    case EXPR_FORMAT:
+      g_clear_pointer (&self->format_parts, g_ptr_array_unref);
+      break;
+    case EXPR_FAST_GET:
+    case EXPR_FAST_HAS:
+    case EXPR_FAST_NOT_HAS:
+      g_clear_pointer (&self->fast_get_key, g_free);
+      break;
+    case EXPR_FAST_IN:
+    case EXPR_FAST_NOT_IN:
+      g_clear_pointer (&self->fast_in.key, g_free);
+      g_clear_pointer (&self->fast_in.haystack, g_hash_table_unref);
+    case EXPR_FAST_EQ:
+    case EXPR_FAST_NE:
+      g_clear_pointer (&self->fast_eq.key, g_free);
+      shumate_vector_value_unset (&self->fast_eq.value);
+      break;
+    default:
+      g_clear_pointer (&self->expressions, g_ptr_array_unref);
+      break;
+    }
 
   G_OBJECT_CLASS (shumate_vector_expression_filter_parent_class)->finalize (object);
 }
@@ -518,12 +703,22 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
   gboolean boolean;
   double number, number2;
   g_autofree char *string = NULL;
-  ShumateVectorExpression **expressions = (ShumateVectorExpression **)self->expressions->pdata;
+  ShumateVectorExpression **expressions = NULL;
   ShumateVectorCollator collator;
-  guint n_expressions = self->expressions->len;
+  guint n_expressions = 0;
+
+  if (self->expressions)
+    {
+      expressions = (ShumateVectorExpression **)self->expressions->pdata;
+      n_expressions = self->expressions->len;
+    }
 
   switch (self->type)
     {
+    case EXPR_LITERAL:
+      shumate_vector_value_copy (&self->value, out);
+      return TRUE;
+
     case EXPR_NOT:
       g_assert (n_expressions == 1);
 
@@ -589,8 +784,7 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       g_assert (n_expressions == 1);
 
       string = shumate_vector_expression_eval_string (expressions[0], scope, NULL);
-      shumate_vector_render_scope_get_variable (scope, string, &value);
-      shumate_vector_value_copy (&value, out);
+      shumate_vector_render_scope_get_variable (scope, string, out);
       return TRUE;
 
     case EXPR_NOT_IN:
@@ -1108,7 +1302,8 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
     case EXPR_FORMAT:
         {
-          FormatExpressionPart **format_expressions = (FormatExpressionPart **)expressions;
+          FormatExpressionPart **format_expressions = (FormatExpressionPart **)self->format_parts->pdata;
+          n_expressions = self->format_parts->len;
           g_autoptr(GPtrArray) format_parts = g_ptr_array_new_full (n_expressions, (GDestroyNotify)shumate_vector_format_part_free);
 
           for (int i = 0; i < n_expressions; i++)
@@ -1393,6 +1588,47 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
           return FALSE;
         }
 
+    case EXPR_FAST_NOT_HAS:
+      inverted = TRUE;
+      G_GNUC_FALLTHROUGH;
+    case EXPR_FAST_HAS:
+      shumate_vector_render_scope_get_variable (scope, self->fast_get_key, &value);
+      shumate_vector_value_set_boolean (out, !shumate_vector_value_is_null (&value) ^ inverted);
+      return TRUE;
+
+    case EXPR_FAST_GET:
+      shumate_vector_render_scope_get_variable (scope, self->fast_get_key, out);
+      return TRUE;
+
+    case EXPR_FAST_NOT_IN:
+      inverted = TRUE;
+      G_GNUC_FALLTHROUGH;
+    case EXPR_FAST_IN:
+      shumate_vector_render_scope_get_variable (scope, self->fast_in.key, &value);
+      shumate_vector_value_set_boolean (out, g_hash_table_contains (self->fast_in.haystack, &value) ^ inverted);
+      return TRUE;
+
+    case EXPR_FAST_NE:
+      inverted = TRUE;
+      G_GNUC_FALLTHROUGH;
+    case EXPR_FAST_EQ:
+      shumate_vector_render_scope_get_variable (scope, self->fast_eq.key, &value);
+      shumate_vector_value_set_boolean (out, shumate_vector_value_equal (&value, &self->fast_eq.value) ^ inverted);
+      return TRUE;
+
+    case EXPR_FAST_NOT_GEOMETRY_TYPE:
+      inverted = TRUE;
+      G_GNUC_FALLTHROUGH;
+    case EXPR_FAST_GEOMETRY_TYPE:
+      if (scope->feature == NULL)
+        {
+          shumate_vector_value_unset (out);
+          return TRUE;
+        }
+
+      shumate_vector_value_set_boolean (out, (self->fast_geometry_type == scope->feature->type) ^ inverted);
+      return TRUE;
+
     default:
       g_assert_not_reached ();
     }
@@ -1412,5 +1648,4 @@ shumate_vector_expression_filter_class_init (ShumateVectorExpressionFilterClass 
 static void
 shumate_vector_expression_filter_init (ShumateVectorExpressionFilter *self)
 {
-  self->expressions = g_ptr_array_new_with_free_func (g_object_unref);
 }

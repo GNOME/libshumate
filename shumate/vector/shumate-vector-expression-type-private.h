@@ -24,6 +24,8 @@ G_BEGIN_DECLS
 typedef enum {
   EXPR_INVALID,
 
+  EXPR_LITERAL,
+
   EXPR_COLLATOR,
   EXPR_FORMAT,
   EXPR_IMAGE,
@@ -93,6 +95,16 @@ typedef enum {
   EXPR_TAN,
 
   EXPR_ZOOM,
+
+  EXPR_FAST_GET,
+  EXPR_FAST_HAS,
+  EXPR_FAST_NOT_HAS,
+  EXPR_FAST_IN,
+  EXPR_FAST_NOT_IN,
+  EXPR_FAST_EQ,
+  EXPR_FAST_NE,
+  EXPR_FAST_GEOMETRY_TYPE,
+  EXPR_FAST_NOT_GEOMETRY_TYPE,
 } ExpressionType;
 
 typedef struct _ExprInfo
