@@ -90,7 +90,7 @@ shumate_vector_expression_eval (ShumateVectorExpression  *self,
                                 ShumateVectorRenderScope *scope,
                                 ShumateVectorValue       *out)
 {
-  g_return_val_if_fail (self == NULL || SHUMATE_IS_VECTOR_EXPRESSION (self), FALSE);
+  g_assert (self == NULL || SHUMATE_IS_VECTOR_EXPRESSION (self));
 
   if (self == NULL)
     return FALSE;
