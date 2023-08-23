@@ -533,7 +533,7 @@ shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *self,
   sprites = shumate_vector_sprite_sheet_new ();
 
   texture = gdk_texture_new_for_pixbuf (sprites_pixbuf);
-  if (!shumate_vector_sprite_sheet_add_page (self->sprites, texture, sprites_json, 1, error))
+  if (!shumate_vector_sprite_sheet_add_page (sprites, texture, sprites_json, 1, error))
     return FALSE;
 
   shumate_vector_renderer_set_sprite_sheet (self, sprites);
