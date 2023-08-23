@@ -355,13 +355,28 @@ test_vector_expression_feature_filter (void)
 
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"name\", \"Hello, world!\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"get\", \"name\"], \"Hello, world!\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!=\", [\"get\", \"name\"], \"HELLO, WORLD!\"]"));
   g_assert_false (filter_with_scope (&scope, "[\"==\", \"name\", \"Goodbye, world!\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"has\", \"name\"]"));
+  // Use concat to avoid optimizations and test the regular code path
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"get\", [\"concat\", \"name\"]], \"Hello, world!\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"has\", [\"concat\", \"name\"]]"));
   g_assert_false (filter_with_scope (&scope, "[\"!has\", \"name\"]"));
+  g_assert_false (filter_with_scope (&scope, "[\"!has\", [\"concat\", \"name\"]]"));
   g_assert_false (filter_with_scope (&scope, "[\"has\", \"name:en\"]"));
   g_assert_true  (filter_with_scope (&scope, "[\"!has\", \"name:en\"]"));
+  g_assert_false (filter_with_scope (&scope, "[\"has\", [\"concat\", \"name:en\"]]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!has\", [\"concat\", \"name:en\"]]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"$type\", \"Point\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!=\", \"$type\", \"Polygon\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!=\", \"$type\", \"NotAShape\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"geometry-type\"], [\"concat\", \"Point\"]]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!=\", [\"geometry-type\"], [\"concat\", \"Polygon\"]]"));
   g_assert_true  (filter_with_scope (&scope, "[\"==\", \"zoom\", 10]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"in\", \"name\", [\"literal\", [\"Hello, world!\", true, 3]]]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!in\", \"name\", [\"literal\", [\"HELLO, WORLD!\", true, 3]]]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"concat\", \"Hello, world!\"], \"Hello, world!\"]"));
+  g_assert_true  (filter_with_scope (&scope, "[\"!=\", [\"concat\", \"Hello, world!\"], \"HELLO, WORLD!\"]"));
 
   vector_tile__tile__free_unpacked (scope.tile, NULL);
 }
