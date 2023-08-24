@@ -53,6 +53,8 @@
 
 #include "shumate/shumate-file-cache.h"
 
+#include "shumate/shumate-vector-sprite.h"
+#include "shumate/shumate-vector-sprite-sheet.h"
 #include "shumate/shumate-vector-renderer.h"
 
 #undef __SHUMATE_SHUMATE_H_INSIDE__
