@@ -108,6 +108,12 @@ libshumate_c_args = [
   '-DG_LOG_DOMAIN="@0@"'.format(package_name),
 ]
 
+if not get_option('buildtype').startswith('debug')
+  libshumate_c_args += [
+    '-DG_DISABLE_ASSERT',
+  ]
+endif
+
 version_h = configuration_data()
 version_h.set('SHUMATE_MAJOR_VERSION', version_major)
 version_h.set('SHUMATE_MINOR_VERSION', version_minor)
