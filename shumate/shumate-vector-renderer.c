@@ -850,12 +850,13 @@ render_job_finish (RenderJob *job)
       shumate_tile_set_symbols (data->tile, job->symbols);
     }
 
-  if (data->completed)
-    return_from_task (job->task, data->req);
-
-  /* Make sure the TaskData knows there's not a current job anymore */
   if (data->current_job == job)
-    data->current_job = NULL;
+    {
+      data->current_job = NULL;
+
+      if (data->completed)
+        return_from_task (job->task, data->req);
+    }
 
   render_job_unref (job);
   return G_SOURCE_REMOVE;
@@ -900,10 +901,7 @@ begin_render (ShumateVectorRenderer  *self,
   TaskData *data = (TaskData *)g_task_get_task_data (task);
 
   if (data->current_job != NULL)
-    {
-      g_cancellable_cancel (data->current_job->cancellable);
-      data->current_job = NULL;
-    }
+    g_cancellable_cancel (data->current_job->cancellable);
 
   job = g_new0 (RenderJob, 1);
   job->cancellable = g_cancellable_new ();
