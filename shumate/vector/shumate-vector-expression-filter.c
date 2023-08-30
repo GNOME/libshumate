@@ -33,6 +33,7 @@ struct _ShumateVectorExpressionFilter
     ShumateVectorValue value;
     GPtrArray *format_parts;
     char *fast_get_key;
+    GHashTable *match_expressions;
     struct {
       char *key;
       GHashTable *haystack;
@@ -258,6 +259,85 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
 
       case EXPR_INTERPOLATE:
         return shumate_vector_expression_interpolate_from_json_array (array, ctx, error);
+
+      case EXPR_MATCH:
+        {
+          ShumateVectorExpression *input_expr;
+
+          self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_FILTER, NULL);
+          self->type = EXPR_MATCH;
+          self->expressions = g_ptr_array_new_with_free_func (g_object_unref);
+          self->match_expressions = g_hash_table_new_full (
+            (GHashFunc)shumate_vector_value_hash,
+            (GEqualFunc)shumate_vector_value_equal,
+            (GDestroyNotify)shumate_vector_value_free,
+            g_object_unref
+          );
+
+          if (json_array_get_length (array) < 3)
+            {
+              g_set_error (error,
+                          SHUMATE_STYLE_ERROR,
+                          SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                          "Operator `match` expected at least 2 arguments, got %d",
+                          json_array_get_length (array) - 1);
+              return NULL;
+            }
+
+          input_expr = shumate_vector_expression_filter_from_array_or_literal (json_array_get_element (array, 1), ctx, error);
+          if (input_expr == NULL)
+            return NULL;
+          g_ptr_array_add (self->expressions, input_expr);
+
+          for (int i = 2, n = json_array_get_length (array); i + 1 < n; i += 2)
+            {
+              JsonNode *label_node = json_array_get_element (array, i);
+              JsonNode *output_node = json_array_get_element (array, i + 1);
+              g_autoptr(ShumateVectorExpression) output_expr =
+                shumate_vector_expression_filter_from_array_or_literal (output_node, ctx, error);
+
+              if (output_expr == NULL)
+                return NULL;
+
+              if (JSON_NODE_HOLDS_ARRAY (label_node))
+                {
+                  JsonArray *labels = json_node_get_array (label_node);
+                  for (int j = 0, m = json_array_get_length (labels); j < m; j ++)
+                    {
+                      JsonNode *label = json_array_get_element (labels, j);
+                      g_autoptr(ShumateVectorValue) label_value = g_new0 (ShumateVectorValue, 1);
+
+                      if (!shumate_vector_value_set_from_json_literal (label_value, label, error))
+                        return NULL;
+
+                      g_hash_table_insert (self->match_expressions, g_steal_pointer (&label_value), g_object_ref (output_expr));
+                    }
+                }
+              else
+                {
+                  g_autoptr(ShumateVectorValue) label_value = g_new0 (ShumateVectorValue, 1);
+
+                  if (!shumate_vector_value_set_from_json_literal (label_value, label_node, error))
+                    return NULL;
+
+                  g_hash_table_insert (self->match_expressions, g_steal_pointer (&label_value), g_object_ref (output_expr));
+                }
+            }
+
+          if (json_array_get_length (array) % 2 == 1)
+            {
+              JsonNode *default_node = json_array_get_element (array, json_array_get_length (array) - 1);
+              ShumateVectorExpression *default_expr =
+                shumate_vector_expression_filter_from_array_or_literal (default_node, ctx, error);
+
+              if (default_expr == NULL)
+                return NULL;
+
+              g_ptr_array_add (self->expressions, g_steal_pointer (&default_expr));
+            }
+
+          return (ShumateVectorExpression *)g_steal_pointer (&self);
+        }
 
       case EXPR_LET:
         {
@@ -659,6 +739,8 @@ shumate_vector_expression_filter_finalize (GObject *object)
 {
   ShumateVectorExpressionFilter *self = (ShumateVectorExpressionFilter *)object;
 
+  g_clear_pointer (&self->expressions, g_ptr_array_unref);
+
   switch (self->type)
     {
     case EXPR_LITERAL:
@@ -666,6 +748,9 @@ shumate_vector_expression_filter_finalize (GObject *object)
       break;
     case EXPR_FORMAT:
       g_clear_pointer (&self->format_parts, g_ptr_array_unref);
+      break;
+    case EXPR_MATCH:
+      g_clear_pointer (&self->match_expressions, g_hash_table_unref);
       break;
     case EXPR_FAST_GET:
     case EXPR_FAST_HAS:
@@ -682,7 +767,6 @@ shumate_vector_expression_filter_finalize (GObject *object)
       shumate_vector_value_unset (&self->fast_eq.value);
       break;
     default:
-      g_clear_pointer (&self->expressions, g_ptr_array_unref);
       break;
     }
 
@@ -981,34 +1065,23 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       return TRUE;
 
     case EXPR_MATCH:
-      g_assert (n_expressions >= 2);
+      {
+        ShumateVectorExpression *output_expr;
 
-      if (!shumate_vector_expression_eval (expressions[0], scope, &value))
-        return FALSE;
+        g_assert (n_expressions == 1 || n_expressions == 2);
 
-      for (int i = 1; i < n_expressions; i += 2)
-        {
-          if (!shumate_vector_expression_eval (expressions[i], scope, &value2))
-            return FALSE;
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
 
-          if (i + 1 == n_expressions)
-            {
-              /* fallback value */
-              shumate_vector_value_copy (&value2, out);
-              return TRUE;
-            }
-          else
-            {
-              if (shumate_vector_value_equal (&value, &value2))
-                {
-                  if (!shumate_vector_expression_eval (expressions[i + 1], scope, &value))
-                    return FALSE;
+        output_expr = g_hash_table_lookup (self->match_expressions, &value);
 
-                  shumate_vector_value_copy (&value, out);
-                  return TRUE;
-                }
-            }
-        }
+        if (output_expr != NULL)
+          return shumate_vector_expression_eval (output_expr, scope, out);
+        else if (n_expressions == 2)
+          return shumate_vector_expression_eval (expressions[1], scope, out);
+        else
+          return FALSE;
+      }
 
       /* no case matched and there was no fallback */
       return FALSE;
