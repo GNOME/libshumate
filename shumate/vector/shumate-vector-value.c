@@ -399,9 +399,9 @@ shumate_vector_value_hash (ShumateVectorValue *self)
     case SHUMATE_VECTOR_VALUE_TYPE_NULL:
       return 0;
     case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
-      return g_direct_hash (&self->number);
+      return g_double_hash (&self->number);
     case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
-      return g_direct_hash (&self->boolean);
+      return !!self->boolean;
     case SHUMATE_VECTOR_VALUE_TYPE_STRING:
       return g_str_hash (self->string);
     case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
