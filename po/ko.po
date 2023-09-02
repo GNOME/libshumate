@@ -1,14 +1,14 @@
 # Korean translation for libshumate.
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
-# DaeHyun Sung <sungdh86+git@gmail.com>, 2022.
+# DaeHyun Sung <sungdh86+git@gmail.com>, 2022-2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-05 19:54+0000\n"
-"PO-Revision-Date: 2022-09-14 01:11+0900\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-08-31 13:05+0900\n"
 "Last-Translator: DaeHyun Sung <sungdh86+git@gmail.com>\n"
 "Language-Team: Korean <gnome-kr@googlegroups.com>\n"
 "Language: ko\n"
@@ -16,7 +16,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "확대"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "축소"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
