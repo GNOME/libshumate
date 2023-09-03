@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-05 19:45+0000\n"
-"PO-Revision-Date: 2022-09-05 22:52+0300\n"
+"POT-Creation-Date: 2023-05-05 13:38+0000\n"
+"PO-Revision-Date: 2023-09-03 21:35+0300\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
@@ -16,8 +16,16 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"(n%100<10 || n%100>=20) ? 1 : 2)\n"
-"X-Generator: Gtranslator 40.0\n"
+"(n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Priartinti"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Atitolinti"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
