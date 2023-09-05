@@ -45,6 +45,10 @@ ShumateVectorSpriteSheet *shumate_vector_renderer_get_sprite_sheet (ShumateVecto
 void shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
                                                ShumateVectorSpriteSheet *sprites);
 
+void shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
+                                              const char            *name,
+                                              ShumateDataSource     *data_source);
+
 /**
  * SHUMATE_STYLE_ERROR:
  *

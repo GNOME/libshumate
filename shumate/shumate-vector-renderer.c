@@ -594,6 +594,37 @@ shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
 }
 
 
+/**
+ * shumate_vector_renderer_set_data_source:
+ * @self: a [class@VectorRenderer]
+ * @name: the name of the data source
+ * @data_source: a [class@DataSource]
+ *
+ * Adds a data source to the renderer.
+ *
+ * Currently, [class@VectorRenderer] only supports one data source
+ * and throws an error if the style does not contain exactly one
+ * data source. However, support for multiple sources may be added
+ * in the future, so this method accepts a name parameter. If the
+ * name does not match the one expected by the style, this method
+ * will have no effect.
+ *
+ * Since: 1.2
+ */
+void
+shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
+                                         const char            *name,
+                                         ShumateDataSource     *data_source)
+{
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_return_if_fail (name != NULL);
+  g_return_if_fail (SHUMATE_IS_DATA_SOURCE (data_source));
+
+  if (g_strcmp0 (name, self->source_name) == 0)
+    g_set_object (&self->data_source, data_source);
+}
+
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 static GdkTexture *
 texture_new_for_surface (cairo_surface_t *surface)
