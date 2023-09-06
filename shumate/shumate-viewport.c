@@ -452,12 +452,19 @@ shumate_viewport_set_reference_map_source (ShumateViewport  *self,
                                            ShumateMapSource *map_source)
 {
   g_return_if_fail (SHUMATE_IS_VIEWPORT (self));
-
-  shumate_viewport_set_max_zoom_level (self, shumate_map_source_get_max_zoom_level (map_source));
-  shumate_viewport_set_min_zoom_level (self, shumate_map_source_get_min_zoom_level (map_source));
+  g_return_if_fail (map_source == NULL || SHUMATE_IS_MAP_SOURCE (map_source));
 
   if (g_set_object (&self->ref_map_source, map_source))
-    g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_REFERENCE_MAP_SOURCE]);
+    {
+      if (map_source != NULL)
+        {
+          shumate_viewport_set_max_zoom_level (self, shumate_map_source_get_max_zoom_level (map_source));
+          shumate_viewport_set_min_zoom_level (self, shumate_map_source_get_min_zoom_level (map_source));
+        }
+
+      g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_REFERENCE_MAP_SOURCE]);
+    }
+
 }
 
 /**
