@@ -250,11 +250,6 @@ do_snapshot (GdkPaintable  *paintable,
 
       width = paintable_width * (width / self->source_rect.width);
       height = paintable_height * (height / self->source_rect.height);
-
-      gdk_paintable_snapshot (self->source_paintable,
-                              snapshot,
-                              paintable_width * (width / self->source_rect.width),
-                              paintable_height * (height / self->source_rect.height));
     }
 
     if (symbolic && GTK_IS_SYMBOLIC_PAINTABLE (self->source_paintable))
