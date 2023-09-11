@@ -260,8 +260,6 @@ place_point_label (ShumateVectorSymbolDetails *details,
 
 static void
 place_line_label (ShumateVectorSymbolDetails *details,
-                  double                      x,
-                  double                      y,
                   ShumateVectorRenderScope   *scope)
 {
   ShumateVectorSymbolInfo *symbol_info;
@@ -270,7 +268,15 @@ place_line_label (ShumateVectorSymbolDetails *details,
 
   for (i = 0; i < lines->len; i ++)
     {
-      g_autoptr(GPtrArray) split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+      g_autoptr(GPtrArray) split_lines = NULL;
+
+      if (details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
+        split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+      else
+        {
+          split_lines = g_ptr_array_new ();
+          g_ptr_array_add (split_lines, (ShumateVectorLineString *)lines->pdata[i]);
+        }
 
       for (j = 0; j < split_lines->len; j ++)
         {
@@ -308,21 +314,24 @@ place_line_label (ShumateVectorSymbolDetails *details,
           shumate_vector_point_iter_init (&iter, linestring);
 
           /* Make the spacing even on both sides */
-          shumate_vector_point_iter_advance (&iter, fmod (length, spacing) / 2);
-          distance += fmod (length, spacing) / 2;
+          shumate_vector_point_iter_advance (&iter, fmod (length / 2, spacing));
+          distance += fmod (length / 2, spacing);
 
           while (!shumate_vector_point_iter_is_at_end (&iter))
             {
               ShumateVectorPoint point;
               shumate_vector_point_iter_get_current_point (&iter, &point);
 
-              symbol_info = create_symbol_info (details, x, y);
+              if (point.x > 0 && point.x < 1 && point.y > 0 && point.y < 1)
+                {
+                  symbol_info = create_symbol_info (details, point.x, point.y);
 
-              shumate_vector_symbol_info_set_line_points (symbol_info,
-                                                          shumate_vector_line_string_copy (linestring),
-                                                          distance);
+                  shumate_vector_symbol_info_set_line_points (symbol_info,
+                                                              shumate_vector_line_string_copy (linestring),
+                                                              distance);
 
-              g_ptr_array_add (scope->symbols, symbol_info);
+                  g_ptr_array_add (scope->symbols, symbol_info);
+                }
 
               shumate_vector_point_iter_advance (&iter, spacing);
               distance += spacing;
@@ -477,7 +486,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
       if (symbol_placement == SHUMATE_VECTOR_PLACEMENT_LINE
           || symbol_placement == SHUMATE_VECTOR_PLACEMENT_LINE_CENTER)
-        place_line_label (details, x, y, scope);
+        place_line_label (details, scope);
       else
         {
           if (shumate_vector_render_scope_get_geometry_type (scope) == SHUMATE_VECTOR_GEOMETRY_LINESTRING)
