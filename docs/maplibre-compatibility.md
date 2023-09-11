@@ -472,7 +472,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-text-opacity">text-opacity</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-optional">text-optional</a></td>

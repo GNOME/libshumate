@@ -66,6 +66,7 @@ typedef struct {
   GPtrArray *formatted_text;
   ShumateVectorAnchor text_anchor;
   GdkRGBA text_color, icon_color;
+  double text_opacity;
   double text_size;
   double text_padding;
   char *text_font;

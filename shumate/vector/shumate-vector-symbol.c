@@ -598,7 +598,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
 
-  if (self->glyphs)
+  if (self->glyphs && self->symbol_info->details->text_opacity > 0)
     {
       double length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
@@ -623,6 +623,9 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
       gtk_snapshot_save (snapshot);
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
+
+      if (self->symbol_info->details->text_opacity < 1)
+        gtk_snapshot_push_opacity (snapshot, self->symbol_info->details->text_opacity);
 
       for (int i = 0; i < self->glyphs->len; i ++)
         {
@@ -678,9 +681,12 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
             shumate_vector_point_iter_advance (&iter, glyph->width / tile_size_for_zoom);
         }
 
+      if (self->symbol_info->details->text_opacity < 1)
+        gtk_snapshot_pop (snapshot);
+
       gtk_snapshot_restore (snapshot);
     }
-  else if (self->glyphs_node)
+  else if (self->glyphs_node && self->symbol_info->details->text_opacity > 0)
     {
       double angle = 0;
       double offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
@@ -695,6 +701,9 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
       gtk_snapshot_save (snapshot);
 
+      if (self->symbol_info->details->text_opacity < 1)
+        gtk_snapshot_push_opacity (snapshot, self->symbol_info->details->text_opacity);
+
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
       gtk_snapshot_translate (snapshot,
                               &GRAPHENE_POINT_INIT (
@@ -706,6 +715,10 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0 + offset_x,
                                                               -self->layout_height / 2.0 + offset_y));
       gtk_snapshot_append_node (snapshot, self->glyphs_node);
+
+      if (self->symbol_info->details->text_opacity < 1)
+        gtk_snapshot_pop (snapshot);
+
       gtk_snapshot_restore (snapshot);
     }
 
