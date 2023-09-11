@@ -138,6 +138,9 @@ shumate_vector_symbol_constructed (GObject *object)
           pango_attr_list_insert (attrs, attr);
         }
 
+      attr = pango_attr_letter_spacing_new (self->symbol_info->details->text_letter_spacing * self->symbol_info->details->text_size * PANGO_SCALE);
+      pango_attr_list_insert (attrs, attr);
+
       attr = pango_attr_foreground_new (self->symbol_info->details->text_color.red * 65535,
                                         self->symbol_info->details->text_color.green * 65535,
                                         self->symbol_info->details->text_color.blue * 65535);
@@ -159,17 +162,35 @@ shumate_vector_symbol_constructed (GObject *object)
             {
               int width = shumate_vector_sprite_get_width (part->sprite);
               int height = shumate_vector_sprite_get_height (part->sprite);
-              PangoRectangle rect = {
-                .x = 0,
+              /* For shapes, since we're overriding the ink and logical rects
+                 of the glyph, we have to take letter spacing into account ourselves */
+              double spacing = self->symbol_info->details->text_letter_spacing * self->symbol_info->details->text_size;
+
+              PangoRectangle ink_rect = {
+                .x = spacing / 2 * PANGO_SCALE,
                 .y = -height * PANGO_SCALE,
                 .width = width * PANGO_SCALE,
                 .height = height * PANGO_SCALE,
               };
+              PangoRectangle logical_rect = {
+                .x = 0,
+                .y = -height * PANGO_SCALE,
+                .width = (width + spacing) * PANGO_SCALE,
+                .height = height * PANGO_SCALE,
+              };
 
-              attr = pango_attr_shape_new_with_data (&rect, &rect, g_object_ref (part->sprite), (PangoAttrDataCopyFunc)g_object_ref, g_object_unref);
+              attr = pango_attr_shape_new_with_data (&ink_rect, &logical_rect, g_object_ref (part->sprite), (PangoAttrDataCopyFunc)g_object_ref, g_object_unref);
               attr->start_index = string->len;
               attr->end_index = string->len + strlen ("\uFFFC");
               pango_attr_list_insert (attrs, attr);
+
+              if (spacing != 0)
+                {
+                  attr = pango_attr_letter_spacing_new (0);
+                  attr->start_index = string->len;
+                  attr->end_index = string->len + strlen ("\uFFFC");
+                  pango_attr_list_insert (attrs, attr);
+                }
 
               g_string_append (string, "\uFFFC");
 

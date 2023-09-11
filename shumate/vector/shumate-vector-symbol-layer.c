@@ -33,6 +33,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *icon_size;
   ShumateVectorExpression *text_anchor;
   ShumateVectorExpression *text_field;
+  ShumateVectorExpression *text_letter_spacing;
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_opacity;
   ShumateVectorExpression *text_size;
@@ -120,6 +121,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), error);
       if (layer->text_field == NULL)
+        return NULL;
+
+      layer->text_letter_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "text-letter-spacing"), error);
+      if (layer->text_letter_spacing == NULL)
         return NULL;
 
       layer->text_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "text-anchor"), error);
@@ -227,6 +232,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_size);
   g_clear_object (&self->cursor);
   g_clear_object (&self->text_keep_upright);
+  g_clear_object (&self->text_letter_spacing);
   g_clear_object (&self->text_opacity);
   g_clear_object (&self->text_padding);
   g_clear_object (&self->text_rotation_alignment);
@@ -433,6 +439,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .formatted_text = g_steal_pointer (&text_field),
 
     .text_anchor = shumate_vector_expression_eval_anchor (self->text_anchor, scope),
+    .text_letter_spacing = shumate_vector_expression_eval_number (self->text_letter_spacing, scope, 0.0),
     .text_opacity = shumate_vector_expression_eval_number (self->text_opacity, scope, 1.0),
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
     .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),

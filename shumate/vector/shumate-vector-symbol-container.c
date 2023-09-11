@@ -338,9 +338,9 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
 #if 0
     {
       ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-      float rotation = shumate_viewport_get_rotation (viewport);
-      float delta_x = -self->collision->delta_x;
-      float delta_y = -self->collision->delta_y;
+      double rotation = shumate_viewport_get_rotation (viewport);
+      double delta_x = -self->collision->delta_x;
+      double delta_y = -self->collision->delta_y;
 
       rotate_around_origin (&delta_x, &delta_y, rotation);
 

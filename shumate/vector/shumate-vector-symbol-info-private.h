@@ -69,6 +69,7 @@ typedef struct {
   double text_opacity;
   double text_size;
   double text_padding;
+  double text_letter_spacing;
   char *text_font;
   ShumateVectorAlignment text_rotation_alignment;
   double text_offset_x, text_offset_y;
