@@ -567,7 +567,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (parent));
       ShumateMapSource *map_source = shumate_vector_symbol_container_get_map_source (SHUMATE_VECTOR_SYMBOL_CONTAINER (parent));
       double zoom_level = shumate_viewport_get_zoom_level (viewport);
-      tile_size_for_zoom = shumate_map_source_get_tile_size (map_source) * powf (2, zoom_level - self->symbol_info->details->tile_zoom_level);
+      tile_size_for_zoom = shumate_map_source_get_tile_size (map_source) * pow (2, zoom_level - self->symbol_info->details->tile_zoom_level);
       rotation = shumate_viewport_get_rotation (viewport);
     }
 

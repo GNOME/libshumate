@@ -263,7 +263,7 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   for (GList *l = self->children; l != NULL; l = l->next)
     {
       ChildInfo *child = l->data;
-      double tile_size_at_zoom = tile_size * powf (2, zoom_level - child->zoom);
+      double tile_size_at_zoom = tile_size * pow (2, zoom_level - child->zoom);
       double x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
       double y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
 
