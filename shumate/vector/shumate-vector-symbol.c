@@ -35,7 +35,7 @@ struct _ShumateVectorSymbol
   GArray *glyphs;
 
   GskRenderNode *glyphs_node;
-  int layout_width, layout_height;
+  int layout_width, layout_height, baseline, layout_y;
 
   graphene_rect_t bounds;
   double x, y;
@@ -130,6 +130,7 @@ shumate_vector_symbol_constructed (GObject *object)
       g_autoptr(GString) string = g_string_new ("");
       PangoAttribute *attr;
       gboolean any_images = FALSE;
+      PangoRectangle ink_rect;
 
       if (self->symbol_info->details->text_font != NULL)
         {
@@ -228,9 +229,11 @@ shumate_vector_symbol_constructed (GObject *object)
       text = g_string_free (g_steal_pointer (&string), FALSE);
       pango_layout_set_text (layout, text, -1);
 
-      pango_layout_get_size (layout, &self->layout_width, &self->layout_height);
-      self->layout_width /= PANGO_SCALE;
-      self->layout_height /= PANGO_SCALE;
+      pango_layout_get_pixel_extents (layout, &ink_rect, NULL);
+      self->layout_width = ink_rect.width;
+      self->layout_height = ink_rect.height;
+      self->layout_y = ink_rect.y;
+      self->baseline = pango_layout_get_baseline (layout) / (double) PANGO_SCALE;
 
       if ((self->symbol_info->details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP
           || self->symbol_info->details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_VIEWPORT_GLYPH)
@@ -677,7 +680,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
               gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
               gtk_snapshot_translate (snapshot,
                                       &GRAPHENE_POINT_INIT (-glyph->width / 2.0,
-                                                            self->symbol_info->details->text_size / 2.0));
+                                                            self->baseline - self->layout_y - self->layout_height / 2.0));
 
               if (glyph->node != NULL)
                 gtk_snapshot_append_node (snapshot, glyph->node);
@@ -733,8 +736,10 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                               ));
       gtk_snapshot_rotate (snapshot, angle * 180 / G_PI);
 
-      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-self->layout_width / 2.0 + offset_x,
-                                                              -self->layout_height / 2.0 + offset_y));
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (
+                                          -self->layout_width / 2.0 + offset_x,
+                                          -self->layout_y - self->layout_height / 2.0 + offset_y
+                                        ));
       gtk_snapshot_append_node (snapshot, self->glyphs_node);
 
       if (self->symbol_info->details->text_opacity < 1)
