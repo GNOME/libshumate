@@ -90,7 +90,7 @@ shumate_vector_render_scope_exec_geometry (ShumateVectorRenderScope *self)
 GPtrArray *
 shumate_vector_render_scope_get_geometry (ShumateVectorRenderScope *self)
 {
-  GPtrArray *lines = g_ptr_array_new ();
+  GPtrArray *lines = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_line_string_free);
   ShumateVectorLineString *current_line = NULL;
   VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
   VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (self->reader);

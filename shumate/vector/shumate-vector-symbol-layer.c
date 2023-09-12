@@ -275,61 +275,75 @@ place_line_label (ShumateVectorSymbolDetails *details,
                   ShumateVectorRenderScope   *scope)
 {
   ShumateVectorSymbolInfo *symbol_info;
-  g_autoptr(GPtrArray) lines = shumate_vector_render_scope_get_geometry (scope);
-  guint i, j;
+  GPtrArray *lines;
+  g_autoptr(GPtrArray) simplified_lines = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_line_string_free);
+  guint i;
+  float spacing = details->symbol_spacing / scope->target_size;
+  float total_length = 0;
+  float remaining_distance;
 
+  if (spacing <= 0)
+    return;
+
+  lines = shumate_vector_render_scope_get_geometry (scope);
+  g_ptr_array_set_free_func (lines, NULL);
   for (i = 0; i < lines->len; i ++)
     {
-      g_autoptr(GPtrArray) split_lines = NULL;
-
       if (details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
-        split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
-      else
         {
-          split_lines = g_ptr_array_new ();
-          g_ptr_array_add (split_lines, (ShumateVectorLineString *)lines->pdata[i]);
+          GPtrArray *split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
+          g_ptr_array_extend_and_steal (simplified_lines, split_lines);
         }
+      else
+        g_ptr_array_add (simplified_lines, (ShumateVectorLineString *)lines->pdata[i]);
+    }
+  g_clear_pointer (&lines, g_ptr_array_unref);
 
-      for (j = 0; j < split_lines->len; j ++)
-        {
-          g_autoptr(ShumateVectorLineString) linestring = (ShumateVectorLineString *)split_lines->pdata[j];
-          double length = shumate_vector_line_string_length (linestring);
-          float distance = 0;
-          ShumateVectorPointIter iter;
-          float spacing = details->symbol_spacing / scope->target_size;
+  for (i = 0; i < simplified_lines->len; i ++)
+    total_length += shumate_vector_line_string_length ((ShumateVectorLineString *)simplified_lines->pdata[i]);
 
-          if (spacing <= 0)
-            return;
+  /* Make the spacing even on both sides */
+  remaining_distance = fmod (total_length / 2, spacing);
+
+  for (i = 0; i < simplified_lines->len; i ++)
+    {
+      ShumateVectorLineString *linestring = (ShumateVectorLineString *)simplified_lines->pdata[i];
+      float distance = 0;
+      ShumateVectorPointIter iter;
 
 #if 0
-          /* visualize line simplification */
+      /* visualize line simplification */
 
-          if (linestring->n_points > 0)
-            {
-              guint k;
-              float scale = scope->scale * scope->target_size;
+      if (linestring->n_points > 0)
+        {
+          guint k;
+          float scale = scope->scale * scope->target_size;
 
-              cairo_set_source_rgb (scope->cr,
-                                    rand () % 255 / 255.0,
-                                    rand () % 255 / 255.0,
-                                    rand () % 255 / 255.0);
-              cairo_set_line_width (scope->cr, scope->scale);
+          cairo_set_source_rgb (scope->cr,
+                                rand () % 255 / 255.0,
+                                rand () % 255 / 255.0,
+                                rand () % 255 / 255.0);
+          cairo_set_line_width (scope->cr, scope->scale);
 
-              cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
-              for (k = 1; k < linestring->n_points; k ++)
-                cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
+          cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
+          for (k = 1; k < linestring->n_points; k ++)
+            cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
 
-              cairo_stroke (scope->cr);
-            }
+          cairo_stroke (scope->cr);
+        }
 #endif
 
-          shumate_vector_point_iter_init (&iter, linestring);
+      shumate_vector_point_iter_init (&iter, linestring);
 
-          /* Make the spacing even on both sides */
-          shumate_vector_point_iter_advance (&iter, fmod (length / 2, spacing));
-          distance += fmod (length / 2, spacing);
+      shumate_vector_point_iter_advance (&iter, remaining_distance);
+      distance += remaining_distance;
 
-          while (!shumate_vector_point_iter_is_at_end (&iter))
+      while (!shumate_vector_point_iter_is_at_end (&iter))
+        {
+          ShumateVectorPoint point;
+          shumate_vector_point_iter_get_current_point (&iter, &point);
+
+          if (point.x >= 0 && point.x < 1 && point.y >= 0 && point.y < 1)
             {
               ShumateVectorPoint point;
               shumate_vector_point_iter_get_current_point (&iter, &point);
@@ -344,11 +358,13 @@ place_line_label (ShumateVectorSymbolDetails *details,
 
                   g_ptr_array_add (scope->symbols, symbol_info);
                 }
-
-              shumate_vector_point_iter_advance (&iter, spacing);
-              distance += spacing;
             }
+
+          shumate_vector_point_iter_advance (&iter, spacing);
+          distance += spacing;
         }
+
+      remaining_distance = distance - shumate_vector_line_string_length (linestring);
     }
 }
 
@@ -471,7 +487,6 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     case SHUMATE_VECTOR_GEOMETRY_POINT:
         {
           g_autoptr(GPtrArray) geometry = shumate_vector_render_scope_get_geometry (scope);
-          g_ptr_array_set_free_func (geometry, (GDestroyNotify)shumate_vector_line_string_free);
 
           for (int i = 0; i < geometry->len; i ++)
             {
@@ -505,22 +520,29 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
         {
           if (shumate_vector_render_scope_get_geometry_type (scope) == SHUMATE_VECTOR_GEOMETRY_LINESTRING)
             {
-              // Place at the middle point of the linestring
+              double distance = 0;
               g_autoptr(GPtrArray) geometry = shumate_vector_render_scope_get_geometry (scope);
-              g_ptr_array_set_free_func (geometry, (GDestroyNotify)shumate_vector_line_string_free);
+
+              for (int i = 0; i < geometry->len; i ++)
+                distance += shumate_vector_line_string_length (g_ptr_array_index (geometry, i)) / 2;
 
               for (int i = 0; i < geometry->len; i ++)
                 {
                   ShumateVectorLineString *linestring = g_ptr_array_index (geometry, i);
-                  double length = shumate_vector_line_string_length (linestring);
                   ShumateVectorPointIter iter;
-                  ShumateVectorPoint point;
 
                   shumate_vector_point_iter_init (&iter, linestring);
-                  shumate_vector_point_iter_advance (&iter, length / 2);
-                  shumate_vector_point_iter_get_current_point (&iter, &point);
+                  shumate_vector_point_iter_advance (&iter, distance);
 
-                  place_point_label (details, point.x, point.y, scope);
+                  if (shumate_vector_point_iter_is_at_end (&iter))
+                    distance -= shumate_vector_line_string_length (linestring);
+                  else
+                    {
+                      ShumateVectorPoint point;
+                      shumate_vector_point_iter_get_current_point (&iter, &point);
+                      place_point_label (details, point.x, point.y, scope);
+                      break;
+                    }
                 }
             }
           else
