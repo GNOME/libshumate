@@ -295,6 +295,11 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\">\", [\"literal\", \"hello\"], \"a\", [\"collator\", {}]]"));
   g_assert_true (filter ("[\"<\", [\"literal\", \"a\"], \"hello\", [\"collator\", {}]]"));
   g_assert_true (filter ("[\"!=\", [\"resolved-locale\", [\"collator\", {}]], \"foo\"]"));
+
+  g_assert_true (filter ("[\"==\", [\"step\", -10, \"a\", 1, \"b\", 2, \"c\"], \"a\"]"));
+  g_assert_true (filter ("[\"==\", [\"step\", 1.5, \"a\", 1, \"b\", 2, \"c\"], \"b\"]"));
+  g_assert_true (filter ("[\"==\", [\"step\", 2, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
+  g_assert_true (filter ("[\"==\", [\"step\", 3, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
 }
 
 

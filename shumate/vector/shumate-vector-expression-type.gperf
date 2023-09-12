@@ -51,6 +51,7 @@ case, EXPR_CASE
 coalesce, EXPR_COALESCE
 match, EXPR_MATCH, GE(2)
 interpolate, EXPR_INTERPOLATE
+step, EXPR_STEP
 let, EXPR_LET
 var, EXPR_VAR
 concat, EXPR_CONCAT

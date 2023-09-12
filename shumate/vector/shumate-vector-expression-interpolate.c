@@ -25,11 +25,18 @@ typedef struct {
   ShumateVectorExpression *expr;
 } Stop;
 
+typedef enum {
+  STEP,
+  LINEAR,
+  EXPONENTIAL,
+} InterpolationType;
+
 struct _ShumateVectorExpressionInterpolate
 {
   ShumateVectorExpression parent_instance;
 
   ShumateVectorExpression *input;
+  InterpolationType interpolation;
   double base;
   GPtrArray *stops;
 };
@@ -43,6 +50,7 @@ shumate_vector_expression_interpolate_from_json_obj (JsonObject *object, GError 
   g_autoptr(ShumateVectorExpressionInterpolate) self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_INTERPOLATE, NULL);
   JsonNode *stops_node;
 
+  self->interpolation = EXPONENTIAL;
   self->base = json_object_get_double_member_with_default (object, "base", 1.0);
 
   if ((stops_node = json_object_get_member (object, "stops")))
@@ -118,6 +126,62 @@ shumate_vector_expression_interpolate_from_json_obj (JsonObject *object, GError 
   return (ShumateVectorExpression *)g_steal_pointer (&self);
 }
 
+static gboolean
+add_stops (ShumateVectorExpressionInterpolate  *self,
+           JsonArray                           *array,
+           int                                  start,
+           ShumateVectorExpressionContext      *ctx,
+           GError                             **error)
+{
+  double prev_point;
+
+  /* Stops */
+  for (int i = start, n = json_array_get_length (array); i < n; i += 2)
+    {
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+      g_autoptr(ShumateVectorExpression) expr = NULL;
+      Stop *stop;
+      double point;
+
+      if (!shumate_vector_value_set_from_json_literal (&value, json_array_get_element (array, i), error))
+        return FALSE;
+
+      if (!shumate_vector_value_get_number (&value, &point))
+        {
+          g_set_error (error,
+                       SHUMATE_STYLE_ERROR,
+                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                       "Expected stop input to be a number");
+          return FALSE;
+        }
+
+      if (i > start && point <= prev_point)
+        {
+          g_set_error (error,
+                       SHUMATE_STYLE_ERROR,
+                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                       "Stop inputs must be in strictly ascending order");
+          return FALSE;
+        }
+      prev_point = point;
+
+      expr = shumate_vector_expression_filter_from_array_or_literal (
+        json_array_get_element (array, i + 1),
+        ctx,
+        error
+      );
+      if (!expr)
+        return FALSE;
+
+      stop = g_new0 (Stop, 1);
+      stop->point = point;
+      stop->expr = g_steal_pointer (&expr);
+      g_ptr_array_add (self->stops, stop);
+    }
+
+  return TRUE;
+}
+
 ShumateVectorExpression *
 shumate_vector_expression_interpolate_from_json_array (JsonArray                       *array,
                                                        ShumateVectorExpressionContext  *ctx,
@@ -126,9 +190,8 @@ shumate_vector_expression_interpolate_from_json_array (JsonArray                
   g_autoptr(ShumateVectorExpressionInterpolate) self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_INTERPOLATE, NULL);
   JsonArray *interpolation;
   const char *interpolation_type;
-  double prev_point;
 
-  if (json_array_get_length (array)< 5)
+  if (json_array_get_length (array) < 5)
     {
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
@@ -142,7 +205,7 @@ shumate_vector_expression_interpolate_from_json_array (JsonArray                
       g_set_error (error,
                    SHUMATE_STYLE_ERROR,
                    SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                   "Operator `interpolate` expected an odd number of arguments");
+                   "Operator `interpolate` expected an even number of arguments");
       return NULL;
     }
 
@@ -173,7 +236,7 @@ shumate_vector_expression_interpolate_from_json_array (JsonArray                
           return NULL;
         }
 
-      self->base = 1.0;
+      self->interpolation = LINEAR;
     }
   else if (g_strcmp0 ("exponential", interpolation_type) == 0)
     {
@@ -191,6 +254,7 @@ shumate_vector_expression_interpolate_from_json_array (JsonArray                
       if (!shumate_vector_value_set_from_json_literal (&value, json_array_get_element (interpolation, 1), error))
         return NULL;
 
+      self->interpolation = EXPONENTIAL;
       if (!shumate_vector_value_get_number (&value, &self->base))
         {
           g_set_error (error,
@@ -219,48 +283,64 @@ shumate_vector_expression_interpolate_from_json_array (JsonArray                
     return NULL;
 
   /* Stops */
-  for (int i = 3, n = json_array_get_length (array); i < n; i += 2)
+  if (!add_stops (self, array, 3, ctx, error))
+    return NULL;
+
+  return (ShumateVectorExpression *)g_steal_pointer (&self);
+}
+
+ShumateVectorExpression *
+shumate_vector_expression_step_from_json_array (JsonArray                       *array,
+                                                ShumateVectorExpressionContext  *ctx,
+                                                GError                         **error)
+{
+  g_autoptr(ShumateVectorExpressionInterpolate) self = g_object_new (SHUMATE_TYPE_VECTOR_EXPRESSION_INTERPOLATE, NULL);
+  Stop *stop;
+
+  self->interpolation = STEP;
+
+  if (json_array_get_length (array) < 5)
     {
-      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-      g_autoptr(ShumateVectorExpression) expr = NULL;
-      Stop *stop;
-      double point;
-
-      if (!shumate_vector_value_set_from_json_literal (&value, json_array_get_element (array, i), error))
-        return NULL;
-
-      if (!shumate_vector_value_get_number (&value, &point))
-        {
-          g_set_error (error,
-                       SHUMATE_STYLE_ERROR,
-                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                       "Expected stop input to be a number");
-          return NULL;
-        }
-
-      if (i > 3 && point <= prev_point)
-        {
-          g_set_error (error,
-                       SHUMATE_STYLE_ERROR,
-                       SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
-                       "Stop inputs must be in strictly ascending order");
-          return NULL;
-        }
-      prev_point = point;
-
-      expr = shumate_vector_expression_filter_from_array_or_literal (
-        json_array_get_element (array, i + 1),
-        ctx,
-        error
-      );
-      if (!expr)
-        return NULL;
-
-      stop = g_new0 (Stop, 1);
-      stop->point = point;
-      stop->expr = g_steal_pointer (&expr);
-      g_ptr_array_add (self->stops, stop);
+      g_set_error (error,
+                   SHUMATE_STYLE_ERROR,
+                   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                   "Operator `interpolate` expected at least 4 arguments");
+      return NULL;
     }
+
+  if (json_array_get_length (array) % 2 == 0)
+    {
+      g_set_error (error,
+                   SHUMATE_STYLE_ERROR,
+                   SHUMATE_STYLE_ERROR_INVALID_EXPRESSION,
+                   "Operator `interpolate` expected an even number of arguments");
+      return NULL;
+    }
+
+  /* Input */
+  self->input = shumate_vector_expression_filter_from_array_or_literal (
+    json_array_get_element (array, 1),
+    ctx,
+    error
+  );
+  if (!self->input)
+    return NULL;
+
+  /* First stop */
+  stop = g_new0 (Stop, 1);
+  g_ptr_array_add (self->stops, stop);
+  stop->point = -G_MAXDOUBLE;
+  stop->expr = shumate_vector_expression_filter_from_array_or_literal (
+    json_array_get_element (array, 2),
+    ctx,
+    error
+  );
+  if (!stop->expr)
+    return NULL;
+
+  /* Stops */
+  if (!add_stops (self, array, 3, ctx, error))
+    return NULL;
 
   return (ShumateVectorExpression *)g_steal_pointer (&self);
 }
@@ -376,12 +456,23 @@ shumate_vector_expression_interpolate_eval (ShumateVectorExpression  *expr,
           if (!shumate_vector_expression_eval (next->expr, scope, &next_value))
             return FALSE;
 
-          if (self->base == 1.0)
-            lerp (&last_value, &next_value, pos_norm, out);
-          else
-            exp_interp (last->point, next->point, &last_value, &next_value, input, self->base, out);
-
-          return TRUE;
+          switch (self->interpolation)
+            {
+              case STEP:
+                shumate_vector_value_copy (&last_value, out);
+                return TRUE;
+              case LINEAR:
+                lerp (&last_value, &next_value, pos_norm, out);
+                return TRUE;
+              case EXPONENTIAL:
+                if (self->base == 1.0)
+                  lerp (&last_value, &next_value, pos_norm, out);
+                else
+                  exp_interp (last->point, next->point, &last_value, &next_value, input, self->base, out);
+                return TRUE;
+              default:
+                g_assert_not_reached ();
+            }
         }
     }
 

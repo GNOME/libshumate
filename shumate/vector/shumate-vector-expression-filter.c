@@ -260,6 +260,9 @@ shumate_vector_expression_filter_from_json_array (JsonArray                     
       case EXPR_INTERPOLATE:
         return shumate_vector_expression_interpolate_from_json_array (array, ctx, error);
 
+      case EXPR_STEP:
+        return shumate_vector_expression_step_from_json_array (array, ctx, error);
+
       case EXPR_MATCH:
         {
           ShumateVectorExpression *input_expr;
