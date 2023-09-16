@@ -1,4 +1,10 @@
 =====================
+Version 1.1.0
+=====================
+ - Fix grey background on sprites
+ - Updated translations
+
+=====================
 Version 1.1.rc
  - Bugfixes and optimizations in vector render
  - Add icon-color property for vector renderer
