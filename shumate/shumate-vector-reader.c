@@ -16,7 +16,9 @@
  */
 
 #include "shumate-vector-reader-private.h"
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include "vector/vector_tile.pb-c.h"
+#endif
 
 /**
  * ShumateVectorReader:
