@@ -61,11 +61,7 @@ gio_dep = dependency('gio-2.0', version: glib_req)
 cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 gtk_dep = dependency('gtk4')
-if get_option('libsoup3')
-  libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
-else
-  libsoup_dep = dependency('libsoup-2.4', version: '>= 2.42')
-endif
+libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
 
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)

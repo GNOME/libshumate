@@ -415,11 +415,7 @@ fetch_from_network (FillTileData *data_arg)
     }
 
   modtime_string = get_modified_time_string (data->modtime);
-#ifdef SHUMATE_LIBSOUP_3
   headers = soup_message_get_request_headers (data->msg);
-#else
-  headers = data->msg->request_headers;
-#endif
 
   /* If an etag is available, only use it.
    * OSM servers seems to send now as the modified time for all tiles
@@ -438,36 +434,16 @@ fetch_from_network (FillTileData *data_arg)
 
   if (data->self->soup_session == NULL)
     {
-#ifdef SHUMATE_LIBSOUP_3
       data->self->soup_session =
         soup_session_new_with_options ("user-agent", "libshumate/" SHUMATE_VERSION,
                                        "max-conns-per-host", MAX_CONNS_DEFAULT,
                                        "max-conns", MAX_CONNS_DEFAULT,
                                        NULL);
-#else
-      data->self->soup_session
-        = soup_session_new_with_options ("proxy-uri", NULL,
-                                         "ssl-strict", FALSE,
-                                         SOUP_SESSION_ADD_FEATURE_BY_TYPE,
-                                         SOUP_TYPE_PROXY_RESOLVER_DEFAULT,
-                                         SOUP_SESSION_ADD_FEATURE_BY_TYPE,
-                                         SOUP_TYPE_CONTENT_DECODER,
-                                         NULL);
-
-      g_object_set (G_OBJECT (data->self->soup_session),
-                    "user-agent", shumate_get_user_agent (),
-                    "max-conns-per-host", MAX_CONNS_DEFAULT,
-                    "max-conns", MAX_CONNS_DEFAULT,
-                    NULL);
-
-#endif
     }
 
   soup_session_send_async (data->self->soup_session,
                            data->msg,
-#ifdef SHUMATE_LIBSOUP_3
                            G_PRIORITY_DEFAULT,
-#endif
                            data->cancellable,
                            on_message_sent,
                            data);
@@ -502,13 +478,8 @@ on_message_sent (GObject *source_object, GAsyncResult *res, gpointer user_data)
       return;
     }
 
-#ifdef SHUMATE_LIBSOUP_3
   status = soup_message_get_status (data->msg);
   headers = soup_message_get_response_headers (data->msg);
-#else
-  status = data->msg->status_code;
-  headers = data->msg->response_headers;
-#endif
 
   g_debug ("Got reply %d", status);
 
