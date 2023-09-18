@@ -18,7 +18,9 @@
 #pragma once
 
 #include "shumate-vector-reader.h"
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include "vector/vector_tile.pb-c.h"
+#endif
 
 G_BEGIN_DECLS
 
