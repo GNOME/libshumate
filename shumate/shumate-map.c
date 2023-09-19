@@ -655,6 +655,21 @@ on_motion_controller_motion (ShumateMap               *self,
 }
 
 static void
+on_arrow_key (GtkWidget  *widget,
+              const char *action,
+              GVariant   *args)
+{
+  ShumateMap *self = SHUMATE_MAP (widget);
+  int dx, dy;
+  double lat, lon;
+
+  g_variant_get (args, "(ii)", &dx, &dy);
+
+  shumate_viewport_widget_coords_to_location (self->viewport, widget, dx * 25, dy * 25, &lat, &lon);
+  move_location_to_coords (self, lat, lon, 0, 0);
+}
+
+static void
 shumate_map_get_property (GObject    *object,
                           guint       prop_id,
                           GValue     *value,
@@ -903,6 +918,25 @@ shumate_map_class_init (ShumateMapClass *klass)
                   G_TYPE_NONE,
                   0);
 
+  /* Arrow keys */
+  gtk_widget_class_install_action (widget_class, "pan", "(ii)", on_arrow_key);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Left, 0,
+                                       "pan",
+                                       "(ii)", -1, 0);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Right, 0,
+                                       "pan",
+                                       "(ii)", 1, 0);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Up, 0,
+                                       "pan",
+                                       "(ii)", 0, -1);
+  gtk_widget_class_add_binding_action (widget_class,
+                                       GDK_KEY_Down, 0,
+                                       "pan",
+                                       "(ii)", 0, 1);
+
   gtk_widget_class_set_layout_manager_type (widget_class, GTK_TYPE_BIN_LAYOUT);
   gtk_widget_class_set_css_name (widget_class, "map-view");
 
@@ -918,7 +952,6 @@ shumate_map_init (ShumateMap *self)
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
   GtkEventController *motion_controller;
-  GtkEventController *key_controller;
   GtkGesture *swipe_gesture;
   GtkGesture *zoom_gesture;
   GtkGesture *rotate_gesture;
@@ -971,10 +1004,8 @@ shumate_map_init (ShumateMap *self)
   g_signal_connect_swapped (click_gesture, "pressed", G_CALLBACK (on_click_gesture_pressed), self);
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click_gesture));
 
-  key_controller = gtk_event_controller_key_new ();
-  gtk_widget_add_controller (GTK_WIDGET (self), key_controller);
-
   gtk_widget_set_overflow (GTK_WIDGET (self), GTK_OVERFLOW_HIDDEN);
+  gtk_widget_set_focusable (GTK_WIDGET (self), TRUE);
 }
 
 /**
