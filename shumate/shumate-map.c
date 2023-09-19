@@ -62,6 +62,7 @@
 
 #define DECELERATION_FRICTION 4.0
 #define ZOOM_ANIMATION_MS 200
+#define SCROLL_PIXELS_PER_LEVEL 50
 
 enum
 {
@@ -98,6 +99,7 @@ typedef struct
   double from_zoom;
   guint tick_id;
   gboolean zoom_animation : 1;
+  gboolean zoom_deceleration : 1;
 } GoToContext;
 
 typedef struct
@@ -351,6 +353,12 @@ ease_in_out_quad (double p)
   return -0.5 * (p * (p - 2) - 1);
 }
 
+static inline double
+ease_out_quad (double p)
+{
+  return 1 - (1 - p) * (1 - p);
+}
+
 static inline int64_t
 ms_to_us (int64_t ms)
 {
@@ -393,7 +401,9 @@ go_to_tick_cb (GtkWidget     *widget,
   g_assert (progress >= 0.0 && progress <= 1.0);
 
   /* Apply the ease function to the progress itself */
-  if (!ctx->zoom_animation)
+  if (ctx->zoom_deceleration)
+    progress = ease_out_quad (progress);
+  else if (!ctx->zoom_animation)
     progress = ease_in_out_quad (progress);
 
   /* Interpolate zoom level */
@@ -476,7 +486,8 @@ view_swipe_cb (GtkGestureSwipe *swipe_gesture,
 
 static void
 set_zoom_level (ShumateMap *self,
-                double      zoom_level)
+                double      zoom_level,
+                double      animate)
 {
   ShumateMapSource *map_source;
   double lat, lon;
@@ -500,7 +511,7 @@ set_zoom_level (ShumateMap *self,
                                             lat,
                                             lon,
                                             zoom_level,
-                                            self->animate_zoom ? ZOOM_ANIMATION_MS : 0);
+                                            self->animate_zoom && animate ? ZOOM_ANIMATION_MS : 0);
 
       if (self->goto_context != NULL)
         self->goto_context->zoom_animation = TRUE;
@@ -522,13 +533,32 @@ on_scroll_controller_scroll (ShumateMap               *self,
   if (self->goto_context != NULL && self->goto_context->zoom_animation)
     zoom_level = self->goto_context->to_zoom;
 
-  if (dy < 0)
-    zoom_level += 0.2;
-  else if (dy > 0)
-    zoom_level -= 0.2;
+  if (gtk_event_controller_scroll_get_unit (controller) == GDK_SCROLL_UNIT_SURFACE)
+    set_zoom_level (self, zoom_level - dy / SCROLL_PIXELS_PER_LEVEL, FALSE);
+  else
+    {
+      zoom_level -= dy / 5;
+      /* snap to the nearest 1/5 of a zoom level */
+      set_zoom_level (self, roundf (zoom_level * 5) / 5, TRUE);
+    }
 
-  /* snap to the nearest 1/5 of a zoom level */
-  set_zoom_level (self, roundf (zoom_level * 5) / 5);
+  return TRUE;
+}
+
+static gboolean
+on_scroll_controller_decelerate (ShumateMap               *self,
+                                 double                    vel_x,
+                                 double                    vel_y,
+                                 GtkEventControllerScroll *controller)
+{
+  double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
+
+  if (self->goto_context != NULL && self->goto_context->zoom_animation)
+    zoom_level = self->goto_context->to_zoom;
+
+  set_zoom_level (self, zoom_level - vel_y / SCROLL_PIXELS_PER_LEVEL / ZOOM_ANIMATION_MS, TRUE);
+  if (self->goto_context != NULL)
+    self->goto_context->zoom_deceleration = TRUE;
 
   return TRUE;
 }
@@ -610,7 +640,7 @@ on_click_gesture_pressed (ShumateMap      *self,
       double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
       self->current_x = x;
       self->current_y = y;
-      set_zoom_level (self, zoom_level + 1);
+      set_zoom_level (self, zoom_level + 1, TRUE);
     }
 }
 
@@ -915,8 +945,9 @@ shumate_map_init (ShumateMap *self)
   g_signal_connect (swipe_gesture, "swipe", G_CALLBACK (view_swipe_cb), self);
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (swipe_gesture));
 
-  scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_DISCRETE);
+  scroll_controller = gtk_event_controller_scroll_new (GTK_EVENT_CONTROLLER_SCROLL_VERTICAL|GTK_EVENT_CONTROLLER_SCROLL_KINETIC);
   g_signal_connect_swapped (scroll_controller, "scroll", G_CALLBACK (on_scroll_controller_scroll), self);
+  g_signal_connect_swapped (scroll_controller, "decelerate", G_CALLBACK (on_scroll_controller_decelerate), self);
   gtk_widget_add_controller (GTK_WIDGET (self), scroll_controller);
 
   zoom_gesture = gtk_gesture_zoom_new ();
