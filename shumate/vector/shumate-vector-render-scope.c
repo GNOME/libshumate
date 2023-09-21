@@ -251,16 +251,43 @@ shumate_vector_render_scope_get_geometry_center (ShumateVectorRenderScope *self,
   *y = (min_y + max_y) / 2.0;
 }
 
+static void
+convert_vector_value (VectorTile__Tile__Value *v, ShumateVectorValue *value)
+{
+  if (v->has_int_value)
+    shumate_vector_value_set_number (value, v->int_value);
+  else if (v->has_uint_value)
+    shumate_vector_value_set_number (value, v->uint_value);
+  else if (v->has_sint_value)
+    shumate_vector_value_set_number (value, v->sint_value);
+  else if (v->has_float_value)
+    shumate_vector_value_set_number (value, v->float_value);
+  else if (v->has_double_value)
+    shumate_vector_value_set_number (value, v->double_value);
+  else if (v->has_bool_value)
+    shumate_vector_value_set_boolean (value, v->bool_value);
+  else if (v->string_value != NULL)
+    shumate_vector_value_set_string (value, v->string_value);
+  else
+    shumate_vector_value_unset (value);
+}
 
 void
 shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, const char *variable, ShumateVectorValue *value)
 {
-  g_auto(GValue) gvalue = G_VALUE_INIT;
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
+  VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
 
-  if (shumate_vector_reader_iter_get_feature_tag (self->reader, variable, &gvalue))
-    shumate_vector_value_set_from_g_value (value, &gvalue);
-  else
-    shumate_vector_value_unset (value);
+  for (int i = 0; i + 1 < feature->n_tags; i += 2)
+    {
+      if (strcmp (layer->keys[feature->tags[i]], variable) == 0)
+        {
+          convert_vector_value (layer->values[feature->tags[i + 1]], value);
+          return;
+        }
+    }
+
+  shumate_vector_value_unset (value);
 }
 
 
@@ -274,17 +301,14 @@ shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self)
 
   for (int i = 1; i < feature->n_tags; i += 2)
     {
-      g_auto(GValue) gvalue = G_VALUE_INIT;
+      g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
       int key = feature->tags[i - 1];
       int val = feature->tags[i];
 
       if (key >= layer->n_keys || val >= layer->n_values)
         continue;
 
-      if (shumate_vector_reader_iter_get_feature_tag (self->reader, layer->keys[key], &gvalue))
-        shumate_vector_value_set_from_g_value (&value, &gvalue);
-      else
-        shumate_vector_value_unset (&value);
+      convert_vector_value (layer->values[val], &value);
       g_hash_table_insert (tags, g_strdup (layer->keys[key]), shumate_vector_value_as_string (&value));
     }
 
