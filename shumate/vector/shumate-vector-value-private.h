@@ -80,6 +80,7 @@ void shumate_vector_value_free (ShumateVectorValue *self);
 void shumate_vector_value_unset (ShumateVectorValue *self);
 gboolean shumate_vector_value_is_null (ShumateVectorValue *self);
 void shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out);
+void shumate_vector_value_steal (ShumateVectorValue *self, ShumateVectorValue *out);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorValue, shumate_vector_value_free)
 G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (ShumateVectorValue, shumate_vector_value_unset)

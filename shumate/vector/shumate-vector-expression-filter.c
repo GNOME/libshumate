@@ -1159,7 +1159,7 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
           if (i + 1 == n_expressions)
             {
               /* fallback value */
-              shumate_vector_value_copy (&value, out);
+              shumate_vector_value_steal (&value, out);
               return TRUE;
             }
           else
@@ -1169,12 +1169,7 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
                 return FALSE;
 
               if (bool_result)
-                {
-                  if (!shumate_vector_expression_eval (expressions[i + 1], scope, &value))
-                    return FALSE;
-                  shumate_vector_value_copy (&value, out);
-                  return TRUE;
-                }
+                return shumate_vector_expression_eval (expressions[i + 1], scope, out);
             }
         }
 
@@ -1184,13 +1179,12 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
     case EXPR_COALESCE:
       for (int i = 0; i < n_expressions; i ++)
         {
-          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+          if (!shumate_vector_expression_eval (expressions[i], scope, out))
             continue;
 
-          if (shumate_vector_value_is_null (&value))
+          if (shumate_vector_value_is_null (out))
             continue;
 
-          shumate_vector_value_copy (&value, out);
           return TRUE;
         }
 

@@ -382,7 +382,7 @@ lerp (ShumateVectorValue *last_value, ShumateVectorValue *next_value, double pos
       shumate_vector_value_set_color (out, &color);
     }
   else
-    shumate_vector_value_copy (last_value, out);
+    shumate_vector_value_steal (last_value, out);
 }
 
 
@@ -459,7 +459,7 @@ shumate_vector_expression_interpolate_eval (ShumateVectorExpression  *expr,
           switch (self->interpolation)
             {
               case STEP:
-                shumate_vector_value_copy (&last_value, out);
+                shumate_vector_value_steal (&last_value, out);
                 return TRUE;
               case LINEAR:
                 lerp (&last_value, &next_value, pos_norm, out);

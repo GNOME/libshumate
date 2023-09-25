@@ -123,17 +123,28 @@ shumate_vector_value_free (ShumateVectorValue *self)
 void
 shumate_vector_value_unset (ShumateVectorValue *self)
 {
-  if (self->type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
-    g_clear_pointer (&self->string, g_free);
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
-    g_clear_pointer (&self->array, g_ptr_array_unref);
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+  switch (self->type)
     {
+    case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+      g_clear_pointer (&self->string, g_free);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+      g_clear_pointer (&self->array, g_ptr_array_unref);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
       g_clear_object (&self->image);
       g_clear_pointer (&self->image_name, g_free);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+      g_clear_pointer (&self->formatted_string, g_ptr_array_unref);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLLATOR:
+      break;
     }
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
-    g_clear_pointer (&self->formatted_string, g_ptr_array_unref);
 
   self->type = SHUMATE_VECTOR_VALUE_TYPE_NULL;
 }
@@ -152,17 +163,35 @@ shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out)
   shumate_vector_value_unset (out);
   *out = *self;
 
-  if (self->type == SHUMATE_VECTOR_VALUE_TYPE_STRING)
-    out->string = g_strdup (out->string);
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
-    out->array = g_ptr_array_ref (out->array);
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE)
+  switch (self->type)
     {
-      out->image = g_object_ref (out->image);
-      out->image_name = g_strdup (out->image_name);
+    case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+      out->string = g_strdup (self->string);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+      out->array = g_ptr_array_ref (self->array);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+      out->image = g_object_ref (self->image);
+      out->image_name = g_strdup (self->image_name);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING:
+      out->formatted_string = g_ptr_array_ref (self->formatted_string);
+      break;
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
+    case SHUMATE_VECTOR_VALUE_TYPE_COLLATOR:
+      break;
     }
-  else if (self->type == SHUMATE_VECTOR_VALUE_TYPE_FORMATTED_STRING)
-    out->formatted_string = g_ptr_array_ref (out->formatted_string);
+}
+
+void
+shumate_vector_value_steal (ShumateVectorValue *self, ShumateVectorValue *out)
+{
+  *out = *self;
+  self->type = SHUMATE_VECTOR_VALUE_TYPE_NULL;
 }
 
 
