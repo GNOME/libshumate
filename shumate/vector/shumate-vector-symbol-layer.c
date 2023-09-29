@@ -289,7 +289,8 @@ place_line_label (ShumateVectorSymbolDetails *details,
   g_ptr_array_set_free_func (lines, NULL);
   for (i = 0; i < lines->len; i ++)
     {
-      if (details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
+      if (details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP
+          || details->text_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_VIEWPORT_GLYPH)
         {
           GPtrArray *split_lines = shumate_vector_line_string_simplify ((ShumateVectorLineString *)lines->pdata[i]);
           g_ptr_array_extend_and_steal (simplified_lines, split_lines);
