@@ -45,4 +45,6 @@ ShumateMapSource *shumate_vector_symbol_container_get_map_source (ShumateVectorS
 
 ShumateVectorCollision *shumate_vector_symbol_container_get_collision (ShumateVectorSymbolContainer *self);
 
+char *shumate_vector_symbol_container_get_debug_text (ShumateVectorSymbolContainer *self);
+
 G_END_DECLS

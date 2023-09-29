@@ -27,6 +27,7 @@
 
 #include "shumate-marker-layer.h"
 #include "shumate-marker-private.h"
+#include "shumate-inspector-settings-private.h"
 
 #include "shumate-enum-types.h"
 
@@ -57,6 +58,8 @@ struct _ShumateMarkerLayer
 
   GtkSelectionMode mode;
   GList *selected;
+
+  int n_children;
 };
 
 G_DEFINE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER);
@@ -291,7 +294,13 @@ shumate_marker_layer_constructed (GObject *object)
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   g_signal_connect_swapped (viewport, "notify", G_CALLBACK (on_viewport_changed), self);
+}
 
+static char *
+shumate_marker_layer_get_debug_text (ShumateLayer *layer)
+{
+  ShumateMarkerLayer *self = SHUMATE_MARKER_LAYER (layer);
+  return g_strdup_printf ("markers: %d, %d selected\n", self->n_children, g_list_length (self->selected));
 }
 
 static void
@@ -299,6 +308,7 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->dispose = shumate_marker_layer_dispose;
   object_class->finalize = shumate_marker_layer_finalize;
@@ -307,6 +317,8 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
   object_class->constructed = shumate_marker_layer_constructed;
 
   widget_class->size_allocate = shumate_marker_layer_size_allocate;
+
+  layer_class->get_debug_text = shumate_marker_layer_get_debug_text;
 
   /**
    * ShumateMarkerLayer:selection-mode:
@@ -463,6 +475,7 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *self,
 
   gtk_widget_insert_before (GTK_WIDGET(marker), GTK_WIDGET (self), NULL);
   update_marker_visibility (self, marker);
+  self->n_children++;
 }
 
 
@@ -489,6 +502,8 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *self)
 
       child = next;
     }
+
+  self->n_children = 0;
 }
 
 
@@ -536,6 +551,12 @@ shumate_marker_layer_get_selected (ShumateMarkerLayer *self)
   return g_list_copy (self->selected);
 }
 
+static void
+update_debug_text (ShumateMarkerLayer *self)
+{
+  if (shumate_inspector_settings_get_show_debug_overlay (shumate_inspector_settings_get_default ()))
+    gtk_widget_queue_draw (GTK_WIDGET (self));
+}
 
 /**
  * shumate_marker_layer_select_marker:
@@ -577,6 +598,7 @@ shumate_marker_layer_select_marker (ShumateMarkerLayer *self, ShumateMarker *mar
     case GTK_SELECTION_MULTIPLE:
       self->selected = g_list_prepend (self->selected, marker);
       shumate_marker_set_selected (marker, TRUE);
+      update_debug_text (self);
       g_signal_emit (self, signals[MARKER_SELECTED], 0, marker);
       return TRUE;
 
@@ -611,6 +633,7 @@ shumate_marker_layer_unselect_marker (ShumateMarkerLayer *self,
 
   self->selected = g_list_remove (self->selected, marker);
   shumate_marker_set_selected (marker, FALSE);
+  update_debug_text (self);
   g_signal_emit (self, signals[MARKER_UNSELECTED], 0, marker);
 }
 
@@ -641,6 +664,7 @@ shumate_marker_layer_remove_marker (ShumateMarkerLayer *self,
   }
 
   gtk_widget_unparent (GTK_WIDGET (marker));
+  self->n_children--;
 }
 
 

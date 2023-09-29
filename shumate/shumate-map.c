@@ -43,6 +43,8 @@
 
 #include "shumate.h"
 #include "shumate-enum-types.h"
+#include "shumate-inspector-page-private.h"
+#include "shumate-inspector-settings-private.h"
 #include "shumate-kinetic-scrolling-private.h"
 #include "shumate-marshal.h"
 #include "shumate-map-layer.h"
@@ -706,6 +708,71 @@ shumate_map_dispose (GObject *object)
 }
 
 static void
+shumate_map_snapshot (GtkWidget *widget,
+                      GtkSnapshot *snapshot)
+{
+  ShumateMap *self = SHUMATE_MAP (widget);
+  ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
+  ShumateMapSource *map_source = shumate_viewport_get_reference_map_source (self->viewport);
+  int width, height;
+
+  GTK_WIDGET_CLASS (shumate_map_parent_class)->snapshot (GTK_WIDGET (self), snapshot);
+
+  if (shumate_inspector_settings_get_show_debug_overlay (settings))
+    {
+      g_autoptr(GString) all_debug_text = g_string_new ("");
+      PangoContext *context = gtk_widget_create_pango_context (GTK_WIDGET (self));
+      g_autoptr(PangoLayout) layout = NULL;
+      double lat = shumate_location_get_latitude (SHUMATE_LOCATION (self->viewport));
+      double lon = shumate_location_get_longitude (SHUMATE_LOCATION (self->viewport));
+      double zoom = shumate_viewport_get_zoom_level (self->viewport);
+      double rot = shumate_viewport_get_rotation (self->viewport);
+
+      g_string_append (all_debug_text, "<tt>");
+      g_string_append_printf (all_debug_text,
+                              "lat = %9.5f, lon = %10.5f\nzoom = %5.2f, rot = %5.1f\n",
+                              lat, lon, zoom, rot * 180 / G_PI);
+
+      if (map_source != NULL)
+        g_string_append_printf (all_debug_text, "tile size = %4dpx (%7.2f)\n",
+                                shumate_map_source_get_tile_size (map_source),
+                                shumate_map_source_get_tile_size_at_zoom (map_source, zoom));
+
+      g_string_append (all_debug_text, "\n");
+
+      for (GtkWidget *w = gtk_widget_get_first_child (GTK_WIDGET (self));
+           w != NULL;
+           w = gtk_widget_get_next_sibling (w))
+        {
+          ShumateLayer *layer = SHUMATE_LAYER (w);
+          g_string_append_printf (all_debug_text, "<b>%s</b>\n", G_OBJECT_CLASS_NAME (G_OBJECT_GET_CLASS (layer)));
+          if (SHUMATE_LAYER_GET_CLASS (layer)->get_debug_text != NULL)
+            {
+              g_autofree char *debug_text = SHUMATE_LAYER_GET_CLASS (layer)->get_debug_text (layer);
+              if (debug_text != NULL)
+                {
+                  g_string_append (all_debug_text, debug_text);
+                  g_string_append (all_debug_text, "\n");
+                }
+            }
+        }
+
+      g_string_append (all_debug_text, "</tt>");
+
+      layout = pango_layout_new (context);
+      pango_layout_set_markup (layout, all_debug_text->str, -1);
+      pango_layout_set_width (layout, gtk_widget_get_width (GTK_WIDGET (self)) * PANGO_SCALE);
+
+      pango_layout_get_pixel_size (layout, &width, &height);
+      gtk_snapshot_append_color (snapshot, &(GdkRGBA){1, 1, 1, 0.7}, &GRAPHENE_RECT_INIT (0, 0, width, height));
+
+      gtk_snapshot_append_layout (snapshot, layout, &(GdkRGBA){0, 0, 0, 1});
+
+      g_object_unref (context);
+    }
+}
+
+static void
 shumate_map_class_init (ShumateMapClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
@@ -714,6 +781,8 @@ shumate_map_class_init (ShumateMapClass *klass)
   object_class->dispose = shumate_map_dispose;
   object_class->get_property = shumate_map_get_property;
   object_class->set_property = shumate_map_set_property;
+
+  widget_class->snapshot = shumate_map_snapshot;
 
   /**
    * ShumateMap:zoom-on-double-click:
@@ -808,11 +877,14 @@ shumate_map_class_init (ShumateMapClass *klass)
   gtk_widget_class_set_css_name (widget_class, "map-view");
 
   go_to_quark = g_quark_from_static_string ("go-to");
+
+  shumate_inspector_page_ensure_registered ();
 }
 
 static void
 shumate_map_init (ShumateMap *self)
 {
+  ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
   GtkGesture *drag_gesture;
   GtkEventController *scroll_controller;
   GtkEventController *motion_controller;
@@ -828,6 +900,8 @@ shumate_map_init (ShumateMap *self)
   self->state = SHUMATE_STATE_NONE;
   self->goto_context = NULL;
   self->go_to_duration = 0;
+
+  g_signal_connect_object (settings, "notify::show-debug-overlay", G_CALLBACK (gtk_widget_queue_draw), self, G_CONNECT_SWAPPED);
 
   gtk_widget_set_cursor_from_name (GTK_WIDGET (self), "grab");
 

@@ -36,8 +36,19 @@ struct _ShumateLayerClass
 {
   GtkWidgetClass parent_class;
 
+  /**
+   * ShumateLayerClass::get_debug_text:
+   * @self: a [class@Layer]
+   *
+   * Returns a string to show in the debug overlay, which can be
+   * enabled in the GTK inspector.
+   *
+   * Returns: (transfer full) (nullable): a string with debug text
+   */
+  char *(*get_debug_text) (ShumateLayer *self);
+
   /*< private >*/
-  gpointer padding[16];
+  gpointer padding[15];
 };
 
 ShumateViewport *shumate_layer_get_viewport (ShumateLayer *self);

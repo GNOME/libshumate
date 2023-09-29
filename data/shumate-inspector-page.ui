@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <template class="ShumateInspectorPage" parent="GtkBox">
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">1</property>
+            <child>
+              <object class="GtkListBox">
+                <property name="margin-top">60</property>
+                <property name="margin-bottom">60</property>
+                <property name="margin-start">60</property>
+                <property name="margin-end">60</property>
+                <property name="selection-mode">0</property>
+                <property name="halign">3</property>
+                <style>
+                  <class name="boxed-list"/>
+                  <class name="rich-list"/>
+                </style>
+                <child>
+                  <object class="GtkListBoxRow">
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">0</property>
+                        <property name="spacing">18</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label" translatable="true">Show Debug Overlay</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch">
+                            <property name="halign">2</property>
+                            <property name="hexpand">true</property>
+                            <property name="valign">3</property>
+                            <binding name="active">
+                              <lookup name="show-debug-overlay" type="ShumateInspectorSettings">
+                                <lookup name="settings" type="ShumateInspectorPage">
+                                  <constant>ShumateInspectorPage</constant>
+                                </lookup>
+                              </lookup>
+                            </binding>
+                            <signal name="notify::active" handler="on_show_debug_overlay" swapped="True"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkListBoxRow">
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">0</property>
+                        <property name="spacing">18</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label" translatable="true">Show Tile Bounds</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch">
+                            <property name="halign">2</property>
+                            <property name="hexpand">true</property>
+                            <property name="valign">3</property>
+                            <binding name="active">
+                              <lookup name="show-tile-bounds" type="ShumateInspectorSettings">
+                                <lookup name="settings" type="ShumateInspectorPage">
+                                  <constant>ShumateInspectorPage</constant>
+                                </lookup>
+                              </lookup>
+                            </binding>
+                            <signal name="notify::active" handler="on_show_tile_bounds" swapped="True"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkListBoxRow">
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">0</property>
+                        <property name="spacing">18</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="label" translatable="true">Show Collision Boxes</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch">
+                            <property name="halign">2</property>
+                            <property name="hexpand">true</property>
+                            <property name="valign">3</property>
+                            <binding name="active">
+                              <lookup name="show-collision-boxes" type="ShumateInspectorSettings">
+                                <lookup name="settings" type="ShumateInspectorPage">
+                                  <constant>ShumateInspectorPage</constant>
+                                </lookup>
+                              </lookup>
+                            </binding>
+                            <signal name="notify::active" handler="on_show_collision_boxes" swapped="True"/>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

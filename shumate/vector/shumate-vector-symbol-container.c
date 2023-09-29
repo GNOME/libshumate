@@ -20,6 +20,7 @@
 #include "shumate-vector-collision-private.h"
 #include "shumate-symbol-event-private.h"
 #include "shumate-profiling-private.h"
+#include "shumate-inspector-settings-private.h"
 
 struct _ShumateVectorSymbolContainer
 {
@@ -29,6 +30,8 @@ struct _ShumateVectorSymbolContainer
 
   GList *children;
   ShumateVectorCollision *collision;
+
+  int visible_count;
 
   double last_rotation;
   double last_zoom;
@@ -99,6 +102,7 @@ static void
 shumate_vector_symbol_container_constructed (GObject *object)
 {
   ShumateVectorSymbolContainer *self = (ShumateVectorSymbolContainer *)object;
+  ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
   ShumateViewport *viewport;
   guint tile_size;
 
@@ -113,6 +117,8 @@ shumate_vector_symbol_container_constructed (GObject *object)
   g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_viewport_changed), self);
   g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_viewport_changed), self);
   g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_viewport_changed), self);
+
+  g_signal_connect_object (settings, "notify::show-collision-boxes", G_CALLBACK (on_viewport_changed), self, G_CONNECT_SWAPPED);
 }
 
 
@@ -252,6 +258,7 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       self->last_center_y = center_y;
       self->collision->delta_x = 0;
       self->collision->delta_y = 0;
+      self->visible_count = 0;
     }
   else
     {
@@ -285,6 +292,9 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
               gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), now_visible);
               child->visible = now_visible;
             }
+
+          if (now_visible)
+            self->visible_count ++;
         }
 
       if (!child->visible)
@@ -318,6 +328,7 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
   SHUMATE_PROFILE_START ();
 
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
+  ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
 
   for (GList *l = self->children; l != NULL; l = l->next)
     {
@@ -335,7 +346,7 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
 
-#if 0
+  if (shumate_inspector_settings_get_show_collision_boxes (settings))
     {
       ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
       double rotation = shumate_viewport_get_rotation (viewport);
@@ -349,7 +360,6 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
       shumate_vector_collision_visualize (self->collision, snapshot);
       gtk_snapshot_restore (snapshot);
     }
-#endif
 }
 
 
@@ -500,4 +510,11 @@ shumate_vector_symbol_container_get_collision (ShumateVectorSymbolContainer *sel
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self), NULL);
   return self->collision;
+}
+
+
+char *
+shumate_vector_symbol_container_get_debug_text (ShumateVectorSymbolContainer *self)
+{
+  return g_strdup_printf ("symbols: %d, %d visible\n", g_list_length (self->children), self->visible_count);
 }

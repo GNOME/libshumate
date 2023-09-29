@@ -23,6 +23,7 @@
 #include "shumate-symbol-event.h"
 #include "shumate-profiling-private.h"
 #include "shumate-utils-private.h"
+#include "shumate-inspector-settings-private.h"
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 #  include "vector/shumate-vector-symbol-container-private.h"
@@ -531,6 +532,7 @@ on_symbol_clicked (ShumateMapLayer              *self,
 static void
 shumate_map_layer_constructed (GObject *object)
 {
+  ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (object);
   ShumateViewport *viewport;
 
@@ -538,6 +540,8 @@ shumate_map_layer_constructed (GObject *object)
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   g_signal_connect_swapped (viewport, "notify", G_CALLBACK (on_viewport_changed), self);
+
+  g_signal_connect_object (settings, "notify::show-tile-bounds", G_CALLBACK (queue_recompute_grid_in_idle), self, G_CONNECT_SWAPPED);
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->symbols = shumate_vector_symbol_container_new (self->map_source, viewport);
@@ -632,6 +636,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
     * tile_size_for_zoom;
   double map_height = shumate_map_source_get_row_count (self->map_source, zoom_level)
     * tile_size_for_zoom;
+  gboolean show_tile_bounds = shumate_inspector_settings_get_show_tile_bounds (shumate_inspector_settings_get_default ());
 
   GHashTableIter iter;
   gpointer key;
@@ -662,11 +667,6 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (width / 2.0, height / 2.0));
   gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
-#define SHUMATE_DEBUG_MAP_LAYER 0
-#if SHUMATE_DEBUG_MAP_LAYER
-  gtk_snapshot_scale (snapshot, 0.5, 0.5);
-#endif
-
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (-width / 2.0, -height / 2.0));
 
   g_hash_table_iter_init (&iter, self->tile_children);
@@ -691,25 +691,68 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 
       gdk_paintable_snapshot (paintable, snapshot, size, size);
 
+      if (show_tile_bounds)
+        {
+          g_autofree char *text = NULL;
+          g_autoptr(PangoLayout) layout = NULL;
+          int x = shumate_tile_get_x (tile);
+          GdkRGBA color = {1, 0, 1, 1};
+
+          if (x == pos->x)
+            text = g_strdup_printf (" %d, %d, %d", pos->zoom, pos->x, pos->y);
+          else
+            text = g_strdup_printf (" %d, %d (%d), %d", pos->zoom, x, pos->x, pos->y);
+
+          layout = gtk_widget_create_pango_layout (widget, text);
+          gtk_snapshot_append_layout (snapshot, layout, &color);
+          gtk_snapshot_append_border (snapshot,
+                                      &GSK_ROUNDED_RECT_INIT (0, 0, size, size),
+                                      (float[]){1, 1, 1, 1},
+                                      (GdkRGBA[]) { color, color, color, color });
+        }
+
       gtk_snapshot_restore (snapshot);
     }
 
   gtk_snapshot_restore (snapshot);
 
-#if SHUMATE_DEBUG_MAP_LAYER
-  float border_width[] = { 3, 3, 3, 3 };
-  GdkRGBA colors[4] = {
-    { 0, 0, 0, 1 },
-    { 0, 0, 0, 1 },
-    { 0, 0, 0, 1 },
-    { 0, 0, 0, 1 },
-  };
-  gtk_snapshot_append_border (snapshot, &GSK_ROUNDED_RECT_INIT (width * 0.25, height * 0.25, width * 0.5, height * 0.5), border_width, colors);
-#endif
-
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   gtk_widget_snapshot_child (widget, GTK_WIDGET (self->symbols), snapshot);
 #endif
+}
+
+static char *
+shumate_map_layer_get_debug_text (ShumateLayer *layer)
+{
+  ShumateMapLayer *self = SHUMATE_MAP_LAYER (layer);
+  g_autoptr(GString) string = g_string_new ("");
+  int n_loading = 0;
+  GHashTableIter iter;
+  ShumateTile *tile;
+
+  g_hash_table_iter_init (&iter, self->tile_children);
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&tile))
+    {
+      if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+        n_loading ++;
+    }
+
+  g_string_append_printf (string,
+                          "tiles: %d, %d loading\n",
+                          g_hash_table_size (self->tile_children),
+                          n_loading);
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  {
+    g_autofree char *symbol_debug = shumate_vector_symbol_container_get_debug_text (self->symbols);
+    g_string_append (string, symbol_debug);
+  }
+#endif
+
+  if (self->deferring)
+    g_string_append (string, "deferring\n");
+
+  return g_string_free_and_steal (g_steal_pointer (&string));
 }
 
 static void
@@ -717,6 +760,7 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->set_property = shumate_map_layer_set_property;
   object_class->get_property = shumate_map_layer_get_property;
@@ -726,6 +770,8 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
   widget_class->size_allocate = shumate_map_layer_size_allocate;
   widget_class->snapshot = shumate_map_layer_snapshot;
   widget_class->measure = shumate_map_layer_measure;
+
+  layer_class->get_debug_text = shumate_map_layer_get_debug_text;
 
   obj_properties[PROP_MAP_SOURCE] =
     g_param_spec_object ("map-source",

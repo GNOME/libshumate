@@ -295,12 +295,19 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   cairo_destroy (cr);
 }
 
+static char *
+shumate_path_layer_get_debug_text (ShumateLayer *layer)
+{
+  ShumatePathLayer *self = SHUMATE_PATH_LAYER (layer);
+  return g_strdup_printf ("%d nodes", g_list_length (self->nodes));
+}
 
 static void
 shumate_path_layer_class_init (ShumatePathLayerClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  ShumateLayerClass *layer_class = SHUMATE_LAYER_CLASS (klass);
 
   object_class->finalize = shumate_path_layer_finalize;
   object_class->dispose = shumate_path_layer_dispose;
@@ -309,6 +316,8 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
   object_class->set_property = shumate_path_layer_set_property;
 
   widget_class->snapshot = shumate_path_layer_snapshot;
+
+  layer_class->get_debug_text = shumate_path_layer_get_debug_text;
 
   /**
    * ShumatePathLayer:closed:

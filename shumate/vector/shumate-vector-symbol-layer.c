@@ -312,28 +312,6 @@ place_line_label (ShumateVectorSymbolDetails *details,
       float distance = 0;
       ShumateVectorPointIter iter;
 
-#if 0
-      /* visualize line simplification */
-
-      if (linestring->n_points > 0)
-        {
-          guint k;
-          float scale = scope->scale * scope->target_size;
-
-          cairo_set_source_rgb (scope->cr,
-                                rand () % 255 / 255.0,
-                                rand () % 255 / 255.0,
-                                rand () % 255 / 255.0);
-          cairo_set_line_width (scope->cr, scope->scale);
-
-          cairo_move_to (scope->cr, linestring->points[0].x * scale, linestring->points[0].y * scale);
-          for (k = 1; k < linestring->n_points; k ++)
-            cairo_line_to (scope->cr, linestring->points[k].x * scale, linestring->points[k].y * scale);
-
-          cairo_stroke (scope->cr);
-        }
-#endif
-
       shumate_vector_point_iter_init (&iter, linestring);
 
       shumate_vector_point_iter_advance (&iter, remaining_distance);

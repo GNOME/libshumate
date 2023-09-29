@@ -1,3 +1,4 @@
+data/shumate-inspector-page.ui
 data/shumate-simple-map.ui
 shumate/shumate-viewport.c
 shumate/shumate-vector-renderer.c
@@ -20,6 +21,7 @@ shumate/shumate-location.c
 shumate/shumate-license.c
 shumate/shumate-layer.c
 shumate/shumate-kinetic-scrolling.c
+shumate/shumate-inspector-page.c
 shumate/shumate-file-cache.c
 shumate/shumate-data-source.c
 shumate/shumate-coordinate.c
