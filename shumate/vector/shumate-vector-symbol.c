@@ -387,17 +387,17 @@ shumate_vector_symbol_contains (GtkWidget *widget,
                                 double     y)
 {
   GtkWidget *parent;
-  GtkAllocation alloc;
+  graphene_rect_t alloc;
 
   if (x < 0 || y < 0)
     return FALSE;
 
-  gtk_widget_get_allocation (widget, &alloc);
-
-  if (x > alloc.width || y > alloc.height)
+  parent = gtk_widget_get_parent (widget);
+  if (!gtk_widget_compute_bounds (widget, parent, &alloc))
     return FALSE;
 
-  parent = gtk_widget_get_parent (widget);
+  if (x > alloc.size.width || y > alloc.size.height)
+    return FALSE;
 
   if (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (parent))
     {
@@ -405,8 +405,8 @@ shumate_vector_symbol_contains (GtkWidget *widget,
         shumate_vector_symbol_container_get_collision ((ShumateVectorSymbolContainer *) (parent));
 
       return shumate_vector_collision_query_point (collision,
-                                                   alloc.x + x + collision->delta_x,
-                                                   alloc.y + y + collision->delta_y,
+                                                   alloc.origin.x + x + collision->delta_x,
+                                                   alloc.origin.y + y + collision->delta_y,
                                                    widget);
     }
 

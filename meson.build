@@ -2,7 +2,7 @@ project(
   'libshumate', 'c',
   version: '1.2.alpha',
   license: 'LGPLv2.1+',
-  meson_version: '>= 0.53.0',
+  meson_version: '>= 0.55.0',
   default_options: [
     'buildtype=debugoptimized',
   ]
@@ -48,7 +48,7 @@ cc = meson.get_compiler('c')
 
 libm_dep = cc.find_library('m', required: true)
 
-glib_req = '>= 2.68.0'
+glib_req = '>= 2.74.0'
 cairo_req = '>= 1.4'
 sqlite_req = '>= 1.12.0'
 introspection_req = '>= 0.6.3'

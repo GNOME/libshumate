@@ -133,12 +133,11 @@ update_marker_visibility (ShumateMarkerLayer *layer,
 
   if (within_viewport)
     {
-      GtkAllocation marker_allocation;
+      graphene_rect_t bounds;
 
-      gtk_widget_get_allocation (GTK_WIDGET (marker), &marker_allocation);
-
-      if (marker_allocation.x != (int)x || marker_allocation.y != (int)y)
-        gtk_widget_queue_allocate (GTK_WIDGET (layer));
+      if (gtk_widget_compute_bounds (GTK_WIDGET (marker), GTK_WIDGET (layer), &bounds))
+        if (bounds.origin.x != (int)x || bounds.origin.y != (int)y)
+          gtk_widget_queue_allocate (GTK_WIDGET (layer));
     }
 }
 

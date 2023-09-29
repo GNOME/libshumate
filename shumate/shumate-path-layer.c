@@ -240,8 +240,8 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   cairo_t *cr;
   GList *elem;
 
-  width = gtk_widget_get_allocated_width (widget);
-  height = gtk_widget_get_allocated_height (widget);
+  width = gtk_widget_get_width (widget);
+  height = gtk_widget_get_height (widget);
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
 
   if (!gtk_widget_get_visible (widget) || width <= 0 || height <= 0)

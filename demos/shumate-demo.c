@@ -30,7 +30,7 @@ activate (GtkApplication* app,
   ShumateDemoWindow *window;
 
   window = shumate_demo_window_new (app);
-  gtk_widget_show (GTK_WIDGET (window));
+  gtk_window_present (GTK_WINDOW (window));
 }
 
 
@@ -39,7 +39,7 @@ main (int argc, char *argv[])
 {
   g_autoptr(GtkApplication) app = NULL;
 
-  app = gtk_application_new ("org.gnome.Shumate.Demo", G_APPLICATION_FLAGS_NONE);
+  app = gtk_application_new ("org.gnome.Shumate.Demo", G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
 
   return g_application_run (G_APPLICATION (app), argc, argv);
