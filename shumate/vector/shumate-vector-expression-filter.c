@@ -806,6 +806,16 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       shumate_vector_value_copy (&self->value, out);
       return TRUE;
 
+    case EXPR_TO_STRING:
+      {
+        g_autofree char *string = NULL;
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+        string = shumate_vector_value_as_string (&value);
+        shumate_vector_value_set_string (out, string);
+        return TRUE;
+      }
+
     case EXPR_NOT:
       g_assert (n_expressions == 1);
 

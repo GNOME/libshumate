@@ -25,6 +25,7 @@ typedef enum {
   EXPR_INVALID,
 
   EXPR_LITERAL,
+  EXPR_TO_STRING,
 
   EXPR_COLLATOR,
   EXPR_FORMAT,

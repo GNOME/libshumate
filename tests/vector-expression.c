@@ -300,6 +300,9 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"step\", 1.5, \"a\", 1, \"b\", 2, \"c\"], \"b\"]"));
   g_assert_true (filter ("[\"==\", [\"step\", 2, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
   g_assert_true (filter ("[\"==\", [\"step\", 3, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
+
+  g_assert_false (filter ("[\"==\", 2, \"2\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", 2], \"2\"]"));
 }
 
 
