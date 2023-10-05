@@ -14,8 +14,8 @@ option('demos',
        description: 'Build demonstration programs')
 
 option('vector_renderer',
-       type: 'boolean', value: false,
-       description: 'Build the experimental vector tile renderer')
+       type: 'boolean', value: true,
+       description: 'Build the vector tile renderer')
 
 option('sysprof',
        type: 'feature', value: 'auto',
