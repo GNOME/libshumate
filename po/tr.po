@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-07-29 23:15+0300\n"
+"POT-Creation-Date: 2023-10-05 19:48+0000\n"
+"PO-Revision-Date: 2023-10-06 02:04+0300\n"
 "Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Turkish <takim@gnome.org.tr>\n"
 "Language: tr\n"
@@ -18,7 +18,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Hata Ayıklama Kaplamasını Göster"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Döşeme Sınırlarını Göster"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Çakışma Kutularını Göster"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -51,3 +63,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
