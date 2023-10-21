@@ -1,4 +1,10 @@
 =====================
+Version 1.1.1
+=====================
+ - Fix null reference map source, avoid critical log message when setting
+   a null map source with shumate_viewport_set_reference_map_source()
+
+=====================
 Version 1.1.0
 =====================
  - Fix grey background on sprites
