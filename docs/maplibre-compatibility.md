@@ -565,11 +565,11 @@ evaluated at integer zoom levels only.
 <table>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-array">array</a></td>
-    <td>❌ Not supported</td>
+    <td>❌ Not supported. The expression engine in libshumate does not perform ahead-of-time type checking.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-boolean">boolean</a></td>
-    <td>❌ Not supported</td>
+    <td>❌ Not supported. The expression engine in libshumate does not perform ahead-of-time type checking.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-collator">collator</a></td>
@@ -589,7 +589,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-number">number</a></td>
-    <td>❌ Not supported</td>
+    <td>❌ Not supported. The expression engine in libshumate does not perform ahead-of-time type checking.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-number-format">number-format</a></td>
@@ -597,31 +597,31 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-object">object</a></td>
-    <td>❌ Not supported</td>
+    <td>❌ Not supported. The expression engine in libshumate does not perform ahead-of-time type checking.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-string">string</a></td>
-    <td>❌ Not supported</td>
+    <td>❌ Not supported. The expression engine in libshumate does not perform ahead-of-time type checking.</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-boolean">to-boolean</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-color">to-color</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-number">to-number</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-to-string">to-string</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#types-typeof">typeof</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported. Arrays always return "array", without information about the array's elements like in MapLibre GL JS. Additionally, because libshumate's type system is less static than MapLibre GL JS's, results may differ in some (likely not common) cases.</td>
   </tr>
 </table>
 
@@ -642,7 +642,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#id">id</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#line-progress">line-progress</a></td>
@@ -764,7 +764,7 @@ evaluated at integer zoom levels only.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#step">step</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
 </table>
 
