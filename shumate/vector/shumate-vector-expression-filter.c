@@ -806,6 +806,83 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
       shumate_vector_value_copy (&self->value, out);
       return TRUE;
 
+    case EXPR_TO_BOOLEAN:
+      {
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+
+        switch (value.type)
+          {
+            case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+              shumate_vector_value_set_boolean (out, FALSE);
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+              shumate_vector_value_copy (&value, out);
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+              shumate_vector_value_set_boolean (out, value.number != 0 && !isnan (value.number));
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+              shumate_vector_value_set_boolean (out, value.string != NULL && value.string[0] != '\0');
+              return TRUE;
+            default:
+              shumate_vector_value_set_boolean (out, TRUE);
+              return TRUE;
+          }
+      }
+
+    case EXPR_TO_COLOR:
+      for (int i = 0; i < n_expressions; i ++)
+        {
+          GdkRGBA rgba;
+
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            continue;
+
+          if (shumate_vector_value_get_color (&value, &rgba))
+            {
+              shumate_vector_value_set_color (out, &rgba);
+              return TRUE;
+            }
+        }
+
+      return FALSE;
+
+    case EXPR_TO_NUMBER:
+      for (int i = 0; i < n_expressions; i ++)
+        {
+          if (!shumate_vector_expression_eval (expressions[i], scope, &value))
+            continue;
+
+          switch (value.type)
+            {
+              case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+                shumate_vector_value_set_number (out, 0);
+                return TRUE;
+              case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+                shumate_vector_value_set_number (out, value.boolean ? 1 : 0);
+                return TRUE;
+              case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+                shumate_vector_value_copy (&value, out);
+                return TRUE;
+              case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+                {
+                  char *endptr = NULL;
+                  number = g_ascii_strtod (value.string, &endptr);
+                  if (errno == 0 && endptr != NULL && *endptr == '\0')
+                    {
+                      shumate_vector_value_set_number (out, number);
+                      return TRUE;
+                    }
+                }
+                break;
+              default:
+                break;
+            }
+        }
+
+      return FALSE;
+
     case EXPR_TO_STRING:
       {
         g_autofree char *string = NULL;
@@ -814,6 +891,40 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         string = shumate_vector_value_as_string (&value);
         shumate_vector_value_set_string (out, string);
         return TRUE;
+      }
+
+    case EXPR_TYPEOF:
+      {
+        if (!shumate_vector_expression_eval (expressions[0], scope, &value))
+          return FALSE;
+
+        switch (value.type)
+          {
+            case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+              shumate_vector_value_set_string (out, "null");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+              shumate_vector_value_set_string (out, "boolean");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+              shumate_vector_value_set_string (out, "number");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_STRING:
+              shumate_vector_value_set_string (out, "string");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+              shumate_vector_value_set_string (out, "array");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
+              shumate_vector_value_set_string (out, "color");
+              return TRUE;
+            case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
+              shumate_vector_value_set_string (out, "resolvedImage");
+              return TRUE;
+            default:
+              shumate_vector_value_set_string (out, "value");
+              return TRUE;
+          }
       }
 
     case EXPR_NOT:
@@ -1257,14 +1368,16 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         {
         case EXPR_DIV:
           if (number2 == 0)
-            return FALSE;
-          shumate_vector_value_set_number (out, number / number2);
+            shumate_vector_value_set_number (out, number == 0 ? NAN : number > 0 ? INFINITY : -INFINITY);
+          else
+            shumate_vector_value_set_number (out, number / number2);
           return TRUE;
 
         case EXPR_REM:
           if (number2 == 0)
-            return FALSE;
-          shumate_vector_value_set_number (out, fmod (number, number2));
+            shumate_vector_value_set_number (out, NAN);
+          else
+            shumate_vector_value_set_number (out, fmod (number, number2));
           return TRUE;
 
         case EXPR_POW:

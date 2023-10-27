@@ -443,6 +443,51 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 }
 
 
+static JsonNode *
+shumate_vector_value_as_json (ShumateVectorValue *value)
+{
+  JsonNode *node;
+
+  switch (value->type)
+    {
+    case SHUMATE_VECTOR_VALUE_TYPE_NULL:
+      node = json_node_new (JSON_NODE_NULL);
+      return node;
+    case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
+      node = json_node_new (JSON_NODE_VALUE);
+      if (fmod (value->number, 1) == 0)
+        json_node_set_int (node, value->number);
+      else
+        json_node_set_double (node, value->number);
+      return node;
+    case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
+      node = json_node_new (JSON_NODE_VALUE);
+      json_node_set_boolean (node, value->boolean);
+      return node;
+    case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
+      {
+        g_autoptr(JsonBuilder) builder = json_builder_new ();
+        json_builder_begin_array (builder);
+        for (int i = 0; i < value->array->len; i ++)
+          {
+            ShumateVectorValue *child = g_ptr_array_index (value->array, i);
+            json_builder_add_value (builder, shumate_vector_value_as_json (child));
+          }
+
+        json_builder_end_array (builder);
+        return json_builder_get_root (builder);
+      }
+    default:
+      {
+        g_autofree char *string = shumate_vector_value_as_string (value);
+        node = json_node_new (JSON_NODE_VALUE);
+        json_node_set_string (node, string);
+        return node;
+      }
+    }
+}
+
+
 char *
 shumate_vector_value_as_string (ShumateVectorValue *self)
 {
@@ -451,28 +496,37 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
     case SHUMATE_VECTOR_VALUE_TYPE_NULL:
       return g_strdup ("");
     case SHUMATE_VECTOR_VALUE_TYPE_NUMBER:
-      return g_strdup_printf ("%g", self->number);
+      /* printf produces nan, inf, and -inf, but the spec says we should act like ECMAScript
+         which uses NaN, -Infinity, and Infinity */
+      if (G_UNLIKELY (isnan (self->number)))
+        return g_strdup ("NaN");
+      else if (G_UNLIKELY (isinf (self->number)))
+        {
+          if (self->number < 0)
+            return g_strdup ("-Infinity");
+          else
+            return g_strdup ("Infinity");
+        }
+      else
+        return g_strdup_printf ("%g", self->number);
     case SHUMATE_VECTOR_VALUE_TYPE_BOOLEAN:
       return g_strdup (self->boolean ? "true" : "false");
     case SHUMATE_VECTOR_VALUE_TYPE_STRING:
       return g_strdup (self->string);
     case SHUMATE_VECTOR_VALUE_TYPE_COLOR:
-      return gdk_rgba_to_string (&self->color);
+      /* gdk_rgba_to_string() produces `rgb(...)` when alpha is ~1, which is
+         not consistent with the MapLibre spec */
+      return g_strdup_printf (
+        "rgba(%d,%d,%d,%g)",
+        (int)round (255 * CLAMP (self->color.red, 0, 1)),
+        (int)round (255 * CLAMP (self->color.green, 0, 1)),
+        (int)round (255 * CLAMP (self->color.blue, 0, 1)),
+        CLAMP (self->color.alpha, 0, 1)
+      );
     case SHUMATE_VECTOR_VALUE_TYPE_ARRAY:
       {
-        g_autofree char *result = NULL;
-        g_autoptr(GStrvBuilder) builder = g_strv_builder_new ();
-        g_auto(GStrv) strv = NULL;
-
-        for (int i = 0; i < self->array->len; i ++)
-          {
-            g_autofree char *string = shumate_vector_value_as_string (g_ptr_array_index (self->array, i));
-            g_strv_builder_add (builder, string);
-          }
-
-        strv = g_strv_builder_end (builder);
-        result = g_strjoinv (", ", strv);
-        return g_strconcat ("[", result, "]", NULL);
+        g_autoptr(JsonNode) node = shumate_vector_value_as_json (self);
+        return json_to_string (node, FALSE);
       }
     case SHUMATE_VECTOR_VALUE_TYPE_RESOLVED_IMAGE:
       return g_strdup (self->image_name);
@@ -489,6 +543,9 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
 
         return g_string_free (g_steal_pointer (&result), FALSE);
       }
+    case SHUMATE_VECTOR_VALUE_TYPE_COLLATOR:
+      /* Not supported */
+      return g_strdup ("");
     default:
       g_assert_not_reached ();
     }

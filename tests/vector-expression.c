@@ -301,8 +301,41 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"step\", 2, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
   g_assert_true (filter ("[\"==\", [\"step\", 3, \"a\", 1, \"b\", 2, \"c\"], \"c\"]"));
 
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", 0], false]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", 1], true]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", -2], true]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", null], false]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", \"\"], false]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", \"hello\"], true]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", [\"collator\", {}]], true]"));
+  g_assert_true (filter ("[\"==\", [\"to-color\", \"red\"], [\"to-color\", \"rgb(255, 0, 0)\"]]"));
+  g_assert_true (filter ("[\"==\", [\"to-color\", \"not a color\", \"#FF0000\"], [\"to-color\", \"rgb(255, 0, 0)\"]]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", \"2\"], 2]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", \"-.5\"], -0.5]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", \"1e3\"], 1000]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", null], 0]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", false], 0]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", true], 1]"));
+  g_assert_true (filter ("[\"==\", [\"to-number\", \"not a number\", 10], 10]"));
   g_assert_false (filter ("[\"==\", 2, \"2\"]"));
   g_assert_true (filter ("[\"==\", [\"to-string\", 2], \"2\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", \"a\"], \"a\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", true], \"true\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", false], \"false\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", null], \"\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"to-color\", \"gold\"]], \"rgba(255,215,0,1)\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"to-color\", \"rgba(255, 1, 2, 0.1)\"]], \"rgba(255,1,2,0.1)\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"literal\", [1, 0.5, null, true, [\"b\"]]]], \"[1,0.5,null,true,[\\\"b\\\"]]\"]"));
+
+  /* Test NaN/inf handling */
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", [\"/\", 0, 0]], false]"));
+  g_assert_true (filter ("[\"==\", [\"to-boolean\", [\"/\", 1, 0]], true]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"/\", 0, 0]], \"NaN\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"/\", 1, 0]], \"Infinity\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"/\", -1, 0]], \"-Infinity\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"%\", 0, 0]], \"NaN\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"%\", 1, 0]], \"NaN\"]"));
+  g_assert_true (filter ("[\"==\", [\"to-string\", [\"%\", -1, 0]], \"NaN\"]"));
 }
 
 
@@ -473,7 +506,7 @@ test_vector_expression_array ()
   shumate_vector_value_array_append (&array1, &element2);
 
   string = shumate_vector_value_as_string (&array1);
-  g_assert_cmpstr (string, ==, "[Hello, world!, true]");
+  g_assert_cmpstr (string, ==, "[\"Hello, world!\",true]");
 
   shumate_vector_value_start_array (&array2);
   shumate_vector_value_array_append (&array2, &element1);
