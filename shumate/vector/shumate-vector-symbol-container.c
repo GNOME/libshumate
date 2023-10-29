@@ -184,6 +184,15 @@ shumate_vector_symbol_container_set_property (GObject      *object,
     }
 }
 
+static double
+get_effective_zoom_level (ShumateMapSource *map_source, ShumateViewport *viewport)
+{
+  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double our_tile_size = shumate_map_source_get_tile_size (map_source);
+  double reference_tile_size = shumate_map_source_get_tile_size (shumate_viewport_get_reference_map_source (viewport));
+  return log2 (reference_tile_size / our_tile_size) + zoom_level;
+}
+
 static void
 rotate_around_origin (double *x,
                       double *y,
@@ -234,7 +243,7 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
   GtkAllocation alloc;
   double tile_size = shumate_map_source_get_tile_size (self->map_source);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double zoom_level = get_effective_zoom_level (self->map_source, viewport);
   double rotation = shumate_viewport_get_rotation (viewport);
   double center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
   double center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
