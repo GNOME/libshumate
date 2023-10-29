@@ -286,6 +286,21 @@ should_defer (ShumateMapLayer *self)
   return self->deferring;
 }
 
+static double
+get_zoom_level_for_calculation (ShumateMapLayer *self)
+{
+  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  ShumateMapSource *reference_map_source =
+    shumate_viewport_get_reference_map_source (viewport);
+  int tile_size = shumate_map_source_get_tile_size (self->map_source);
+  int reference_tile_size =
+    shumate_map_source_get_tile_size (reference_map_source);
+  double viewport_zoom_level = shumate_viewport_get_zoom_level (viewport);
+
+  return viewport_zoom_level + (tile_size == reference_tile_size ?
+                                0 : log2 (reference_tile_size / tile_size));
+}
+
 static void
 recompute_grid (ShumateMapLayer *self)
 {
@@ -299,7 +314,7 @@ recompute_grid (ShumateMapLayer *self)
   int height = gtk_widget_get_height (GTK_WIDGET (self));
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
   int tile_size = shumate_map_source_get_tile_size (self->map_source);
-  int zoom_level = shumate_viewport_get_zoom_level (viewport);
+  int zoom_level = (int) get_zoom_level_for_calculation (self);
   double latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
   double longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
   int latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
@@ -592,13 +607,11 @@ shumate_map_layer_measure (GtkWidget      *widget,
 
   if (natural)
     {
-      ShumateViewport *viewport;
       double tile_size;
       guint zoom_level;
       guint count;
 
-      viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-      zoom_level = shumate_viewport_get_zoom_level (viewport);
+      zoom_level = (int) get_zoom_level_for_calculation (self);
       tile_size = shumate_map_source_get_tile_size_at_zoom (self->map_source, zoom_level);
       if (orientation == GTK_ORIENTATION_HORIZONTAL)
         count = shumate_map_source_get_column_count (self->map_source, zoom_level);
@@ -622,7 +635,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 {
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
   ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  double zoom_level = shumate_viewport_get_zoom_level (viewport);
+  double zoom_level = get_zoom_level_for_calculation (self);
   int width = gtk_widget_get_width (GTK_WIDGET (self));
   int height = gtk_widget_get_height (GTK_WIDGET (self));
   double rotation = shumate_viewport_get_rotation (viewport);
