@@ -1,4 +1,10 @@
 =====================
+Version 1.1.2
+=====================
+ - Fix using overlay map layers with different tile sizes than the reference
+   source
+
+=====================
 Version 1.1.1
 =====================
  - Fix null reference map source, avoid critical log message when setting
