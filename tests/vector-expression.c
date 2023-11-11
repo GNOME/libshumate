@@ -290,6 +290,22 @@ test_vector_expression_basic_filter (void)
   g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7], \"\U0001F30E!\"]"));
   g_assert_true (filter ("[\"==\", [\"slice\", \"Hello, \U0001F30E!\", 7, 8], \"\U0001F30E\"]"));
 
+  /* Test slice with negative and out of range indices */
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], -2], [\"literal\", [\"b\", \"c\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], -3], [\"literal\", [\"a\", \"b\", \"c\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], -4], [\"literal\", [\"a\", \"b\", \"c\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 0, -1], [\"literal\", [\"a\", \"b\"]]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 0, -3], [\"literal\", []]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 0, -4], [\"literal\", []]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", [\"literal\", [\"a\", \"b\", \"c\"]], 3, 4], [\"literal\", []]]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", -2], \"bc\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", -3], \"abc\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", -4], \"abc\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", 0, -1], \"ab\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", 0, -3], \"\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", 0, -4], \"\"]"));
+  g_assert_true (filter ("[\"==\", [\"slice\", \"abc\", 3, 4], \"\"]"));
+
   g_assert_true (filter ("[\"==\", [\"literal\", \"hello\"], \"HELLO\", [\"collator\", {\"case-sensitive\": false}]]"));
   g_assert_true (filter ("[\"!=\", [\"literal\", \"hello\"], \"HELLO\", [\"collator\", {\"case-sensitive\": true}]]"));
   g_assert_true (filter ("[\">\", [\"literal\", \"hello\"], \"a\", [\"collator\", {}]]"));
