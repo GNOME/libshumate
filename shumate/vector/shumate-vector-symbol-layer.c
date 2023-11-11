@@ -29,6 +29,8 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *icon_anchor;
   ShumateVectorExpression *icon_color;
   ShumateVectorExpression *icon_image;
+  ShumateVectorExpression *icon_opacity;
+  ShumateVectorExpression *icon_rotate;
   ShumateVectorExpression *icon_rotation_alignment;
   ShumateVectorExpression *icon_size;
   ShumateVectorExpression *text_anchor;
@@ -63,6 +65,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->icon_color = shumate_vector_expression_from_json (json_object_get_member (paint, "icon-color"), error);
       if (layer->icon_color == NULL)
+        return NULL;
+
+      layer->icon_opacity = shumate_vector_expression_from_json (json_object_get_member (paint, "icon-opacity"), error);
+      if (layer->icon_opacity == NULL)
         return NULL;
 
       layer->text_color = shumate_vector_expression_from_json (json_object_get_member (paint, "text-color"), error);
@@ -110,6 +116,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->icon_offset_x = json_array_get_double_element (icon_offset, 0);
           layer->icon_offset_y = json_array_get_double_element (icon_offset, 1);
         }
+
+      layer->icon_rotate = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-rotate"), error);
+      if (layer->icon_rotate == NULL)
+        return NULL;
 
       layer->icon_size = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-size"), error);
       if (layer->icon_size == NULL)
@@ -224,6 +234,8 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->icon_anchor);
   g_clear_object (&self->icon_color);
   g_clear_object (&self->icon_image);
+  g_clear_object (&self->icon_opacity);
+  g_clear_object (&self->icon_rotate);
   g_clear_object (&self->icon_rotation_alignment);
   g_clear_object (&self->icon_size);
   g_clear_object (&self->text_field);
@@ -426,6 +438,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
     .icon_anchor = shumate_vector_expression_eval_anchor (self->icon_anchor, scope),
     .icon_image = g_steal_pointer (&icon_image),
+    .icon_opacity = CLAMP (shumate_vector_expression_eval_number (self->icon_opacity, scope, 1.0), 0.0, 1.0),
+    .icon_rotate = shumate_vector_expression_eval_number (self->icon_rotate, scope, 0.0) * G_PI / 180,
     .icon_rotation_alignment = icon_rotation_alignment,
     .icon_size = shumate_vector_expression_eval_number (self->icon_size, scope, 1.0),
     .icon_offset_x = self->icon_offset_x,

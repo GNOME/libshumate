@@ -59,6 +59,8 @@ typedef struct {
   ShumateVectorAnchor icon_anchor;
   ShumateVectorSprite *icon_image;
   double icon_offset_x, icon_offset_y;
+  float icon_opacity;
+  float icon_rotate; /* in radians */
   float icon_size;
   ShumateVectorAlignment icon_rotation_alignment;
 

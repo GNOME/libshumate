@@ -577,7 +577,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->x - self->bounds.origin.x,
                                                           self->y - self->bounds.origin.y));
 
-  if (self->symbol_info->details->icon_image)
+  if (self->symbol_info->details->icon_image && self->symbol_info->details->icon_opacity > 0.0)
     {
       double angle = 0;
       double icon_width = shumate_vector_sprite_get_width (self->symbol_info->details->icon_image)
@@ -597,6 +597,8 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       else
         angle = -rotation;
 
+      angle += self->symbol_info->details->icon_rotate;
+
       gtk_snapshot_save (snapshot);
 
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
@@ -611,6 +613,10 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
                                 -icon_width / 2.0 + offset_x,
                                 -icon_height / 2.0 + offset_y
                               ));
+
+      if (self->symbol_info->details->icon_opacity < 1.0)
+        gtk_snapshot_push_opacity (snapshot, self->symbol_info->details->icon_opacity);
+
       gtk_symbolic_paintable_snapshot_symbolic (
         GTK_SYMBOLIC_PAINTABLE (self->symbol_info->details->icon_image),
         snapshot,
@@ -619,10 +625,14 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
         &self->symbol_info->details->icon_color,
         1
       );
+
+      if (self->symbol_info->details->icon_opacity < 1.0)
+        gtk_snapshot_pop (snapshot);
+
       gtk_snapshot_restore (snapshot);
     }
 
-  if (self->glyphs && self->symbol_info->details->text_opacity > 0)
+  if (self->glyphs && self->symbol_info->details->text_opacity > 0.0)
     {
       double length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
@@ -648,7 +658,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_save (snapshot);
       gtk_snapshot_rotate (snapshot, rotation * 180 / G_PI);
 
-      if (self->symbol_info->details->text_opacity < 1)
+      if (self->symbol_info->details->text_opacity < 1.0)
         gtk_snapshot_push_opacity (snapshot, self->symbol_info->details->text_opacity);
 
       for (int i = 0; i < self->glyphs->len; i ++)
@@ -705,12 +715,12 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
             shumate_vector_point_iter_advance (&iter, glyph->width / tile_size_for_zoom);
         }
 
-      if (self->symbol_info->details->text_opacity < 1)
+      if (self->symbol_info->details->text_opacity < 1.0)
         gtk_snapshot_pop (snapshot);
 
       gtk_snapshot_restore (snapshot);
     }
-  else if (self->glyphs_node && self->symbol_info->details->text_opacity > 0)
+  else if (self->glyphs_node && self->symbol_info->details->text_opacity > 0.0)
     {
       double angle = 0;
       double offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
@@ -950,10 +960,10 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
       add_anchor_offset (self->symbol_info->details->icon_anchor, &offset_x, &offset_y, icon_width, icon_height);
 
-      rotate_around_center (&offset_x, &offset_y, angle);
-
       if (self->symbol_info->details->icon_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = rotation + self->midpoint_angle;
+      angle += self->symbol_info->details->icon_rotate;
+      rotate_around_center (&offset_x, &offset_y, angle);
 
       check = shumate_vector_collision_check (
         collision,
