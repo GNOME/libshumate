@@ -1158,7 +1158,9 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
           else
             {
               gboolean bool_result;
-              shumate_vector_value_get_boolean (&value, &bool_result);
+              if (!shumate_vector_value_get_boolean (&value, &bool_result))
+                return FALSE;
+
               if (bool_result)
                 {
                   if (!shumate_vector_expression_eval (expressions[i + 1], scope, &value))
