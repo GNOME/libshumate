@@ -809,6 +809,8 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
     case EXPR_TO_BOOLEAN:
       {
+        g_assert (n_expressions == 1);
+
         if (!shumate_vector_expression_eval (expressions[0], scope, &value))
           return FALSE;
 
@@ -887,6 +889,9 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
     case EXPR_TO_STRING:
       {
         g_autofree char *string = NULL;
+
+        g_assert (n_expressions == 1);
+
         if (!shumate_vector_expression_eval (expressions[0], scope, &value))
           return FALSE;
         string = shumate_vector_value_as_string (&value);
@@ -896,6 +901,8 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
 
     case EXPR_TYPEOF:
       {
+        g_assert (n_expressions == 1);
+
         if (!shumate_vector_expression_eval (expressions[0], scope, &value))
           return FALSE;
 
