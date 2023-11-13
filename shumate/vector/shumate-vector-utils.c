@@ -218,7 +218,6 @@ point_distance (ShumateVectorPoint *a,
 static ShumateVectorPoint *
 get_prev_point (ShumateVectorPointIter *iter)
 {
-  g_assert (iter->current_point >= 0);
   g_assert (iter->current_point < iter->num_points);
   return &iter->points[iter->current_point];
 }
@@ -226,7 +225,6 @@ get_prev_point (ShumateVectorPointIter *iter)
 static ShumateVectorPoint *
 get_next_point (ShumateVectorPointIter *iter)
 {
-  g_assert (iter->current_point >= 0);
   g_assert (iter->current_point < iter->num_points);
 
   if (iter->reversed)

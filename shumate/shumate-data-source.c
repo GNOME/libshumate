@@ -335,7 +335,7 @@ shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
   ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
 
   g_return_if_fail (SHUMATE_IS_DATA_SOURCE (self));
-  g_return_if_fail (zoom_level >= 0 && zoom_level <= 30);
+  g_return_if_fail (zoom_level <= 30u);
 
   if (priv->min_zoom_level != zoom_level)
     {
@@ -381,7 +381,7 @@ shumate_data_source_set_max_zoom_level (ShumateDataSource *self,
   ShumateDataSourcePrivate *priv = shumate_data_source_get_instance_private (self);
 
   g_return_if_fail (SHUMATE_IS_DATA_SOURCE (self));
-  g_return_if_fail (zoom_level >= 0 && zoom_level <= 30);
+  g_return_if_fail (zoom_level <= 30u);
 
   if (priv->max_zoom_level != zoom_level)
     {
