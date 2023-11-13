@@ -137,6 +137,7 @@ shumate_map_source_set_property (GObject      *object,
       case PROP_ID:
         shumate_map_source_set_id (map_source,
                                    g_value_get_string (value));
+        break;
 
       case PROP_NAME:
         shumate_map_source_set_name (map_source,
