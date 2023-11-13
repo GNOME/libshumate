@@ -764,6 +764,7 @@ shumate_vector_expression_filter_finalize (GObject *object)
     case EXPR_FAST_NOT_IN:
       g_clear_pointer (&self->fast_in.key, g_free);
       g_clear_pointer (&self->fast_in.haystack, g_hash_table_unref);
+      break;
     case EXPR_FAST_EQ:
     case EXPR_FAST_NE:
       g_clear_pointer (&self->fast_eq.key, g_free);
