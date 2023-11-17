@@ -22,16 +22,21 @@
 #include "shumate-profiling-private.h"
 #include "shumate-inspector-settings-private.h"
 
+typedef struct {
+  int layer_idx;
+  GPtrArray *symbols;
+} LayerBucket;
+
 struct _ShumateVectorSymbolContainer
 {
   ShumateLayer parent_instance;
 
   ShumateMapSource *map_source;
 
-  GList *children;
+  GPtrArray *layer_buckets;
   ShumateVectorCollision *collision;
 
-  int visible_count;
+  int child_count, visible_count;
 
   double last_rotation;
   double last_zoom;
@@ -77,6 +82,65 @@ typedef struct {
   gboolean visible : 1;
 } ChildInfo;
 
+static void
+layer_bucket_free (LayerBucket *bucket)
+{
+  g_clear_pointer (&bucket->symbols, g_ptr_array_unref);
+  g_free (bucket);
+}
+
+static void
+add_symbol_to_layer_buckets (ShumateVectorSymbolContainer *self,
+                             ChildInfo                   *info)
+{
+  LayerBucket *bucket;
+
+  for (int i = 0; i < self->layer_buckets->len; i ++)
+    {
+      bucket = g_ptr_array_index (self->layer_buckets, i);
+
+      if (bucket->layer_idx == info->symbol_info->details->layer_idx)
+        {
+          g_ptr_array_add (bucket->symbols, info);
+          return;
+        }
+    }
+
+  bucket = g_new0 (LayerBucket, 1);
+  bucket->layer_idx = info->symbol_info->details->layer_idx;
+  bucket->symbols = g_ptr_array_new_with_free_func (g_free);
+  g_ptr_array_add (self->layer_buckets, bucket);
+
+  g_ptr_array_add (bucket->symbols, info);
+}
+
+static int
+child_info_compare (gconstpointer a, gconstpointer b)
+{
+  const ChildInfo *child_a = *(ChildInfo **)a;
+  const ChildInfo *child_b = *(ChildInfo **)b;
+  return child_a->symbol_info->details->symbol_sort_key - child_b->symbol_info->details->symbol_sort_key;
+}
+
+static int
+layer_bucket_compare (gconstpointer a, gconstpointer b)
+{
+  const LayerBucket *bucket_a = *(LayerBucket **)a;
+  const LayerBucket *bucket_b = *(LayerBucket **)b;
+  return bucket_a->layer_idx - bucket_b->layer_idx;
+}
+
+static void
+sort_layer_buckets (ShumateVectorSymbolContainer *self)
+{
+  g_ptr_array_sort (self->layer_buckets, (GCompareFunc)layer_bucket_compare);
+
+  for (int i = 0; i < self->layer_buckets->len; i ++)
+    {
+      LayerBucket *bucket = self->layer_buckets->pdata[i];
+      g_ptr_array_sort (bucket->symbols, (GCompareFunc)child_info_compare);
+    }
+}
 
 ShumateVectorSymbolContainer *
 shumate_vector_symbol_container_new (ShumateMapSource *map_source,
@@ -127,7 +191,7 @@ shumate_vector_symbol_container_finalize (GObject *object)
 {
   ShumateVectorSymbolContainer *self = (ShumateVectorSymbolContainer *)object;
 
-  g_list_free_full (self->children, (GDestroyNotify) g_free);
+  g_clear_pointer (&self->layer_buckets, g_ptr_array_unref);
   g_clear_pointer (&self->collision, shumate_vector_collision_free);
 
   G_OBJECT_CLASS (shumate_vector_symbol_container_parent_class)->finalize (object);
@@ -276,50 +340,57 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
       rotate_around_origin (&self->collision->delta_x, &self->collision->delta_y, rotation);
     }
 
-  for (GList *l = self->children; l != NULL; l = l->next)
+  /* Higher layers have priority during placement, so iterate the
+     array from back to front */
+  for (int i = self->layer_buckets->len - 1; i >= 0; i --)
     {
-      ChildInfo *child = l->data;
-      double tile_size_at_zoom = tile_size * pow (2, zoom_level - child->zoom);
-      double x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
-      double y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
+      LayerBucket *bucket = g_ptr_array_index (self->layer_buckets, i);
 
-      rotate_around_center (&x, &y, width, height, rotation);
-
-      if (recalc)
+      for (int j = 0; j < bucket->symbols->len; j ++)
         {
-          gboolean now_visible =
-            shumate_vector_symbol_calculate_collision (child->symbol,
-                                                       self->collision,
-                                                       x,
-                                                       y,
-                                                       tile_size_at_zoom,
-                                                       rotation,
-                                                       &child->bounds);
+          ChildInfo *child = g_ptr_array_index (bucket->symbols, j);
+          double tile_size_at_zoom = tile_size * pow (2, zoom_level - child->zoom);
+          double x = (child->tile_x + child->x) * tile_size_at_zoom - center_x + width/2.0;
+          double y = (child->tile_y + child->y) * tile_size_at_zoom - center_y + height/2.0;
 
-          if (now_visible != child->visible)
+          rotate_around_center (&x, &y, width, height, rotation);
+
+          if (recalc)
             {
-              gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), now_visible);
-              child->visible = now_visible;
+              gboolean now_visible =
+                shumate_vector_symbol_calculate_collision (child->symbol,
+                                                          self->collision,
+                                                          x,
+                                                          y,
+                                                          tile_size_at_zoom,
+                                                          rotation,
+                                                          &child->bounds);
+
+              if (now_visible != child->visible)
+                {
+                  gtk_widget_set_child_visible (GTK_WIDGET (child->symbol), now_visible);
+                  child->visible = now_visible;
+                }
+
+              if (now_visible)
+                self->visible_count ++;
             }
 
-          if (now_visible)
-            self->visible_count ++;
+          if (!child->visible)
+            continue;
+
+          gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, NULL, NULL, NULL);
+          gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, NULL, NULL, NULL);
+
+          alloc.x = child->bounds.origin.x - self->collision->delta_x;
+          alloc.y = child->bounds.origin.y - self->collision->delta_y;
+          alloc.width = child->bounds.size.width;
+          alloc.height = child->bounds.size.height;
+
+          gtk_widget_size_allocate (GTK_WIDGET (child->symbol), &alloc, -1);
+          if (child->symbol_info->line != NULL)
+            gtk_widget_queue_draw (GTK_WIDGET (child->symbol));
         }
-
-      if (!child->visible)
-        continue;
-
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_HORIZONTAL, -1, NULL, NULL, NULL, NULL);
-      gtk_widget_measure (GTK_WIDGET (child->symbol), GTK_ORIENTATION_VERTICAL, -1, NULL, NULL, NULL, NULL);
-
-      alloc.x = child->bounds.origin.x - self->collision->delta_x;
-      alloc.y = child->bounds.origin.y - self->collision->delta_y;
-      alloc.width = child->bounds.size.width;
-      alloc.height = child->bounds.size.height;
-
-      gtk_widget_size_allocate (GTK_WIDGET (child->symbol), &alloc, -1);
-      if (child->symbol_info->line != NULL)
-        gtk_widget_queue_draw (GTK_WIDGET (child->symbol));
     }
 
   self->labels_changed = FALSE;
@@ -339,20 +410,25 @@ shumate_vector_symbol_container_snapshot (GtkWidget   *widget,
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
   ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
 
-  for (GList *l = self->children; l != NULL; l = l->next)
+  for (int i = 0; i < self->layer_buckets->len; i ++)
     {
-      ChildInfo *child = (ChildInfo *)l->data;
-      double correct_x = child->bounds.origin.x - self->collision->delta_x;
-      double correct_y = child->bounds.origin.y - self->collision->delta_y;
+      LayerBucket *bucket = g_ptr_array_index (self->layer_buckets, i);
 
-      gtk_snapshot_save (snapshot);
-      gtk_snapshot_translate (snapshot,
-                              &GRAPHENE_POINT_INIT (
-                                correct_x - (int) correct_x,
-                                correct_y - (int) correct_y
-                              ));
-      gtk_widget_snapshot_child (widget, GTK_WIDGET (child->symbol), snapshot);
-      gtk_snapshot_restore (snapshot);
+      for (int j = 0; j < bucket->symbols->len; j ++)
+        {
+          ChildInfo *child = g_ptr_array_index (bucket->symbols, j);
+          double correct_x = child->bounds.origin.x - self->collision->delta_x;
+          double correct_y = child->bounds.origin.y - self->collision->delta_y;
+
+          gtk_snapshot_save (snapshot);
+          gtk_snapshot_translate (snapshot,
+                                  &GRAPHENE_POINT_INIT (
+                                    correct_x - (int) correct_x,
+                                    correct_y - (int) correct_y
+                                  ));
+          gtk_widget_snapshot_child (widget, GTK_WIDGET (child->symbol), snapshot);
+          gtk_snapshot_restore (snapshot);
+        }
     }
 
   if (shumate_inspector_settings_get_show_collision_boxes (settings))
@@ -409,6 +485,7 @@ shumate_vector_symbol_container_class_init (ShumateVectorSymbolContainerClass *k
 static void
 shumate_vector_symbol_container_init (ShumateVectorSymbolContainer *self)
 {
+  self->layer_buckets = g_ptr_array_new_with_free_func ((GDestroyNotify)layer_bucket_free);
 }
 
 static void
@@ -429,13 +506,6 @@ on_symbol_clicked (ShumateVectorSymbolContainer *self,
   shumate_symbol_event_set_lat_lon (event, lat, lon);
 
   g_signal_emit (self, signals[SYMBOL_CLICKED], 0, event);
-}
-
-
-static int
-child_info_compare (ChildInfo *a, ChildInfo *b)
-{
-  return shumate_vector_symbol_info_compare (a->symbol_info, b->symbol_info);
 }
 
 
@@ -465,8 +535,9 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
       info->zoom = zoom;
       info->visible = TRUE;
 
-      self->children = g_list_prepend (self->children, info);
+      add_symbol_to_layer_buckets (self, info);
       gtk_widget_set_parent (GTK_WIDGET (info->symbol), GTK_WIDGET (self));
+      self->child_count ++;
 
       g_signal_connect_object (info->symbol,
                                "clicked",
@@ -475,7 +546,7 @@ shumate_vector_symbol_container_add_symbols (ShumateVectorSymbolContainer *self,
                                G_CONNECT_SWAPPED);
     }
 
-  self->children = g_list_sort (self->children, (GCompareFunc)child_info_compare);
+  sort_layer_buckets (self);
   self->labels_changed = TRUE;
 }
 
@@ -490,18 +561,32 @@ shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContainer *se
 
   g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
 
-  for (GList *l = self->children; l != NULL; l = l->next)
+  for (int i = 0; i < self->layer_buckets->len; i ++)
     {
-      ChildInfo *info = l->data;
+      LayerBucket *bucket = g_ptr_array_index (self->layer_buckets, i);
+      int k = 0;
 
-      if (info->tile_x != tile_x || info->tile_y != tile_y || info->zoom != zoom)
-        continue;
+      for (int j = 0; j < bucket->symbols->len; j ++)
+        {
+          ChildInfo *info = g_ptr_array_index (bucket->symbols, j);
 
-      gtk_widget_unparent (GTK_WIDGET (info->symbol));
-      g_clear_pointer (&l->data, g_free);
+          if (info->tile_x == tile_x && info->tile_y == tile_y && info->zoom == zoom)
+            {
+              gtk_widget_unparent (GTK_WIDGET (info->symbol));
+              self->child_count --;
+              g_clear_pointer (&g_ptr_array_index (bucket->symbols, j), g_free);
+            }
+          else
+            {
+              g_ptr_array_index (bucket->symbols, j) = NULL;
+              g_ptr_array_index (bucket->symbols, k) = info;
+              k ++;
+            }
+        }
+
+      g_ptr_array_set_size (bucket->symbols, k);
     }
 
-  self->children = g_list_remove_all (self->children, NULL);
   self->labels_changed = TRUE;
 }
 
@@ -525,5 +610,5 @@ shumate_vector_symbol_container_get_collision (ShumateVectorSymbolContainer *sel
 char *
 shumate_vector_symbol_container_get_debug_text (ShumateVectorSymbolContainer *self)
 {
-  return g_strdup_printf ("symbols: %d, %d visible\n", g_list_length (self->children), self->visible_count);
+  return g_strdup_printf ("symbols: %d, %d visible\n", self->child_count, self->visible_count);
 }
