@@ -26,18 +26,26 @@ struct _ShumateVectorSymbolLayer
 {
   ShumateVectorLayer parent_instance;
 
+  ShumateVectorExpression *icon_allow_overlap;
   ShumateVectorExpression *icon_anchor;
   ShumateVectorExpression *icon_color;
+  ShumateVectorExpression *icon_ignore_placement;
   ShumateVectorExpression *icon_image;
   ShumateVectorExpression *icon_opacity;
+  ShumateVectorExpression *icon_optional;
+  ShumateVectorExpression *icon_overlap;
   ShumateVectorExpression *icon_rotate;
   ShumateVectorExpression *icon_rotation_alignment;
   ShumateVectorExpression *icon_size;
   ShumateVectorExpression *text_anchor;
   ShumateVectorExpression *text_field;
   ShumateVectorExpression *text_letter_spacing;
+  ShumateVectorExpression *text_allow_overlap;
+  ShumateVectorExpression *text_ignore_placement;
   ShumateVectorExpression *text_color;
   ShumateVectorExpression *text_opacity;
+  ShumateVectorExpression *text_optional;
+  ShumateVectorExpression *text_overlap;
   ShumateVectorExpression *text_size;
   ShumateVectorExpression *cursor;
   ShumateVectorExpression *text_padding;
@@ -88,8 +96,16 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       JsonNode *text_offset_node;
       JsonArray *text_font;
 
+      layer->icon_allow_overlap = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-allow-overlap"), error);
+      if (layer->icon_allow_overlap == NULL)
+        return NULL;
+
       layer->icon_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-anchor"), error);
       if (layer->icon_anchor == NULL)
+        return NULL;
+
+      layer->icon_ignore_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-ignore-placement"), error);
+      if (layer->icon_ignore_placement == NULL)
         return NULL;
 
       layer->icon_image = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-image"), error);
@@ -117,6 +133,14 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->icon_offset_y = json_array_get_double_element (icon_offset, 1);
         }
 
+      layer->icon_optional = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-optional"), error);
+      if (layer->icon_optional == NULL)
+        return NULL;
+
+      layer->icon_overlap = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-overlap"), error);
+      if (layer->icon_overlap == NULL)
+        return NULL;
+
       layer->icon_rotate = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-rotate"), error);
       if (layer->icon_rotate == NULL)
         return NULL;
@@ -129,8 +153,16 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
       if (layer->icon_rotation_alignment == NULL)
         return NULL;
 
+      layer->text_allow_overlap = shumate_vector_expression_from_json (json_object_get_member (layout, "text-allow-overlap"), error);
+      if (layer->text_allow_overlap == NULL)
+        return NULL;
+
       layer->text_field = shumate_vector_expression_from_json (json_object_get_member (layout, "text-field"), error);
       if (layer->text_field == NULL)
+        return NULL;
+
+      layer->text_ignore_placement = shumate_vector_expression_from_json (json_object_get_member (layout, "text-ignore-placement"), error);
+      if (layer->text_ignore_placement == NULL)
         return NULL;
 
       layer->text_letter_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "text-letter-spacing"), error);
@@ -165,6 +197,14 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
           layer->text_offset_x = json_array_get_double_element (text_offset, 0);
           layer->text_offset_y = json_array_get_double_element (text_offset, 1);
         }
+
+      layer->text_optional = shumate_vector_expression_from_json (json_object_get_member (layout, "text-optional"), error);
+      if (layer->text_optional == NULL)
+        return NULL;
+
+      layer->text_overlap = shumate_vector_expression_from_json (json_object_get_member (layout, "text-overlap"), error);
+      if (layer->text_overlap == NULL)
+        return NULL;
 
       layer->text_rotation_alignment = shumate_vector_expression_from_json (json_object_get_member (layout, "text-rotation-alignment"), error);
       if (layer->text_rotation_alignment == NULL)
@@ -231,14 +271,20 @@ shumate_vector_symbol_layer_finalize (GObject *object)
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (object);
 
+  g_clear_object (&self->icon_allow_overlap);
   g_clear_object (&self->icon_anchor);
   g_clear_object (&self->icon_color);
+  g_clear_object (&self->icon_ignore_placement);
   g_clear_object (&self->icon_image);
   g_clear_object (&self->icon_opacity);
+  g_clear_object (&self->icon_optional);
+  g_clear_object (&self->icon_overlap);
   g_clear_object (&self->icon_rotate);
   g_clear_object (&self->icon_rotation_alignment);
   g_clear_object (&self->icon_size);
+  g_clear_object (&self->text_allow_overlap);
   g_clear_object (&self->text_field);
+  g_clear_object (&self->text_ignore_placement);
   g_clear_object (&self->text_anchor);
   g_clear_object (&self->text_color);
   g_clear_object (&self->text_size);
@@ -246,6 +292,8 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_keep_upright);
   g_clear_object (&self->text_letter_spacing);
   g_clear_object (&self->text_opacity);
+  g_clear_object (&self->text_optional);
+  g_clear_object (&self->text_overlap);
   g_clear_object (&self->text_padding);
   g_clear_object (&self->text_rotation_alignment);
   g_clear_object (&self->symbol_sort_key);
@@ -432,8 +480,11 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .tags = g_hash_table_ref (tags),
 
     .icon_anchor = shumate_vector_expression_eval_anchor (self->icon_anchor, scope),
+    .icon_ignore_placement = shumate_vector_expression_eval_boolean (self->icon_ignore_placement, scope, FALSE),
     .icon_image = g_steal_pointer (&icon_image),
     .icon_opacity = CLAMP (shumate_vector_expression_eval_number (self->icon_opacity, scope, 1.0), 0.0, 1.0),
+    .icon_optional = shumate_vector_expression_eval_boolean (self->icon_optional, scope, FALSE),
+    .icon_overlap = shumate_vector_expression_eval_overlap (self->icon_overlap, self->icon_allow_overlap, scope),
     .icon_rotate = shumate_vector_expression_eval_number (self->icon_rotate, scope, 0.0) * G_PI / 180,
     .icon_rotation_alignment = icon_rotation_alignment,
     .icon_size = shumate_vector_expression_eval_number (self->icon_size, scope, 1.0),
@@ -443,8 +494,11 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     .formatted_text = g_steal_pointer (&text_field),
 
     .text_anchor = shumate_vector_expression_eval_anchor (self->text_anchor, scope),
+    .text_ignore_placement = shumate_vector_expression_eval_boolean (self->text_ignore_placement, scope, FALSE),
     .text_letter_spacing = shumate_vector_expression_eval_number (self->text_letter_spacing, scope, 0.0),
     .text_opacity = shumate_vector_expression_eval_number (self->text_opacity, scope, 1.0),
+    .text_optional = shumate_vector_expression_eval_boolean (self->text_optional, scope, FALSE),
+    .text_overlap = shumate_vector_expression_eval_overlap (self->text_overlap, self->text_allow_overlap, scope),
     .text_size = shumate_vector_expression_eval_number (self->text_size, scope, 16.0),
     .text_padding = shumate_vector_expression_eval_number (self->text_padding, scope, 2.0),
     .text_font = g_strdup (self->text_fonts),

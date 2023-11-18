@@ -85,4 +85,9 @@ ShumateVectorPlacement shumate_vector_expression_eval_placement (ShumateVectorEx
 
 ShumateVectorAnchor shumate_vector_expression_eval_anchor (ShumateVectorExpression  *self,
                                                            ShumateVectorRenderScope *scope);
+
+ShumateVectorOverlap shumate_vector_expression_eval_overlap (ShumateVectorExpression  *self,
+                                                             ShumateVectorExpression  *allow_overlap,
+                                                             ShumateVectorRenderScope *scope);
+
 G_END_DECLS

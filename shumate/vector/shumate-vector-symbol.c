@@ -43,6 +43,9 @@ struct _ShumateVectorSymbol
   ShumateVectorPoint midpoint;
   double midpoint_angle;
   double line_length;
+
+  uint8_t show_text : 1;
+  uint8_t show_icon : 1;
 };
 
 G_DEFINE_TYPE (ShumateVectorSymbol, shumate_vector_symbol, GTK_TYPE_WIDGET)
@@ -577,7 +580,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
   gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (self->x - self->bounds.origin.x,
                                                           self->y - self->bounds.origin.y));
 
-  if (self->symbol_info->details->icon_image && self->symbol_info->details->icon_opacity > 0.0)
+  if (self->show_icon && self->symbol_info->details->icon_image && self->symbol_info->details->icon_opacity > 0.0)
     {
       double angle = 0;
       double icon_width = shumate_vector_sprite_get_width (self->symbol_info->details->icon_image)
@@ -632,7 +635,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
       gtk_snapshot_restore (snapshot);
     }
 
-  if (self->glyphs && self->symbol_info->details->text_opacity > 0.0)
+  if (self->show_text && self->glyphs && self->symbol_info->details->text_opacity > 0.0)
     {
       double length = self->layout_width / tile_size_for_zoom;
       double start_pos = MAX (0, self->symbol_info->line_position - (length / 2.0));
@@ -720,7 +723,7 @@ shumate_vector_symbol_snapshot (GtkWidget   *widget,
 
       gtk_snapshot_restore (snapshot);
     }
-  else if (self->glyphs_node && self->symbol_info->details->text_opacity > 0.0)
+  else if (self->show_text && self->glyphs_node && self->symbol_info->details->text_opacity > 0.0)
     {
       double angle = 0;
       double offset_x = self->symbol_info->details->text_offset_x * self->symbol_info->details->text_size;
@@ -863,6 +866,7 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
   ShumateVectorPointIter iter;
   ShumateVectorPoint point;
   ShumateVectorPoint midpoint = {0};
+  int save = 0;
 
   shumate_vector_collision_rollback_pending (collision, 0);
 
@@ -884,10 +888,15 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
       g_assert (self->symbol_info->line != NULL);
 
       if (length > line_length - start_pos)
-        return FALSE;
+        {
+          self->show_text = FALSE;
+          return FALSE;
+        }
 
       shumate_vector_point_iter_init (&iter, self->symbol_info->line);
       shumate_vector_point_iter_advance (&iter, start_pos);
+
+      self->show_text = TRUE;
 
       do
         {
@@ -911,11 +920,22 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
             xextent + self->symbol_info->details->text_padding,
             yextent + self->symbol_info->details->text_padding,
             rotation + shumate_vector_point_iter_get_current_angle (&iter),
+            self->symbol_info->details->text_overlap,
+            self->symbol_info->details->text_ignore_placement,
             self
           );
 
           if (!check)
-            return FALSE;
+            {
+              if (self->symbol_info->details->text_optional)
+                {
+                  shumate_vector_collision_rollback_pending (collision, save);
+                  self->show_text = FALSE;
+                  break;
+                }
+              else
+                return FALSE;
+            }
         }
       while ((length -= shumate_vector_point_iter_next_segment (&iter)) > 0);
     }
@@ -933,6 +953,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
       rotate_around_center (&offset_x, &offset_y, angle);
 
+      self->show_text = TRUE;
+
       check = shumate_vector_collision_check (
         collision,
         x + midpoint.x + offset_x,
@@ -940,12 +962,24 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         self->layout_width / 2.0 + self->symbol_info->details->text_padding,
         yextent + self->symbol_info->details->text_padding,
         angle,
+        self->symbol_info->details->text_overlap,
+        self->symbol_info->details->text_ignore_placement,
         self
       );
 
       if (!check)
-        return FALSE;
+        {
+          if (self->symbol_info->details->text_optional)
+            {
+              shumate_vector_collision_rollback_pending (collision, save);
+              self->show_text = FALSE;
+            }
+          else
+            return FALSE;
+        }
     }
+
+  save = shumate_vector_collision_save_pending (collision);
 
   if (self->symbol_info->details->icon_image)
     {
@@ -957,6 +991,8 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
 
       double offset_x = self->symbol_info->details->icon_offset_x * self->symbol_info->details->icon_size;
       double offset_y = self->symbol_info->details->icon_offset_y * self->symbol_info->details->icon_size;
+
+      self->show_icon = TRUE;
 
       add_anchor_offset (self->symbol_info->details->icon_anchor, &offset_x, &offset_y, icon_width, icon_height);
 
@@ -972,12 +1008,25 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
         icon_width / 2,
         icon_height / 2,
         angle,
+        self->symbol_info->details->icon_overlap,
+        self->symbol_info->details->icon_ignore_placement,
         self
       );
 
       if (!check)
-        return FALSE;
+        {
+          if (self->symbol_info->details->icon_optional)
+            {
+              shumate_vector_collision_rollback_pending (collision, save);
+              self->show_icon = FALSE;
+            }
+          else
+            return FALSE;
+        }
     }
+
+  if (!self->show_icon && !self->show_text)
+    return FALSE;
 
   shumate_vector_collision_commit_pending (collision, &self->bounds);
   *bounds_out = self->bounds;

@@ -42,6 +42,8 @@ gboolean shumate_vector_collision_check (ShumateVectorCollision *self,
                                          double                  xextent,
                                          double                  yextent,
                                          double                  rotation,
+                                         ShumateVectorOverlap    overlap,
+                                         gboolean                ignore_placement,
                                          gpointer                tag);
 int shumate_vector_collision_save_pending (ShumateVectorCollision *self);
 void shumate_vector_collision_rollback_pending (ShumateVectorCollision *self,

@@ -27,6 +27,12 @@
 G_BEGIN_DECLS
 
 typedef enum {
+  SHUMATE_VECTOR_OVERLAP_NEVER,
+  SHUMATE_VECTOR_OVERLAP_ALWAYS,
+  SHUMATE_VECTOR_OVERLAP_COOPERATIVE,
+} ShumateVectorOverlap;
+
+typedef enum {
   SHUMATE_VECTOR_ALIGNMENT_AUTO,
   SHUMATE_VECTOR_ALIGNMENT_MAP,
   SHUMATE_VECTOR_ALIGNMENT_VIEWPORT,
@@ -79,6 +85,9 @@ typedef struct {
   ShumateVectorPlacement symbol_placement;
   float symbol_spacing;
 
+  ShumateVectorOverlap icon_overlap;
+  ShumateVectorOverlap text_overlap;
+
   int tile_x;
   int tile_y;
   int tile_zoom_level;
@@ -91,6 +100,10 @@ typedef struct {
   GHashTable *tags;
 
   gboolean text_keep_upright : 1;
+  gboolean text_ignore_placement : 1;
+  gboolean text_optional : 1;
+  gboolean icon_ignore_placement : 1;
+  gboolean icon_optional : 1;
 
   /*< private >*/
   guint ref_count;

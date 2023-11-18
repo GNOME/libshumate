@@ -255,6 +255,33 @@ shumate_vector_expression_eval_anchor (ShumateVectorExpression  *self,
   return SHUMATE_VECTOR_ANCHOR_CENTER;
 }
 
+ShumateVectorOverlap
+shumate_vector_expression_eval_overlap (ShumateVectorExpression  *self,
+                                        ShumateVectorExpression  *allow_overlap,
+                                        ShumateVectorRenderScope *scope)
+{
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  const char *string;
+  gboolean result;
+
+  shumate_vector_expression_eval (self, scope, &value);
+
+  if (shumate_vector_value_get_string (&value, &string))
+    {
+      if (g_strcmp0 (string, "always") == 0)
+        return SHUMATE_VECTOR_OVERLAP_ALWAYS;
+      else if (g_strcmp0 (string, "never") == 0)
+        return SHUMATE_VECTOR_OVERLAP_NEVER;
+      else if (g_strcmp0 (string, "cooperative") == 0)
+        return SHUMATE_VECTOR_OVERLAP_COOPERATIVE;
+    }
+
+  if (shumate_vector_expression_eval_boolean (allow_overlap, scope, FALSE))
+    return SHUMATE_VECTOR_OVERLAP_ALWAYS;
+  else
+    return SHUMATE_VECTOR_OVERLAP_NEVER;
+}
+
 void
 shumate_vector_expression_context_clear (ShumateVectorExpressionContext *ctx)
 {

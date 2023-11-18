@@ -46,6 +46,7 @@ typedef struct {
   double rotation;
   double aaxextent;
   double aayextent;
+  uint8_t overlap_never : 1;
 } Box;
 
 typedef struct {
@@ -348,8 +349,11 @@ detect_collision (ShumateVectorCollision *self,
                     {
                       Box *b = &((Box*)col->boxes->data)[i];
 
-                      if (rects_intersect (bbox, b))
-                        return TRUE;
+                      if (b->overlap_never || bbox->overlap_never)
+                        {
+                          if (rects_intersect (bbox, b))
+                            return TRUE;
+                        }
                     }
                 }
             }
@@ -367,21 +371,25 @@ shumate_vector_collision_check (ShumateVectorCollision *self,
                                 double                  xextent,
                                 double                  yextent,
                                 double                  rotation,
+                                ShumateVectorOverlap    overlap,
+                                gboolean                ignore_placement,
                                 gpointer                tag)
 {
   Box new_bbox = {
     tag, x, y, xextent, yextent, rotation,
+    .overlap_never = overlap == SHUMATE_VECTOR_OVERLAP_NEVER
   };
 
   axis_align (&new_bbox);
 
-  if (detect_collision (self, &new_bbox))
+  if (overlap != SHUMATE_VECTOR_OVERLAP_ALWAYS)
     {
-      g_array_set_size (self->pending_boxes, 0);
-      return FALSE;
+      if (detect_collision (self, &new_bbox))
+        return FALSE;
     }
 
-  g_array_append_val (self->pending_boxes, new_bbox);
+  if (!ignore_placement)
+    g_array_append_val (self->pending_boxes, new_bbox);
 
   return TRUE;
 }
