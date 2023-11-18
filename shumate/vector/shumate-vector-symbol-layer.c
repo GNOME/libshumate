@@ -278,7 +278,8 @@ place_point_label (ShumateVectorSymbolDetails *details,
                    double                      y,
                    ShumateVectorRenderScope   *scope)
 {
-  g_ptr_array_add (scope->symbols, create_symbol_info (details, x, y));
+  if (x >= 0 && x < 1 && y >= 0 && y < 1)
+    g_ptr_array_add (scope->symbols, create_symbol_info (details, x, y));
 }
 
 
@@ -336,19 +337,13 @@ place_line_label (ShumateVectorSymbolDetails *details,
 
           if (point.x >= 0 && point.x < 1 && point.y >= 0 && point.y < 1)
             {
-              ShumateVectorPoint point;
-              shumate_vector_point_iter_get_current_point (&iter, &point);
+              symbol_info = create_symbol_info (details, point.x, point.y);
 
-              if (point.x > 0 && point.x < 1 && point.y > 0 && point.y < 1)
-                {
-                  symbol_info = create_symbol_info (details, point.x, point.y);
+              shumate_vector_symbol_info_set_line_points (symbol_info,
+                                                          shumate_vector_line_string_copy (linestring),
+                                                          distance);
 
-                  shumate_vector_symbol_info_set_line_points (symbol_info,
-                                                              shumate_vector_line_string_copy (linestring),
-                                                              distance);
-
-                  g_ptr_array_add (scope->symbols, symbol_info);
-                }
+              g_ptr_array_add (scope->symbols, symbol_info);
             }
 
           shumate_vector_point_iter_advance (&iter, spacing);
@@ -489,8 +484,6 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
                 {
                   x = string->points[j].x;
                   y = string->points[j].y;
-                  if (x < 0 || x >= 1 || y < 0 || y >= 1)
-                    break;
                   place_point_label (details, x, y, scope);
                 }
             }
@@ -501,10 +494,6 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
     case SHUMATE_VECTOR_GEOMETRY_LINESTRING:
     case SHUMATE_VECTOR_GEOMETRY_POLYGON:
       shumate_vector_render_scope_get_geometry_center (scope, &x, &y);
-      if (x < 0 || x >= 1 || y < 0 || y >= 1)
-        /* Tiles usually include a bit of margin. Don't include symbols that are
-         * covered by a different tile. */
-        break;
 
       if (symbol_placement == SHUMATE_VECTOR_PLACEMENT_LINE
           || symbol_placement == SHUMATE_VECTOR_PLACEMENT_LINE_CENTER)
