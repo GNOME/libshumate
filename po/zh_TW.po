@@ -1,0 +1,50 @@
+# Chinese (Taiwan) translation for libshumate.
+# Copyright (C) 2023 libshumate's COPYRIGHT HOLDER
+# This file is distributed under the same license as the libshumate package.
+# Cheng-Chia Tseng <pswo10680@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libshumate libshumate-1-1\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
+"POT-Creation-Date: 2023-10-07 15:05+0000\n"
+"PO-Revision-Date: 2023-10-21 19:37+0800\n"
+"Last-Translator: Cheng-Chia Tseng <zerngjia@gmail.com>\n"
+"Language-Team: Chinese (Taiwan) <chinese-l10n@googlegroups.com>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "拉近"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "拉遠"
+
+#. m is the unit for meters
+#: shumate/shumate-scale.c:197
+#, c-format
+msgid "%d m"
+msgstr "%d 公尺"
+
+#. km is the unit for kilometers
+#: shumate/shumate-scale.c:200
+#, c-format
+msgid "%d km"
+msgstr "%d 公里"
+
+#. ft is the unit for feet
+#: shumate/shumate-scale.c:206
+#, c-format
+msgid "%d ft"
+msgstr "%d 英尺"
+
+#. mi is the unit for miles
+#: shumate/shumate-scale.c:209
+#, c-format
+msgid "%d mi"
+msgstr "%d 英里"
