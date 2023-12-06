@@ -1,0 +1,51 @@
+# British English translation for libshumate.
+# Copyright (C) 2023 libshumate's COPYRIGHT HOLDER
+# This file is distributed under the same license as the libshumate package.
+# Bruce Cowan <bruce@bcowan.me.uk>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libshumate libshumate-1-1\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
+"POT-Creation-Date: 2023-11-28 03:32+0000\n"
+"PO-Revision-Date: 2023-12-06 12:51+0000\n"
+"Last-Translator: Bruce Cowan <bruce@bcowan.me.uk>\n"
+"Language-Team: British English <en_GB@li.org>\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);;\n"
+"X-Generator: Poedit 3.4\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Zoom In"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Zoom Out"
+
+#. m is the unit for meters
+#: shumate/shumate-scale.c:197
+#, c-format
+msgid "%d m"
+msgstr "%d m"
+
+#. km is the unit for kilometers
+#: shumate/shumate-scale.c:200
+#, c-format
+msgid "%d km"
+msgstr "%d km"
+
+#. ft is the unit for feet
+#: shumate/shumate-scale.c:206
+#, c-format
+msgid "%d ft"
+msgstr "%d ft"
+
+#. mi is the unit for miles
+#: shumate/shumate-scale.c:209
+#, c-format
+msgid "%d mi"
+msgstr "%d mi"
