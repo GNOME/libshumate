@@ -10,6 +10,7 @@ tests = [
   'coordinate',
   'data-source-request',
   'file-cache',
+  'location',
   'map',
   'marker',
   'marker-layer',

@@ -26,6 +26,8 @@
  * and longitude and can be used to specify location on the map.
  */
 
+#include <math.h>
+
 #include "shumate-location.h"
 
 G_DEFINE_INTERFACE (ShumateLocation, shumate_location, G_TYPE_OBJECT);
@@ -110,4 +112,32 @@ double
 shumate_location_get_longitude (ShumateLocation *location)
 {
   return SHUMATE_LOCATION_GET_IFACE (location)->get_longitude (location);
+}
+
+#define EARTH_RADIUS 6378137.0 /* meters, Equatorial radius */
+
+/**
+ * shumate_location_distance:
+ * @this: a [iface@Location]
+ * @other: a [iface@Location]
+ *
+ * Calculates the distance in meters between two locations.
+ *
+ * This function uses the great-circle distance formula, which assumes
+ * Earth is a perfect sphere. This limits the accuracy of the result,
+ * but is good enough for most purposes.
+ *
+ * Returns: the distance in meters between @this and @other
+ *
+ * Since: 1.2
+ */
+double
+shumate_location_distance (ShumateLocation *this, ShumateLocation *other)
+{
+  double lat1 = shumate_location_get_latitude (this) * G_PI / 180.0f;
+  double lon1 = shumate_location_get_longitude (this) * G_PI / 180.0f;
+  double lat2 = shumate_location_get_latitude (other) * G_PI / 180.0f;
+  double lon2 = shumate_location_get_longitude (other) * G_PI / 180.0f;
+
+  return acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (lon2 - lon1)) * EARTH_RADIUS;
 }
