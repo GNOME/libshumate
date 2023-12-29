@@ -7,15 +7,23 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-06-02 12:33+0000\n"
-"PO-Revision-Date: 2022-06-06 12:33+0200\n"
+"POT-Creation-Date: 2023-12-13 10:01+0000\n"
+"PO-Revision-Date: 2023-12-29 11:42+0100\n"
 "Last-Translator: Fabio Tomat <f.t.public@gmail.com>\n"
 "Language-Team: Friulian <fur@li.org>\n"
 "Language: fur\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Ingrandìs"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Impiçulìs"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
