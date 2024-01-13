@@ -447,6 +447,9 @@ shumate_vector_reader_iter_get_feature_tag (ShumateVectorReaderIter *self,
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->feature != NULL, FALSE);
 
+  if (key == NULL)
+    return FALSE;
+
   for (int i = 0; i + 1 < self->feature->n_tags; i += 2)
     {
       if (strcmp (self->layer->keys[self->feature->tags[i]], key) == 0)
