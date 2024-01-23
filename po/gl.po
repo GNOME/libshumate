@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-08-11 22:00+0200\n"
-"Last-Translator: Fran Dieguez <frandieguez@gnome.org>\n"
+"POT-Creation-Date: 2023-10-28 12:43+0000\n"
+"PO-Revision-Date: 2024-01-23 22:22+0100\n"
+"Last-Translator: Fran Dieguez <fran.dieguez@gnome.org>\n"
 "Language-Team: Galician <Proxecto Trasno <proxecto@trasno.gal>>\n"
 "Language: gl\n"
 "MIME-Version: 1.0\n"
@@ -22,7 +22,19 @@ msgstr ""
 "X-DL-Branch: main\n"
 "X-DL-Domain: po\n"
 "X-DL-State: Translating\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Mostrar capa superposta de depuración"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Mostrar limites das teselas"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Mostrar caixas de colisión"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -55,3 +67,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
