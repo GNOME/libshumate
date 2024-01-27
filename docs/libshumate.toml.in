@@ -39,8 +39,13 @@ file_format = "{filename}#L{line}"
 urlmap_file = "urlmap.js"
 content_files = [
   "maplibre-compatibility.md",
+  "inspector.md",
 ]
 content_images = [
   "libshumate-r.svg",
+  "figures/inspector.png",
+  "figures/inspector-overlay.png",
+  "figures/inspector-collision.png",
+  "figures/inspector-tile-bounds.png",
 ]
 
