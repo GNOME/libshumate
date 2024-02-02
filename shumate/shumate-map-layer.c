@@ -609,6 +609,12 @@ snap_coordinate (double point,
   return round ((point - translate) / size) * size + translate;
 }
 
+static double
+round_px (double x, double scale_factor)
+{
+  return round (x * scale_factor) / scale_factor;
+}
+
 static void
 shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 {
@@ -629,6 +635,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   double map_height = shumate_map_source_get_row_count (self->map_source, zoom_level)
     * tile_size_for_zoom;
   gboolean show_tile_bounds = shumate_inspector_settings_get_show_tile_bounds (shumate_inspector_settings_get_default ());
+  double scale_factor = gtk_widget_get_scale_factor (widget);
 
   GHashTableIter iter;
   gpointer key;
@@ -669,19 +676,25 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
       ShumateTile *tile = value;
       GdkPaintable *paintable = shumate_tile_get_paintable (tile);
       double size = tile_size * pow (2, zoom_level - pos->zoom);
+      double x = -(longitude_x - width/2.0) + size * pos->x;
+      double y = -(latitude_y - height/2.0) + size * pos->y;
 
       if (paintable == NULL)
         continue;
 
       gtk_snapshot_save (snapshot);
 
-      gtk_snapshot_translate (snapshot,
-                              &GRAPHENE_POINT_INIT (
-                                -(longitude_x - width/2.0) + size * pos->x,
-                                -(latitude_y - height/2.0) + size * pos->y
-                              ));
+      gtk_snapshot_translate (snapshot, &GRAPHENE_POINT_INIT (
+        round_px (x, scale_factor),
+        round_px (y, scale_factor)
+      ));
 
-      gdk_paintable_snapshot (paintable, snapshot, size, size);
+      gdk_paintable_snapshot (
+        paintable,
+        snapshot,
+        round_px (x + size, scale_factor) - round_px (x, scale_factor),
+        round_px (y + size, scale_factor) - round_px (y, scale_factor)
+      );
 
       if (show_tile_bounds)
         {
