@@ -1,4 +1,13 @@
 =====================
+Version 1.2.beta
+=====================
+ - Fix artifacts in NGL renderer
+ - Don't crash in vector reader if key is NULL
+ - Enable the vector renderer by default when building (can still be disabled
+   if not needed)
+ - Add distance method for Location
+
+=====================
 Version 1.2.alpha
 =====================
  - Various vector renderer improvements
