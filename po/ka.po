@@ -1,14 +1,14 @@
 # Georgian translation for libshumate.
 # Copyright (C) 2023 libshumate authrors
 # This file is distributed under the same license as the libshumate package.
-# Ekaterine Papava <papava.e@gtu.ge>, 2023.
+# Ekaterine Papava <papava.e@gtu.ge>, 2023-2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-08-17 21:23+0200\n"
+"POT-Creation-Date: 2023-10-28 12:43+0000\n"
+"PO-Revision-Date: 2024-02-12 18:29+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
@@ -17,6 +17,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "გამართვის განლაგების ჩვენება"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "ფილის საზღვრების ჩვენება"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "შეჯახების მართკუთხედების ჩვენება"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -49,3 +61,7 @@ msgstr "%d ფტ"
 #, c-format
 msgid "%d mi"
 msgstr "%d მი"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
