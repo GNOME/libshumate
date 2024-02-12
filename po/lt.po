@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-09-03 21:35+0300\n"
+"POT-Creation-Date: 2023-10-28 12:43+0000\n"
+"PO-Revision-Date: 2024-02-12 23:31+0200\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
@@ -17,7 +17,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "(n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Rodyti derinimo dangalą"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Rodyti plytelių ribas"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Rodyti susidūrimų dėžutes"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -50,3 +62,7 @@ msgstr "%d pėd"
 #, c-format
 msgid "%d mi"
 msgstr "%d myl"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
