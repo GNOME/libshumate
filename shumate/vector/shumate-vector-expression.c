@@ -94,10 +94,50 @@ shumate_vector_expression_real_eval (ShumateVectorExpression  *self,
 }
 
 
+static ShumateVectorIndexBitset *
+shumate_vector_expression_real_eval_bitset (ShumateVectorExpression  *self,
+                                            ShumateVectorRenderScope *scope,
+                                            ShumateVectorIndexBitset *mask)
+{
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (scope->reader);
+  ShumateVectorIndexBitset *result = shumate_vector_index_bitset_new (layer->n_features);
+  int feature_idx = 0;
+
+  if (mask != NULL)
+    {
+      feature_idx = -1;
+      while ((feature_idx = shumate_vector_index_bitset_next (mask, feature_idx)) != -1)
+        {
+          shumate_vector_reader_iter_read_feature (scope->reader, feature_idx);
+          if (shumate_vector_expression_eval_boolean (self, scope, FALSE))
+            shumate_vector_index_bitset_set (result, feature_idx);
+        }
+    }
+  else
+    {
+      shumate_vector_reader_iter_read_feature (scope->reader, 0);
+      while (TRUE)
+        {
+          if (shumate_vector_expression_eval_boolean (self, scope, FALSE))
+            shumate_vector_index_bitset_set (result, feature_idx);
+
+          if (!shumate_vector_reader_iter_next_feature (scope->reader))
+            break;
+
+          feature_idx ++;
+        }
+    }
+
+  return result;
+}
+
+
 static void
 shumate_vector_expression_class_init (ShumateVectorExpressionClass *klass)
 {
   klass->eval = shumate_vector_expression_real_eval;
+  klass->eval_bitset = shumate_vector_expression_real_eval_bitset;
+  klass->collect_indexes = NULL;
 }
 
 
@@ -118,6 +158,27 @@ shumate_vector_expression_eval (ShumateVectorExpression  *self,
     return FALSE;
   else
     return SHUMATE_VECTOR_EXPRESSION_GET_CLASS (self)->eval (self, scope, out);
+}
+
+
+ShumateVectorIndexBitset *
+shumate_vector_expression_eval_bitset (ShumateVectorExpression *self,
+                                       ShumateVectorRenderScope *scope,
+                                       ShumateVectorIndexBitset *mask)
+{
+  g_assert (SHUMATE_IS_VECTOR_EXPRESSION (self));
+  return SHUMATE_VECTOR_EXPRESSION_GET_CLASS (self)->eval_bitset (self, scope, mask);
+}
+
+
+void
+shumate_vector_expression_collect_indexes (ShumateVectorExpression       *self,
+                                           const char                    *layer_name,
+                                           ShumateVectorIndexDescription *index_description)
+{
+  g_assert (SHUMATE_IS_VECTOR_EXPRESSION (self));
+  if (SHUMATE_VECTOR_EXPRESSION_GET_CLASS (self)->collect_indexes != NULL)
+    SHUMATE_VECTOR_EXPRESSION_GET_CLASS (self)->collect_indexes (self, layer_name, index_description);
 }
 
 
@@ -285,7 +346,6 @@ shumate_vector_expression_eval_overlap (ShumateVectorExpression  *self,
 {
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
   const char *string;
-  gboolean result;
 
   shumate_vector_expression_eval (self, scope, &value);
 

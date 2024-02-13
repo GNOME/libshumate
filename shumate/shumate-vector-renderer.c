@@ -36,6 +36,7 @@
 #include "vector/shumate-vector-symbol-info-private.h"
 #include "vector/shumate-vector-utils-private.h"
 #include "vector/shumate-vector-layer-private.h"
+#include "vector/shumate-vector-index-private.h"
 #endif
 
 struct _ShumateVectorRenderer
@@ -53,6 +54,10 @@ struct _ShumateVectorRenderer
   char *style_json;
 
   GPtrArray *layers;
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  ShumateVectorIndexDescription *index_description;
+#endif
 };
 
 
@@ -396,18 +401,26 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
         {
           JsonNode *layer_node = json_array_get_element (layers, i);
           JsonObject *layer_obj;
+          const char *layer_id;
           ShumateVectorLayer *layer;
+          ShumateVectorExpression *filter;
 
           if (!shumate_vector_json_get_object (layer_node, &layer_obj, error))
             return FALSE;
 
+          if (!shumate_vector_json_get_string_member (layer_obj, "id", &layer_id, error))
+            return FALSE;
+
           if (!(layer = shumate_vector_layer_create_from_json (layer_obj, error)))
             {
-              g_prefix_error (error, "layer '%s': ", json_object_get_string_member (layer_obj, "id"));
+              g_prefix_error (error, "layer '%s': ", layer_id);
               return FALSE;
             }
 
           g_ptr_array_add (self->layers, layer);
+          filter = shumate_vector_layer_get_filter (layer);
+          if (filter != NULL)
+            shumate_vector_expression_collect_indexes (filter, shumate_vector_layer_get_source_layer (layer), self->index_description);
         }
     }
 
@@ -483,6 +496,9 @@ static void
 shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
   g_mutex_init (&self->sprites_mutex);
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  self->index_description = shumate_vector_index_description_new ();
+#endif
 }
 
 
@@ -826,6 +842,8 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   scope.zoom_level = shumate_tile_get_zoom_level (tile);
   scope.symbols = symbol_list;
   scope.sprites = sprites;
+  scope.index = NULL;
+  scope.index_description = self->index_description;
 
   if (scope.zoom_level > source_position->zoom)
     {
@@ -862,6 +880,8 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   cairo_destroy (scope.cr);
   cairo_surface_destroy (surface);
   g_clear_object (&scope.reader);
+
+  g_clear_pointer (&scope.index, shumate_vector_index_free);
 
   profile_desc = g_strdup_printf ("(%d, %d) @ %f", scope.tile_x, scope.tile_y, scope.zoom_level);
   SHUMATE_PROFILE_END (profile_desc);

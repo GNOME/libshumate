@@ -21,6 +21,7 @@ tests = {
 if get_option('vector_renderer')
   tests += {
     'vector-expression': {},
+    'vector-index': {},
     'vector-reader': {},
     'vector-renderer': {},
     'vector-sprite-sheet': {},

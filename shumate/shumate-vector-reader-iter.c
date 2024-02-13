@@ -255,6 +255,34 @@ shumate_vector_reader_iter_read_layer_by_name (ShumateVectorReaderIter *self,
   return FALSE;
 }
 
+/*< private >
+ * shumate_vector_reader_iter_get_layer_index:
+ * @self: A #ShumateVectorReaderIter.
+ *
+ * Gets the index of the current layer.
+ *
+ * Returns: The index of the current layer.
+ *
+ * Since: 1.3
+ */
+int
+shumate_vector_reader_iter_get_layer_index (ShumateVectorReaderIter *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), -1);
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  for (int i = 0; i < self->reader->tile->n_layers; i++)
+  {
+    if (self->layer == self->reader->tile->layers[i])
+    {
+      return i;
+    }
+  }
+#endif
+
+  return -1;
+}
+
 /**
  * shumate_vector_reader_iter_get_layer_name:
  * @self: A #ShumateVectorReader.
@@ -399,6 +427,28 @@ shumate_vector_reader_iter_next_feature (ShumateVectorReaderIter *self)
     return FALSE;
 #else
   return FALSE;
+#endif
+}
+
+/*< private >
+ * shumate_vector_reader_iter_get_feature_index:
+ * @self: A [class@VectorReaderIter].
+ *
+ * Gets the index of the current feature.
+ *
+ * Returns: The index of the current feature.
+ *
+ * Since: 1.3
+ */
+int
+shumate_vector_reader_iter_get_feature_index (ShumateVectorReaderIter *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
+  return self->feature_index;
+#else
+  return 0;
 #endif
 }
 

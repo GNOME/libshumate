@@ -24,6 +24,7 @@
 #include "shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
 #include "../shumate-vector-reader-iter-private.h"
+#include "shumate-vector-index-private.h"
 
 typedef enum {
   SHUMATE_VECTOR_GEOMETRY_POINT = VECTOR_TILE__TILE__GEOM_TYPE__POINT,
@@ -40,6 +41,7 @@ typedef struct {
   int tile_x;
   int tile_y;
   int layer_idx;
+  int source_layer_idx;
 
   GPtrArray *symbols;
 
@@ -48,6 +50,8 @@ typedef struct {
   float overzoom_x, overzoom_y, overzoom_scale;
 
   ShumateVectorReaderIter *reader;
+  ShumateVectorIndex *index;
+  ShumateVectorIndexDescription *index_description;
 } ShumateVectorRenderScope;
 
 
@@ -66,3 +70,4 @@ void shumate_vector_render_scope_get_variable (ShumateVectorRenderScope *self, c
 
 GHashTable *shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self);
 
+void shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self);

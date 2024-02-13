@@ -5,6 +5,7 @@ libshumate_sources += files(
   'shumate-vector-expression-interpolate.c',
   'shumate-vector-expression-filter.c',
   'shumate-vector-fill-layer.c',
+  'shumate-vector-index.c',
   'shumate-vector-layer.c',
   'shumate-vector-line-layer.c',
   'shumate-vector-render-scope.c',

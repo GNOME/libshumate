@@ -51,6 +51,7 @@ libshumate_private_h = [
   'vector/shumate-vector-expression-filter-private.h',
   'vector/shumate-vector-expression-interpolate-private.h',
   'vector/shumate-vector-fill-layer-private.h',
+  'vector/shumate-vector-index-private.h',
   'vector/shumate-vector-layer-private.h',
   'vector/shumate-vector-line-layer-private.h',
   'vector/shumate-vector-render-scope-private.h',

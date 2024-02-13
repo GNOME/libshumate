@@ -315,3 +315,136 @@ shumate_vector_render_scope_create_tag_table (ShumateVectorRenderScope *self)
   return g_steal_pointer (&tags);
 }
 
+ShumateVectorIndexBitset *
+shumate_vector_render_scope_get_bitset (ShumateVectorRenderScope *self,
+                                        const char               *field,
+                                        ShumateVectorValue       *value)
+{
+  return shumate_vector_index_get_bitset (self->index, self->layer_idx, field, value);
+}
+
+/* Temporary data for shumate_vector_render_scope_index_layer */
+typedef struct {
+  ShumateVectorIndexBitset *used_values;
+  ShumateVectorIndexBitset *unused_values;
+  GHashTable *indexes;
+  guint8 is_unused;
+} FieldIndexingData;
+
+void
+shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
+{
+  const char *layer_name = shumate_vector_reader_iter_get_layer_name (self->reader);
+  VectorTile__Tile__Layer *layer;
+  FieldIndexingData *fields;
+  int feature_idx = 0;
+
+  if (self->index == NULL)
+    self->index = shumate_vector_index_new ();
+
+  if (shumate_vector_index_has_layer (self->index, self->source_layer_idx))
+    return;
+
+  if (!shumate_vector_index_description_has_layer (self->index_description, layer_name))
+    return;
+
+  layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
+  fields = g_new0 (FieldIndexingData, layer->n_keys);
+
+  /* Read all of the features and build every requested index */
+  shumate_vector_reader_iter_read_feature (self->reader, 0);
+  while (TRUE)
+    {
+      VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
+
+      for (int i = 1; i < feature->n_tags; i += 2)
+        {
+          ShumateVectorIndexBitset *bitset;
+          int key = feature->tags[i - 1];
+          int val = feature->tags[i];
+
+          if (key >= layer->n_keys || val >= layer->n_values)
+            continue;
+
+          if (fields[key].indexes == NULL)
+            {
+              if (fields[key].is_unused)
+                /* We have already looked up this field, and it is not in the description */
+                continue;
+
+              if (shumate_vector_index_description_has_field (self->index_description, layer_name, layer->keys[key]))
+                {
+                  fields[key].indexes = g_hash_table_new (g_direct_hash, g_direct_equal);
+                  fields[key].used_values = shumate_vector_index_bitset_new (layer->n_values);
+                  fields[key].unused_values = shumate_vector_index_bitset_new (layer->n_values);
+                }
+              else
+                {
+                  fields[key].is_unused = TRUE;
+                  continue;
+                }
+            }
+
+          if (shumate_vector_index_bitset_get (fields[key].unused_values, val))
+            continue;
+
+          if (shumate_vector_index_bitset_get (fields[key].used_values, val))
+            bitset = g_hash_table_lookup (fields[key].indexes, GINT_TO_POINTER (val));
+          else
+            {
+              ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+              VectorTile__Tile__Value *v = layer->values[val];
+              const char *field_name = layer->keys[key];
+
+              convert_vector_value (v, &value);
+
+              if (shumate_vector_index_description_has_value (self->index_description, layer_name, field_name, &value))
+                bitset = shumate_vector_index_bitset_new (layer->n_features);
+              else
+                {
+                  shumate_vector_index_bitset_set (fields[key].unused_values, val);
+                  continue;
+                }
+
+              g_hash_table_insert (fields[key].indexes, GINT_TO_POINTER (val), bitset);
+              shumate_vector_index_bitset_set (fields[key].used_values, val);
+            }
+
+          shumate_vector_index_bitset_set (bitset, feature_idx);
+        }
+
+      if (!shumate_vector_reader_iter_next_feature (self->reader))
+        break;
+      feature_idx ++;
+    }
+
+  for (int key = 0; key < layer->n_keys; key ++)
+    {
+      int val;
+      const char *field_name;
+      GHashTableIter field_iter;
+      ShumateVectorIndexBitset *bitset;
+      FieldIndexingData *field = &fields[key];
+
+      if (field->indexes == NULL)
+        continue;
+
+      field_name = layer->keys[key];
+
+      g_hash_table_iter_init (&field_iter, field->indexes);
+      while (g_hash_table_iter_next (&field_iter, (gpointer *)&val, (gpointer *)&bitset))
+        {
+          ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+          VectorTile__Tile__Value *v;
+
+          v = layer->values[val];
+          convert_vector_value (v, &value);
+
+          shumate_vector_index_add_bitset (self->index, self->source_layer_idx, field_name, &value, bitset);
+        }
+
+      g_hash_table_destroy (field->indexes);
+      shumate_vector_index_bitset_free (field->used_values);
+      shumate_vector_index_bitset_free (field->unused_values);
+    }
+}

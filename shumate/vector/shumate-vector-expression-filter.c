@@ -615,6 +615,16 @@ optimize (ShumateVectorExpressionFilter *self)
 {
   switch (self->type)
     {
+    case EXPR_ANY:
+    case EXPR_ALL:
+      if (self->expressions == NULL || self->expressions->len == 0)
+        {
+          g_clear_pointer (&self->expressions, g_ptr_array_unref);
+          shumate_vector_value_set_boolean (&self->value, self->type == EXPR_ALL);
+          self->type = EXPR_LITERAL;
+        }
+      break;
+
     case EXPR_EQ:
     case EXPR_NE:
       {
@@ -694,22 +704,21 @@ optimize (ShumateVectorExpressionFilter *self)
     case EXPR_IN:
     case EXPR_NOT_IN:
       {
-        ShumateVectorExpressionFilter *key_expr, *array_expr;
-
-        if (self->expressions->len != 2)
-          break;
+        ShumateVectorExpressionFilter *key_expr;
 
         key_expr = self->expressions->pdata[0];
-        array_expr = self->expressions->pdata[1];
 
-        if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (key_expr) || !SHUMATE_IS_VECTOR_EXPRESSION_FILTER (array_expr))
+        if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (key_expr))
           break;
         if (key_expr->type != EXPR_FAST_GET)
           break;
-        if (array_expr->type != EXPR_LITERAL)
-          break;
-        if (array_expr->value.type != SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
-          break;
+
+        for (int i = 1, n = self->expressions->len; i < n; i ++)
+          {
+            ShumateVectorExpressionFilter *expr = self->expressions->pdata[i];
+            if (!SHUMATE_IS_VECTOR_EXPRESSION_FILTER (expr) || expr->type != EXPR_LITERAL)
+              break;
+          }
 
         self->type = self->type == EXPR_IN ? EXPR_FAST_IN : EXPR_FAST_NOT_IN;
         self->fast_in.key = g_strdup (key_expr->fast_get_key);
@@ -717,11 +726,25 @@ optimize (ShumateVectorExpressionFilter *self)
         self->fast_in.haystack = g_hash_table_new_full (
           (GHashFunc)shumate_vector_value_hash, (GEqualFunc)shumate_vector_value_equal, (GDestroyNotify)shumate_vector_value_free, NULL
         );
-        for (int i = 0, n = array_expr->value.array->len; i < n; i ++)
+        for (int i = 1; i < self->expressions->len; i ++)
           {
-            ShumateVectorValue *value = g_new0 (ShumateVectorValue, 1);
-            shumate_vector_value_copy (g_ptr_array_index (array_expr->value.array, i), value);
-            g_hash_table_add (self->fast_in.haystack, value);
+            ShumateVectorExpressionFilter *value_expr = self->expressions->pdata[i];
+
+            if (value_expr->value.type == SHUMATE_VECTOR_VALUE_TYPE_ARRAY)
+              {
+                for (int j = 0, n = value_expr->value.array->len; j < n; j ++)
+                  {
+                    ShumateVectorValue *value = g_new0 (ShumateVectorValue, 1);
+                    shumate_vector_value_copy (g_ptr_array_index (value_expr->value.array, j), value);
+                    g_hash_table_add (self->fast_in.haystack, value);
+                  }
+              }
+            else
+              {
+                ShumateVectorValue *value = g_new0 (ShumateVectorValue, 1);
+                shumate_vector_value_copy (&value_expr->value, value);
+                g_hash_table_add (self->fast_in.haystack, value);
+              }
           }
 
         g_clear_pointer (&self->expressions, g_ptr_array_unref);
@@ -1880,6 +1903,149 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
     }
 }
 
+static ShumateVectorIndexBitset *
+shumate_vector_expression_filter_eval_bitset (ShumateVectorExpression  *expr,
+                                              ShumateVectorRenderScope *scope,
+                                              ShumateVectorIndexBitset *mask)
+{
+  ShumateVectorExpressionFilter *self = (ShumateVectorExpressionFilter *)expr;
+  VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (scope->reader);
+  ShumateVectorIndexBitset *bitset = NULL;
+
+  switch (self->type)
+    {
+      case EXPR_LITERAL:
+        {
+          gboolean result = FALSE;
+          bitset = shumate_vector_index_bitset_new (layer->n_features);
+          shumate_vector_value_get_boolean (&self->value, &result);
+          if (!result)
+            shumate_vector_index_bitset_not (bitset);
+          return bitset;
+        }
+
+      case EXPR_FAST_EQ:
+        bitset = shumate_vector_index_get_bitset (scope->index, scope->source_layer_idx, self->fast_eq.key, &self->fast_eq.value);
+        if (bitset == NULL)
+          return shumate_vector_index_bitset_new (layer->n_features);
+        else
+          return shumate_vector_index_bitset_copy (bitset);
+
+      case EXPR_FAST_NE:
+        bitset = shumate_vector_index_get_bitset (scope->index, scope->source_layer_idx, self->fast_eq.key, &self->fast_eq.value);
+        if (bitset == NULL)
+          bitset = shumate_vector_index_bitset_new (layer->n_features);
+        else
+          bitset = shumate_vector_index_bitset_copy (bitset);
+        shumate_vector_index_bitset_not (bitset);
+        return bitset;
+
+      case EXPR_FAST_NOT_IN:
+      case EXPR_FAST_IN:
+        {
+          GHashTableIter iter;
+          ShumateVectorValue *value;
+          bitset = shumate_vector_index_bitset_new (layer->n_features);
+          g_hash_table_iter_init (&iter, self->fast_in.haystack);
+          while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&value))
+            {
+              ShumateVectorIndexBitset *current_bitset = shumate_vector_index_get_bitset (scope->index, scope->source_layer_idx, self->fast_in.key, value);
+              if (current_bitset != NULL)
+                shumate_vector_index_bitset_or (bitset, current_bitset);
+            }
+
+          if (self->type == EXPR_FAST_NOT_IN)
+            shumate_vector_index_bitset_not (bitset);
+
+          return bitset;
+        }
+
+      case EXPR_NOT:
+        bitset = shumate_vector_expression_filter_eval_bitset (g_ptr_array_index (self->expressions, 0), scope, mask);
+        shumate_vector_index_bitset_not (bitset);
+        return bitset;
+
+      case EXPR_ALL:
+        for (int i = 0; i < self->expressions->len; i ++)
+          {
+            ShumateVectorIndexBitset *current_bitset = shumate_vector_expression_filter_eval_bitset (g_ptr_array_index (self->expressions, i), scope, bitset);
+            if (i == 0)
+              bitset = current_bitset;
+            else
+              {
+                shumate_vector_index_bitset_and (bitset, current_bitset);
+                shumate_vector_index_bitset_free (current_bitset);
+              }
+
+            if (bitset == NULL)
+              return NULL;
+          }
+        return bitset;
+
+      case EXPR_ANY:
+      case EXPR_NONE:
+        for (int i = 0; i < self->expressions->len; i ++)
+          {
+            ShumateVectorIndexBitset *current_bitset;
+            current_bitset = shumate_vector_expression_filter_eval_bitset (g_ptr_array_index (self->expressions, i), scope, bitset);
+            shumate_vector_index_bitset_not (current_bitset);
+            if (i == 0)
+              bitset = current_bitset;
+            else
+              {
+                shumate_vector_index_bitset_and (bitset, current_bitset);
+                shumate_vector_index_bitset_free (current_bitset);
+              }
+          }
+
+        if (self->type == EXPR_ANY)
+          shumate_vector_index_bitset_not (bitset);
+
+        return bitset;
+
+      default:
+        return SHUMATE_VECTOR_EXPRESSION_CLASS (shumate_vector_expression_filter_parent_class)->eval_bitset (expr, scope, mask);
+    }
+}
+
+static void
+shumate_vector_expression_filter_collect_indexes (ShumateVectorExpression       *expr,
+                                                  const char                    *layer_name,
+                                                  ShumateVectorIndexDescription *index_description)
+{
+  ShumateVectorExpressionFilter *self = (ShumateVectorExpressionFilter *)expr;
+
+  switch (self->type)
+    {
+      case EXPR_FAST_EQ:
+      case EXPR_FAST_NE:
+        shumate_vector_index_description_add (index_description, layer_name, self->fast_eq.key, &self->fast_eq.value);
+        break;
+
+      case EXPR_FAST_IN:
+      case EXPR_FAST_NOT_IN:
+        {
+          GHashTableIter iter;
+          ShumateVectorValue *value;
+          g_hash_table_iter_init (&iter, self->fast_in.haystack);
+          while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&value))
+            shumate_vector_index_description_add (index_description, layer_name, self->fast_in.key, value);
+          break;
+        }
+
+      case EXPR_ANY:
+      case EXPR_ALL:
+      case EXPR_NONE:
+      case EXPR_NOT:
+        for (int i = 0; i < self->expressions->len; i ++)
+          shumate_vector_expression_collect_indexes (g_ptr_array_index (self->expressions, i), layer_name, index_description);
+        break;
+
+      default:
+        break;
+    }
+}
+
 static void
 shumate_vector_expression_filter_class_init (ShumateVectorExpressionFilterClass *klass)
 {
@@ -1888,6 +2054,8 @@ shumate_vector_expression_filter_class_init (ShumateVectorExpressionFilterClass 
 
   object_class->finalize = shumate_vector_expression_filter_finalize;
   expr_class->eval = shumate_vector_expression_filter_eval;
+  expr_class->eval_bitset = shumate_vector_expression_filter_eval_bitset;
+  expr_class->collect_indexes = shumate_vector_expression_filter_collect_indexes;
 }
 
 

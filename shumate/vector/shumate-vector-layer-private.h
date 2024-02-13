@@ -21,6 +21,7 @@
 #include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
 #include "shumate-vector-render-scope-private.h"
+#include "shumate-vector-expression-private.h"
 
 G_BEGIN_DECLS
 
@@ -40,5 +41,6 @@ ShumateVectorLayer *shumate_vector_layer_create_from_json (JsonObject *object, G
 void shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope *scope);
 const char *shumate_vector_layer_get_id (ShumateVectorLayer *self);
 const char *shumate_vector_layer_get_source_layer (ShumateVectorLayer *self);
+ShumateVectorExpression *shumate_vector_layer_get_filter (ShumateVectorLayer *self);
 
 G_END_DECLS

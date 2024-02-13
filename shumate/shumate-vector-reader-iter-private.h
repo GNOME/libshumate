@@ -28,6 +28,9 @@ G_BEGIN_DECLS
 VectorTile__Tile__Layer *shumate_vector_reader_iter_get_layer_struct (ShumateVectorReaderIter *self);
 VectorTile__Tile__Feature *shumate_vector_reader_iter_get_feature_struct (ShumateVectorReaderIter *self);
 
+int shumate_vector_reader_iter_get_layer_index (ShumateVectorReaderIter *self);
+int shumate_vector_reader_iter_get_feature_index (ShumateVectorReaderIter *self);
+
 G_END_DECLS
 
 #endif

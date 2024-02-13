@@ -21,6 +21,7 @@
 #include "shumate-vector-render-scope-private.h"
 #include "shumate-vector-symbol-info-private.h"
 #include "shumate-vector-value-private.h"
+#include "shumate-vector-index-private.h"
 
 G_BEGIN_DECLS
 
@@ -44,6 +45,14 @@ struct _ShumateVectorExpressionClass
   gboolean (*eval) (ShumateVectorExpression  *self,
                     ShumateVectorRenderScope *scope,
                     ShumateVectorValue       *out);
+
+  ShumateVectorIndexBitset *(*eval_bitset) (ShumateVectorExpression  *self,
+                                            ShumateVectorRenderScope *scope,
+                                            ShumateVectorIndexBitset *mask);
+
+  void (*collect_indexes) (ShumateVectorExpression       *self,
+                           const char                    *layer_name,
+                           ShumateVectorIndexDescription *index_description);
 };
 
 ShumateVectorExpression *shumate_vector_expression_from_json (JsonNode  *json,
@@ -55,7 +64,13 @@ gboolean shumate_vector_expression_eval (ShumateVectorExpression  *self,
                                          ShumateVectorRenderScope *scope,
                                          ShumateVectorValue       *out);
 
+ShumateVectorIndexBitset *shumate_vector_expression_eval_bitset (ShumateVectorExpression  *self,
+                                                                 ShumateVectorRenderScope *scope,
+                                                                 ShumateVectorIndexBitset *mask);
 
+void shumate_vector_expression_collect_indexes (ShumateVectorExpression       *self,
+                                                const char                    *layer_name,
+                                                ShumateVectorIndexDescription *index_description);
 
 double shumate_vector_expression_eval_number (ShumateVectorExpression  *self,
                                               ShumateVectorRenderScope *scope,

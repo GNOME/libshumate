@@ -146,6 +146,10 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
 
       VectorTile__Tile__Layer *layer = shumate_vector_reader_iter_get_layer_struct (scope->reader);
 
+      if (layer->n_features == 0)
+        return;
+
+      scope->source_layer_idx = shumate_vector_reader_iter_get_layer_index (scope->reader);
       cairo_save (scope->cr);
 
       scope->scale = (double) layer->extent / scope->target_size / scope->overzoom_scale;
@@ -153,9 +157,25 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
 
       cairo_translate (scope->cr, -scope->overzoom_x * layer->extent, -scope->overzoom_y * layer->extent);
 
-      while (shumate_vector_reader_iter_next_feature (scope->reader))
+      if (priv->filter != NULL)
         {
-          if (priv->filter == NULL || shumate_vector_expression_eval_boolean (priv->filter, scope, FALSE))
+          int feature_idx = -1;
+          g_autoptr(ShumateVectorIndexBitset) bitset = NULL;
+
+          shumate_vector_render_scope_index_layer (scope);
+          bitset = shumate_vector_expression_eval_bitset (priv->filter, scope, NULL);
+
+          g_assert (bitset->len == layer->n_features);
+
+          while ((feature_idx = shumate_vector_index_bitset_next (bitset, feature_idx)) != -1)
+            {
+              shumate_vector_reader_iter_read_feature (scope->reader, feature_idx);
+              SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+            }
+        }
+      else
+        {
+          while (shumate_vector_reader_iter_next_feature (scope->reader))
             SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
         }
 
@@ -177,4 +197,12 @@ shumate_vector_layer_get_source_layer (ShumateVectorLayer *self)
   ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
   g_return_val_if_fail (SHUMATE_IS_VECTOR_LAYER (self), NULL);
   return priv->source_layer;
+}
+
+ShumateVectorExpression *
+shumate_vector_layer_get_filter (ShumateVectorLayer *self)
+{
+  ShumateVectorLayerPrivate *priv = shumate_vector_layer_get_instance_private (self);
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_LAYER (self), NULL);
+  return priv->filter;
 }
