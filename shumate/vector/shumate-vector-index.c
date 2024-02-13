@@ -20,11 +20,17 @@
 typedef struct {
   /* Hash set of ShumateVectorValues that should have indexes */
   GHashTable *values;
+  /* True if there should be an index of features that have any value for this field */
+  guint8 has_index;
 } ShumateVectorIndexDescriptionField;
 
 typedef struct {
   /* Map of field name to ShumateVectorIndexDescriptionField */
   GHashTable *fields;
+  /* True if there should be geometry type indexes for the broad geometry types, not distinguishing single vs. multi */
+  guint8 broad_geometry_indexes;
+  /* True if there should be geometry type indexes that distinguish single vs. multi types*/
+  guint8 geometry_indexes;
 } ShumateVectorIndexDescriptionLayer;
 
 /* A description of the fields and values that a set of expressions needs indexes for. */
@@ -36,11 +42,15 @@ struct _ShumateVectorIndexDescription {
 typedef struct {
   /* Map of value to GHashTable of ShumateVectorIndexBitset */
   GHashTable *indexes;
+  /* Index of features that have any value for this field */
+  ShumateVectorIndexBitset *has_index;
 } ShumateVectorIndexField;
 
 typedef struct {
   /* Map of field name to ShumateVectorIndexField */
   GHashTable *fields;
+  ShumateVectorIndexBitset *broad_geometry_type_indexes[3];
+  ShumateVectorIndexBitset *geometry_type_indexes[6];
 } ShumateVectorIndexLayer;
 
 /* A set of indexes for a specific vector tile. */
@@ -232,16 +242,11 @@ shumate_vector_index_has_layer (ShumateVectorIndex *self,
   return g_hash_table_contains (self->layers, GINT_TO_POINTER (layer_idx));
 }
 
-void
-shumate_vector_index_add_bitset (ShumateVectorIndex       *self,
-                                 int                       layer_idx,
-                                 const char               *field_name,
-                                 ShumateVectorValue       *value,
-                                 ShumateVectorIndexBitset *bitset)
+static ShumateVectorIndexLayer *
+get_or_create_layer (ShumateVectorIndex *self,
+                     int                 layer_idx)
 {
-  ShumateVectorIndexBitset *existing;
   ShumateVectorIndexLayer *layer;
-  ShumateVectorIndexField *field;
 
   layer = g_hash_table_lookup (self->layers, GINT_TO_POINTER (layer_idx));
   if (layer == NULL)
@@ -250,12 +255,36 @@ shumate_vector_index_add_bitset (ShumateVectorIndex       *self,
       g_hash_table_insert (self->layers, GINT_TO_POINTER (layer_idx), layer);
     }
 
+  return layer;
+}
+
+static ShumateVectorIndexField *
+get_or_create_field (ShumateVectorIndex *self,
+                     int                 layer_idx,
+                     const char         *field_name)
+{
+  ShumateVectorIndexLayer *layer = get_or_create_layer (self, layer_idx);
+  ShumateVectorIndexField *field;
+
   field = g_hash_table_lookup (layer->fields, field_name);
   if (field == NULL)
     {
       field = shumate_vector_index_field_new ();
       g_hash_table_insert (layer->fields, g_strdup (field_name), field);
     }
+
+  return field;
+}
+
+void
+shumate_vector_index_add_bitset (ShumateVectorIndex       *self,
+                                 int                       layer_idx,
+                                 const char               *field_name,
+                                 ShumateVectorValue       *value,
+                                 ShumateVectorIndexBitset *bitset)
+{
+  ShumateVectorIndexBitset *existing;
+  ShumateVectorIndexField *field = get_or_create_field (self, layer_idx, field_name);
 
   existing = g_hash_table_lookup (field->indexes, value);
   if (existing != NULL)
@@ -269,6 +298,77 @@ shumate_vector_index_add_bitset (ShumateVectorIndex       *self,
       shumate_vector_value_copy (value, value_copy);
       g_hash_table_insert (field->indexes, value_copy, bitset);
     }
+}
+
+void
+shumate_vector_index_add_bitset_has (ShumateVectorIndex       *self,
+                                     int                       layer_idx,
+                                     const char               *field_name,
+                                     ShumateVectorIndexBitset *bitset)
+{
+  ShumateVectorIndexField *field = get_or_create_field (self, layer_idx, field_name);
+
+  if (field->has_index != NULL)
+    {
+      shumate_vector_index_bitset_or (field->has_index, bitset);
+      shumate_vector_index_bitset_free (bitset);
+    }
+  else
+    field->has_index = bitset;
+}
+
+void
+shumate_vector_index_add_bitset_broad_geometry_type (ShumateVectorIndex       *self,
+                                                     int                       layer_idx,
+                                                     ShumateGeometryType       type,
+                                                     ShumateVectorIndexBitset *bitset)
+{
+  ShumateVectorIndexLayer *layer = get_or_create_layer (self, layer_idx);
+  ShumateVectorIndexBitset *existing;
+  int i;
+
+  switch (type)
+    {
+    case SHUMATE_GEOMETRY_TYPE_POINT:
+      i = 0;
+      break;
+    case SHUMATE_GEOMETRY_TYPE_LINESTRING:
+      i = 1;
+      break;
+    case SHUMATE_GEOMETRY_TYPE_POLYGON:
+      i = 2;
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+
+  existing = layer->broad_geometry_type_indexes[i];
+  if (existing != NULL)
+    {
+      shumate_vector_index_bitset_or (existing, bitset);
+      shumate_vector_index_bitset_free (bitset);
+    }
+  else
+    layer->broad_geometry_type_indexes[i] = bitset;
+}
+
+void
+shumate_vector_index_add_bitset_geometry_type (ShumateVectorIndex       *self,
+                                               int                       layer_idx,
+                                               ShumateGeometryType       type,
+                                               ShumateVectorIndexBitset *bitset)
+{
+  ShumateVectorIndexLayer *layer = get_or_create_layer (self, layer_idx);
+  ShumateVectorIndexBitset *existing;
+
+  existing = layer->geometry_type_indexes[type];
+  if (existing != NULL)
+    {
+      shumate_vector_index_bitset_or (existing, bitset);
+      shumate_vector_index_bitset_free (bitset);
+    }
+  else
+    layer->geometry_type_indexes[type] = bitset;
 }
 
 ShumateVectorIndexBitset *
@@ -292,6 +392,74 @@ shumate_vector_index_get_bitset (ShumateVectorIndex *self,
     return NULL;
 
   return g_hash_table_lookup (field->indexes, value);
+}
+
+ShumateVectorIndexBitset *
+shumate_vector_index_get_bitset_has (ShumateVectorIndex *self,
+                                     int                 layer_idx,
+                                     const char         *field_name)
+{
+  ShumateVectorIndexLayer *layer;
+  ShumateVectorIndexField *field;
+
+  if (self == NULL)
+    return NULL;
+
+  layer = g_hash_table_lookup (self->layers, GINT_TO_POINTER (layer_idx));
+  if (layer == NULL)
+    return NULL;
+
+  field = g_hash_table_lookup (layer->fields, field_name);
+  if (field == NULL)
+    return NULL;
+
+  return field->has_index;
+}
+
+ShumateVectorIndexBitset *
+shumate_vector_index_get_bitset_broad_geometry_type (ShumateVectorIndex *self,
+                                                     int                  layer_idx,
+                                                     ShumateGeometryType  type)
+{
+  ShumateVectorIndexLayer *layer;
+
+  if (self == NULL)
+    return NULL;
+
+  layer = g_hash_table_lookup (self->layers, GINT_TO_POINTER (layer_idx));
+  if (layer == NULL)
+    return NULL;
+
+  switch (type)
+    {
+    case SHUMATE_GEOMETRY_TYPE_POINT:
+      return layer->broad_geometry_type_indexes[0];
+    case SHUMATE_GEOMETRY_TYPE_LINESTRING:
+      return layer->broad_geometry_type_indexes[1];
+    case SHUMATE_GEOMETRY_TYPE_POLYGON:
+      return layer->broad_geometry_type_indexes[2];
+    default:
+      return NULL;
+    }
+}
+
+ShumateVectorIndexBitset *
+shumate_vector_index_get_bitset_geometry_type (ShumateVectorIndex *self,
+                                               int                  layer_idx,
+                                               ShumateGeometryType  type)
+{
+  ShumateVectorIndexLayer *layer;
+
+  g_assert (type >= SHUMATE_GEOMETRY_TYPE_POINT && type <= SHUMATE_GEOMETRY_TYPE_MULTIPOLYGON);
+
+  if (self == NULL)
+    return NULL;
+
+  layer = g_hash_table_lookup (self->layers, GINT_TO_POINTER (layer_idx));
+  if (layer == NULL)
+    return NULL;
+
+  return layer->geometry_type_indexes[type];
 }
 
 static ShumateVectorIndexDescriptionField *
@@ -371,15 +539,56 @@ shumate_vector_index_description_has_value (ShumateVectorIndexDescription *descr
   return g_hash_table_contains (field->values, value);
 }
 
-void
-shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
-                                      const char                    *layer,
-                                      const char                    *field,
-                                      ShumateVectorValue            *value)
+gboolean
+shumate_vector_index_description_has_field_has_index (ShumateVectorIndexDescription *description,
+                                                      const char                    *layer_name,
+                                                      const char                    *field_name)
+{
+  ShumateVectorIndexDescriptionLayer *layer;
+  ShumateVectorIndexDescriptionField *field;
+
+  layer = g_hash_table_lookup (description->layers, layer_name);
+  if (layer == NULL)
+    return FALSE;
+
+  field = g_hash_table_lookup (layer->fields, field_name);
+  if (field == NULL)
+    return FALSE;
+
+  return field->has_index;
+}
+
+gboolean
+shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDescription *description,
+                                                          const char                    *layer_name)
+{
+  ShumateVectorIndexDescriptionLayer *layer;
+
+  layer = g_hash_table_lookup (description->layers, layer_name);
+  if (layer == NULL)
+    return FALSE;
+
+  return layer->broad_geometry_indexes;
+}
+
+gboolean
+shumate_vector_index_description_has_geometry_type (ShumateVectorIndexDescription *description,
+                                                    const char                    *layer_name)
+{
+  ShumateVectorIndexDescriptionLayer *layer;
+
+  layer = g_hash_table_lookup (description->layers, layer_name);
+  if (layer == NULL)
+    return FALSE;
+
+  return layer->geometry_indexes;
+}
+
+static ShumateVectorIndexDescriptionLayer *
+get_or_create_desc_layer (ShumateVectorIndexDescription *desc,
+                          const char                    *layer)
 {
   ShumateVectorIndexDescriptionLayer *layer_desc;
-  ShumateVectorIndexDescriptionField *field_desc;
-  ShumateVectorValue *value_copy;
 
   layer_desc = g_hash_table_lookup (desc->layers, layer);
   if (layer_desc == NULL)
@@ -388,6 +597,17 @@ shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
       g_hash_table_insert (desc->layers, g_strdup (layer), layer_desc);
     }
 
+  return layer_desc;
+}
+
+static ShumateVectorIndexDescriptionField *
+get_or_create_desc_field (ShumateVectorIndexDescription *desc,
+                          const char                    *layer,
+                          const char                    *field)
+{
+  ShumateVectorIndexDescriptionLayer *layer_desc = get_or_create_desc_layer (desc, layer);
+  ShumateVectorIndexDescriptionField *field_desc;
+
   field_desc = g_hash_table_lookup (layer_desc->fields, field);
   if (field_desc == NULL)
     {
@@ -395,7 +615,44 @@ shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
       g_hash_table_insert (layer_desc->fields, g_strdup (field), field_desc);
     }
 
+  return field_desc;
+}
+
+void
+shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
+                                      const char                    *layer,
+                                      const char                    *field,
+                                      ShumateVectorValue            *value)
+{
+  ShumateVectorIndexDescriptionField *field_desc = get_or_create_desc_field (desc, layer, field);
+  ShumateVectorValue *value_copy;
+
   value_copy = g_new0 (ShumateVectorValue, 1);
   shumate_vector_value_copy (value, value_copy);
   g_hash_table_insert (field_desc->values, value_copy, value_copy);
+}
+
+void
+shumate_vector_index_description_add_has_index (ShumateVectorIndexDescription *desc,
+                                                const char                    *layer,
+                                                const char                    *field)
+{
+  ShumateVectorIndexDescriptionField *field_desc = get_or_create_desc_field (desc, layer, field);
+  field_desc->has_index = TRUE;
+}
+
+void
+shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDescription *desc,
+                                                          const char                    *layer)
+{
+  ShumateVectorIndexDescriptionLayer *layer_desc = get_or_create_desc_layer (desc, layer);
+  layer_desc->broad_geometry_indexes = TRUE;
+}
+
+void
+shumate_vector_index_description_add_geometry_type (ShumateVectorIndexDescription *desc,
+                                                    const char                    *layer)
+{
+  ShumateVectorIndexDescriptionLayer *layer_desc = get_or_create_desc_layer (desc, layer);
+  layer_desc->geometry_indexes = TRUE;
 }

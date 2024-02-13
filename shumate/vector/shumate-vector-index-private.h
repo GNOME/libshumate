@@ -19,6 +19,7 @@
 
 #include <glib-object.h>
 #include "shumate-vector-value-private.h"
+#include "../shumate-vector-reader.h"
 
 G_BEGIN_DECLS
 
@@ -51,11 +52,31 @@ void shumate_vector_index_add_bitset (ShumateVectorIndex       *self,
                                       const char               *field_name,
                                       ShumateVectorValue       *value,
                                       ShumateVectorIndexBitset *bitset);
+void shumate_vector_index_add_bitset_has (ShumateVectorIndex       *self,
+                                          int                       layer_idx,
+                                          const char               *field_name,
+                                          ShumateVectorIndexBitset *bitset);
+void shumate_vector_index_add_bitset_broad_geometry_type (ShumateVectorIndex       *self,
+                                                          int                       layer_idx,
+                                                          ShumateGeometryType       type,
+                                                          ShumateVectorIndexBitset *bitset);
+void shumate_vector_index_add_bitset_geometry_type (ShumateVectorIndex       *self,
+                                                    int                       layer_idx,
+                                                    ShumateGeometryType       type,
+                                                    ShumateVectorIndexBitset *bitset);
 ShumateVectorIndexBitset *shumate_vector_index_get_bitset (ShumateVectorIndex *self,
                                                            int                 layer_idx,
                                                            const char         *field_name,
                                                            ShumateVectorValue *value);
-
+ShumateVectorIndexBitset *shumate_vector_index_get_bitset_has (ShumateVectorIndex *self,
+                                                               int                 layer_idx,
+                                                               const char         *field_name);
+ShumateVectorIndexBitset *shumate_vector_index_get_bitset_broad_geometry_type (ShumateVectorIndex *self,
+                                                                               int                  layer_idx,
+                                                                               ShumateGeometryType  type);
+ShumateVectorIndexBitset *shumate_vector_index_get_bitset_geometry_type (ShumateVectorIndex *self,
+                                                                         int                  layer_idx,
+                                                                         ShumateGeometryType  type);
 
 ShumateVectorIndexDescription *shumate_vector_index_description_new (void);
 void shumate_vector_index_description_free (ShumateVectorIndexDescription *description);
@@ -68,9 +89,22 @@ gboolean shumate_vector_index_description_has_value (ShumateVectorIndexDescripti
                                                      const char                    *layer_name,
                                                      const char                    *field_name,
                                                      ShumateVectorValue            *value);
+gboolean shumate_vector_index_description_has_field_has_index (ShumateVectorIndexDescription *description,
+                                                               const char                    *layer_name,
+                                                               const char                    *field_name);
+gboolean shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDescription *description,
+                                                                   const char                    *layer_name);
+gboolean shumate_vector_index_description_has_geometry_type (ShumateVectorIndexDescription *description,
+                                                             const char                    *layer_name);
 void shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
                                            const char                    *layer,
                                            const char                    *field,
                                            ShumateVectorValue            *value);
-
+void shumate_vector_index_description_add_has_index (ShumateVectorIndexDescription *desc,
+                                                     const char                    *layer,
+                                                     const char                    *field);
+void shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDescription *desc,
+                                                               const char                    *layer);
+void shumate_vector_index_description_add_geometry_type (ShumateVectorIndexDescription *desc,
+                                                         const char                    *layer);
 G_END_DECLS

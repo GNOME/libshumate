@@ -328,6 +328,7 @@ typedef struct {
   ShumateVectorIndexBitset *used_values;
   ShumateVectorIndexBitset *unused_values;
   GHashTable *indexes;
+  ShumateVectorIndexBitset *has_index;
   guint8 is_unused;
 } FieldIndexingData;
 
@@ -338,6 +339,8 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
   VectorTile__Tile__Layer *layer;
   FieldIndexingData *fields;
   int feature_idx = 0;
+  ShumateVectorIndexBitset *broad_geometry_indexes[3] = { NULL, NULL, NULL };
+  ShumateVectorIndexBitset *geometry_indexes[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
   if (self->index == NULL)
     self->index = shumate_vector_index_new ();
@@ -351,11 +354,54 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
   layer = shumate_vector_reader_iter_get_layer_struct (self->reader);
   fields = g_new0 (FieldIndexingData, layer->n_keys);
 
+  if (shumate_vector_index_description_has_broad_geometry_type (self->index_description, layer_name))
+    {
+      for (int i = 0; i < 3; i ++)
+        broad_geometry_indexes[i] = shumate_vector_index_bitset_new (layer->n_features);
+
+      shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POINT, broad_geometry_indexes[0]);
+      shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_LINESTRING, broad_geometry_indexes[1]);
+      shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON, broad_geometry_indexes[2]);
+    }
+
+  if (shumate_vector_index_description_has_geometry_type (self->index_description, layer_name))
+    {
+      for (int i = 1; i < 7; i ++)
+        {
+          geometry_indexes[i] = shumate_vector_index_bitset_new (layer->n_features);
+          shumate_vector_index_add_bitset_geometry_type (self->index, self->source_layer_idx, i, geometry_indexes[i]);
+        }
+    }
+
   /* Read all of the features and build every requested index */
   shumate_vector_reader_iter_read_feature (self->reader, 0);
   while (TRUE)
     {
       VectorTile__Tile__Feature *feature = shumate_vector_reader_iter_get_feature_struct (self->reader);
+
+      if (broad_geometry_indexes[0] != NULL)
+        {
+          switch (feature->type)
+            {
+            case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
+              shumate_vector_index_bitset_set (broad_geometry_indexes[0], feature_idx);
+              break;
+            case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
+              shumate_vector_index_bitset_set (broad_geometry_indexes[1], feature_idx);
+              break;
+            case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
+              shumate_vector_index_bitset_set (broad_geometry_indexes[2], feature_idx);
+              break;
+            default:
+              break;
+            }
+        }
+
+      if (geometry_indexes[feature->type] != NULL)
+        {
+          ShumateGeometryType type = shumate_vector_reader_iter_get_feature_geometry_type (self->reader);
+          shumate_vector_index_bitset_set (geometry_indexes[type], feature_idx);
+        }
 
       for (int i = 1; i < feature->n_tags; i += 2)
         {
@@ -377,6 +423,8 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
                   fields[key].indexes = g_hash_table_new (g_direct_hash, g_direct_equal);
                   fields[key].used_values = shumate_vector_index_bitset_new (layer->n_values);
                   fields[key].unused_values = shumate_vector_index_bitset_new (layer->n_values);
+                  if (shumate_vector_index_description_has_field_has_index (self->index_description, layer_name, layer->keys[key]))
+                    fields[key].has_index = shumate_vector_index_bitset_new (layer->n_features);
                 }
               else
                 {
@@ -384,6 +432,9 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
                   continue;
                 }
             }
+
+          if (fields[key].has_index != NULL)
+            shumate_vector_index_bitset_set (fields[key].has_index, feature_idx);
 
           if (shumate_vector_index_bitset_get (fields[key].unused_values, val))
             continue;
