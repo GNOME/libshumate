@@ -508,7 +508,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-text-transform">text-transform</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#paint-symbol-text-translate">text-translate</a></td>

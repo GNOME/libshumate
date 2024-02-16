@@ -47,6 +47,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *text_optional;
   ShumateVectorExpression *text_overlap;
   ShumateVectorExpression *text_size;
+  ShumateVectorExpression *text_transform;
   ShumateVectorExpression *cursor;
   ShumateVectorExpression *text_padding;
   ShumateVectorExpression *text_keep_upright;
@@ -167,6 +168,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->text_letter_spacing = shumate_vector_expression_from_json (json_object_get_member (layout, "text-letter-spacing"), error);
       if (layer->text_letter_spacing == NULL)
+        return NULL;
+
+      layer->text_transform = shumate_vector_expression_from_json (json_object_get_member (layout, "text-transform"), error);
+      if (layer->text_transform == NULL)
         return NULL;
 
       layer->text_anchor = shumate_vector_expression_from_json (json_object_get_member (layout, "text-anchor"), error);
@@ -296,6 +301,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->text_overlap);
   g_clear_object (&self->text_padding);
   g_clear_object (&self->text_rotation_alignment);
+  g_clear_object (&self->text_transform);
   g_clear_object (&self->symbol_sort_key);
   g_clear_object (&self->symbol_placement);
   g_clear_object (&self->symbol_spacing);
@@ -413,6 +419,7 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
   g_autofree char *feature_id = NULL;
   ShumateVectorPlacement symbol_placement;
   ShumateVectorAlignment icon_rotation_alignment, text_rotation_alignment;
+  g_autofree char *text_transform = NULL;
   g_autoptr(GHashTable) tags = NULL;
   g_autoptr(ShumateVectorSymbolDetails) details = NULL;
   g_autoptr(ShumateVectorSprite) icon_image = shumate_vector_expression_eval_image (self->icon_image, scope);
@@ -436,8 +443,9 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
       if (strlen (text) > 0)
         {
+          ShumateVectorFormatPart *part;
           text_field = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_format_part_free);
-          ShumateVectorFormatPart *part = g_new0 (ShumateVectorFormatPart, 1);
+          part = g_new0 (ShumateVectorFormatPart, 1);
           part->string = g_steal_pointer (&text);
           g_ptr_array_add (text_field, part);
         }
@@ -445,6 +453,22 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
   if (text_field == NULL && icon_image == NULL)
     return;
+
+  text_transform = shumate_vector_expression_eval_string (self->text_transform, scope, NULL);
+  if (text_field != NULL && text_transform != NULL)
+    {
+      for (int i = 0; i < text_field->len; i ++)
+        {
+          ShumateVectorFormatPart *part = g_ptr_array_index (text_field, i);
+          if (part->string != NULL)
+            {
+              if (g_strcmp0 (text_transform, "uppercase") == 0)
+                part->string = g_utf8_strup (part->string, -1);
+              else if (g_strcmp0 (text_transform, "lowercase") == 0)
+                part->string = g_utf8_strdown (part->string, -1);
+            }
+        }
+    }
 
   symbol_placement = shumate_vector_expression_eval_placement (self->symbol_placement, scope);
   if (geometry_type == SHUMATE_VECTOR_GEOMETRY_POINT && symbol_placement != SHUMATE_VECTOR_PLACEMENT_POINT)
