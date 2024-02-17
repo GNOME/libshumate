@@ -15,6 +15,17 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+/*
+ * Map styles can be very large with many layers, often having many similar expressions. For example,
+ * the GNOME Maps style has over 800 style layers for roads, and most of their filter expressions
+ * are different permutations of the same few geometry and feature data expressions. Instead of calculating
+ * every expression for every feature 800 times, we can build indexes for those expressions and use them
+ * to quickly filter features.
+ *
+ * The indexes are bitsets: each feature's bit is set if it matches the expression. It is very fast to
+ * combine these bitsets with bitwise AND, OR, and NOT operations.
+ */
+
 #include "shumate-vector-index-private.h"
 
 typedef struct {
@@ -492,6 +503,7 @@ shumate_vector_index_description_layer_free (ShumateVectorIndexDescriptionLayer 
   g_free (layer);
 }
 
+/* Creates a new index description, which describes the indexes that a set of expressions will use. */
 ShumateVectorIndexDescription *
 shumate_vector_index_description_new (void)
 {
@@ -500,6 +512,7 @@ shumate_vector_index_description_new (void)
   return desc;
 }
 
+/* Returns whether the index description has any indexes for the given layer. */
 gboolean
 shumate_vector_index_description_has_layer (ShumateVectorIndexDescription *description,
                                             const char                    *layer_name)
@@ -507,6 +520,7 @@ shumate_vector_index_description_has_layer (ShumateVectorIndexDescription *descr
   return g_hash_table_contains (description->layers, layer_name);
 }
 
+/* Returns whether the index description has any indexes for the given field. */
 gboolean
 shumate_vector_index_description_has_field (ShumateVectorIndexDescription *description,
                                             const char                    *layer_name,
@@ -519,6 +533,7 @@ shumate_vector_index_description_has_field (ShumateVectorIndexDescription *descr
   return g_hash_table_contains (layer->fields, field_name);
 }
 
+/* Returns whether the index description has an index for the given key=value pair. */
 gboolean
 shumate_vector_index_description_has_value (ShumateVectorIndexDescription *description,
                                             const char                    *layer_name,
@@ -539,6 +554,8 @@ shumate_vector_index_description_has_value (ShumateVectorIndexDescription *descr
   return g_hash_table_contains (field->values, value);
 }
 
+/* Returns whether the index description has an index for features with any value for the
+   given field. */
 gboolean
 shumate_vector_index_description_has_field_has_index (ShumateVectorIndexDescription *description,
                                                       const char                    *layer_name,
@@ -558,6 +575,7 @@ shumate_vector_index_description_has_field_has_index (ShumateVectorIndexDescript
   return field->has_index;
 }
 
+/* Returns whether the index description has broad geometry type indexes. */
 gboolean
 shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDescription *description,
                                                           const char                    *layer_name)
@@ -571,6 +589,7 @@ shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDesc
   return layer->broad_geometry_indexes;
 }
 
+/* Returns whether the index description has geometry type indexes that distinguish single vs. multi geometries. */
 gboolean
 shumate_vector_index_description_has_geometry_type (ShumateVectorIndexDescription *description,
                                                     const char                    *layer_name)
@@ -618,6 +637,7 @@ get_or_create_desc_field (ShumateVectorIndexDescription *desc,
   return field_desc;
 }
 
+/* Add an index for the given key=value pair. */
 void
 shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
                                       const char                    *layer,
@@ -632,6 +652,7 @@ shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
   g_hash_table_insert (field_desc->values, value_copy, value_copy);
 }
 
+/* Add an index for features that have any value for the given field. */
 void
 shumate_vector_index_description_add_has_index (ShumateVectorIndexDescription *desc,
                                                 const char                    *layer,
@@ -641,6 +662,9 @@ shumate_vector_index_description_add_has_index (ShumateVectorIndexDescription *d
   field_desc->has_index = TRUE;
 }
 
+/* Add geometry indexes to the index description. "Broad" indexes only index point/line/polygon,
+   not whether the geometry is a single or multi geometry. This is very common and is faster
+   to calculate. */
 void
 shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDescription *desc,
                                                           const char                    *layer)
@@ -649,6 +673,7 @@ shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDesc
   layer_desc->broad_geometry_indexes = TRUE;
 }
 
+/* Add geometry indexes to the index description. These indexes will distinguish single vs. multi geometries. */
 void
 shumate_vector_index_description_add_geometry_type (ShumateVectorIndexDescription *desc,
                                                     const char                    *layer)

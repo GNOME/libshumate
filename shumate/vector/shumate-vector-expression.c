@@ -93,7 +93,9 @@ shumate_vector_expression_real_eval (ShumateVectorExpression  *self,
   g_assert_not_reached ();
 }
 
-
+/* A default implementation for eval_bitset() that calls the regular eval() method for each
+   feature. The mask parameter allows it to skip features that don't need to be calculated
+   (e.g. they have been excluded by a previous child of an ALL expression). */
 static ShumateVectorIndexBitset *
 shumate_vector_expression_real_eval_bitset (ShumateVectorExpression  *self,
                                             ShumateVectorRenderScope *scope,
@@ -161,6 +163,9 @@ shumate_vector_expression_eval (ShumateVectorExpression  *self,
 }
 
 
+/* Evaluates the expression as a boolean for every feature in the scope's current layer and
+   returns the result in a bitset. If the mask parameter is provided, only those features
+   need to be calculated. */
 ShumateVectorIndexBitset *
 shumate_vector_expression_eval_bitset (ShumateVectorExpression *self,
                                        ShumateVectorRenderScope *scope,
@@ -171,6 +176,8 @@ shumate_vector_expression_eval_bitset (ShumateVectorExpression *self,
 }
 
 
+/* Adds any indexes this expression uses to the index description. Indexes can only be used
+   in eval_bitset() implementations, not eval(). */
 void
 shumate_vector_expression_collect_indexes (ShumateVectorExpression       *self,
                                            const char                    *layer_name,

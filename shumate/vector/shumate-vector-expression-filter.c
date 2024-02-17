@@ -2197,6 +2197,8 @@ shumate_vector_expression_filter_eval_bitset (ShumateVectorExpression  *expr,
           {
             ShumateVectorIndexBitset *current_bitset;
             current_bitset = shumate_vector_expression_filter_eval_bitset (g_ptr_array_index (self->expressions, i), scope, bitset);
+            /* Invert the result bitset so we can pass it to the mask parameter of eval_bitset(), saving some work
+               if there are any non-bitset-optimized expressions */
             shumate_vector_index_bitset_not (current_bitset);
             if (i == 0)
               bitset = current_bitset;
