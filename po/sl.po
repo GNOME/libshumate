@@ -2,14 +2,14 @@
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
 #
-# Matej Urbančič <mateju@src.gnome.org>, 2022–2023.
+# Matej Urbančič <mateju@src.gnome.org>, 2022–2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-07-29 06:42+0000\n"
-"PO-Revision-Date: 2023-07-29 15:43+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-02-14 18:14+0000\n"
+"PO-Revision-Date: 2024-02-17 08:05+0100\n"
 "Last-Translator: Matej Urbančič <mateju@src.gnome.org>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups."
 "com>\n"
@@ -20,7 +20,19 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || "
 "n%100==4 ? 3 : 0);\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Pokaži podatke razhroščevanja"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Pokaži meje ploščice"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Pokaži polja trkov"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -53,3 +65,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
