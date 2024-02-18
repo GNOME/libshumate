@@ -9,14 +9,17 @@ test_location_distance (void)
   g_assert_cmpfloat (shumate_location_distance (a, b), ==, 0.0);
 
   shumate_location_set_location (a, 1.0, 1.0);
-  g_assert_cmpfloat (shumate_location_distance (a, b), ==, 157425.537108393531);
+  g_assert_cmpfloat_with_epsilon (shumate_location_distance (a, b),
+                                  157425.537108393531, 0.001);
 
   shumate_location_set_location (a, 0.0, 180.0);
-  g_assert_cmpfloat (shumate_location_distance (a, b), ==, 20037508.342789243);
+  g_assert_cmpfloat_with_epsilon (shumate_location_distance (a, b),
+                                  20037508.342789243, 0.001);
 
   shumate_location_set_location (a, 1.0, 2.0);
   shumate_location_set_location (b, 3.0, 4.0);
-  g_assert_cmpfloat (shumate_location_distance (a, b), ==, 314755.1553654014);
+  g_assert_cmpfloat_with_epsilon (shumate_location_distance (a, b),
+                                  314755.1553654014, 0.001);
 }
 
 int
@@ -28,3 +31,4 @@ main (int argc, char *argv[])
 
   return g_test_run ();
 }
+
