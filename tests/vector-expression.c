@@ -44,6 +44,42 @@ test_vector_expression_literal (void)
 
 
 static void
+test_vector_expression_number_array (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string ("[1, 2, 3, 4, 5]", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  double num;
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_no_error (error);
+
+  g_assert_true (shumate_vector_expression_eval (expression, NULL, &value));
+  g_assert_cmpint (5, ==, value.array->len);
+  for (int i = 0; i < 5; i++)
+    {
+      g_assert_true (shumate_vector_value_get_number (value.array->pdata[i], &num));
+      g_assert_cmpfloat (i + 1, ==, num);
+    }
+}
+
+
+static void
+test_vector_expression_nested_array_literal (void)
+{
+  g_autoptr(GError) error = NULL;
+  g_autoptr(JsonNode) node = json_from_string ("[\"in\", 2, [1, 2, 3, 4, 5]]", NULL);
+  g_autoptr(ShumateVectorExpression) expression;
+  g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  double num;
+
+  expression = shumate_vector_expression_from_json (node, &error);
+  g_assert_error (error, SHUMATE_STYLE_ERROR, SHUMATE_STYLE_ERROR_INVALID_EXPRESSION);
+}
+
+
+static void
 check_interpolate (ShumateVectorExpression *expression)
 {
   ShumateVectorRenderScope scope;
@@ -605,6 +641,8 @@ main (int argc, char *argv[])
 
   g_test_add_func ("/vector/expression/parse", test_vector_expression_parse);
   g_test_add_func ("/vector/expression/literal", test_vector_expression_literal);
+  g_test_add_func ("/vector/expression/number-array", test_vector_expression_number_array);
+  g_test_add_func ("/vector/expression/nested-array-literal", test_vector_expression_nested_array_literal);
   g_test_add_func ("/vector/expression/interpolate", test_vector_expression_interpolate);
   g_test_add_func ("/vector/expression/interpolate-filter", test_vector_expression_interpolate_filter);
   g_test_add_func ("/vector/expression/interpolate-color", test_vector_expression_interpolate_color);

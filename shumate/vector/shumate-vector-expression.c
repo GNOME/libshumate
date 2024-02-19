@@ -56,7 +56,30 @@ shumate_vector_expression_from_json (JsonNode  *json,
   else if (JSON_NODE_HOLDS_OBJECT (json))
     return shumate_vector_expression_interpolate_from_json_obj (json_node_get_object (json), error);
   else if (JSON_NODE_HOLDS_ARRAY (json))
-    return shumate_vector_expression_filter_from_json_array (json_node_get_array (json), NULL, error);
+    {
+      JsonArray *array = json_node_get_array (json);
+      if (json_array_get_length (array) > 1)
+        {
+          JsonNode *first = json_array_get_element (array, 0);
+          if (JSON_NODE_HOLDS_VALUE (first) && json_node_get_value_type (first) != G_TYPE_STRING)
+            {
+              /* If it's an array of numbers, return it as a literal */
+              g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+              shumate_vector_value_start_array (&value);
+              for (guint i = 0; i < json_array_get_length (array); i++)
+                {
+                  g_auto(ShumateVectorValue) element = SHUMATE_VECTOR_VALUE_INIT;
+                  if (!shumate_vector_value_set_from_json_literal (&element, json_array_get_element (array, i), error))
+                    return NULL;
+                  shumate_vector_value_array_append (&value, &element);
+                }
+
+              return shumate_vector_expression_filter_from_literal (&value);
+            }
+        }
+
+      return shumate_vector_expression_filter_from_json_array (json_node_get_array (json), NULL, error);
+    }
   else
     g_assert_not_reached ();
 }
