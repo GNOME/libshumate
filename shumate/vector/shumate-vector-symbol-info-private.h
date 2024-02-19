@@ -81,6 +81,7 @@ typedef struct {
   char *text_font;
   ShumateVectorAlignment text_rotation_alignment;
   double text_offset_x, text_offset_y;
+  double icon_padding_top, icon_padding_right, icon_padding_bottom, icon_padding_left;
 
   ShumateVectorPlacement symbol_placement;
   float symbol_spacing;

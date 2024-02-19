@@ -34,6 +34,7 @@ struct _ShumateVectorSymbolLayer
   ShumateVectorExpression *icon_opacity;
   ShumateVectorExpression *icon_optional;
   ShumateVectorExpression *icon_overlap;
+  ShumateVectorExpression *icon_padding;
   ShumateVectorExpression *icon_rotate;
   ShumateVectorExpression *icon_rotation_alignment;
   ShumateVectorExpression *icon_size;
@@ -140,6 +141,10 @@ shumate_vector_symbol_layer_create_from_json (JsonObject *object, GError **error
 
       layer->icon_overlap = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-overlap"), error);
       if (layer->icon_overlap == NULL)
+        return NULL;
+
+      layer->icon_padding = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-padding"), error);
+      if (layer->icon_padding == NULL)
         return NULL;
 
       layer->icon_rotate = shumate_vector_expression_from_json (json_object_get_member (layout, "icon-rotate"), error);
@@ -284,6 +289,7 @@ shumate_vector_symbol_layer_finalize (GObject *object)
   g_clear_object (&self->icon_opacity);
   g_clear_object (&self->icon_optional);
   g_clear_object (&self->icon_overlap);
+  g_clear_object (&self->icon_padding);
   g_clear_object (&self->icon_rotate);
   g_clear_object (&self->icon_rotation_alignment);
   g_clear_object (&self->icon_size);
@@ -414,6 +420,8 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 {
   ShumateVectorSymbolLayer *self = SHUMATE_VECTOR_SYMBOL_LAYER (layer);
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+  g_auto(ShumateVectorValue) icon_padding_value = SHUMATE_VECTOR_VALUE_INIT;
+  GPtrArray *icon_padding_array;
   g_autoptr(GPtrArray) text_field = NULL;
   g_autofree char *cursor = NULL;
   g_autofree char *feature_id = NULL;
@@ -547,6 +555,31 @@ shumate_vector_symbol_layer_render (ShumateVectorLayer *layer, ShumateVectorRend
 
   details->text_color = SHUMATE_VECTOR_COLOR_BLACK;
   shumate_vector_expression_eval_color (self->text_color, scope, &details->text_color);
+
+  shumate_vector_expression_eval (self->icon_padding, scope, &icon_padding_value);
+  if ((icon_padding_array = shumate_vector_value_get_array (&icon_padding_value)) != NULL)
+    {
+      if (icon_padding_array->len == 0 || !shumate_vector_value_get_number (g_ptr_array_index (icon_padding_array, 0), &details->icon_padding_top))
+        details->icon_padding_top = 2;
+
+      if (icon_padding_array->len <= 1 || !shumate_vector_value_get_number (g_ptr_array_index (icon_padding_array, 1), &details->icon_padding_right))
+        details->icon_padding_right = details->icon_padding_top;
+
+      if (icon_padding_array->len <= 2 || !shumate_vector_value_get_number (g_ptr_array_index (icon_padding_array, 2), &details->icon_padding_bottom))
+        details->icon_padding_bottom = details->icon_padding_top;
+
+      if (icon_padding_array->len <= 3 || !shumate_vector_value_get_number (g_ptr_array_index (icon_padding_array, 3), &details->icon_padding_left))
+        details->icon_padding_left = details->icon_padding_right;
+    }
+  else
+    {
+      if (!shumate_vector_value_get_number (&icon_padding_value, &details->icon_padding_top))
+        details->icon_padding_top = 2;
+
+      details->icon_padding_right = details->icon_padding_top;
+      details->icon_padding_bottom = details->icon_padding_top;
+      details->icon_padding_left = details->icon_padding_top;
+    }
 
   switch (shumate_vector_render_scope_get_geometry_type (scope))
     {

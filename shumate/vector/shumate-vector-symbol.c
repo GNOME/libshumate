@@ -999,14 +999,16 @@ shumate_vector_symbol_calculate_collision (ShumateVectorSymbol    *self,
       if (self->symbol_info->details->icon_rotation_alignment == SHUMATE_VECTOR_ALIGNMENT_MAP)
         angle = rotation + self->midpoint_angle;
       angle += self->symbol_info->details->icon_rotate;
+      offset_x += (self->symbol_info->details->icon_padding_right - self->symbol_info->details->icon_padding_left) / 2.0;
+      offset_y += (self->symbol_info->details->icon_padding_bottom - self->symbol_info->details->icon_padding_top) / 2.0;
       rotate_around_center (&offset_x, &offset_y, angle);
 
       check = shumate_vector_collision_check (
         collision,
         x + midpoint.x + offset_x,
         y + midpoint.y + offset_y,
-        icon_width / 2,
-        icon_height / 2,
+        (icon_width + self->symbol_info->details->icon_padding_left + self->symbol_info->details->icon_padding_right) / 2 ,
+        (icon_height + self->symbol_info->details->icon_padding_top + self->symbol_info->details->icon_padding_bottom) / 2,
         angle,
         self->symbol_info->details->icon_overlap,
         self->symbol_info->details->icon_ignore_placement,

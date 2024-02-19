@@ -352,7 +352,7 @@ the spec.
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-padding">icon-padding</a></td>
-    <td>❌ Not supported</td>
+    <td>✅ Supported</td>
   </tr>
   <tr>
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/layers/#layout-symbol-icon-pitch-alignment">icon-pitch-alignment</a></td>
