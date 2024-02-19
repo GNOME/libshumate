@@ -3,4 +3,5 @@
 *.sw?
 *.pyc
 build
+.flatpak-builder
 /subprojects/gi-docgen
