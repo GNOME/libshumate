@@ -534,12 +534,21 @@ on_scroll_controller_scroll (ShumateMap               *self,
     zoom_level = self->goto_context->to_zoom;
 
   if (gtk_event_controller_scroll_get_unit (controller) == GDK_SCROLL_UNIT_SURFACE)
+    /* Smooth scrolling with a touchpad or similar device */
     set_zoom_level (self, zoom_level - dy / SCROLL_PIXELS_PER_LEVEL, FALSE);
   else
     {
       zoom_level -= dy / 5;
-      /* snap to the nearest 1/5 of a zoom level */
-      set_zoom_level (self, roundf (zoom_level * 5) / 5, TRUE);
+      if (fabs(dy) == 1)
+        /* Traditional discrete mouse, snap to the nearest 1/5 of a zoom level */
+        set_zoom_level (self, roundf (zoom_level * 5) / 5, TRUE);
+      else
+        /* Smooth scrolling using a mouse.
+         *
+         * Various smooth-scrolling mice behave like "discrete" mice,
+         * while emitting fractions of a scroll at the same time.
+         * Do not round their events, or most of the scrolling gets ignored.*/
+        set_zoom_level (self, zoom_level, TRUE);
     }
 
   return TRUE;
