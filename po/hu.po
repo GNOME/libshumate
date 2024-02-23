@@ -1,14 +1,14 @@
 # Hungarian translation for libshumate.
-# Copyright (C) 2022, 2023 Free Software Foundation, Inc.
+# Copyright (C) 2022, 2023, 2024 Free Software Foundation, Inc.
 # This file is distributed under the same license as the libshumate package.
 #
-# Balázs Úr <ur.balazs at fsf dot hu>, 2022, 2023.
+# Balázs Úr <ur.balazs at fsf dot hu>, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-07-26 01:39+0200\n"
+"POT-Creation-Date: 2023-10-28 12:43+0000\n"
+"PO-Revision-Date: 2024-02-23 01:43+0100\n"
 "Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
 "Language-Team: Hungarian <openscope at fsf dot hu>\n"
 "Language: hu\n"
@@ -16,7 +16,19 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 23.04.1\n"
+"X-Generator: Lokalize 23.08.4\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Hibakeresési rátét megjelenítése"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Csempehatárok megjelenítése"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Ütközési dobozok megjelenítése"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -49,3 +61,7 @@ msgstr "%d láb"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
