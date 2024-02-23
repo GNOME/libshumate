@@ -6,27 +6,27 @@ test_env = [
   'G_TEST_BUILDDIR=@0@'.format(meson.current_build_dir()),
 ]
 
-tests = [
-  'coordinate',
-  'data-source-request',
-  'file-cache',
-  'location',
-  'map',
-  'marker',
-  'marker-layer',
-  'memory-cache',
-  'viewport',
-]
+tests = {
+  'coordinate': {},
+  'data-source-request': {},
+  'file-cache': { 'suite': 'no-valgrind' },
+  'location': {},
+  'map': { 'suite': 'no-valgrind' },
+  'marker': { 'suite': 'no-valgrind' },
+  'marker-layer': { 'suite': 'no-valgrind' },
+  'memory-cache': {},
+  'viewport': {},
+}
 
 if get_option('vector_renderer')
-  tests += [
-    'vector-expression',
-    'vector-reader',
-    'vector-renderer',
-    'vector-sprite-sheet',
-    'vector-style',
-    'vector-value',
-  ]
+  tests += {
+    'vector-expression': {},
+    'vector-reader': {},
+    'vector-renderer': {},
+    'vector-sprite-sheet': {},
+    'vector-style': {},
+    'vector-value': {},
+  }
 endif
 
 subdir('data')
@@ -47,13 +47,13 @@ if valgrind.found()
   )
 endif
 
-foreach test : tests
+foreach test_name, args : tests
   executable = executable(
-    test,
+    test_name,
     test_resources,
-    '@0@.c'.format(test),
+    '@0@.c'.format(test_name),
     dependencies: [libshumate_dep],
   )
 
-  test(test, executable, env: test_env)
+  test(test_name, executable, env: test_env, suite: args.get('suite', []))
 endforeach

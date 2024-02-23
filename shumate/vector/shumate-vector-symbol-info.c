@@ -30,6 +30,7 @@ shumate_vector_symbol_details_free (ShumateVectorSymbolDetails *details)
 
   g_clear_pointer (&details->layer, g_free);
   g_clear_pointer (&details->feature_id, g_free);
+  g_clear_pointer (&details->source_layer, g_free);
 
   g_clear_object (&details->icon_image);
 

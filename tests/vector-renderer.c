@@ -1,4 +1,4 @@
-#include <gtk/gtk.h>
+#include <glib-object.h>
 #include <shumate/shumate.h>
 #include "shumate/shumate-tile-private.h"
 #include "shumate/shumate-vector-renderer-private.h"
