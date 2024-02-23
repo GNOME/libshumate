@@ -143,6 +143,7 @@ shumate_vector_renderer_finalize (GObject *object)
   g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
   g_clear_object (&self->sprites);
+  g_clear_pointer (&self->index_description, shumate_vector_index_description_free);
 
   if (self->thread_pool)
     g_thread_pool_free (self->thread_pool, FALSE, FALSE);

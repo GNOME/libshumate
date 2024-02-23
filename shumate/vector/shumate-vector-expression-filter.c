@@ -2059,7 +2059,7 @@ shumate_vector_expression_filter_eval_bitset (ShumateVectorExpression  *expr,
           gboolean result = FALSE;
           bitset = shumate_vector_index_bitset_new (layer->n_features);
           shumate_vector_value_get_boolean (&self->value, &result);
-          if (!result)
+          if (result)
             shumate_vector_index_bitset_not (bitset);
           return bitset;
         }

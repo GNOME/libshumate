@@ -213,6 +213,7 @@ static void
 shumate_vector_index_field_free (ShumateVectorIndexField *field)
 {
   g_hash_table_destroy (field->indexes);
+  g_clear_pointer (&field->has_index, shumate_vector_index_bitset_free);
   g_free (field);
 }
 
@@ -228,6 +229,10 @@ static void
 shumate_vector_index_layer_free (ShumateVectorIndexLayer *layer)
 {
   g_hash_table_destroy (layer->fields);
+  for (int i = 0; i < 3; i++)
+    g_clear_pointer (&layer->broad_geometry_type_indexes[i], shumate_vector_index_bitset_free);
+  for (int i = 0; i < 6; i++)
+    g_clear_pointer (&layer->geometry_type_indexes[i], shumate_vector_index_bitset_free);
   g_free (layer);
 }
 
@@ -372,14 +377,14 @@ shumate_vector_index_add_bitset_geometry_type (ShumateVectorIndex       *self,
   ShumateVectorIndexLayer *layer = get_or_create_layer (self, layer_idx);
   ShumateVectorIndexBitset *existing;
 
-  existing = layer->geometry_type_indexes[type];
+  existing = layer->geometry_type_indexes[type - 1];
   if (existing != NULL)
     {
       shumate_vector_index_bitset_or (existing, bitset);
       shumate_vector_index_bitset_free (bitset);
     }
   else
-    layer->geometry_type_indexes[type] = bitset;
+    layer->geometry_type_indexes[type - 1] = bitset;
 }
 
 ShumateVectorIndexBitset *
@@ -470,7 +475,7 @@ shumate_vector_index_get_bitset_geometry_type (ShumateVectorIndex *self,
   if (layer == NULL)
     return NULL;
 
-  return layer->geometry_type_indexes[type];
+  return layer->geometry_type_indexes[type - 1];
 }
 
 static ShumateVectorIndexDescriptionField *
@@ -510,6 +515,13 @@ shumate_vector_index_description_new (void)
   ShumateVectorIndexDescription *desc = g_new0 (ShumateVectorIndexDescription, 1);
   desc->layers = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify) shumate_vector_index_description_layer_free);
   return desc;
+}
+
+void
+shumate_vector_index_description_free (ShumateVectorIndexDescription *description)
+{
+  g_hash_table_destroy (description->layers);
+  g_free (description);
 }
 
 /* Returns whether the index description has any indexes for the given layer. */

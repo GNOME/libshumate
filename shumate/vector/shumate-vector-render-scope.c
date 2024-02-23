@@ -443,7 +443,7 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
             bitset = g_hash_table_lookup (fields[key].indexes, GINT_TO_POINTER (val));
           else
             {
-              ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+              g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
               VectorTile__Tile__Value *v = layer->values[val];
               const char *field_name = layer->keys[key];
 
@@ -485,7 +485,7 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
       g_hash_table_iter_init (&field_iter, field->indexes);
       while (g_hash_table_iter_next (&field_iter, (gpointer *)&val, (gpointer *)&bitset))
         {
-          ShumateVectorValue value = SHUMATE_VECTOR_VALUE_INIT;
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
           VectorTile__Tile__Value *v;
 
           v = layer->values[val];
@@ -498,4 +498,6 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
       shumate_vector_index_bitset_free (field->used_values);
       shumate_vector_index_bitset_free (field->unused_values);
     }
+
+  g_free (fields);
 }
