@@ -1,13 +1,13 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 #
-# Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>, 2022.
+# SPDX-FileCopyrightText: 2022, 2024 Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-03 11:55+0000\n"
-"PO-Revision-Date: 2022-09-05 22:45+0300\n"
+"POT-Creation-Date: 2023-10-07 15:05+0000\n"
+"PO-Revision-Date: 2024-02-24 23:11+0200\n"
 "Last-Translator: Rūdolfs Mazurs <rudolfs.mazurs@gmail.com>\n"
 "Language-Team: Latvian <lata-l10n@googlegroups.com>\n"
 "Language: lv\n"
@@ -16,7 +16,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n != 0 ? 1 :"
 " 2);\n"
-"X-Generator: Lokalize 21.12.3\n"
+"X-Generator: Lokalize 23.08.1\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Rādīt atkļūdošanas pārklājumu"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Rādīt flīžu robežas"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Rādīt kolīziju kastes"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Tuvināt"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Tālināt"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -41,3 +61,8 @@ msgstr "%d pēdas"
 #, c-format
 msgid "%d mi"
 msgstr "%d jūdzes"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
+
