@@ -22,7 +22,7 @@ test_license_map ()
   g_object_ref_sink (map2);
 
   label = gtk_widget_get_first_child (GTK_WIDGET (license));
-  g_assert (GTK_IS_LABEL (label));
+  g_assert_true (GTK_IS_LABEL (label));
 
   g_assert_cmpstr (gtk_label_get_text (GTK_LABEL (label)), ==, "");
 
@@ -85,7 +85,7 @@ test_license_extra_text ()
   g_assert_cmpstr (shumate_license_get_extra_text (license), ==, "Hello, world!");
 
   label = gtk_widget_get_last_child (GTK_WIDGET (license));
-  g_assert (GTK_IS_LABEL (label));
+  g_assert_true (GTK_IS_LABEL (label));
 
   g_assert_cmpstr (gtk_label_get_text (GTK_LABEL (label)), ==, "Hello, world!");
 }
