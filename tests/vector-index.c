@@ -2,6 +2,7 @@
 #include "shumate/vector/shumate-vector-index-private.h"
 #include "shumate/vector/shumate-vector-render-scope-private.h"
 #include "shumate/vector/shumate-vector-expression-private.h"
+#include "shumate/shumate-vector-reader-iter-private.h"
 
 static void
 test_vector_index_bitset (void)

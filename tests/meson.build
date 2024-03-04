@@ -54,6 +54,7 @@ foreach test_name, args : tests
     test_resources,
     '@0@.c'.format(test_name),
     dependencies: [libshumate_dep],
+    c_args: libshumate_c_args,
   )
 
   test(test_name, executable, env: test_env, suite: args.get('suite', []))
