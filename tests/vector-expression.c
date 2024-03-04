@@ -72,7 +72,6 @@ test_vector_expression_nested_array_literal (void)
   g_autoptr(JsonNode) node = json_from_string ("[\"in\", 2, [1, 2, 3, 4, 5]]", NULL);
   g_autoptr(ShumateVectorExpression) expression;
   g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
-  double num;
 
   expression = shumate_vector_expression_from_json (node, &error);
   g_assert_error (error, SHUMATE_STYLE_ERROR, SHUMATE_STYLE_ERROR_INVALID_EXPRESSION);
