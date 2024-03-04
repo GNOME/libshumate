@@ -497,6 +497,9 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
       g_hash_table_destroy (field->indexes);
       shumate_vector_index_bitset_free (field->used_values);
       shumate_vector_index_bitset_free (field->unused_values);
+
+      if (field->has_index != NULL)
+        shumate_vector_index_add_bitset_has (self->index, self->source_layer_idx, field_name, field->has_index);
     }
 
   g_free (fields);

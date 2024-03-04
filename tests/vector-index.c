@@ -163,12 +163,17 @@ test_vector_index_eval (void)
   shumate_vector_index_bitset_free (bitset);
   shumate_vector_index_description_free (index_description);
 
-  /* Test fallback with an expression that isn't indexed */
   bitset = compute_bitset (reader, "[\"in\", [\"get\", \"name\"], [\"literal\", [\"test1\", \"helloworld\"]]]", "lines", NULL);
   g_assert_true (shumate_vector_index_bitset_get (bitset, 0));
   g_assert_false (shumate_vector_index_bitset_get (bitset, 1));
   shumate_vector_index_bitset_free (bitset);
 
+  bitset = compute_bitset (reader, "[\"has\", \"name\"]", "lines", NULL);
+  g_assert_true (shumate_vector_index_bitset_get (bitset, 0));
+  g_assert_false (shumate_vector_index_bitset_get (bitset, 1));
+  shumate_vector_index_bitset_free (bitset);
+
+  /* Test fallback with an expression that isn't indexed */
   bitset = compute_bitset (reader, "[\">=\", [\"get\", \"number\"], [\"zoom\"]]", "polygons", NULL);
   g_assert_true (shumate_vector_index_bitset_get (bitset, 0));
   g_assert_false (shumate_vector_index_bitset_get (bitset, 1));
