@@ -385,6 +385,7 @@ shumate_vector_reader_iter_read_feature (ShumateVectorReaderIter *self,
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_if_fail (index >= 0);
+  g_return_if_fail (self->layer != NULL);
   g_return_if_fail (index < self->layer->n_features);
 
   self->feature = self->layer->features[index];
