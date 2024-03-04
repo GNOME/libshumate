@@ -1,6 +1,6 @@
 project(
   'libshumate', 'c',
-  version: '1.2.rc2',
+  version: '1.2.0',
   license: 'LGPLv2.1+',
   meson_version: '>= 0.55.0',
   default_options: [
