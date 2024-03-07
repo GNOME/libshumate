@@ -4,6 +4,8 @@
 #include "shumate/shumate-vector-renderer-private.h"
 #include "shumate/shumate-utils-private.h"
 
+#undef G_DISABLE_ASSERT
+
 static void
 test_vector_renderer_render (void)
 {

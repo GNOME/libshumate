@@ -4,6 +4,8 @@
 #include "shumate/vector/shumate-vector-expression-private.h"
 #include "shumate/shumate-vector-reader-iter-private.h"
 
+#undef G_DISABLE_ASSERT
+
 static void
 test_vector_index_bitset (void)
 {

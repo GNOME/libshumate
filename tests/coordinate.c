@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
 
+#undef G_DISABLE_ASSERT
+
 #define ACCEPTABLE_EPSILON 0.0000000000001
 
 static void

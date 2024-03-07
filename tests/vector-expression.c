@@ -3,6 +3,7 @@
 #include "shumate/vector/shumate-vector-expression-interpolate-private.h"
 #include "shumate/vector/shumate-vector-expression-filter-private.h"
 
+#undef G_DISABLE_ASSERT
 
 static void
 test_vector_expression_parse (void)

@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
 
+#undef G_DISABLE_ASSERT
+
 static void
 test_map_add_layers (void)
 {

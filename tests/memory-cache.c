@@ -1,6 +1,8 @@
 #include <shumate/shumate.h>
 #include "shumate/shumate-memory-cache-private.h"
 
+#undef G_DISABLE_ASSERT
+
 static GdkPaintable *
 create_paintable ()
 {

@@ -7,6 +7,8 @@
 #define CMD(op, rep) ((op & 7) | ((rep) << 3))
 #define POINT(x, y) unzigzag (x), unzigzag (y)
 
+#undef G_DISABLE_ASSERT
+
 static uint32_t
 unzigzag (int value)
 {

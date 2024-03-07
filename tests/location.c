@@ -1,5 +1,7 @@
 #include <shumate/shumate.h>
 
+#undef G_DISABLE_ASSERT
+
 void
 test_location_distance (void)
 {

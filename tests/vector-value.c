@@ -2,6 +2,8 @@
 #include <shumate/shumate.h>
 #include "shumate/vector/shumate-vector-value-private.h"
 
+#undef G_DISABLE_ASSERT
+
 static void
 test_vector_value_literal (void)
 {
