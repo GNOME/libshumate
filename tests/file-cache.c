@@ -1,5 +1,6 @@
-#include <shumate/shumate.h>
+#undef G_DISABLE_ASSERT
 
+#include <shumate/shumate.h>
 
 #define TEST_ETAG "0123456789ABCDEFG"
 #define TEST_DATA "The quick brown fox \0 jumps over the lazy dog"

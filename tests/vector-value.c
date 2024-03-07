@@ -1,3 +1,5 @@
+#undef G_DISABLE_ASSERT
+
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
 #include "shumate/vector/shumate-vector-value-private.h"

@@ -1,3 +1,5 @@
+#undef G_DISABLE_ASSERT
+
 #include <shumate/shumate.h>
 #include "shumate/shumate-memory-cache-private.h"
 
