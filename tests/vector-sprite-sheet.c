@@ -1,6 +1,7 @@
+#undef G_DISABLE_ASSERT
+
 #include <shumate/shumate.h>
 #include "shumate/shumate-vector-sprite-sheet.h"
-
 
 static void
 test_vector_sprite_sheet (void)

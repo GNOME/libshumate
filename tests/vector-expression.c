@@ -1,8 +1,9 @@
+#undef G_DISABLE_ASSERT
+
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
 #include "shumate/vector/shumate-vector-expression-interpolate-private.h"
 #include "shumate/vector/shumate-vector-expression-filter-private.h"
-
 
 static void
 test_vector_expression_parse (void)

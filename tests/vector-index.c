@@ -1,3 +1,5 @@
+#undef G_DISABLE_ASSERT
+
 #include <shumate/shumate.h>
 #include "shumate/vector/shumate-vector-index-private.h"
 #include "shumate/vector/shumate-vector-render-scope-private.h"

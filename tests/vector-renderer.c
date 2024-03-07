@@ -1,3 +1,5 @@
+#undef G_DISABLE_ASSERT
+
 #include <glib-object.h>
 #include <shumate/shumate.h>
 #include "shumate/shumate-tile-private.h"
