@@ -86,7 +86,7 @@ void shumate_location_set_location (ShumateLocation *location,
 double shumate_location_get_latitude (ShumateLocation *location);
 double shumate_location_get_longitude (ShumateLocation *location);
 
-double shumate_location_distance (ShumateLocation *this, ShumateLocation *other);
+double shumate_location_distance (ShumateLocation *self, ShumateLocation *other);
 
 G_END_DECLS
 

@@ -118,7 +118,7 @@ shumate_location_get_longitude (ShumateLocation *location)
 
 /**
  * shumate_location_distance:
- * @this: a [iface@Location]
+ * @self: a [iface@Location]
  * @other: a [iface@Location]
  *
  * Calculates the distance in meters between two locations.
@@ -127,15 +127,15 @@ shumate_location_get_longitude (ShumateLocation *location)
  * Earth is a perfect sphere. This limits the accuracy of the result,
  * but is good enough for most purposes.
  *
- * Returns: the distance in meters between @this and @other
+ * Returns: the distance in meters between @self and @other
  *
  * Since: 1.2
  */
 double
-shumate_location_distance (ShumateLocation *this, ShumateLocation *other)
+shumate_location_distance (ShumateLocation *self, ShumateLocation *other)
 {
-  double lat1 = shumate_location_get_latitude (this) * G_PI / 180.0f;
-  double lon1 = shumate_location_get_longitude (this) * G_PI / 180.0f;
+  double lat1 = shumate_location_get_latitude (self) * G_PI / 180.0f;
+  double lon1 = shumate_location_get_longitude (self) * G_PI / 180.0f;
   double lat2 = shumate_location_get_latitude (other) * G_PI / 180.0f;
   double lon2 = shumate_location_get_longitude (other) * G_PI / 180.0f;
 
