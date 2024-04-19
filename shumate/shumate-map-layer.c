@@ -223,9 +223,16 @@ static double
 get_effective_zoom_level (ShumateMapLayer *self)
 {
   double zoom_level = shumate_viewport_get_zoom_level (shumate_layer_get_viewport (SHUMATE_LAYER (self)));
-  double our_tile_size = shumate_map_source_get_tile_size (self->map_source);
-  double reference_tile_size = shumate_map_source_get_tile_size (shumate_viewport_get_reference_map_source (shumate_layer_get_viewport (SHUMATE_LAYER (self))));
-  return log2 (reference_tile_size / our_tile_size) + zoom_level;
+  ShumateMapSource *map_source = shumate_viewport_get_reference_map_source (shumate_layer_get_viewport (SHUMATE_LAYER (self)));
+
+  if (map_source)
+    {
+      double reference_tile_size = shumate_map_source_get_tile_size (map_source);
+      double our_tile_size = shumate_map_source_get_tile_size (self->map_source);
+      return log2 (reference_tile_size / our_tile_size) + zoom_level;
+    }
+  else
+    return zoom_level;
 }
 
 static gboolean
