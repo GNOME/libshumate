@@ -1,4 +1,9 @@
 =====================
+Version 1.1.4
+=====================
+- Fix crash with null reference map source
+
+=====================
 Version 1.1.3
 =====================
  - Updated translations
