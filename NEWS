@@ -1,4 +1,10 @@
 =====================
+Version 1.2.1
+=====================
+ - Fix compiling with C++
+ - Fix crash with null reference map source
+
+=====================
 Version 1.2.0
 =====================
  - Use g_assert_true instead of g_assert in tests
