@@ -471,7 +471,7 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
 
   for (int key = 0; key < layer->n_keys; key ++)
     {
-      int val;
+      gpointer valp;
       const char *field_name;
       GHashTableIter field_iter;
       ShumateVectorIndexBitset *bitset;
@@ -483,8 +483,9 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
       field_name = layer->keys[key];
 
       g_hash_table_iter_init (&field_iter, field->indexes);
-      while (g_hash_table_iter_next (&field_iter, (gpointer *)&val, (gpointer *)&bitset))
+      while (g_hash_table_iter_next (&field_iter, &valp, (gpointer *)&bitset))
         {
+          int val = GPOINTER_TO_INT(valp);
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
           VectorTile__Tile__Value *v;
 
