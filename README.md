@@ -5,14 +5,15 @@ libshumate is a GTK4 widget to display maps.
 
 libshumate requires:
 
-   * glib >= 2.68
-   * gio >= 2.68
-   * gobject >= 2.68
+   * glib >= 2.74
+   * gio >= 2.74
+   * gobject >= 2.74
    * gobject-introspection >= 0.6.3
    * cairo >= 1.4
    * sqlite3 >= 1.12.0
-   * libsoup >= 2.42 OR libsoup >= 3.0 if `-Dlibsoup3=true` is passed to meson
+   * libsoup >= 3.0
    * gtk4
+   * json-glib >= 1.6 and protobuf-c if vector renderer is enabled (which it is by default)
 
 Building is done with [Meson](https://mesonbuild.com).
 
