@@ -280,7 +280,7 @@ search_sprites (GPtrArray *sprites,
                 gboolean   higher,
                 gboolean   lower)
 {
-  int best_scale = higher ? G_MAXDOUBLE : G_MINDOUBLE;
+  double best_scale = higher ? G_MAXDOUBLE : G_MINDOUBLE;
   ShumateVectorSprite *best_sprite = NULL;
 
   for (int i = 0; i < sprites->len; i++)
