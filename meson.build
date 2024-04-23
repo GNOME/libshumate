@@ -99,7 +99,7 @@ add_project_arguments('-DGETTEXT_PACKAGE="shumate1"', language: 'c')
 build_demos = get_option('demos')
 
 if get_option('gtk_doc') and not get_option('gir')
-  error('Cannot generate the documentation if gobjet-introspection is disabled.')
+  error('Cannot generate the documentation if gobject-introspection is disabled.')
 endif
 
 generate_gir = get_option('gir')
