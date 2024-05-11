@@ -2,14 +2,15 @@
 # Copyright (C) 2022 libshumate's COPYRIGHT HOLDER
 # This file is distributed under the same license as the libshumate package.
 # Dušan Kazik <prescott66@gmail.com>, 2022.
+# Jose Riha <jose1711@gmail.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-25 20:03+0000\n"
-"PO-Revision-Date: 2022-09-27 14:25+0200\n"
-"Last-Translator: Dušan Kazik <prescott66@gmail.com>\n"
+"POT-Creation-Date: 2023-10-28 12:43+0000\n"
+"PO-Revision-Date: 2024-05-11 23:35+0200\n"
+"Last-Translator: Josee Riha <jose1711@gmail.com>\n"
 "Language-Team: Slovak <gnome-sk-list@gnome.org>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +18,26 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 1 : (n>=2 && n<=4) ? 2 : 0\n"
 "X-Generator: Gtranslator 40.0\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Zobraziť ladiacu vrstvu"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Zobraziť hranice tlaždíc"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Zobraziť kolízne rámčeky"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Priblížiť"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Oddialiť"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -41,3 +62,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
