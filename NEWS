@@ -1,4 +1,11 @@
 =====================
+Version 1.2.2
+=====================
+ - Fix some compiler warnings
+ - Fix build failure with Clang 18
+ - Allow building with G_DISABLE_ASSERT
+
+=====================
 Version 1.2.1
 =====================
  - Fix compiling with C++
