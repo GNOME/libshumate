@@ -8,25 +8,38 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-10-07 15:05+0000\n"
-"PO-Revision-Date: 2023-11-29 13:46-0300\n"
-"Last-Translator: Juliano de Souza Camargo <julianosc@pm.me>\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-05-25 07:23+0000\n"
+"PO-Revision-Date: 2024-05-27 20:47-0300\n"
+"Last-Translator: Leônidas Araújo <leorusvellt@hotmail.com>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Gtranslator 45.3\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Mostrar sobreposição de depuração"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Mostrar limites do bloco"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Mostrar caixas de colisão"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
 msgstr "Ampliar"
 
+# Leônidas -- "Reduzir" tem sido maus usado.
 #: data/shumate-simple-map.ui:53
 msgid "Zoom Out"
-msgstr "Diminuir"
+msgstr "Reduzir"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -51,3 +64,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
