@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Gnome Nepali Translation\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-06 18:11+0000\n"
-"PO-Revision-Date: 2022-09-08 03:32+0545\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-05-19 12:45+0000\n"
+"PO-Revision-Date: 2024-06-01 20:41+0545\n"
 "Last-Translator: Pawan Chitrakar <chautari@gmail.com>\n"
 "Language-Team: Nepali Translation Team <chautari@gmail.com>\n"
 "Language: ne\n"
@@ -16,7 +16,27 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "डिबग ओभरले देखाउनुहोस्"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "टाइल सीमा देखाउनुहोस्"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "टक्कर बाकस देखाउनुहोस्"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "जुम बढाउनुहोस्"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "जूम घटाउनुहोस्"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -41,3 +61,7 @@ msgstr "%d फिट"
 #, c-format
 msgid "%d mi"
 msgstr "%d माइल"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "शुमाते"
