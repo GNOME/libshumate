@@ -1,4 +1,12 @@
 =====================
+Version 1.3.alpha
+=====================
+ - Allow building with C++
+ - Fix crash in MapSource
+ - Add documentation for the GTK inspector page
+ - Fix compilation warnings
+
+=====================
 Version 1.2.0
 =====================
  - Use g_assert_true instead of g_assert in tests
