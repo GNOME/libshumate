@@ -7,11 +7,11 @@ fedora:
   image: registry.gitlab.gnome.org/gnome/gtk/fedora:v46
   script:
     - sudo dnf install -y vala sqlite-devel libsoup3-devel gtk4-devel protobuf-c-devel gcovr python3-packaging gperf valgrind
-    - meson setup _build -Db_coverage=true -Dgtk_doc=true
+    - meson setup _build -Db_coverage=true -Dgtk_doc=true -Dvector_renderer=false
     - xvfb-run ninja -C _build test
     - mv _build/docs/libshumate-1.0 docs
     # run the vector tests
-    - meson setup _build --reconfigure -Dvector_renderer=true
+    - meson setup _build --reconfigure
     - xvfb-run meson test -C _build
     - xvfb-run meson test -C _build --setup=valgrind
     - ninja -C _build coverage
