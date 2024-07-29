@@ -6,10 +6,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate libshumate-1-0\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-07-03 08:19+0000\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-06-01 14:57+0000\n"
 "PO-Revision-Date: 2023-09-09 02:19+0300\n"
-"Last-Translator: Efstathios Iosifidis <eiosifidis@gnome.org>\n"
+"Last-Translator: Giannis Antypas <gianni.antypas@gmail.com>\n"
 "Language-Team: Greek <gnome-el-list@gnome.org>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +17,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.3.2\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Εμφάνιαη επικάλυψης αποσφαλμάτωσης"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Εμφάνιαη ορίων πλακιδίων"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Εμφάνιαη πλαισίων σύγκρουσης"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -42,10 +54,14 @@ msgstr "%d χλμ"
 #: shumate/shumate-scale.c:206
 #, c-format
 msgid "%d ft"
-msgstr "%d ft"
+msgstr "%d πδ"
 
 #. mi is the unit for miles
 #: shumate/shumate-scale.c:209
 #, c-format
 msgid "%d mi"
-msgstr "%d mi"
+msgstr "%d μίλ"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
