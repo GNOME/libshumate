@@ -1,4 +1,9 @@
 =====================
+Version 1.3.beta
+=====================
+ - Fix build with -Dvector_renderer=false
+
+=====================
 Version 1.3.alpha
 =====================
  - Allow building with C++
