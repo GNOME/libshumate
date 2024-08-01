@@ -1,4 +1,9 @@
 =====================
+Version 1.2.3
+=====================
+ - Fix build with -Dvector_renderer=false
+
+=====================
 Version 1.2.2
 =====================
  - Fix some compiler warnings
