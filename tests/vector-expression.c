@@ -592,7 +592,7 @@ test_vector_expression_formatted_string ()
   node = json_from_string ("[\"format\",\
     \"Hello \",\
     [\"concat\", \"world\", \"!\"], {\"font-scale\": 0.1},\
-    \"\n\", {\"text-color\": [\"coalesce\", \"red\"]},\
+    \"\\n\", {\"text-color\": [\"coalesce\", \"red\"]},\
     null,\
     \"test\"\
     ]", &error);
