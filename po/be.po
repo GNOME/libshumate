@@ -6,9 +6,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-05-08 13:21+0300\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/"
+"issues/\n"
+"POT-Creation-Date: 2024-08-01 20:21+0000\n"
+"PO-Revision-Date: 2024-08-24 19:42+0300\n"
 "Last-Translator: Yuras Shumovich <shumovichy@gmail.com>\n"
 "Language-Team: Belarusian <i18n-bel-gnome@googlegroups.com>\n"
 "Language: be\n"
@@ -17,7 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Накладваць інтэрфейс адладкі"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Паказваць межы плітак"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Паказваць рамкі сутыкнення"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -52,4 +65,8 @@ msgstr "%d ф."
 #: shumate/shumate-scale.c:209
 #, c-format
 msgid "%d mi"
-msgstr "%d міл."
+msgstr "%d міль"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
