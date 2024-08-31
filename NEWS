@@ -1,4 +1,9 @@
 =====================
+Version 1.3.rc
+=====================
+ - Fix vector expression test with newer json-glib versions
+
+=====================
 Version 1.3.beta
 =====================
  - Fix build with -Dvector_renderer=false
