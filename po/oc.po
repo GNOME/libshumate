@@ -6,16 +6,36 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-05-23 12:26+0000\n"
-"PO-Revision-Date: 2022-05-23 16:03+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-08-01 20:21+0000\n"
+"PO-Revision-Date: 2024-09-01 09:54+0200\n"
 "Last-Translator: Quentin PAGÈS\n"
 "Language-Team: Occitan <totenoc@gmail.com>\n"
 "Language: oc\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.3\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Afichar la superposicion de desbugatge"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Afichar los limits dels teules"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Afichar las bóstias de collision"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Agrandir"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Reduire"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -40,3 +60,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
