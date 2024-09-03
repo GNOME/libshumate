@@ -1,21 +1,44 @@
-# Bulgarian translation libshumate po-file.
-# Copyright (C) 2022 libshumate's Alexander Shopov <ash@kambanaria.org>
+# Bulgarian translation of libshumate po-file.
+# Copyright (C) 2022 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2024 twlvnn kraftwerk <kraft_werk@tutanota.com>.
 # This file is distributed under the same license as the libshumate package.
 # Alexander Shopov <ash@kambanaria.org>, 2022.
+# twlvnn kraftwerk <kraft_werk@tutanota.com>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2022-09-10 10:16+0000\n"
-"PO-Revision-Date: 2022-09-13 10:10+0200\n"
-"Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2024-08-30 18:17+0000\n"
+"PO-Revision-Date: 2024-09-03 22:23+0200\n"
+"Last-Translator: twlvnn kraftwerk <kraft_werk@tutanota.com>\n"
 "Language-Team: Bulgarian <dict-notifications@fsa-bg.org>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"X-Generator: Gtranslator 46.1\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Показване на информация за отстраняване на грешки"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Показване на границите на плочките"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Показване на полетата за засичане на сблъсък"
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Увеличаване"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Намаляване"
 
 #. m is the unit for meters
 #: shumate/shumate-scale.c:197
@@ -40,3 +63,7 @@ msgstr "%d ft"
 #, c-format
 msgid "%d mi"
 msgstr "%d mi"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
