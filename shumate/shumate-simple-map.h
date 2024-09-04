@@ -19,6 +19,7 @@
 
 #include <gtk/gtk.h>
 #include <shumate/shumate-map.h>
+#include <shumate/shumate-map-layer.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-compass.h>
@@ -58,5 +59,7 @@ void              shumate_simple_map_set_show_zoom_buttons (ShumateSimpleMap *se
                                                             gboolean          show_zoom_buttons);
 
 ShumateMap *shumate_simple_map_get_map (ShumateSimpleMap *self);
+
+ShumateMapLayer *shumate_simple_map_get_base_map_layer (ShumateSimpleMap *self);
 
 G_END_DECLS

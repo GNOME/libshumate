@@ -18,6 +18,7 @@
  */
 
 #include "shumate-map-layer.h"
+#include "shumate-marshal.h"
 #include "shumate-memory-cache-private.h"
 #include "shumate-tile-private.h"
 #include "shumate-symbol-event.h"
@@ -43,7 +44,6 @@ struct _ShumateMapLayer
   ShumateMapSource *map_source;
 
   GHashTable *tile_children;
-  GHashTable *tile_fill;
 
   guint recompute_grid_idle_id;
 
@@ -77,6 +77,8 @@ static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 enum
 {
   SYMBOL_CLICKED,
+  MAP_LOADED,
+  TILE_ERROR,
   LAST_SIGNAL
 };
 
@@ -97,8 +99,23 @@ positive_mod (int i, int n)
 }
 
 typedef struct {
-  ShumateMapLayer *self;
   ShumateTile *tile;
+  GCancellable *cancellable;
+  guint error;
+} TileChild;
+
+static void
+tile_child_free (TileChild *child)
+{
+  g_clear_object (&child->tile);
+  g_clear_object (&child->cancellable);
+  g_free (child);
+}
+
+
+typedef struct {
+  ShumateMapLayer *self;
+  TileChild *tile_child;
   char *source_id;
   ShumateGridPosition pos;
 } TileFilledData;
@@ -107,7 +124,6 @@ static void
 tile_filled_data_free (TileFilledData *data)
 {
   g_clear_object (&data->self);
-  g_clear_object (&data->tile);
   g_clear_pointer (&data->source_id, g_free);
   g_free (data);
 }
@@ -155,24 +171,32 @@ on_tile_filled (GObject      *source_object,
 
   success = shumate_map_source_fill_tile_finish (SHUMATE_MAP_SOURCE (source_object), res, &error);
 
-  // TODO: Report the error
   if (!success)
-    return;
+    {
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        {
+          data->tile_child->error = TRUE;
+          g_signal_emit (data->self, signals[TILE_ERROR], 0, data->tile_child->tile, error);
+        }
+    }
+  else
+    {
+      add_symbols (data->self, data->tile_child->tile, &data->pos);
 
-  add_symbols (data->self, data->tile, &data->pos);
-
-  shumate_memory_cache_store_tile (data->self->memcache,
-                                   data->tile,
-                                   data->source_id);
+      shumate_memory_cache_store_tile (data->self->memcache,
+                                       data->tile_child->tile,
+                                       data->source_id);
+    }
 
   recompute_grid (data->self);
 }
 
-static void
+static TileChild *
 add_tile (ShumateMapLayer     *self,
           ShumateTile         *tile,
           ShumateGridPosition *pos)
 {
+  TileChild *tile_child = g_new0 (TileChild, 1);
   const char *source_id = shumate_map_source_get_id (self->map_source);
 
   self->profile_all_tiles_filled_begin = SHUMATE_PROFILE_CURRENT_TIME;
@@ -184,40 +208,40 @@ add_tile (ShumateMapLayer     *self,
     }
   else
     {
-      GCancellable *cancellable = g_cancellable_new ();
       TileFilledData *data = g_new0 (TileFilledData, 1);
+
+      tile_child->cancellable = g_cancellable_new ();
+
       data->self = g_object_ref (self);
-      data->tile = g_object_ref (tile);
+      data->tile_child = tile_child;
       data->source_id = g_strdup (source_id);
       data->pos = *pos;
 
       shumate_tile_set_paintable (tile, NULL);
-      shumate_map_source_fill_tile_async (self->map_source, tile, cancellable, on_tile_filled, data);
-      g_hash_table_insert (self->tile_fill, g_object_ref (tile), cancellable);
+      shumate_map_source_fill_tile_async (self->map_source, tile, tile_child->cancellable, on_tile_filled, data);
     }
 
-  g_hash_table_insert (self->tile_children, pos, tile);
+  tile_child->tile = tile;
+
+  g_hash_table_insert (self->tile_children, pos, tile_child);
   gtk_widget_queue_draw (GTK_WIDGET (self));
   g_signal_connect_object (tile, "notify::state", (GCallback)on_tile_notify_state, self, G_CONNECT_SWAPPED);
+
+  return tile_child;
 }
 
 static void
 remove_tile (ShumateMapLayer     *self,
-             ShumateTile         *tile,
+             TileChild           *tile_child,
              ShumateGridPosition *pos)
 {
-  GCancellable *cancellable = g_hash_table_lookup (self->tile_fill, tile);
-  if (cancellable)
-    {
-      g_cancellable_cancel (cancellable);
-      g_hash_table_remove (self->tile_fill, tile);
-    }
+  g_cancellable_cancel (tile_child->cancellable);
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   shumate_vector_symbol_container_remove_symbols (self->symbols, pos->x, pos->y, pos->zoom);
 #endif
 
-  g_signal_handlers_disconnect_by_func (tile, on_tile_notify_state, self);
+  g_signal_handlers_disconnect_by_func (tile_child->tile, on_tile_notify_state, self);
 }
 
 static double
@@ -345,7 +369,7 @@ recompute_grid (ShumateMapLayer *self)
 
   gboolean defer = should_defer (self);
 
-  gboolean all_filled = TRUE, all_done = TRUE;
+  gboolean all_filled = TRUE, all_done = TRUE, all_succeeded = TRUE;
 
   /* First, remove all the tiles that aren't in bounds, or that are on the
    * wrong zoom level and haven't finished loading */
@@ -353,7 +377,7 @@ recompute_grid (ShumateMapLayer *self)
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       ShumateGridPosition *pos = key;
-      ShumateTile *tile = value;
+      TileChild *tile_child = value;
       float size = powf (2, zoom_level - pos->zoom);
       float x = pos->x * size;
       float y = pos->y * size;
@@ -362,9 +386,9 @@ recompute_grid (ShumateMapLayer *self)
           || x >= tile_initial_column + required_columns
           || y + size <= tile_initial_row
           || y >= tile_initial_row + required_rows
-          || (pos->zoom != zoom_level && shumate_tile_get_state (tile) != SHUMATE_STATE_DONE))
+          || (pos->zoom != zoom_level && shumate_tile_get_state (tile_child->tile) != SHUMATE_STATE_DONE))
         {
-          remove_tile (self, tile, pos);
+          remove_tile (self, tile_child, pos);
           g_hash_table_iter_remove (&iter);
         }
     }
@@ -375,22 +399,25 @@ recompute_grid (ShumateMapLayer *self)
       for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
         {
           g_autoptr(ShumateGridPosition) pos = shumate_grid_position_new (x, y, zoom_level);
-          ShumateTile *tile = g_hash_table_lookup (self->tile_children, pos);
+          TileChild *tile_child = g_hash_table_lookup (self->tile_children, pos);
 
           n_tiles ++;
 
-          if (!tile && !defer)
+          if (!tile_child && !defer)
             {
-              tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
+              ShumateTile *tile = shumate_tile_new_full (positive_mod (x, source_columns), positive_mod (y, source_rows), tile_size, zoom_level);
               shumate_tile_set_scale_factor (tile, gtk_widget_get_scale_factor (GTK_WIDGET (self)));
-              add_tile (self, tile, g_steal_pointer (&pos));
+              tile_child = add_tile (self, tile, g_steal_pointer (&pos));
             }
 
-          if (tile == NULL || shumate_tile_get_paintable (tile) == NULL)
+          if (tile_child == NULL || shumate_tile_get_paintable (tile_child->tile) == NULL)
             all_filled = FALSE;
 
-          if (tile == NULL || shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+          if (tile_child == NULL || shumate_tile_get_state (tile_child->tile) != SHUMATE_STATE_DONE)
             all_done = FALSE;
+
+          if (tile_child != NULL && tile_child->error)
+            all_succeeded = FALSE;
         }
     }
 
@@ -399,6 +426,8 @@ recompute_grid (ShumateMapLayer *self)
       g_autofree char *desc = g_strdup_printf ("Visible tiles done (%d)", n_tiles);
       SHUMATE_PROFILE_COLLECT (self->profile_all_tiles_done_begin, desc, NULL);
       self->profile_all_tiles_done_begin = 0;
+
+      g_signal_emit (self, signals[MAP_LOADED], 0, !all_succeeded);
     }
   if (all_filled && self->profile_all_tiles_filled_begin > 0)
     {
@@ -415,11 +444,11 @@ recompute_grid (ShumateMapLayer *self)
       while (g_hash_table_iter_next (&iter, &key, &value))
         {
           ShumateGridPosition *pos = key;
-          ShumateTile *tile = value;
+          TileChild *tile_child = value;
 
           if (pos->zoom != zoom_level)
             {
-              remove_tile (self, tile, pos);
+              remove_tile (self, tile_child, pos);
               g_hash_table_iter_remove (&iter);
             }
         }
@@ -527,7 +556,6 @@ shumate_map_layer_dispose (GObject *object)
     gtk_widget_unparent (child);
 
   g_clear_handle_id (&self->recompute_grid_idle_id, g_source_remove);
-  g_clear_pointer (&self->tile_fill, g_hash_table_unref);
   g_clear_pointer (&self->tile_children, g_hash_table_unref);
   g_clear_object (&self->map_source);
   g_clear_object (&self->memcache);
@@ -680,8 +708,8 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
   while (g_hash_table_iter_next (&iter, &key, &value))
     {
       ShumateGridPosition *pos = key;
-      ShumateTile *tile = value;
-      GdkPaintable *paintable = shumate_tile_get_paintable (tile);
+      TileChild *tile_child = value;
+      GdkPaintable *paintable = shumate_tile_get_paintable (tile_child->tile);
       double size = tile_size * pow (2, zoom_level - pos->zoom);
       double x = -(longitude_x - width/2.0) + size * pos->x;
       double y = -(latitude_y - height/2.0) + size * pos->y;
@@ -707,7 +735,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
         {
           g_autofree char *text = NULL;
           g_autoptr(PangoLayout) layout = NULL;
-          int x = shumate_tile_get_x (tile);
+          int x = shumate_tile_get_x (tile_child->tile);
           GdkRGBA color = {1, 0, 1, 1};
 
           if (x == pos->x)
@@ -740,12 +768,12 @@ shumate_map_layer_get_debug_text (ShumateLayer *layer)
   g_autoptr(GString) string = g_string_new ("");
   int n_loading = 0;
   GHashTableIter iter;
-  ShumateTile *tile;
+  TileChild *tile_child;
 
   g_hash_table_iter_init (&iter, self->tile_children);
-  while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&tile))
+  while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&tile_child))
     {
-      if (shumate_tile_get_state (tile) != SHUMATE_STATE_DONE)
+      if (shumate_tile_get_state (tile_child->tile) != SHUMATE_STATE_DONE)
         n_loading ++;
     }
 
@@ -814,13 +842,59 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
                   G_TYPE_NONE,
                   1,
                   SHUMATE_TYPE_SYMBOL_EVENT);
+
+  /**
+   * ShumateMapLayer::map-loaded:
+   * @self: the [class@MapLayer] emitting the signal
+   * @errors: `TRUE` if any visible tiles failed to load
+   *
+   * Emitted when all the tiles in the map view are finished loading.
+   *
+   * As the map is panned or zoomed, this signal may be emitted multiple times.
+   *
+   * Since: 1.4
+   */
+  signals[MAP_LOADED] =
+    g_signal_new ("map-loaded",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__BOOLEAN,
+                  G_TYPE_NONE,
+                  1,
+                  G_TYPE_BOOLEAN);
+
+  /**
+   * ShumateMapLayer::tile-error:
+   * @self: the [class@MapLayer] emitting the signal
+   * @tile: the [class@Tile] that failed to load
+   * @error: the error that occurred
+   *
+   * Emitted when a tile fails to load.
+   *
+   * Since: 1.4
+   */
+  signals[TILE_ERROR] =
+    g_signal_new ("tile-error",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  _shumate_marshal_VOID__OBJECT_BOXED,
+                  G_TYPE_NONE,
+                  2,
+                  SHUMATE_TYPE_TILE,
+                  G_TYPE_ERROR);
 }
 
 static void
 shumate_map_layer_init (ShumateMapLayer *self)
 {
-  self->tile_children = g_hash_table_new_full (shumate_grid_position_hash, shumate_grid_position_equal, shumate_grid_position_free, g_object_unref);
-  self->tile_fill = g_hash_table_new_full (g_direct_hash, g_direct_equal, g_object_unref, g_object_unref);
+  self->tile_children = g_hash_table_new_full (
+    shumate_grid_position_hash,
+    shumate_grid_position_equal,
+    shumate_grid_position_free,
+    (GDestroyNotify)tile_child_free
+  );
   self->memcache = shumate_memory_cache_new_full (100);
 }
 
@@ -833,3 +907,4 @@ shumate_map_layer_new (ShumateMapSource *map_source,
                        "viewport", viewport,
                        NULL);
 }
+

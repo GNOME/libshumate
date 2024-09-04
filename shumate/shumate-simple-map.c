@@ -62,6 +62,7 @@ enum {
   PROP_SCALE,
   PROP_SHOW_ZOOM_BUTTONS,
   PROP_MAP,
+  PROP_BASE_MAP_LAYER,
   N_PROPS
 };
 
@@ -129,6 +130,10 @@ shumate_simple_map_get_property (GObject    *object,
 
     case PROP_MAP:
       g_value_set_object (value, shumate_simple_map_get_map (self));
+      break;
+
+    case PROP_BASE_MAP_LAYER:
+      g_value_set_object (value, shumate_simple_map_get_base_map_layer (self));
       break;
 
     default:
@@ -278,6 +283,23 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
+  /**
+   * ShumateSimpleMap:base-map-layer:
+   *
+   * The [class@MapLayer] that displays the map source.
+   *
+   * This is a read-only property. To change the basemap, set the
+   * [property@SimpleMap:map-source] property.
+   *
+   * Since: 1.4
+   */
+  properties[PROP_BASE_MAP_LAYER] =
+    g_param_spec_object ("base-map-layer",
+                         "Base map layer",
+                         "Base map layer",
+                         SHUMATE_TYPE_MAP_LAYER,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
   /**
@@ -401,6 +423,7 @@ shumate_simple_map_set_map_source (ShumateSimpleMap *self,
   shumate_license_append_map_source (self->license, map_source);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MAP_SOURCE]);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_BASE_MAP_LAYER]);
 }
 
 
@@ -564,6 +587,23 @@ shumate_simple_map_get_show_zoom_buttons (ShumateSimpleMap *self)
 
 
 /**
+ * shumate_simple_map_set_show_zoom_buttons:
+ * @self: a [class@SimpleMap]
+ * @show_zoom_buttons: %TRUE to show the zoom buttons, %FALSE to hide them
+ *
+ * Sets whether or not the zoom buttons are shown.
+ */
+void
+shumate_simple_map_set_show_zoom_buttons (ShumateSimpleMap *self,
+                                          gboolean          show_zoom_buttons)
+{
+  g_return_if_fail (SHUMATE_IS_SIMPLE_MAP (self));
+  gtk_widget_set_visible (GTK_WIDGET (self->zoom_buttons), show_zoom_buttons);
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_ZOOM_BUTTONS]);
+}
+
+
+/**
  * shumate_simple_map_get_map:
  * @self: a [class@SimpleMap]
  *
@@ -581,17 +621,19 @@ shumate_simple_map_get_map (ShumateSimpleMap *self)
 
 
 /**
- * shumate_simple_map_set_show_zoom_buttons:
+ * shumate_simple_map_get_base_map_layer:
  * @self: a [class@SimpleMap]
- * @show_zoom_buttons: %TRUE to show the zoom buttons, %FALSE to hide them
  *
- * Sets whether or not the zoom buttons are shown.
+ * Gets the [class@MapLayer] that displays the base map.
+ *
+ * Returns: (transfer none): the base map layer
+ *
+ * Since: 1.4
  */
-void
-shumate_simple_map_set_show_zoom_buttons (ShumateSimpleMap *self,
-                                          gboolean          show_zoom_buttons)
+ShumateMapLayer *
+shumate_simple_map_get_base_map_layer (ShumateSimpleMap *self)
 {
-  g_return_if_fail (SHUMATE_IS_SIMPLE_MAP (self));
-  gtk_widget_set_visible (GTK_WIDGET (self->zoom_buttons), show_zoom_buttons);
-  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_ZOOM_BUTTONS]);
+  g_return_val_if_fail (SHUMATE_IS_SIMPLE_MAP (self), NULL);
+
+  return self->map_layer;
 }

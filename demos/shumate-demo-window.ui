@@ -27,6 +27,7 @@
       <object class="ShumateSimpleMap" id="map">
         <property name="map-source" bind-source="layers_dropdown" bind-property="selected-item" bind-flags="sync-create"/>
         <signal name="symbol-clicked" handler="on_symbol_clicked" swapped="true"/>
+        <signal name="notify::base-map-layer" handler="on_base_map_layer_changed"/>
       </object>
     </child>
   </template>

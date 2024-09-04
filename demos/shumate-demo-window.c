@@ -85,6 +85,43 @@ on_symbol_clicked (ShumateVectorRenderer *renderer,
 
 
 static void
+on_tile_error (ShumateMapLayer *layer,
+               ShumateTile     *tile,
+               GError          *error,
+               gpointer         user_data)
+{
+  g_warning (
+    "Failed to load tile %d/%d/%d: %s",
+    shumate_tile_get_zoom_level (tile),
+    shumate_tile_get_x (tile),
+    shumate_tile_get_y (tile),
+    error->message
+  );
+}
+
+
+static void
+on_map_loaded (ShumateMapLayer *layer,
+               gboolean         errors,
+               gpointer         user_data)
+{
+  g_print ("Map loaded%s\n", errors ? " with errors" : "");
+}
+
+
+static void
+on_base_map_layer_changed (ShumateSimpleMap  *map,
+                           GParamSpec        *pspec,
+                           ShumateDemoWindow *self)
+{
+  ShumateMapLayer *base_map_layer = shumate_simple_map_get_base_map_layer (map);
+
+  g_signal_connect_object (base_map_layer, "tile-error", G_CALLBACK (on_tile_error), self, G_CONNECT_SWAPPED);
+  g_signal_connect_object (base_map_layer, "map-loaded", G_CALLBACK (on_map_loaded), self, G_CONNECT_SWAPPED);
+}
+
+
+static void
 shumate_demo_window_dispose (GObject *object)
 {
   ShumateDemoWindow *self = SHUMATE_DEMO_WINDOW (object);
@@ -107,6 +144,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, map);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
   gtk_widget_class_bind_template_callback (widget_class, on_symbol_clicked);
+  gtk_widget_class_bind_template_callback (widget_class, on_base_map_layer_changed);
 }
 
 static gchar *
