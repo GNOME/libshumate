@@ -1,4 +1,9 @@
-=====================
+===================
+Version 1.3.0
+===================
+ - Translation updates
+
+===================
 Version 1.3.rc
 =====================
  - Fix vector expression test with newer json-glib versions
