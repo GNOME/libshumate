@@ -228,7 +228,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
     g_param_spec_double ("zoom-level",
                          "Zoom level",
                          "The level of zoom of the map",
-                         0, 20, 3,
+                         0, 30, 3,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
@@ -252,7 +252,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
     g_param_spec_uint ("max-zoom-level",
                        "Max zoom level",
                        "The highest allowed level of zoom",
-                       0, 20, DEFAULT_MAX_ZOOM,
+                       0, 30, DEFAULT_MAX_ZOOM,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   /**
