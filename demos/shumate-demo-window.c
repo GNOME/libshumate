@@ -252,12 +252,14 @@ shumate_demo_window_init (ShumateDemoWindow *self)
               g_clear_error (&error);
             }
 
+          shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
           shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
           shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
         }
     }
 
   viewport = shumate_simple_map_get_viewport (self->map);
+  shumate_viewport_set_max_zoom_level (viewport, 22);
 
   /* Add the marker layers */
   self->marker_layer = shumate_marker_layer_new (viewport);
