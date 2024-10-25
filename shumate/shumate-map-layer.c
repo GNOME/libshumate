@@ -342,10 +342,10 @@ recompute_grid (ShumateMapLayer *self)
   int zoom_level = (int)floor (get_effective_zoom_level (self));
   double latitude = shumate_location_get_latitude (SHUMATE_LOCATION (viewport));
   double longitude = shumate_location_get_longitude (SHUMATE_LOCATION (viewport));
-  int latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
-  int longitude_x = shumate_map_source_get_x (self->map_source, zoom_level, longitude);
-  int source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
-  int source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
+  double latitude_y = shumate_map_source_get_y (self->map_source, zoom_level, latitude);
+  double longitude_x = shumate_map_source_get_x (self->map_source, zoom_level, longitude);
+  guint64 source_rows = shumate_map_source_get_row_count (self->map_source, zoom_level);
+  guint64 source_columns = shumate_map_source_get_column_count (self->map_source, zoom_level);
 
   double rotation = shumate_viewport_get_rotation (viewport);
   int n_tiles = 0;
@@ -360,10 +360,10 @@ recompute_grid (ShumateMapLayer *self)
   );
 
   // This is the (column, row) of the top left tile
-  int tile_initial_column = floor ((longitude_x - size_x) / (double) tile_size) - 1;
-  int tile_initial_row = floor ((latitude_y - size_y) / (double) tile_size) - 1;
-  int tile_final_column = ceil ((longitude_x + size_x) / (double) tile_size) + 1;
-  int tile_final_row = ceil ((latitude_y + size_y) / (double) tile_size) + 1;
+  gint64 tile_initial_column = floor ((longitude_x - size_x) / (double) tile_size) - 1;
+  gint64 tile_initial_row = floor ((latitude_y - size_y) / (double) tile_size) - 1;
+  gint64 tile_final_column = ceil ((longitude_x + size_x) / (double) tile_size) + 1;
+  gint64 tile_final_row = ceil ((latitude_y + size_y) / (double) tile_size) + 1;
   int required_columns = tile_final_column - tile_initial_column;
   int required_rows = tile_final_row - tile_initial_row;
 
