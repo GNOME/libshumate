@@ -134,10 +134,16 @@ shumate_location_get_longitude (ShumateLocation *location)
 double
 shumate_location_distance (ShumateLocation *self, ShumateLocation *other)
 {
+  double distance;
   double lat1 = shumate_location_get_latitude (self) * G_PI / 180.0f;
   double lon1 = shumate_location_get_longitude (self) * G_PI / 180.0f;
   double lat2 = shumate_location_get_latitude (other) * G_PI / 180.0f;
   double lon2 = shumate_location_get_longitude (other) * G_PI / 180.0f;
 
-  return acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (lon2 - lon1)) * EARTH_RADIUS;
+  distance = acos (sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (lon2 - lon1)) * EARTH_RADIUS;
+
+  if (isnan(distance))
+    return 0;
+  else
+    return distance;
 }
