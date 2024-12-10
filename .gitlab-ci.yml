@@ -1,6 +1,15 @@
+include:
+  - project: 'gnome/citemplates'
+    file: 'flatpak/flatpak_ci_initiative.yml'
+  - component:  gitlab.gnome.org/GNOME/citemplates/release-service@master
+    inputs:
+      dist-job-name: "fedora"
+      tarball-artifact-path: "_build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz"
+
 stages:
 - build
 - pages
+- deploy
 
 fedora:
   stage: build
@@ -39,4 +48,3 @@ pages:
     - public
   only:
   - main
-
