@@ -1,6 +1,15 @@
+include:
+  - project: 'gnome/citemplates'
+    file: 'flatpak/flatpak_ci_initiative.yml'
+  - component:  gitlab.gnome.org/GNOME/citemplates/release-service@master
+    inputs:
+      dist-job-name: "fedora"
+      tarball-artifact-path: "_build/meson-dist/$CI_PROJECT_NAME-$CI_COMMIT_TAG.tar.xz"
+
 stages:
 - build
 - pages
+- deploy
 
 fedora:
   stage: build
@@ -16,11 +25,13 @@ fedora:
     - xvfb-run meson test -C _build --setup=valgrind
     - ninja -C _build coverage
     - mv _build/meson-logs/coveragereport coverage
+    - meson dist -C _build --no-tests
   coverage: '/^\s+lines\.+:\s+([\d.]+\%)\s+/'
   artifacts:
     paths:
     - docs
     - coverage
+    - "_build/meson-dist/*.xz"
     reports:
       coverage_report:
         coverage_format: cobertura
@@ -39,4 +50,3 @@ pages:
     - public
   only:
   - main
-
