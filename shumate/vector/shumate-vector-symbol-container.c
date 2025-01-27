@@ -168,12 +168,10 @@ shumate_vector_symbol_container_constructed (GObject *object)
   ShumateVectorSymbolContainer *self = (ShumateVectorSymbolContainer *)object;
   ShumateInspectorSettings *settings = shumate_inspector_settings_get_default ();
   ShumateViewport *viewport;
-  guint tile_size;
 
   G_OBJECT_CLASS (shumate_vector_symbol_container_parent_class)->constructed (object);
 
-  tile_size = shumate_map_source_get_tile_size (self->map_source);
-  self->collision = shumate_vector_collision_new (tile_size);
+  self->collision = shumate_vector_collision_new ();
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
 

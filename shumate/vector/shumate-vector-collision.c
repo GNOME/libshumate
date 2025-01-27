@@ -113,7 +113,7 @@ bucket_row_free (RTreeBucketRow *bucket_row)
 
 
 ShumateVectorCollision *
-shumate_vector_collision_new ()
+shumate_vector_collision_new (void)
 {
   ShumateVectorCollision *self = g_new0 (ShumateVectorCollision, 1);
 

@@ -33,7 +33,7 @@ typedef struct {
   double delta_x, delta_y;
 } ShumateVectorCollision;
 
-ShumateVectorCollision *shumate_vector_collision_new ();
+ShumateVectorCollision *shumate_vector_collision_new (void);
 void shumate_vector_collision_free (ShumateVectorCollision *self);
 
 gboolean shumate_vector_collision_check (ShumateVectorCollision *self,
