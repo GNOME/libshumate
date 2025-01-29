@@ -1,4 +1,9 @@
 ===================
+Version 1.4.beta
+===================
+ - Fix building with GCC 15
+
+===================
 Version 1.4.alpha
 ===================
  - Increase maximum zoom level to 30
