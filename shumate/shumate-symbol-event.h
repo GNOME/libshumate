@@ -34,5 +34,6 @@ const char *shumate_symbol_event_get_feature_id (ShumateSymbolEvent *self);
 const GStrv shumate_symbol_event_get_keys (ShumateSymbolEvent *self);
 const char *shumate_symbol_event_get_tag (ShumateSymbolEvent *self,
                                           const char         *tag_name);
+gint shumate_symbol_event_get_n_press (ShumateSymbolEvent *self);
 
 G_END_DECLS

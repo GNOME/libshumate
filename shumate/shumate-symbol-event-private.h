@@ -24,6 +24,14 @@ ShumateSymbolEvent *shumate_symbol_event_new (const char *layer,
                                               const char *feature_id,
                                               GHashTable *tags);
 
+ShumateSymbolEvent *shumate_symbol_event_new_with_n_press (const char *layer,
+                                                           const char *source_layer,
+                                                           const char *feature_id,
+                                                           GHashTable *tags,
+                                                           gint n_press);
+
 void shumate_symbol_event_set_lat_lon (ShumateSymbolEvent *self,
                                        double              lat,
                                        double              lon);
+
+void shumate_symbol_event_set_n_press (ShumateSymbolEvent *self, gint n_press);

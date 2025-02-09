@@ -44,6 +44,7 @@ struct _ShumateSymbolEvent
   char *feature_id;
   double lat, lon;
   GHashTable *tags;
+  gint n_press;
 };
 
 static void location_interface_init (ShumateLocationInterface *iface);
@@ -56,6 +57,7 @@ enum {
   PROP_LAYER,
   PROP_SOURCE_LAYER,
   PROP_FEATURE_ID,
+  PROP_N_PRESS,
   N_PROPS,
 
   PROP_LONGITUDE,
@@ -102,6 +104,9 @@ shumate_symbol_event_get_property (GObject    *object,
     case PROP_LONGITUDE:
       g_value_set_double (value, self->lon);
       break;
+    case PROP_N_PRESS:
+      g_value_set_int (value, self->n_press);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -113,11 +118,16 @@ shumate_symbol_event_set_property (GObject      *object,
                                    const GValue *value,
                                    GParamSpec   *pspec)
 {
+  ShumateSymbolEvent *symbol_event = SHUMATE_SYMBOL_EVENT (object);
+
   switch (prop_id)
     {
     case PROP_LATITUDE:
     case PROP_LONGITUDE:
       g_warning ("Cannot change the location of a ShumateSymbolEvent");
+      break;
+    case PROP_N_PRESS:
+      shumate_symbol_event_set_n_press (symbol_event, g_value_get_int (value));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -173,6 +183,22 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
                          "Feature ID",
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateSymbolEvent:n-press:
+   *
+   * The number of clicks/presses triggering the symbol event.
+   *
+   * Since: 1.5
+   */
+  properties[PROP_N_PRESS] =
+    g_param_spec_uint ("n-press",
+                       "Number of presses",
+                       "Number of presses",
+                       1,
+                       INT_MAX,
+                       1,
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 
@@ -334,6 +360,25 @@ shumate_symbol_event_new (const char *layer,
   self->source_layer = g_strdup (source_layer);
   self->feature_id = g_strdup (feature_id);
   self->tags = g_hash_table_ref (tags);
+  self->n_press = 1;
+
+  return self;
+}
+
+ShumateSymbolEvent *
+shumate_symbol_event_new_with_n_press (const char *layer,
+                                       const char *source_layer,
+                                       const char *feature_id,
+                                       GHashTable *tags,
+                                       gint n_press)
+{
+  ShumateSymbolEvent *self = g_object_new (SHUMATE_TYPE_SYMBOL_EVENT, NULL);
+
+  self->layer = g_strdup (layer);
+  self->source_layer = g_strdup (source_layer);
+  self->feature_id = g_strdup (feature_id);
+  self->tags = g_hash_table_ref (tags);
+  self->n_press = n_press;
 
   return self;
 }
@@ -345,4 +390,36 @@ shumate_symbol_event_set_lat_lon (ShumateSymbolEvent *self,
 {
   self->lat = lat;
   self->lon = lon;
+}
+
+/**
+ * shumate_symbol_event_get_n_press:
+ * @self: a [class@SymbolEvent]
+ *
+ * Gets the number of clicks/presses that initiated the event.
+ *
+ * Returns: the number of presses
+ *
+ * Since: 1.5
+ */
+gint
+shumate_symbol_event_get_n_press (ShumateSymbolEvent *self)
+{
+  return self->n_press;
+}
+
+/**
+ * shumate_symbol_event_set_n_press:
+ * @self: a [class@SymbolEvent]
+ * @n_press: the number of presses of the event
+ *
+ * Sets the number of clicks/presses that initiated the event.
+ *
+ *
+ * Since: 1.5
+ */
+void
+shumate_symbol_event_set_n_press (ShumateSymbolEvent *self, gint n_press)
+{
+  self->n_press = n_press;
 }
