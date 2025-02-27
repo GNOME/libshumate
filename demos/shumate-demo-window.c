@@ -67,20 +67,22 @@ on_symbol_clicked (ShumateVectorRenderer *renderer,
   const char *name = shumate_symbol_event_get_tag (event, "name");
 
   if (name != NULL)
-    g_print ("Symbol %s (%s) clicked in layer %s (%s) at (%f, %f)\n",
+    g_print ("Symbol %s (%s) clicked in layer %s (%s) at (%f, %f), click %d\n",
              shumate_symbol_event_get_feature_id (event),
              name,
              shumate_symbol_event_get_layer (event),
               shumate_symbol_event_get_source_layer (event),
              shumate_location_get_latitude (SHUMATE_LOCATION (event)),
-             shumate_location_get_longitude (SHUMATE_LOCATION (event)));
+             shumate_location_get_longitude (SHUMATE_LOCATION (event)),
+             shumate_symbol_event_get_n_press (event));
   else
-    g_print ("Symbol %s clicked in layer %s (%s) at (%f, %f)\n",
+    g_print ("Symbol %s clicked in layer %s (%s) at (%f, %f), click %d\n",
              shumate_symbol_event_get_feature_id (event),
              shumate_symbol_event_get_layer (event),
               shumate_symbol_event_get_source_layer (event),
              shumate_location_get_latitude (SHUMATE_LOCATION (event)),
-             shumate_location_get_longitude (SHUMATE_LOCATION (event)));
+             shumate_location_get_longitude (SHUMATE_LOCATION (event)),
+             shumate_symbol_event_get_n_press (event));
 }
 
 
