@@ -1,4 +1,9 @@
 ===================
+Version 1.4.rc
+===================
+ - Translation updates
+
+===================
 Version 1.4.beta
 ===================
  - Fix building with GCC 15
