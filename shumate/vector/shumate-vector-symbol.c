@@ -40,6 +40,8 @@ struct _ShumateVectorSymbol
   graphene_rect_t bounds;
   double x, y;
 
+  double last_press_x, last_press_y;
+
   ShumateVectorPoint midpoint;
   double midpoint_angle;
   double line_length;
@@ -804,19 +806,32 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
 }
 
 static void
-on_clicked (ShumateVectorSymbol *self,
-            gint                 n_press,
-            double               x,
-            double               y,
-            GtkGestureClick     *click)
+on_click_pressed (ShumateVectorSymbol *self,
+                  gint                 n_press,
+                  double               x,
+                  double               y,
+                  GtkGestureClick     *click)
 {
+  self->last_press_x = x;
+  self->last_press_y = y;
+}
+
+static void
+on_click_released (ShumateVectorSymbol *self,
+                   gint                 n_press,
+                   double               x,
+                   double               y,
+                   GtkGestureClick     *click)
+{
+  if (x != self->last_press_x || y != self->last_press_y)
+    return;
+
   g_autoptr(ShumateSymbolEvent) event =
     shumate_symbol_event_new_with_n_press (self->symbol_info->details->layer,
                                            self->symbol_info->details->source_layer,
                                            self->symbol_info->details->feature_id,
                                            self->symbol_info->details->tags,
                                            n_press);
-
   g_signal_emit (self, signals[CLICKED], 0, event);
 }
 
@@ -824,7 +839,8 @@ static void
 shumate_vector_symbol_init (ShumateVectorSymbol *self)
 {
   GtkGesture *click = gtk_gesture_click_new ();
-  g_signal_connect_object (click, "released", G_CALLBACK (on_clicked), self, G_CONNECT_SWAPPED);
+  g_signal_connect_object (click, "pressed", G_CALLBACK (on_click_pressed), self, G_CONNECT_SWAPPED);
+  g_signal_connect_object (click, "released", G_CALLBACK (on_click_released), self, G_CONNECT_SWAPPED);
   gtk_widget_add_controller (GTK_WIDGET (self), GTK_EVENT_CONTROLLER (click));
 }
 
