@@ -459,6 +459,7 @@ on_drag_gesture_drag_update (ShumateMap     *self,
                            self->gesture_begin_lon,
                            self->drag_begin_x + offset_x,
                            self->drag_begin_y + offset_y);
+  gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_CLAIMED);
 }
 
 static void
