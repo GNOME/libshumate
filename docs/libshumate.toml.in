@@ -6,6 +6,7 @@ license = "LGPL-2.1-or-later"
 browse_url = "https://gitlab.gnome.org/GNOME/libshumate/"
 repository_url = "https://gitlab.gnome.org/GNOME/libshumate.git"
 website_url = "https://gnome.pages.gitlab.gnome.org/libshumate"
+docs_url = "https://gnome.pages.gitlab.gnome.org/libshumate"
 logo_url = "libshumate-r.svg"
 dependencies = [
   "GObject-2.0",
