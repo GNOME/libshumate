@@ -42,6 +42,8 @@ typedef struct {
   int tile_y;
   int layer_idx;
   int source_layer_idx;
+  gboolean show_all_levels;
+  int show_level;
 
   GPtrArray *symbols;
 
