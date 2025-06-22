@@ -49,6 +49,12 @@ void shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
                                               const char            *name,
                                               ShumateDataSource     *data_source);
 
+void shumate_vector_renderer_set_show_all_levels (ShumateVectorRenderer *self,
+                                                  gboolean show_all_levels);
+
+void shumate_vector_renderer_set_show_level (ShumateVectorRenderer *self,
+                                             gint16 show_level);
+
 /**
  * SHUMATE_STYLE_ERROR:
  *

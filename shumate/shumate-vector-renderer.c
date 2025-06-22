@@ -55,6 +55,9 @@ struct _ShumateVectorRenderer
 
   GPtrArray *layers;
 
+  gboolean show_all_levels;
+  gint16 show_level;
+
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorIndexDescription *index_description;
 #endif
@@ -75,6 +78,8 @@ enum {
   PROP_0,
   PROP_STYLE_JSON,
   PROP_SPRITE_SHEET,
+  PROP_SHOW_ALL_LEVELS,
+  PROP_SHOW_LEVEL,
   N_PROPS
 };
 
@@ -171,6 +176,12 @@ shumate_vector_renderer_get_property (GObject    *object,
     case PROP_SPRITE_SHEET:
       g_value_set_object (value, shumate_vector_renderer_get_sprite_sheet (self));
       break;
+    case PROP_SHOW_ALL_LEVELS:
+      g_value_set_boolean (value, self->show_all_levels);
+      break;
+    case PROP_SHOW_LEVEL:
+      g_value_set_int (value, self->show_level);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
     }
@@ -193,6 +204,12 @@ shumate_vector_renderer_set_property (GObject      *object,
       break;
     case PROP_SPRITE_SHEET:
       shumate_vector_renderer_set_sprite_sheet (self, g_value_get_object (value));
+      break;
+    case PROP_SHOW_ALL_LEVELS:
+      self->show_all_levels = g_value_get_boolean (value);
+      break;
+    case PROP_SHOW_LEVEL:
+      self->show_level = g_value_get_int (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -250,6 +267,36 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
                          "sprite-sheet",
                          SHUMATE_TYPE_VECTOR_SPRITE_SHEET,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateVectorRenderer:show-all-levels:
+   *
+   * Determins if feature from in all levels should be rendered.
+   *
+   * Since: 1.6
+   */
+  properties[PROP_SHOW_ALL_LEVELS] =
+    g_param_spec_boolean ("show-all-levels",
+                          "Show all levels",
+                          "Set to true to render features from all levels",
+                          TRUE,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateVectorRenderer:show-level:
+   *
+   * Level to render when show-all-levels is FALSE.
+   *
+   * Since: 1.6
+   */
+  properties[PROP_SHOW_LEVEL] =
+    g_param_spec_int ("show-level",
+                      "Show level",
+                      "Set the level to render when show-all-levels is FALSE",
+                      G_MININT16,
+                      G_MAXINT16,
+                      0,
+                      G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPS, properties);
 }
@@ -502,6 +549,8 @@ shumate_vector_renderer_init (ShumateVectorRenderer *self)
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->index_description = shumate_vector_index_description_new ();
 #endif
+  self->show_all_levels = TRUE;
+  self->show_level = 0;
 }
 
 
@@ -643,6 +692,36 @@ shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
     g_set_object (&self->data_source, data_source);
 }
 
+/**
+ * shumate_vector_renderer_set_show_all_levels:
+ * @self: a [class@VectorRenderer]
+ * @show_all_levels: true if all levels should be rendered
+ *
+ * Toggle if all floor levels should be rendered.
+ */
+void shumate_vector_renderer_set_show_all_levels (ShumateVectorRenderer *self,
+                                                  gboolean show_all_levels)
+{
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+
+  if (show_all_levels == self->show_all_levels)
+    return;
+
+  self->show_all_levels = show_all_levels;
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_ALL_LEVELS]);
+}
+
+void shumate_vector_renderer_set_show_level (ShumateVectorRenderer *self,
+                                             gint16 show_level)
+{
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+
+  if (show_level == self->show_level)
+    return;
+
+  self->show_level = show_level;
+  g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_SHOW_LEVEL]);
+}
 
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
 static GdkTexture *
@@ -847,6 +926,8 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   scope.sprites = sprites;
   scope.index = NULL;
   scope.index_description = self->index_description;
+  scope.show_all_levels = self->show_all_levels;
+  scope.show_level = self->show_level;
 
   if (scope.zoom_level > source_position->zoom)
     {
