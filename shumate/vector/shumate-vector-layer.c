@@ -119,6 +119,24 @@ shumate_vector_layer_init (ShumateVectorLayer *self)
 {
 }
 
+static gboolean
+should_include_feature (ShumateVectorRenderScope *scope)
+{
+  GValue level_value = G_VALUE_INIT;
+
+  fprintf (stderr, "show all %d\n", scope->show_all_levels);
+
+  if (scope->show_all_levels)
+    return TRUE;
+
+  if (!shumate_vector_reader_iter_get_feature_tag (scope->reader, "level",
+                                                   &level_value))
+    return TRUE;
+
+  fprintf (stderr, "level: %ld\n", g_value_get_int64 (&level_value));
+
+  return g_value_get_int64 (&level_value) == scope->show_level;
+}
 
 /**
  * shumate_vector_layer_render:
@@ -170,13 +188,18 @@ shumate_vector_layer_render (ShumateVectorLayer *self, ShumateVectorRenderScope 
           while ((feature_idx = shumate_vector_index_bitset_next (bitset, feature_idx)) != -1)
             {
               shumate_vector_reader_iter_read_feature (scope->reader, feature_idx);
-              SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+
+              if (should_include_feature (scope))
+                SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
             }
         }
       else
         {
           while (shumate_vector_reader_iter_next_feature (scope->reader))
-            SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+            {
+              if (should_include_feature (scope))
+                SHUMATE_VECTOR_LAYER_GET_CLASS (self)->render (self, scope);
+            }
         }
 
       cairo_restore (scope->cr);
