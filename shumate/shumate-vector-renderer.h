@@ -58,6 +58,12 @@ ShumateVectorValue *shumate_vector_renderer_get_global_state (ShumateVectorRende
 void shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
                                                  const char            *key);
 
+void shumate_vector_renderer_set_show_all_levels (ShumateVectorRenderer *self,
+                                                  gboolean show_all_levels);
+
+void shumate_vector_renderer_set_show_level (ShumateVectorRenderer *self,
+                                             gint16 show_level);
+
 /**
  * SHUMATE_STYLE_ERROR:
  *
