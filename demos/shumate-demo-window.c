@@ -180,14 +180,89 @@ activate_goto_eiffel_tower (GSimpleAction *simple,
 }
 
 static void
+add_vector_source (ShumateDemoWindow *self, gboolean show_all_levels, int level)
+{
+  g_autoptr(GBytes) bytes = NULL;
+  const char *style_json;
+  GError *error = NULL;
+  const char *name = NULL;
+  const char *id = NULL;
+
+  if (show_all_levels)
+    {
+      id = g_strdup ("vector-tiles-all-levels");
+      name = g_strdup ("OSM Liberty - all levels");
+    }
+  else
+    {
+      id = g_strdup_printf ("vector-tiles-level-%d", level);
+      name = g_strdup_printf ("OSM Liberty - level %d", level);
+    }
+
+  bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  style_json = g_bytes_get_data (bytes, NULL);
+
+  ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
+    id,
+    style_json,
+    &error
+  );
+
+  shumate_map_source_set_name (SHUMATE_MAP_SOURCE (renderer), name);
+  g_free (id);
+  g_free (name);
+
+  if (!show_all_levels)
+    {
+      shumate_vector_renderer_set_show_all_levels (renderer, FALSE);
+      shumate_vector_renderer_set_show_level (renderer, level);
+    }
+
+  if (error)
+    {
+      g_warning ("Failed to create vector map style: %s", error->message);
+      g_clear_error (&error);
+    }
+  else
+    {
+      g_autoptr(GdkTexture) sprites_texture = NULL;
+      g_autoptr(GBytes) sprites_json = NULL;
+      g_autoptr(GdkTexture) sprites_2x_texture = NULL;
+      g_autoptr(GBytes) sprites_2x_json = NULL;
+      ShumateVectorSpriteSheet *sprites = NULL;
+
+      sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+      sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites.png");
+      sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+      sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.png");
+
+      sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
+      shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);
+      if (error)
+        {
+          g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
+          g_clear_error (&error);
+        }
+
+      shumate_vector_sprite_sheet_add_page (sprites, sprites_2x_texture, g_bytes_get_data (sprites_2x_json, NULL), 2, &error);
+      if (error)
+        {
+          g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
+          g_clear_error (&error);
+        }
+
+      shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
+      shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
+      shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
+    }
+}
+
+static void
 shumate_demo_window_init (ShumateDemoWindow *self)
 {
   ShumateViewport *viewport;
   GtkExpression *expression;
-  g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GSimpleActionGroup) action_map = NULL;
-  const char *style_json;
-  GError *error = NULL;
   const GActionEntry action_entries[] = {
     { "goto-europe", activate_goto_europe },
     { "goto-nyc", activate_goto_nyc },
@@ -212,52 +287,11 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 
   if (shumate_vector_renderer_is_supported ())
     {
-      bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-      style_json = g_bytes_get_data (bytes, NULL);
-
-      ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
-        "vector-tiles",
-        style_json,
-        &error
-      );
-
-      if (error)
-        {
-          g_warning ("Failed to create vector map style: %s", error->message);
-          g_clear_error (&error);
-        }
-      else
-        {
-          g_autoptr(GdkTexture) sprites_texture = NULL;
-          g_autoptr(GBytes) sprites_json = NULL;
-          g_autoptr(GdkTexture) sprites_2x_texture = NULL;
-          g_autoptr(GBytes) sprites_2x_json = NULL;
-          ShumateVectorSpriteSheet *sprites = NULL;
-
-          sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites.png");
-          sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.png");
-
-          sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
-          shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);
-          if (error)
-            {
-              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
-              g_clear_error (&error);
-            }
-
-          shumate_vector_sprite_sheet_add_page (sprites, sprites_2x_texture, g_bytes_get_data (sprites_2x_json, NULL), 2, &error);
-          if (error)
-            {
-              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
-              g_clear_error (&error);
-            }
-
-          shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
-          shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
-          shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
-        }
+      add_vector_source (self, TRUE, 0);
+      add_vector_source (self, FALSE, -1);
+      add_vector_source (self, FALSE, 0);
+      add_vector_source (self, FALSE, 1);
+      add_vector_source (self, FALSE, 2);
     }
 
   viewport = shumate_simple_map_get_viewport (self->map);
