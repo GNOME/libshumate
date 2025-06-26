@@ -181,45 +181,43 @@ activate_goto_eiffel_tower (GSimpleAction *simple,
 }
 
 static void
-shumate_demo_window_init (ShumateDemoWindow *self)
+add_vector_source (ShumateDemoWindow *self, gboolean show_all_levels, int level)
 {
-  ShumateViewport *viewport;
-  GtkExpression *expression;
   g_autoptr(GBytes) bytes = NULL;
-  g_autoptr(GSimpleActionGroup) action_map = NULL;
-  g_autoptr(ShumateVectorRenderer) renderer = NULL;
   const char *style_json;
   GError *error = NULL;
-  const GActionEntry action_entries[] = {
-    { "goto-europe", activate_goto_europe },
-    { "goto-nyc", activate_goto_nyc },
-    { "goto-eiffel-tower", activate_goto_eiffel_tower },
-  };
+  const char *name = NULL;
+  const char *id = NULL;
 
-  gtk_widget_init_template (GTK_WIDGET (self));
-
-  action_map = g_simple_action_group_new ();
-  g_action_map_add_action_entries (G_ACTION_MAP (action_map),
-                                   action_entries,
-                                   G_N_ELEMENTS (action_entries),
-                                   shumate_simple_map_get_map (self->map));
-  gtk_widget_insert_action_group (GTK_WIDGET (self), "win", G_ACTION_GROUP (action_map));
-
-  self->registry = shumate_map_source_registry_new_with_defaults ();
-  shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));
-  expression = gtk_cclosure_expression_new (G_TYPE_STRING, NULL, 0, NULL,
-                                            (GCallback)get_map_source_name, NULL, NULL);
-  gtk_drop_down_set_expression (self->layers_dropdown, expression);
-  gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
+  if (show_all_levels)
+    {
+      id = g_strdup ("vector-tiles-all-levels");
+      name = g_strdup ("OSM Liberty - all levels");
+    }
+  else
+    {
+      id = g_strdup_printf ("vector-tiles-level-%d", level);
+      name = g_strdup_printf ("OSM Liberty - level %d", level);
+    }
 
   bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
   style_json = g_bytes_get_data (bytes, NULL);
 
-  renderer = shumate_vector_renderer_new (
-    "vector-tiles",
+  ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
+    id,
     style_json,
     &error
   );
+
+  shumate_map_source_set_name (SHUMATE_MAP_SOURCE (renderer), name);
+  g_free (id);
+  g_free (name);
+
+  if (!show_all_levels)
+    {
+      shumate_vector_renderer_set_show_all_levels (renderer, FALSE);
+      shumate_vector_renderer_set_show_level (renderer, level);
+    }
 
   if (error)
     {
@@ -256,8 +254,44 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 
       shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
       shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
-      shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (g_steal_pointer (&renderer)));
+      shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
     }
+}
+
+static void
+shumate_demo_window_init (ShumateDemoWindow *self)
+{
+  ShumateViewport *viewport;
+  GtkExpression *expression;
+  g_autoptr(GSimpleActionGroup) action_map = NULL;
+
+  const GActionEntry action_entries[] = {
+    { "goto-europe", activate_goto_europe },
+    { "goto-nyc", activate_goto_nyc },
+    { "goto-eiffel-tower", activate_goto_eiffel_tower },
+  };
+
+  gtk_widget_init_template (GTK_WIDGET (self));
+
+  action_map = g_simple_action_group_new ();
+  g_action_map_add_action_entries (G_ACTION_MAP (action_map),
+                                   action_entries,
+                                   G_N_ELEMENTS (action_entries),
+                                   shumate_simple_map_get_map (self->map));
+  gtk_widget_insert_action_group (GTK_WIDGET (self), "win", G_ACTION_GROUP (action_map));
+
+  self->registry = shumate_map_source_registry_new_with_defaults ();
+  shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (shumate_test_tile_source_new ()));
+  expression = gtk_cclosure_expression_new (G_TYPE_STRING, NULL, 0, NULL,
+                                            (GCallback)get_map_source_name, NULL, NULL);
+  gtk_drop_down_set_expression (self->layers_dropdown, expression);
+  gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
+
+  add_vector_source (self, TRUE, 0);
+  add_vector_source (self, FALSE, -1);
+  add_vector_source (self, FALSE, 0);
+  add_vector_source (self, FALSE, 1);
+  add_vector_source (self, FALSE, 2);
 
   viewport = shumate_simple_map_get_viewport (self->map);
   shumate_viewport_set_max_zoom_level (viewport, 22);
