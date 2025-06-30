@@ -1,4 +1,11 @@
 ===================
+Version 1.5.alpha
+===================
+ - Add number of clicks property to symbol clicked events
+ - Add canonical documentation link
+ - Update header for SimpleMap to reflect current API
+
+===================
 Version 1.4.0
 ===================
  - No changes since 1.4.rc
