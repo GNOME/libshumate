@@ -42,9 +42,12 @@ void              shumate_simple_map_set_map_source (ShumateSimpleMap *self,
 
 void              shumate_simple_map_add_overlay_layer (ShumateSimpleMap *self,
                                                         ShumateLayer     *layer);
-void              shumate_simple_map_insert_overlay_layer (ShumateSimpleMap *self,
-                                                           ShumateLayer     *layer,
-                                                           guint             idx);
+void              shumate_simple_map_insert_overlay_layer_above (ShumateSimpleMap *self,
+                                                                 ShumateLayer     *layer,
+                                                                 ShumateLayer     *sibling);
+void              shumate_simple_map_insert_overlay_layer_behind (ShumateSimpleMap *self,
+                                                                  ShumateLayer     *layer,
+                                                                  ShumateLayer     *sibling);
 void              shumate_simple_map_remove_overlay_layer (ShumateSimpleMap *self,
                                                            ShumateLayer     *layer);
 
