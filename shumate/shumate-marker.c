@@ -54,6 +54,8 @@ enum
 {
   PROP_SELECTABLE = 1,
   PROP_CHILD,
+  PROP_X_HOTSPOT,
+  PROP_Y_HOTSPOT,
   N_PROPERTIES,
 
   PROP_LONGITUDE,
@@ -66,6 +68,8 @@ typedef struct
 {
   double lon;
   double lat;
+  double x_hotspot;
+  double y_hotspot;
 
   gboolean selected;
 
@@ -160,6 +164,14 @@ shumate_marker_get_property (GObject *object,
       g_value_set_double (value, priv->lat);
       break;
 
+    case PROP_X_HOTSPOT:
+      g_value_set_double (value, priv->x_hotspot);
+      break;
+
+    case PROP_Y_HOTSPOT:
+      g_value_set_double (value, priv->y_hotspot);
+      break;
+
     case PROP_SELECTABLE:
       g_value_set_boolean (value, priv->selectable);
       break;
@@ -198,6 +210,14 @@ shumate_marker_set_property (GObject *object,
         shumate_marker_set_location (SHUMATE_LOCATION (marker), lat, priv->lon);
         break;
       }
+
+    case PROP_X_HOTSPOT:
+      shumate_marker_set_hotspot (marker, g_value_get_double (value), priv->y_hotspot);
+      break;
+
+    case PROP_Y_HOTSPOT:
+      shumate_marker_set_hotspot (marker, priv->x_hotspot, g_value_get_double (value));
+      break;
 
     case PROP_SELECTABLE:
       {
@@ -262,6 +282,34 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateMarker:x-hotspot:
+   *
+   * The x hotspot of the marker, a negative value means that the actual
+   * x hotspot is calculated with the [property@Gtk.Widget:halign] property.
+   * The x hotspot should not be more than the width of the widget.
+   *
+   * Since: 1.5
+   */
+  obj_properties[PROP_X_HOTSPOT] =
+    g_param_spec_double ("x-hotspot", NULL, NULL,
+                         -G_MAXDOUBLE, G_MAXDOUBLE, -1,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateMarker:y-hotspot:
+   *
+   * The y hotspot of the marker, a negative value means that the actual
+   * y hotspot is calculated with the [property@Gtk.Widget:valign] property.
+   * The y hotspot should not be more than the height of the widget.
+   *
+   * Since: 1.5
+   */
+  obj_properties[PROP_Y_HOTSPOT] =
+    g_param_spec_double ("y-hotspot", NULL, NULL,
+                         -G_MAXDOUBLE, G_MAXDOUBLE, -1,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
   g_object_class_override_property (object_class,
@@ -285,6 +333,8 @@ shumate_marker_init (ShumateMarker *self)
   priv->lon = 0;
   priv->selected = FALSE;
   priv->selectable = TRUE;
+  priv->x_hotspot = -1;
+  priv->y_hotspot = -1;
 }
 
 static void
@@ -443,4 +493,73 @@ shumate_marker_set_selected (ShumateMarker *marker, gboolean value)
     gtk_widget_unset_state_flags (GTK_WIDGET (marker),
                                   GTK_STATE_FLAG_SELECTED);
   }
+}
+
+/**
+ * shumate_marker_set_hotspot:
+ * @marker: a #ShumateMarker
+ * @x_hotspot: the x hotspot
+ * @y_hotspot: the y hotspot
+ *
+ * Set the hotspot point for the given marker. The value is in pixel relative
+ * to the top-left corner. Use any negative value to fallback to the
+ * [property@Gtk.Widget:halign] or [property@Gtk.Widget:valign] properties.
+ *
+ * Since: 1.5
+ */
+void
+shumate_marker_set_hotspot (ShumateMarker *marker,
+                            gdouble x_hotspot,
+                            gdouble y_hotspot)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_return_if_fail (SHUMATE_IS_MARKER (marker));
+
+  if (x_hotspot < 0)
+    x_hotspot = -1;
+
+  if (y_hotspot < 0)
+    y_hotspot = -1;
+
+  g_object_freeze_notify (G_OBJECT (marker));
+  if (x_hotspot != priv->x_hotspot) {
+    priv->x_hotspot = x_hotspot;
+    g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_X_HOTSPOT]);
+  }
+
+  if (y_hotspot != priv->y_hotspot) {
+    priv->y_hotspot = y_hotspot;
+    g_object_notify_by_pspec (G_OBJECT (marker), obj_properties[PROP_Y_HOTSPOT]);
+  }
+
+  g_object_thaw_notify (G_OBJECT (marker));
+}
+
+/**
+ * shumate_marker_get_hotspot:
+ * @marker: a #ShumateMarker
+ * @x_hotspot: (out) (optional): return value for the x hotspot
+ * @y_hotspot: (out) (optional): return value for the y hotspot
+ *
+ * Get the hotspot point for the given marker. The value is in pixel relative
+ * to the top-left corner. Any negative value means that the hotspot get
+ * computed with the [property@Gtk.Widget:halign] or [property@Gtk.Widget:valign]
+ * properties.
+ *
+ * Since: 1.5
+ */
+void shumate_marker_get_hotspot (ShumateMarker *marker,
+                                 gdouble *x_hotspot,
+                                 gdouble *y_hotspot)
+{
+  ShumateMarkerPrivate *priv = shumate_marker_get_instance_private (marker);
+
+  g_return_if_fail (SHUMATE_IS_MARKER (marker));
+
+  if (x_hotspot)
+    *x_hotspot = priv->x_hotspot;
+
+  if (y_hotspot)
+    *y_hotspot = priv->y_hotspot;
 }

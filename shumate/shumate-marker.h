@@ -67,6 +67,12 @@ GtkWidget *shumate_marker_get_child (ShumateMarker *marker);
 void shumate_marker_set_child (ShumateMarker *marker,
                                GtkWidget     *child);
 
+void shumate_marker_set_hotspot (ShumateMarker *marker,
+                                 gdouble        x_hotspot,
+                                 gdouble        y_hotspot);
+void shumate_marker_get_hotspot (ShumateMarker *marker,
+                                 gdouble       *x_hotspot,
+                                 gdouble       *y_hotspot);
 G_END_DECLS
 
 #endif

@@ -97,6 +97,63 @@ on_click_gesture_released (ShumateMarkerLayer *self,
 }
 
 static void
+calculate_local_marker_offset (ShumateMarker *marker,
+                               int marker_width, int marker_height,
+                               gdouble *x, gdouble *y)
+{
+  double hotspot_x, hotspot_y;
+
+  g_assert (SHUMATE_IS_MARKER (marker));
+
+  shumate_marker_get_hotspot (marker, &hotspot_x, &hotspot_y);
+  if (G_UNLIKELY (hotspot_x > marker_width)) {
+    g_warning ("Marker x hotspot (%lf) is more than the marker width (%d).", hotspot_x, marker_width);
+    hotspot_x = marker_width;
+  }
+
+  if (G_UNLIKELY (hotspot_y > marker_height)) {
+    g_warning ("Marker y hotspot (%lf) is more than the marker height (%d).", hotspot_y, marker_height);
+    hotspot_y = marker_height;
+  }
+
+  if (hotspot_x < 0) {
+    switch (gtk_widget_get_halign (GTK_WIDGET (marker))) {
+    case GTK_ALIGN_START:
+      if (gtk_widget_get_direction (GTK_WIDGET (marker)) == GTK_TEXT_DIR_RTL)
+        *x -= marker_width;
+      break;
+    case GTK_ALIGN_END:
+      if (gtk_widget_get_direction (GTK_WIDGET (marker)) != GTK_TEXT_DIR_RTL)
+        *x -= marker_width;
+      break;
+    default:
+      *x = floorf (*x - marker_width/2.f);
+      break;
+    }
+  } else {
+    if (gtk_widget_get_direction (GTK_WIDGET (marker)) == GTK_TEXT_DIR_RTL)
+      *x -= marker_width - hotspot_x;
+    else
+      *x -= hotspot_x;
+  }
+
+  if (hotspot_y < 0) {
+    switch (gtk_widget_get_valign (GTK_WIDGET (marker))) {
+    case GTK_ALIGN_START:
+      break;
+    case GTK_ALIGN_END:
+      *y -= marker_height;
+      break;
+    default:
+      *y = floorf (*y - marker_height/2.f);
+      break;
+    }
+  } else {
+    *y -= hotspot_y;
+  }
+}
+
+static void
 update_marker_visibility (ShumateMarkerLayer *layer,
                           ShumateMarker      *marker)
 {
@@ -125,8 +182,7 @@ update_marker_visibility (ShumateMarkerLayer *layer,
   gtk_widget_measure (GTK_WIDGET (marker), GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
   shumate_viewport_location_to_widget_coords (viewport, GTK_WIDGET (layer), lat, lon, &x, &y);
-  x = floorf (x - marker_width/2.f);
-  y = floorf (y - marker_height/2.f);
+  calculate_local_marker_offset (marker, marker_width, marker_height, &x, &y);
 
   within_viewport = x > -marker_width && x <= width &&
                     y > -marker_height && y <= height &&
@@ -199,8 +255,7 @@ shumate_marker_layer_size_allocate (GtkWidget *widget,
       gtk_widget_measure (child, GTK_ORIENTATION_VERTICAL, -1, 0, &marker_height, NULL, NULL);
 
       shumate_viewport_location_to_widget_coords (viewport, widget, lat, lon, &x, &y);
-      x = floorf (x - marker_width/2.f);
-      y = floorf (y - marker_height/2.f);
+      calculate_local_marker_offset (SHUMATE_MARKER (child), marker_width, marker_height, &x, &y);
 
       allocation.x = x;
       allocation.y = y;
@@ -466,6 +521,14 @@ shumate_marker_layer_add_marker (ShumateMarkerLayer *self,
   g_signal_connect_object (G_OBJECT (marker), "notify::latitude",
       G_CALLBACK (marker_position_notify), self, 0);
   g_signal_connect_object (G_OBJECT (marker), "notify::longitude",
+      G_CALLBACK (marker_position_notify), self, 0);
+  g_signal_connect_object (G_OBJECT (marker), "notify::x-hotspot",
+      G_CALLBACK (marker_position_notify), self, 0);
+  g_signal_connect_object (G_OBJECT (marker), "notify::y-hotspot",
+      G_CALLBACK (marker_position_notify), self, 0);
+  g_signal_connect_object (G_OBJECT (marker), "notify::halign",
+      G_CALLBACK (marker_position_notify), self, 0);
+  g_signal_connect_object (G_OBJECT (marker), "notify::valign",
       G_CALLBACK (marker_position_notify), self, 0);
 
   /*g_signal_connect (G_OBJECT (marker), "drag-motion",

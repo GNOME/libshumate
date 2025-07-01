@@ -50,6 +50,7 @@ create_marker (ShumateDemoWindow *self, double lat, double lng)
 {
   GtkWidget *image = gtk_image_new_from_icon_name ("map-marker-symbolic");
   ShumateMarker *marker = shumate_marker_new ();
+  gtk_widget_set_valign (GTK_WIDGET (marker), GTK_ALIGN_END);
 
   shumate_location_set_location (SHUMATE_LOCATION (marker), lat, lng);
   shumate_marker_set_child (marker, image);
