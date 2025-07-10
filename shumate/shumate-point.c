@@ -22,6 +22,10 @@
  *
  * A simple variant of [class@Marker] showing the location of the point as a
  * circle on the map.
+ *
+ * ## CSS nodes
+ *
+ * `ShumatePoint` has a single CSS node with the name “map-point”.
  */
 
 #include "shumate-point.h"

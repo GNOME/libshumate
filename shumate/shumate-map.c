@@ -37,6 +37,10 @@
  * layer and won't show anything. A [class@Shumate.Layer] can be added or removed
  * using the [method@Shumate.Map.add_layer] or [method@Shumate.Map.remove_layer]
  * methods.
+ *
+ * ## CSS nodes
+ *
+ * `ShumateMap` has a single CSS node with the name “map-view”.
  */
 
 #include "shumate-map.h"

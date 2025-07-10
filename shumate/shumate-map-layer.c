@@ -35,6 +35,10 @@
  *
  * A [class@Shumate.Layer] implementation that fetches tiles from a [class@Shumate.MapSource]
  * and draws them as a grid.
+ *
+ * ## CSS nodes
+ *
+ * `ShumatePoint` has a single CSS node with the name “map-layer”.
  */
 
 struct _ShumateMapLayer

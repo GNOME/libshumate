@@ -33,6 +33,10 @@
  * instance to add a [class@Gtk.Image] with a pin image and add the
  * [class@Gtk.GestureClick] controller to listen to click events and show
  * a [class@Gtk.Popover] with the description of the marker.
+ *
+ * ## CSS nodes
+ *
+ * `ShumateMarker` has a single CSS node with the name “map-marker”.
  */
 
 #include "shumate-marker.h"
