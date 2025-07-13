@@ -454,6 +454,8 @@ shumate_simple_map_add_overlay_layer (ShumateSimpleMap *self,
  * Inserts a map layer as an overlay on top of the base map. The layer will
  * appear above @sibling, or at the bottom (but still above the base map)
  * if @sibling is %NULL.
+ *
+ * Since: 1.5
  */
 void
 shumate_simple_map_insert_overlay_layer_above (ShumateSimpleMap *self,
@@ -483,6 +485,8 @@ shumate_simple_map_insert_overlay_layer_above (ShumateSimpleMap *self,
  *
  * Inserts a map layer as an overlay on top of the base map. The layer will
  * appear just below @sibling, or above everything else if @sibling is %NULL.
+ *
+ * Since: 1.5
  */
 void
 shumate_simple_map_insert_overlay_layer_behind (ShumateSimpleMap *self,
