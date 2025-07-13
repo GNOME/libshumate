@@ -214,6 +214,14 @@ if generate_gir == true
     'Gtk-4.0',
     'Gsk-4.0',
   ]
+  libshumate_gir_extra_args = [
+    '-DSHUMATE_COMPILATION',
+  ]
+  if gi_scanner_dep.version().version_compare('>=1.83.2')
+    libshumate_gir_extra_args += [
+      '--doc-format=gi-docgen',
+    ]
+  endif
 
   libshumate_gir = gnome.generate_gir(
     libshumate_lib,
@@ -229,9 +237,7 @@ if generate_gir == true
     install_dir_gir: girdir,
     install_dir_typelib: typelibdir,
     fatal_warnings: true,
-    extra_args: [
-      '-DSHUMATE_COMPILATION',
-    ]
+    extra_args: libshumate_gir_extra_args,
   )
 
   libshumate_dep_sources += [

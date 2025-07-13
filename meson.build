@@ -63,6 +63,7 @@ sqlite_dep = dependency('sqlite3', version: sqlite_req)
 gtk_dep = dependency('gtk4')
 libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
 
+gi_scanner_dep = find_program('g-ir-scanner', required: false)
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = dependency('vapigen', version: vala_req, required: false)
 
