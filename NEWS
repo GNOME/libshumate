@@ -1,4 +1,12 @@
 ===================
+Version 1.5.beta
+===================
+ - Add ability to set alignment for markers
+ - Add missing since annotations for SimpleMap
+ - Update minimum Meson version to 0.57.0
+ - Documentation fixes
+
+===================
 Version 1.5.alpha
 ===================
  - Add number of clicks property to symbol clicked events
