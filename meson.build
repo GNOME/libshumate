@@ -65,7 +65,7 @@ libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
 
 gi_scanner_dep = find_program('g-ir-scanner', required: false)
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
-vapigen_dep = dependency('vapigen', version: vala_req, required: false)
+vapigen_dep = find_program('vapigen', version: vala_req, native: true, required: false)
 
 libsysprof_capture_dep = dependency('sysprof-capture-4',
   required: get_option('sysprof'),
