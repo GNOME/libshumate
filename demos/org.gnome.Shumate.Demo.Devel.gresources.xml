@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/gnome/Shumate/Demo/ui">
+  <gresource prefix="/org/gnome/Shumate/Demo/Devel/ui">
     <file preprocess="xml-stripblanks">shumate-demo-window.ui</file>
   </gresource>
-  <gresource prefix="/org/gnome/Shumate/Demo/icons">
+  <gresource prefix="/org/gnome/Shumate/Demo/Devel/icons">
     <file preprocess="xml-stripblanks">map-marker-symbolic.svg</file>
   </gresource>
-  <gresource prefix="/org/gnome/Shumate/Demo/osm-liberty">
+  <gresource prefix="/org/gnome/Shumate/Demo/Devel/osm-liberty">
     <file preprocess="json-stripblanks" alias="style.json">osm-liberty/style.json</file>
     <file preprocess="json-stripblanks" alias="sprites.json">osm-liberty/sprites.json</file>
     <file preprocess="json-stripblanks" alias="sprites@2x.json">osm-liberty/sprites@2x.json</file>

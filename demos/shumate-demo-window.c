@@ -143,7 +143,7 @@ shumate_demo_window_class_init (ShumateDemoWindowClass *klass)
 
   object_class->dispose = shumate_demo_window_dispose;
 
-  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/ui/shumate-demo-window.ui");
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/gnome/Shumate/Demo/Devel/ui/shumate-demo-window.ui");
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, map);
   gtk_widget_class_bind_template_child (widget_class, ShumateDemoWindow, layers_dropdown);
   gtk_widget_class_bind_template_callback (widget_class, on_symbol_clicked);
@@ -213,7 +213,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 
   if (shumate_vector_renderer_is_supported ())
     {
-      bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+      bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
       style_json = g_bytes_get_data (bytes, NULL);
 
       ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
@@ -235,10 +235,10 @@ shumate_demo_window_init (ShumateDemoWindow *self)
           g_autoptr(GBytes) sprites_2x_json = NULL;
           ShumateVectorSpriteSheet *sprites = NULL;
 
-          sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites.png");
-          sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/osm-liberty/sprites@2x.png");
+          sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+          sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.png");
+          sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+          sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.png");
 
           sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
           shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);

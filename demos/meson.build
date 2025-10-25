@@ -1,6 +1,6 @@
 shumate_demo_resources = gnome.compile_resources(
   'shumate-demo-resources',
-  'org.gnome.Shumate.Demo.gresources.xml',
+  'org.gnome.Shumate.Demo.Devel.gresources.xml',
   c_name: 'shumate_demo',
 )
 
