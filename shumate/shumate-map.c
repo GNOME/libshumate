@@ -648,7 +648,7 @@ on_click_gesture_pressed (ShumateMap      *self,
                           double           y,
                           GtkGestureClick *click)
 {
-  if (n_press == 2)
+  if (n_press == 2 && self->zoom_on_double_click == TRUE)
     {
       double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
       self->current_x = x;

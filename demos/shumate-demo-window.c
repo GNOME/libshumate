@@ -263,6 +263,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
 
   viewport = shumate_simple_map_get_viewport (self->map);
   shumate_viewport_set_max_zoom_level (viewport, 22);
+  shumate_map_set_zoom_on_double_click (shumate_simple_map_get_map (self->map), FALSE);
 
   /* Add the marker layers */
   self->marker_layer = shumate_marker_layer_new (viewport);
