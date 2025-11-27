@@ -21,6 +21,7 @@
 #include <shumate/shumate-data-source.h>
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-vector-sprite-sheet.h>
+#include <shumate/shumate-vector-value.h>
 
 G_BEGIN_DECLS
 
@@ -48,6 +49,14 @@ void shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
 void shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
                                               const char            *name,
                                               ShumateDataSource     *data_source);
+
+void shumate_vector_renderer_set_global_state (ShumateVectorRenderer *self,
+                                               const char            *key,
+                                               ShumateVectorValue    *value);
+ShumateVectorValue *shumate_vector_renderer_get_global_state (ShumateVectorRenderer *self,
+                                                              const char            *key);
+void shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
+                                                 const char            *key);
 
 /**
  * SHUMATE_STYLE_ERROR:

@@ -1712,6 +1712,35 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         return TRUE;
       }
 
+    case EXPR_GLOBAL_STATE:
+      {
+        ShumateVectorValue *global_val;
+
+        g_assert (n_expressions == 1);
+
+        if (scope->global_state == NULL)
+          {
+            shumate_vector_value_unset (out);
+            return TRUE;
+          }
+
+        string = shumate_vector_expression_eval_string (expressions[0], scope, NULL);
+
+        if (string == NULL)
+          {
+            shumate_vector_value_unset (out);
+            return TRUE;
+          }
+
+        global_val = g_hash_table_lookup (scope->global_state, string);
+
+        if (global_val != NULL)
+          shumate_vector_value_copy (global_val, out);
+        else
+          shumate_vector_value_unset (out);
+        return TRUE;
+      }
+
     case EXPR_ZOOM:
       shumate_vector_value_set_number (out, scope->zoom_level);
       return TRUE;

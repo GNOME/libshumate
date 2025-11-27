@@ -5,12 +5,16 @@
       "tiles": [""]
     }
   },
+  "state": {
+    "background_color": {"default": "goldenrod"},
+    "test_number": {"default": 1}
+  },
   "layers": [
     {
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "goldenrod",
+        "background-color": ["global-state", "background_color"],
         "background-opacity": 0.5
       }
     },

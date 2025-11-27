@@ -39,6 +39,8 @@ typedef enum {
   EXPR_ID,
   EXPR_GEOMETRY_TYPE,
 
+  EXPR_GLOBAL_STATE,
+
   EXPR_AT,
   EXPR_GET,
   EXPR_HAS,

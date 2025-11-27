@@ -685,6 +685,9 @@ evaluated at integer zoom levels only.
     <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#slice">slice</a></td>
     <td>✅ Supported</td>
   </tr>
+    <td><a href="https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#global-state">global-state</a></td>
+    <td>✅ Supported</td>
+  </tr>
 </table>
 
 ### [Decision](https://maplibre.org/maplibre-gl-js-docs/style-spec/expressions/#decision)

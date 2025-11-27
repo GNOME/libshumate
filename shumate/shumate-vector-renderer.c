@@ -50,6 +50,10 @@ struct _ShumateVectorRenderer
   ShumateVectorSpriteSheet *sprites;
   GMutex sprites_mutex;
 
+  GHashTable *global_state;
+  GHashTable *default_global_state;
+  GMutex global_state_mutex;
+
   GThreadPool *thread_pool;
 
   char *style_json;
@@ -152,6 +156,10 @@ shumate_vector_renderer_finalize (GObject *object)
     g_thread_pool_free (self->thread_pool, FALSE, FALSE);
 
   g_mutex_clear (&self->sprites_mutex);
+
+  g_clear_pointer (&self->global_state, g_hash_table_unref);
+  g_clear_pointer (&self->default_global_state, g_hash_table_unref);
+  g_mutex_clear (&self->global_state_mutex);
 
   G_OBJECT_CLASS (shumate_vector_renderer_parent_class)->finalize (object);
 }
@@ -268,6 +276,7 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
   g_autoptr(JsonNode) node = NULL;
   JsonNode *layers_node;
   JsonNode *sources_node;
+  JsonNode *state_node;
   JsonObject *object;
   const char *style_name;
 
@@ -428,6 +437,44 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
         }
     }
 
+  if ((state_node = json_object_get_member (object, "state")))
+    {
+      JsonObject *state_values;
+      JsonObjectIter iter;
+      const char *key;
+
+      if (!shumate_vector_json_get_object (state_node, &state_values, error))
+        {
+          g_prefix_error (error, "state: ");
+          return FALSE;
+        }
+
+      self->default_global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
+      self->global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
+
+      json_object_iter_init (&iter, state_values);
+      while (json_object_iter_next (&iter, &key, &node))
+        {
+          JsonObject *state_value_object;
+          g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
+
+          if (!shumate_vector_json_get_object (node, &state_value_object, error))
+            {
+              g_prefix_error (error, "state '%s': ", key);
+              return FALSE;
+            }
+
+          if (!shumate_vector_value_set_from_json_literal (&value, json_object_get_member (state_value_object, "default"), error))
+            {
+              g_prefix_error (error, "state '%s': ", key);
+              return FALSE;
+            }
+
+          g_hash_table_insert (self->default_global_state, g_strdup (key), shumate_vector_value_dup (&value));
+          g_hash_table_insert (self->global_state, g_strdup (key), shumate_vector_value_dup (&value));
+        }
+    }
+
   /* According to the style spec, this is not configurable for vector tiles */
   shumate_map_source_set_tile_size (SHUMATE_MAP_SOURCE (self), 512);
 
@@ -500,6 +547,7 @@ static void
 shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
   g_mutex_init (&self->sprites_mutex);
+  g_mutex_init (&self->global_state_mutex);
 #ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->index_description = shumate_vector_index_description_new ();
 #endif
@@ -642,6 +690,123 @@ shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
 
   if (g_strcmp0 (name, self->source_name) == 0)
     g_set_object (&self->data_source, data_source);
+}
+
+
+/**
+ * shumate_vector_renderer_set_global_state:
+ * @self: a [class@VectorRenderer]
+ * @key: the state key
+ * @value: the state value
+ *
+ * Sets a global state value.
+ *
+ * Global state can be accessed in the stylesheet through the "global-state" expression operator.
+ * This allows styles to provide options that can be configured without changing the style JSON.
+ *
+ * Previously rendered tiles are not affected by changes to global state and must be re-rendered.
+ *
+ * Since: 1.6
+ */
+void
+shumate_vector_renderer_set_global_state (ShumateVectorRenderer *self,
+                                          const char            *key,
+                                          ShumateVectorValue    *value)
+{
+  g_autoptr(GMutexLocker) locker = NULL;
+  ShumateVectorValue *val;
+
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_return_if_fail (key != NULL);
+
+  locker = g_mutex_locker_new (&self->global_state_mutex);
+
+  if (self->global_state == NULL)
+    self->global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
+
+  val = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_copy (value, val);
+  g_hash_table_insert (self->global_state, g_strdup (key), val);
+}
+
+
+/**
+ * shumate_vector_renderer_get_global_state:
+ * @self: a [class@VectorRenderer]
+ * @key: the state key
+ *
+ * Gets a global state value.
+ *
+ * If the value has not been set with [method@VectorRenderer.set_global_state], the default
+ * defined in the style will be returned, or %NULL if no default is defined. Note that an
+ * explicitly set null value will return a [struct@VectorValue] of type null, while an
+ * undefined value will return %NULL.
+ *
+ * Returns: (transfer none): the state value, or %NULL if none is set
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_renderer_get_global_state (ShumateVectorRenderer *self,
+                                          const char            *key)
+{
+  g_autoptr(GMutexLocker) locker = NULL;
+  ShumateVectorValue *value;
+
+  g_return_val_if_fail (SHUMATE_IS_VECTOR_RENDERER (self), NULL);
+  g_return_val_if_fail (key != NULL, NULL);
+
+  locker = g_mutex_locker_new (&self->global_state_mutex);
+
+  if (self->global_state == NULL)
+    return NULL;
+
+  value = g_hash_table_lookup (self->global_state, key);
+  if (value != NULL)
+    return value;
+
+  if (self->default_global_state == NULL)
+    return NULL;
+
+  return g_hash_table_lookup (self->default_global_state, key);
+}
+
+
+/**
+ * shumate_vector_renderer_reset_global_state:
+ * @self: a [class@VectorRenderer]
+ * @key: the state key
+ *
+ * Resets a global state value to the default defined in the style, or to null
+ * if no default is defined.
+ *
+ * Since: 1.6
+ */
+void
+shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
+                                            const char            *key)
+{
+  g_autoptr(GMutexLocker) locker = NULL;
+  ShumateVectorValue *default_value;
+
+  g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
+  g_return_if_fail (key != NULL);
+
+  locker = g_mutex_locker_new (&self->global_state_mutex);
+
+  if (self->global_state == NULL)
+    return;
+
+  if (self->default_global_state == NULL)
+    {
+      g_hash_table_remove (self->global_state, key);
+      return;
+    }
+
+  default_value = g_hash_table_lookup (self->default_global_state, key);
+  if (default_value != NULL)
+    g_hash_table_insert (self->global_state, g_strdup (key), shumate_vector_value_dup (default_value));
+  else
+    g_hash_table_remove (self->global_state, key);
 }
 
 
@@ -837,6 +1002,23 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
     self->sprites = shumate_vector_sprite_sheet_new ();
   sprites = g_object_ref (self->sprites);
   g_mutex_unlock (&self->sprites_mutex);
+
+  g_mutex_lock (&self->global_state_mutex);
+  if (self->global_state != NULL)
+    {
+      GHashTableIter iter;
+      const char *key;
+      ShumateVectorValue *value;
+
+      scope.global_state = g_hash_table_new_similar (self->global_state);
+
+      g_hash_table_iter_init (&iter, self->global_state);
+      while (g_hash_table_iter_next (&iter, (gpointer *)&key, (gpointer *)&value))
+        g_hash_table_insert (scope.global_state, g_strdup (key), shumate_vector_value_dup (value));
+    }
+  else
+    scope.global_state = NULL;
+  g_mutex_unlock (&self->global_state_mutex);
 
   texture_size = shumate_tile_get_size (tile);
   scope.scale_factor = shumate_tile_get_scale_factor (tile);

@@ -402,6 +402,23 @@ test_vector_expression_variable_binding (void)
 
 
 static void
+test_vector_expression_global_state (void)
+{
+  ShumateVectorRenderScope scope;
+  ShumateVectorValue* value;
+  g_autoptr(GHashTable) global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
+
+  scope.global_state = global_state;
+
+  value = shumate_vector_value_new_number (5);
+  g_hash_table_insert (scope.global_state, g_strdup ("blah"), value);
+
+  g_assert_true  (filter_with_scope (&scope, "[\"==\", [\"global-state\", \"blah\"], 5]"));
+  g_assert_false (filter_with_scope (&scope, "[\"==\", [\"global-state\", null], 10]"));
+}
+
+
+static void
 test_vector_expression_image (void)
 {
   g_autoptr(GdkTexture) texture = NULL;
@@ -649,6 +666,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/expression/interpolate-color-filter", test_vector_expression_interpolate_color_filter);
   g_test_add_func ("/vector/expression/basic-filter", test_vector_expression_basic_filter);
   g_test_add_func ("/vector/expression/variable-binding", test_vector_expression_variable_binding);
+  g_test_add_func ("/vector/expression/global-state", test_vector_expression_global_state);
   g_test_add_func ("/vector/expression/image", test_vector_expression_image);
   g_test_add_func ("/vector/expression/feature-filter", test_vector_expression_feature_filter);
   g_test_add_func ("/vector/expression/filter-errors", test_vector_expression_filter_errors);

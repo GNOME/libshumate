@@ -46,6 +46,7 @@ typedef struct {
   GPtrArray *symbols;
 
   ShumateVectorSpriteSheet *sprites;
+  GHashTable *global_state;
 
   float overzoom_x, overzoom_y, overzoom_scale;
 
