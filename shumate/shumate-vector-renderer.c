@@ -21,6 +21,7 @@
 #include "shumate-profiling-private.h"
 #include "shumate-vector-reader.h"
 #include "shumate-vector-reader-iter.h"
+#include "shumate-vector-value-private.h"
 
 /**
  * ShumateVectorRenderer:

@@ -21,7 +21,7 @@
 #include <cairo/cairo.h>
 #include "vector_tile.pb-c.h"
 #include "../shumate-vector-sprite-sheet.h"
-#include "shumate-vector-value-private.h"
+#include "../shumate-vector-value-private.h"
 #include "shumate-vector-utils-private.h"
 #include "../shumate-vector-reader-iter-private.h"
 #include "shumate-vector-index-private.h"

@@ -20,7 +20,7 @@
 #include <json-glib/json-glib.h>
 #include "shumate-vector-render-scope-private.h"
 #include "shumate-vector-symbol-info-private.h"
-#include "shumate-vector-value-private.h"
+#include "../shumate-vector-value-private.h"
 #include "shumate-vector-index-private.h"
 
 G_BEGIN_DECLS

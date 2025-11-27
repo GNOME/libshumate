@@ -2,7 +2,7 @@
 
 #include <gtk/gtk.h>
 #include <shumate/shumate.h>
-#include "shumate/vector/shumate-vector-value-private.h"
+#include "shumate/shumate-vector-value-private.h"
 
 static void
 test_vector_value_literal (void)

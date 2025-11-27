@@ -27,6 +27,7 @@ libshumate_public_h = [
   'shumate-vector-renderer.h',
   'shumate-vector-sprite.h',
   'shumate-vector-sprite-sheet.h',
+  'shumate-vector-value.h',
   'shumate-viewport.h',
   'shumate.h',
 ]
@@ -98,6 +99,7 @@ libshumate_sources = [
   'shumate-vector-renderer.c',
   'shumate-vector-sprite.c',
   'shumate-vector-sprite-sheet.c',
+  'shumate-vector-value.c',
   'shumate-viewport.c',
 ]
 

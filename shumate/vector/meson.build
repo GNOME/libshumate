@@ -14,7 +14,6 @@ libshumate_sources += files(
   'shumate-vector-symbol-info.c',
   'shumate-vector-symbol-layer.c',
   'shumate-vector-utils.c',
-  'shumate-vector-value.c',
   'vector_tile.pb-c.c',
 )
 

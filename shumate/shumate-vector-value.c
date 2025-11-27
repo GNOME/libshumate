@@ -18,12 +18,122 @@
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-value-private.h"
 
+/**
+ * ShumateVectorValue: (copy-func shumate_vector_value_dup) (free-func shumate_vector_value_free)
+ *
+ * A mutable value used in the vector style specification.
+ *
+ * Since: 1.6
+ */
+
 enum {
   COLOR_UNSET,
   COLOR_SET,
   COLOR_INVALID,
 };
 
+
+/**
+ * shumate_vector_value_new:
+ *
+ * Creates a new [struct@VectorValue] with a null value.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with a null value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new (void)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  return self;
+}
+
+/**
+ * shumate_vector_value_new_from_value:
+ * @value: a [struct@GObject.Value]
+ *
+ * Creates a new [struct@VectorValue] from a [struct@GObject.Value].
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with the value from @value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new_from_value (GValue *value)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_set_from_g_value (self, value);
+  return self;
+}
+
+/**
+ * shumate_vector_value_new_number:
+ * @number: a number value
+ *
+ * Creates a new [struct@VectorValue] with a number value.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with the given number value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new_number (double number)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_set_number (self, number);
+  return self;
+}
+
+/**
+ * shumate_vector_value_new_string:
+ * @string: a string value
+ *
+ * Creates a new [struct@VectorValue] with a string value.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with the given string value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new_string (const char *string)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_set_string (self, string);
+  return self;
+}
+
+/**
+ * shumate_vector_value_new_boolean:
+ * @boolean: a boolean value
+ *
+ * Creates a new [struct@VectorValue] with a boolean value.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with the given boolean value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new_boolean (gboolean boolean)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_set_boolean (self, boolean);
+  return self;
+}
+
+/**
+ * shumate_vector_value_new_color:
+ * @color: a [struct@Gdk.RGBA]
+ *
+ * Creates a new [struct@VectorValue] with a color value.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] with the given color value
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_new_color (GdkRGBA *color)
+{
+  ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_set_color (self, color);
+  return self;
+}
+
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
 gboolean
 shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *node, GError **error)
 {
@@ -79,6 +189,7 @@ shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *
       return FALSE;
     }
 }
+#endif
 
 gboolean
 shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *value)
@@ -112,6 +223,14 @@ shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *v
 }
 
 
+/**
+ * shumate_vector_value_free:
+ * @self: a [struct@VectorValue]
+ *
+ * Frees a [struct@VectorValue].
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_free (ShumateVectorValue *self)
 {
@@ -120,6 +239,14 @@ shumate_vector_value_free (ShumateVectorValue *self)
 }
 
 
+/**
+ * shumate_vector_value_unset:
+ * @self: a [struct@VectorValue]
+ *
+ * Sets @self to a null value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_unset (ShumateVectorValue *self)
 {
@@ -150,6 +277,16 @@ shumate_vector_value_unset (ShumateVectorValue *self)
 }
 
 
+/**
+ * shumate_vector_value_is_null:
+ * @self: a [struct@VectorValue]
+ *
+ * Checks if @self is a null value.
+ *
+ * Returns: %TRUE if @self is a null value, %FALSE otherwise
+ *
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_is_null (ShumateVectorValue *self)
 {
@@ -195,6 +332,49 @@ shumate_vector_value_steal (ShumateVectorValue *self, ShumateVectorValue *out)
 }
 
 
+/**
+ * shumate_vector_value_dup:
+ * @self: a [struct@VectorValue]
+ *
+ * Creates a duplicate of @self.
+ *
+ * Returns: (transfer full): a new [struct@VectorValue] which is a duplicate of @self
+ *
+ * Since: 1.6
+ */
+ShumateVectorValue *
+shumate_vector_value_dup (ShumateVectorValue *self)
+{
+  ShumateVectorValue *new_value = g_new0 (ShumateVectorValue, 1);
+  shumate_vector_value_copy (self, new_value);
+  return new_value;
+}
+
+/**
+ * shumate_vector_value_get_value_type:
+ * @self: a [struct@VectorValue]
+ *
+ * Gets the type of value stored in @self.
+ *
+ * Returns: the type of @self
+ *
+ * Since: 1.6
+ */
+ShumateVectorValueType
+shumate_vector_value_get_value_type (ShumateVectorValue *self)
+{
+  return self->type;
+}
+
+/**
+ * shumate_vector_value_set_number:
+ * @self: a [struct@VectorValue]
+ * @number: a number value
+ *
+ * Sets @self to a number value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_set_number (ShumateVectorValue *self, double number)
 {
@@ -204,6 +384,16 @@ shumate_vector_value_set_number (ShumateVectorValue *self, double number)
 }
 
 
+/**
+ * shumate_vector_value_get_number:
+ * @self: a [struct@VectorValue]
+ * @number: (out): a location to store the number value
+ *
+ * Gets the number value of @self.
+ *
+ * Returns: %TRUE if @self is a number value and @number was set, %FALSE otherwise
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_get_number (ShumateVectorValue *self, double *number)
 {
@@ -215,6 +405,15 @@ shumate_vector_value_get_number (ShumateVectorValue *self, double *number)
 }
 
 
+/**
+ * shumate_vector_value_set_boolean:
+ * @self: a [struct@VectorValue]
+ * @boolean: a boolean value
+ *
+ * Sets @self to a boolean value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean)
 {
@@ -224,6 +423,16 @@ shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean)
 }
 
 
+/**
+ * shumate_vector_value_get_boolean:
+ * @self: a [struct@VectorValue]
+ * @boolean: (out): a location to store the boolean value
+ *
+ * Gets the boolean value of @self.
+ *
+ * Returns: %TRUE if @self is a boolean value and @boolean was set, %FALSE otherwise
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean)
 {
@@ -235,6 +444,15 @@ shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean)
 }
 
 
+/**
+ * shumate_vector_value_set_string:
+ * @self: a [struct@VectorValue]
+ * @string: a string value
+ *
+ * Sets @self to a string value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 {
@@ -245,6 +463,16 @@ shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 }
 
 
+/**
+ * shumate_vector_value_get_string:
+ * @self: a [struct@VectorValue]
+ * @string: (out): a location to store the string value
+ *
+ * Gets the string value of @self.
+ *
+ * Returns: %TRUE if @self is a string value and @string was set, %FALSE otherwise
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_get_string (ShumateVectorValue *self, const char **string)
 {
@@ -256,6 +484,15 @@ shumate_vector_value_get_string (ShumateVectorValue *self, const char **string)
 }
 
 
+/**
+ * shumate_vector_value_set_color:
+ * @self: a [struct@VectorValue]
+ * @color: a [struct@Gdk.RGBA]
+ *
+ * Sets @self to a color value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color)
 {
@@ -265,6 +502,18 @@ shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color)
 }
 
 
+/**
+ * shumate_vector_value_get_color:
+ * @self: a [struct@VectorValue]
+ * @color: (out): a location to store the color value
+ *
+ * Gets the color value of @self.
+ *
+ * If @self is a string value, it will attempt to parse the string as a color.
+ *
+ * Returns: %TRUE if @self is a color value and @color was set, %FALSE otherwise
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color)
 {
@@ -295,6 +544,14 @@ shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color)
 }
 
 
+/**
+ * shumate_vector_value_start_array:
+ * @self: a [struct@VectorValue]
+ *
+ * Sets @self to an empty array value.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_start_array (ShumateVectorValue *self)
 {
@@ -304,6 +561,15 @@ shumate_vector_value_start_array (ShumateVectorValue *self)
 }
 
 
+/**
+ * shumate_vector_value_array_append:
+ * @self: an array [struct@VectorValue]
+ * @element: a [struct@VectorValue] to append to the array
+ *
+ * Appends @element to the array value of @self. The value of @element is copied.
+ *
+ * Since: 1.6
+ */
 void
 shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element)
 {
@@ -398,6 +664,16 @@ shumate_vector_value_get_collator (ShumateVectorValue    *self,
   return TRUE;
 }
 
+
+/**
+ * shumate_vector_value_hash:
+ * @self: a [struct@VectorValue]
+ *
+ * Calculates a hash value for @self.
+ *
+ * Returns: a hash value for @self
+ * Since: 1.6
+ */
 gint
 shumate_vector_value_hash (ShumateVectorValue *self)
 {
@@ -433,6 +709,17 @@ shumate_vector_value_hash (ShumateVectorValue *self)
     }
 }
 
+
+/**
+ * shumate_vector_value_equal:
+ * @a: a [struct@VectorValue]
+ * @b: a [struct@VectorValue]
+ *
+ * Compares two [struct@VectorValue]s for equality.
+ *
+ * Returns: %TRUE if @a and @b are equal, %FALSE otherwise
+ * Since: 1.6
+ */
 gboolean
 shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 {
@@ -471,7 +758,7 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
     }
 }
 
-
+#ifdef SHUMATE_HAS_VECTOR_RENDERER
 static JsonNode *
 shumate_vector_value_as_json (ShumateVectorValue *value)
 {
@@ -579,3 +866,4 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
       g_assert_not_reached ();
     }
 }
+#endif

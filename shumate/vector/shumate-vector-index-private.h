@@ -18,7 +18,7 @@
 #pragma once
 
 #include <glib-object.h>
-#include "shumate-vector-value-private.h"
+#include "../shumate-vector-value-private.h"
 #include "../shumate-vector-reader.h"
 
 G_BEGIN_DECLS
