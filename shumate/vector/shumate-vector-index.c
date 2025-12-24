@@ -40,8 +40,6 @@ typedef struct {
   GHashTable *fields;
   /* True if there should be geometry type indexes for the broad geometry types, not distinguishing single vs. multi */
   guint8 broad_geometry_indexes;
-  /* True if there should be geometry type indexes that distinguish single vs. multi types*/
-  guint8 geometry_indexes;
 } ShumateVectorIndexDescriptionLayer;
 
 /* A description of the fields and values that a set of expressions needs indexes for. */
@@ -601,20 +599,6 @@ shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDesc
   return layer->broad_geometry_indexes;
 }
 
-/* Returns whether the index description has geometry type indexes that distinguish single vs. multi geometries. */
-gboolean
-shumate_vector_index_description_has_geometry_type (ShumateVectorIndexDescription *description,
-                                                    const char                    *layer_name)
-{
-  ShumateVectorIndexDescriptionLayer *layer;
-
-  layer = g_hash_table_lookup (description->layers, layer_name);
-  if (layer == NULL)
-    return FALSE;
-
-  return layer->geometry_indexes;
-}
-
 static ShumateVectorIndexDescriptionLayer *
 get_or_create_desc_layer (ShumateVectorIndexDescription *desc,
                           const char                    *layer)
@@ -674,22 +658,10 @@ shumate_vector_index_description_add_has_index (ShumateVectorIndexDescription *d
   field_desc->has_index = TRUE;
 }
 
-/* Add geometry indexes to the index description. "Broad" indexes only index point/line/polygon,
-   not whether the geometry is a single or multi geometry. This is very common and is faster
-   to calculate. */
 void
 shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDescription *desc,
                                                           const char                    *layer)
 {
   ShumateVectorIndexDescriptionLayer *layer_desc = get_or_create_desc_layer (desc, layer);
   layer_desc->broad_geometry_indexes = TRUE;
-}
-
-/* Add geometry indexes to the index description. These indexes will distinguish single vs. multi geometries. */
-void
-shumate_vector_index_description_add_geometry_type (ShumateVectorIndexDescription *desc,
-                                                    const char                    *layer)
-{
-  ShumateVectorIndexDescriptionLayer *layer_desc = get_or_create_desc_layer (desc, layer);
-  layer_desc->geometry_indexes = TRUE;
 }

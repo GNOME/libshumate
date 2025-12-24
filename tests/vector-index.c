@@ -61,12 +61,6 @@ test_vector_index_description (void)
   shumate_vector_index_description_add_broad_geometry_type (desc, "foo");
   g_assert_true (shumate_vector_index_description_has_layer (desc, "foo"));
   g_assert_true (shumate_vector_index_description_has_broad_geometry_type (desc, "foo"));
-  g_assert_false (shumate_vector_index_description_has_geometry_type (desc, "foo"));
-
-  shumate_vector_index_description_add_geometry_type (desc, "bar");
-  g_assert_true (shumate_vector_index_description_has_layer (desc, "bar"));
-  g_assert_false (shumate_vector_index_description_has_broad_geometry_type (desc, "bar"));
-  g_assert_true (shumate_vector_index_description_has_geometry_type (desc, "bar"));
 
   shumate_vector_index_description_add_has_index (desc, "baz", "qux");
   g_assert_true (shumate_vector_index_description_has_layer (desc, "baz"));
@@ -148,11 +142,9 @@ test_vector_index_eval (void)
   g_assert_true (shumate_vector_index_bitset_get (bitset, 1));
   shumate_vector_index_bitset_free (bitset);
 
-  /* Test geometry type indexes, both broad and not*/
   bitset = compute_bitset (reader, "[\"in\", [\"geometry-type\"], [\"literal\", [\"LineString\", \"MultiLineString\"]]]", "lines", &index_description);
   g_assert_true (shumate_vector_index_bitset_get (bitset, 0));
   g_assert_true (shumate_vector_index_bitset_get (bitset, 1));
-  g_assert_false (shumate_vector_index_description_has_geometry_type (index_description, "lines"));
   g_assert_true (shumate_vector_index_description_has_broad_geometry_type (index_description, "lines"));
   shumate_vector_index_bitset_free (bitset);
   shumate_vector_index_description_free (index_description);
@@ -160,8 +152,7 @@ test_vector_index_eval (void)
   bitset = compute_bitset (reader, "[\"==\", [\"geometry-type\"], \"LineString\"]", "lines", &index_description);
   g_assert_true (shumate_vector_index_bitset_get (bitset, 0));
   g_assert_true (shumate_vector_index_bitset_get (bitset, 1));
-  g_assert_true (shumate_vector_index_description_has_geometry_type (index_description, "lines"));
-  g_assert_false (shumate_vector_index_description_has_broad_geometry_type (index_description, "lines"));
+  g_assert_true (shumate_vector_index_description_has_broad_geometry_type (index_description, "lines"));
   shumate_vector_index_bitset_free (bitset);
   shumate_vector_index_description_free (index_description);
 

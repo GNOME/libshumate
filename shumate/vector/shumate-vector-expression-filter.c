@@ -23,15 +23,9 @@
 #include "../shumate-vector-reader-iter.h"
 
 typedef enum {
-  GEOM_SINGLE_POINT = 1 << 0,
-  GEOM_MULTI_POINT = 1 << 1,
-  GEOM_SINGLE_LINESTRING = 1 << 2,
-  GEOM_MULTI_LINESTRING = 1 << 3,
-  GEOM_SINGLE_POLYGON = 1 << 4,
-  GEOM_MULTI_POLYGON = 1 << 5,
-  GEOM_ANY_POINT = GEOM_SINGLE_POINT | GEOM_MULTI_POINT,
-  GEOM_ANY_LINESTRING = GEOM_SINGLE_LINESTRING | GEOM_MULTI_LINESTRING,
-  GEOM_ANY_POLYGON = GEOM_SINGLE_POLYGON | GEOM_MULTI_POLYGON,
+  GEOM_POINT = 1 << 0,
+  GEOM_LINESTRING = 1 << 1,
+  GEOM_POLYGON = 1 << 2,
 } GeometryTypeFlags;
 
 struct _ShumateVectorExpressionFilter
@@ -626,17 +620,11 @@ static GeometryTypeFlags
 parse_geometry_type_flag (const char *flag)
 {
   if (g_strcmp0 (flag, "Point") == 0)
-    return GEOM_SINGLE_POINT;
-  else if (g_strcmp0 (flag, "MultiPoint") == 0)
-    return GEOM_MULTI_POINT;
+    return GEOM_POINT;
   else if (g_strcmp0 (flag, "LineString") == 0)
-    return GEOM_SINGLE_LINESTRING;
-  else if (g_strcmp0 (flag, "MultiLineString") == 0)
-    return GEOM_MULTI_LINESTRING;
+    return GEOM_LINESTRING;
   else if (g_strcmp0 (flag, "Polygon") == 0)
-    return GEOM_SINGLE_POLYGON;
-  else if (g_strcmp0 (flag, "MultiPolygon") == 0)
-    return GEOM_MULTI_POLYGON;
+    return GEOM_POLYGON;
   else
     return 0;
 }
@@ -1678,22 +1666,16 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         switch (geometry_type)
           {
           case SHUMATE_GEOMETRY_TYPE_POINT:
+          case SHUMATE_GEOMETRY_TYPE_MULTIPOINT:
             shumate_vector_value_set_string (out, "Point");
             return TRUE;
-          case SHUMATE_GEOMETRY_TYPE_MULTIPOINT:
-            shumate_vector_value_set_string (out, "MultiPoint");
-            return TRUE;
           case SHUMATE_GEOMETRY_TYPE_LINESTRING:
+          case SHUMATE_GEOMETRY_TYPE_MULTILINESTRING:
             shumate_vector_value_set_string (out, "LineString");
             return TRUE;
-          case SHUMATE_GEOMETRY_TYPE_MULTILINESTRING:
-            shumate_vector_value_set_string (out, "MultiLineString");
-            return TRUE;
           case SHUMATE_GEOMETRY_TYPE_POLYGON:
-            shumate_vector_value_set_string (out, "Polygon");
-            return TRUE;
           case SHUMATE_GEOMETRY_TYPE_MULTIPOLYGON:
-            shumate_vector_value_set_string (out, "MultiPolygon");
+            shumate_vector_value_set_string (out, "Polygon");
             return TRUE;
           default:
             shumate_vector_value_unset (out);
@@ -1999,65 +1981,14 @@ shumate_vector_expression_filter_eval (ShumateVectorExpression  *expr,
         switch (feature->type)
           {
           case VECTOR_TILE__TILE__GEOM_TYPE__POINT:
-            if (self->fast_geometry_type & GEOM_ANY_POINT)
-              {
-                if ((self->fast_geometry_type & GEOM_ANY_POINT) == GEOM_ANY_POINT)
-                  result = TRUE;
-                else
-                  {
-                    ShumateGeometryType geometry_type = shumate_vector_reader_iter_get_feature_geometry_type (scope->reader);
-                    if (self->fast_geometry_type & GEOM_SINGLE_POINT)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_POINT);
-                    else if (self->fast_geometry_type & GEOM_MULTI_POINT)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_MULTIPOINT);
-                    else
-                      g_assert_not_reached ();
-                  }
-              }
-            else
-              result = FALSE;
+            result = self->fast_geometry_type & GEOM_POINT;
             break;
-
           case VECTOR_TILE__TILE__GEOM_TYPE__LINESTRING:
-            if (self->fast_geometry_type & GEOM_ANY_LINESTRING)
-              {
-                if ((self->fast_geometry_type & GEOM_ANY_LINESTRING) == GEOM_ANY_LINESTRING)
-                  result = TRUE;
-                else
-                  {
-                    ShumateGeometryType geometry_type = shumate_vector_reader_iter_get_feature_geometry_type (scope->reader);
-                    if (self->fast_geometry_type & GEOM_SINGLE_LINESTRING)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_LINESTRING);
-                    else if (self->fast_geometry_type & GEOM_MULTI_LINESTRING)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_MULTILINESTRING);
-                    else
-                      g_assert_not_reached ();
-                  }
-              }
-            else
-              result = FALSE;
+            result = self->fast_geometry_type & GEOM_LINESTRING;
             break;
-
           case VECTOR_TILE__TILE__GEOM_TYPE__POLYGON:
-            if (self->fast_geometry_type & GEOM_ANY_POLYGON)
-              {
-                if ((self->fast_geometry_type & GEOM_ANY_POLYGON) == GEOM_ANY_POLYGON)
-                  result = TRUE;
-                else
-                  {
-                    ShumateGeometryType geometry_type = shumate_vector_reader_iter_get_feature_geometry_type (scope->reader);
-                    if (self->fast_geometry_type & GEOM_SINGLE_POLYGON)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_POLYGON);
-                    else if (self->fast_geometry_type & GEOM_MULTI_POLYGON)
-                      result = (geometry_type == SHUMATE_GEOMETRY_TYPE_MULTIPOLYGON);
-                    else
-                      g_assert_not_reached ();
-                  }
-              }
-            else
-              result = FALSE;
+            result = self->fast_geometry_type & GEOM_POINT;
             break;
-
           default:
             result = FALSE;
             break;
@@ -2141,59 +2072,23 @@ shumate_vector_expression_filter_eval_bitset (ShumateVectorExpression  *expr,
           ShumateVectorIndexBitset *current_bitset;
           bitset = shumate_vector_index_bitset_new (layer->n_features);
 
-          switch (self->fast_geometry_type & GEOM_ANY_POINT)
+          if (self->fast_geometry_type & GEOM_POINT)
             {
-              case GEOM_ANY_POINT:
-                current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POINT);
-                break;
-              case GEOM_SINGLE_POINT:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POINT);
-                break;
-              case GEOM_MULTI_POINT:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_MULTIPOINT);
-                break;
-              default:
-                current_bitset = NULL;
-                break;
+              current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POINT);
+              shumate_vector_index_bitset_or (bitset, current_bitset);
             }
-          if (current_bitset != NULL)
-            shumate_vector_index_bitset_or (bitset, current_bitset);
 
-          switch (self->fast_geometry_type & GEOM_ANY_LINESTRING)
+          if (self->fast_geometry_type & GEOM_LINESTRING)
             {
-              case GEOM_ANY_LINESTRING:
-                current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_LINESTRING);
-                break;
-              case GEOM_SINGLE_LINESTRING:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_LINESTRING);
-                break;
-              case GEOM_MULTI_LINESTRING:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_MULTILINESTRING);
-                break;
-              default:
-                current_bitset = NULL;
-                break;
+              current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_LINESTRING);
+              shumate_vector_index_bitset_or (bitset, current_bitset);
             }
-          if (current_bitset != NULL)
-            shumate_vector_index_bitset_or (bitset, current_bitset);
 
-          switch (self->fast_geometry_type & GEOM_ANY_POLYGON)
+          switch (self->fast_geometry_type & GEOM_POLYGON)
             {
-              case GEOM_ANY_POLYGON:
-                current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON);
-                break;
-              case GEOM_SINGLE_POLYGON:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON);
-                break;
-              case GEOM_MULTI_POLYGON:
-                current_bitset = shumate_vector_index_get_bitset_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_MULTIPOLYGON);
-                break;
-              default:
-                current_bitset = NULL;
-                break;
+              current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON);
+              shumate_vector_index_bitset_or (bitset, current_bitset);
             }
-          if (current_bitset != NULL)
-            shumate_vector_index_bitset_or (bitset, current_bitset);
 
           return bitset;
         }
@@ -2280,44 +2175,15 @@ shumate_vector_expression_filter_collect_indexes (ShumateVectorExpression       
 
       case EXPR_FAST_GEOMETRY_TYPE:
       case EXPR_FAST_NOT_GEOMETRY_TYPE:
-        switch (self->fast_geometry_type & GEOM_ANY_POINT)
-          {
-            case GEOM_ANY_POINT:
-              shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_SINGLE_POINT:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_MULTI_POINT:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-          }
+        if (self->fast_geometry_type & GEOM_POINT)
+          shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
 
-        switch (self->fast_geometry_type & GEOM_ANY_LINESTRING)
-          {
-            case GEOM_ANY_LINESTRING:
-              shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_SINGLE_LINESTRING:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_MULTI_LINESTRING:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-          }
+        if (self->fast_geometry_type & GEOM_LINESTRING)
+          shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
 
-        switch (self->fast_geometry_type & GEOM_ANY_POLYGON)
-          {
-            case GEOM_ANY_POLYGON:
-              shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_SINGLE_POLYGON:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-            case GEOM_MULTI_POLYGON:
-              shumate_vector_index_description_add_geometry_type (index_description, layer_name);
-              break;
-          }
+        if (self->fast_geometry_type & GEOM_POLYGON)
+          shumate_vector_index_description_add_broad_geometry_type (index_description, layer_name);
+
         break;
 
       case EXPR_ANY:

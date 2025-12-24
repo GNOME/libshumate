@@ -340,7 +340,6 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
   FieldIndexingData *fields;
   int feature_idx = 0;
   ShumateVectorIndexBitset *broad_geometry_indexes[3] = { NULL, NULL, NULL };
-  ShumateVectorIndexBitset *geometry_indexes[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
   if (self->index == NULL)
     self->index = shumate_vector_index_new ();
@@ -362,15 +361,6 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
       shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POINT, broad_geometry_indexes[0]);
       shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_LINESTRING, broad_geometry_indexes[1]);
       shumate_vector_index_add_bitset_broad_geometry_type (self->index, self->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON, broad_geometry_indexes[2]);
-    }
-
-  if (shumate_vector_index_description_has_geometry_type (self->index_description, layer_name))
-    {
-      for (int i = 1; i < 7; i ++)
-        {
-          geometry_indexes[i] = shumate_vector_index_bitset_new (layer->n_features);
-          shumate_vector_index_add_bitset_geometry_type (self->index, self->source_layer_idx, i, geometry_indexes[i]);
-        }
     }
 
   /* Read all of the features and build every requested index */
@@ -395,12 +385,6 @@ shumate_vector_render_scope_index_layer (ShumateVectorRenderScope *self)
             default:
               break;
             }
-        }
-
-      if (geometry_indexes[feature->type] != NULL)
-        {
-          ShumateGeometryType type = shumate_vector_reader_iter_get_feature_geometry_type (self->reader);
-          shumate_vector_index_bitset_set (geometry_indexes[type], feature_idx);
         }
 
       for (int i = 1; i < feature->n_tags; i += 2)

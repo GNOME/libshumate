@@ -94,8 +94,6 @@ gboolean shumate_vector_index_description_has_field_has_index (ShumateVectorInde
                                                                const char                    *field_name);
 gboolean shumate_vector_index_description_has_broad_geometry_type (ShumateVectorIndexDescription *description,
                                                                    const char                    *layer_name);
-gboolean shumate_vector_index_description_has_geometry_type (ShumateVectorIndexDescription *description,
-                                                             const char                    *layer_name);
 void shumate_vector_index_description_add (ShumateVectorIndexDescription *desc,
                                            const char                    *layer,
                                            const char                    *field,
@@ -105,6 +103,4 @@ void shumate_vector_index_description_add_has_index (ShumateVectorIndexDescripti
                                                      const char                    *field);
 void shumate_vector_index_description_add_broad_geometry_type (ShumateVectorIndexDescription *desc,
                                                                const char                    *layer);
-void shumate_vector_index_description_add_geometry_type (ShumateVectorIndexDescription *desc,
-                                                         const char                    *layer);
 G_END_DECLS
