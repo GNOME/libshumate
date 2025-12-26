@@ -75,6 +75,13 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+enum {
+  CHANGED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
+
 static double
 shumate_viewport_get_latitude (ShumateLocation *location)
 {
@@ -108,6 +115,7 @@ shumate_viewport_set_location (ShumateLocation *location,
   self->lat = CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
   g_object_notify (G_OBJECT (self), "longitude");
   g_object_notify (G_OBJECT (self), "latitude");
+  g_signal_emit (self, signals[CHANGED], 0);
 }
 
 static void
@@ -290,6 +298,25 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
   g_object_class_override_property (object_class,
       PROP_LATITUDE,
       "latitude");
+
+  /**
+   * ShumateViewport::changed:
+   * @self: the [class@Viewport] emitting the signal
+   * @event: a [class@SymbolEvent] with details about the clicked symbol.
+   *
+   * Emitted when the viewport position (location, zoom, rotation, etc.) changes. Changes to multiple properties at once
+   * may be combined into a single signal emission.
+   *
+   * Since: 1.6
+   */
+  signals[CHANGED] =
+    g_signal_new ("changed",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  NULL,
+                  G_TYPE_NONE,
+                  0);
 }
 
 static void
@@ -342,6 +369,7 @@ shumate_viewport_set_zoom_level (ShumateViewport *self,
 
   self->zoom_level = zoom_level;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ZOOM_LEVEL]);
+  g_signal_emit (self, signals[CHANGED], 0);
 }
 
 /**
@@ -506,6 +534,7 @@ shumate_viewport_set_rotation (ShumateViewport *self,
 
   self->rotation = rotation;
   g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_ROTATION]);
+  g_signal_emit (self, signals[CHANGED], 0);
 }
 
 /**

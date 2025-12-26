@@ -174,11 +174,7 @@ shumate_vector_symbol_container_constructed (GObject *object)
   self->collision = shumate_vector_collision_new ();
 
   viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-
-  g_signal_connect_swapped (viewport, "notify::longitude", G_CALLBACK (on_viewport_changed), self);
-  g_signal_connect_swapped (viewport, "notify::latitude", G_CALLBACK (on_viewport_changed), self);
-  g_signal_connect_swapped (viewport, "notify::zoom-level", G_CALLBACK (on_viewport_changed), self);
-  g_signal_connect_swapped (viewport, "notify::rotation", G_CALLBACK (on_viewport_changed), self);
+  g_signal_connect_swapped (viewport, "changed", G_CALLBACK (on_viewport_changed), self);
 
   g_signal_connect_object (settings, "notify::show-collision-boxes", G_CALLBACK (on_viewport_changed), self, G_CONNECT_SWAPPED);
 }
