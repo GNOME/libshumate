@@ -26,6 +26,8 @@
  * Since: 1.6
  */
 
+G_DEFINE_BOXED_TYPE (ShumateVectorValue, shumate_vector_value, shumate_vector_value_dup, shumate_vector_value_free);
+
 enum {
   COLOR_UNSET,
   COLOR_SET,
