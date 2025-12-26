@@ -2,7 +2,7 @@ project(
   'libshumate', 'c',
   version: '1.6.alpha',
   license: 'LGPLv2.1+',
-  meson_version: '>= 0.57.0',
+  meson_version: '>= 0.62.0',
   default_options: [
     'buildtype=debugoptimized',
   ]
