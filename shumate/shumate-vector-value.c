@@ -135,7 +135,6 @@ shumate_vector_value_new_color (GdkRGBA *color)
   return self;
 }
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 gboolean
 shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *node, GError **error)
 {
@@ -191,7 +190,6 @@ shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *
       return FALSE;
     }
 }
-#endif
 
 gboolean
 shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *value)
@@ -760,7 +758,6 @@ shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
     }
 }
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 static JsonNode *
 shumate_vector_value_as_json (ShumateVectorValue *value)
 {
@@ -868,4 +865,3 @@ shumate_vector_value_as_string (ShumateVectorValue *self)
       g_assert_not_reached ();
     }
 }
-#endif

@@ -17,8 +17,6 @@
 
 #pragma once
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-
 #include <glib-object.h>
 #include "shumate-vector-reader-iter.h"
 #include "vector/vector_tile.pb-c.h"
@@ -32,5 +30,3 @@ int shumate_vector_reader_iter_get_layer_index (ShumateVectorReaderIter *self);
 int shumate_vector_reader_iter_get_feature_index (ShumateVectorReaderIter *self);
 
 G_END_DECLS
-
-#endif

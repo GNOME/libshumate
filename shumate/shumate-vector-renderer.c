@@ -29,7 +29,6 @@
  * A [class@MapSource] that renders tiles from a given vector data source.
  */
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include <json-glib/json-glib.h>
 #include <cairo/cairo.h>
 
@@ -38,7 +37,6 @@
 #include "vector/shumate-vector-utils-private.h"
 #include "vector/shumate-vector-layer-private.h"
 #include "vector/shumate-vector-index-private.h"
-#endif
 
 struct _ShumateVectorRenderer
 {
@@ -60,9 +58,7 @@ struct _ShumateVectorRenderer
 
   GPtrArray *layers;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorIndexDescription *index_description;
-#endif
 };
 
 
@@ -121,20 +117,16 @@ shumate_vector_renderer_new (const char  *id,
 /**
  * shumate_vector_renderer_is_supported:
  *
- * Checks whether libshumate was compiled with vector tile support. If it was
- * not, vector renderers cannot be created or used.
+ * Checks whether libshumate was compiled with vector tile support. Previous
+ * versions of libshumate had a build-time option to disable vector tiles,
+ * but as of 1.6 they are always enabled.
  *
- * Returns: %TRUE if libshumate was compiled with `-Dvector_renderer=true` or
- * %FALSE if it was not
+ * Returns: %TRUE
  */
 gboolean
 shumate_vector_renderer_is_supported (void)
 {
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   return TRUE;
-#else
-  return FALSE;
-#endif
 }
 
 
@@ -148,9 +140,7 @@ shumate_vector_renderer_finalize (GObject *object)
   g_clear_pointer (&self->source_name, g_free);
   g_clear_object (&self->data_source);
   g_clear_object (&self->sprites);
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_clear_pointer (&self->index_description, shumate_vector_index_description_free);
-#endif
 
   if (self->thread_pool)
     g_thread_pool_free (self->thread_pool, FALSE, FALSE);
@@ -271,7 +261,6 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
 {
   SHUMATE_PROFILE_START ();
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderer *self = (ShumateVectorRenderer *)initable;
   g_autoptr(JsonNode) node = NULL;
   JsonNode *layers_node;
@@ -480,17 +469,6 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
   shumate_map_source_set_tile_size (SHUMATE_MAP_SOURCE (self), 512);
 
   return TRUE;
-#else
-  g_set_error (error,
-               SHUMATE_STYLE_ERROR,
-               SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
-               "Libshumate was compiled without support for vector tiles, so a "
-               "ShumateVectorRenderer may not be constructed. You can fix this "
-               "by compiling libshumate with `-Dvector_renderer=true` or by "
-               "checking `shumate_vector_renderer_is_supported ()` before trying "
-               "to construct a ShumateVectorRenderer.");
-  return FALSE;
-#endif
 }
 
 
@@ -549,9 +527,7 @@ shumate_vector_renderer_init (ShumateVectorRenderer *self)
 {
   g_mutex_init (&self->sprites_mutex);
   g_mutex_init (&self->global_state_mutex);
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->index_description = shumate_vector_index_description_new ();
-#endif
 }
 
 
@@ -811,7 +787,6 @@ shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
 }
 
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 static GdkTexture *
 texture_new_for_surface (cairo_surface_t *surface)
 {
@@ -836,7 +811,6 @@ texture_new_for_surface (cairo_surface_t *surface)
 
   return texture;
 }
-#endif
 
 
 static void
@@ -986,7 +960,6 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
 {
   SHUMATE_PROFILE_START ();
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorRenderScope scope;
   cairo_surface_t *surface;
   g_autoptr(GPtrArray) symbol_list = g_ptr_array_new_with_free_func ((GDestroyNotify)shumate_vector_symbol_info_unref);
@@ -1072,10 +1045,6 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
 
   profile_desc = g_strdup_printf ("(%d, %d) @ %f", scope.tile_x, scope.tile_y, scope.zoom_level);
   SHUMATE_PROFILE_END (profile_desc);
-
-#else
-  g_return_if_reached ();
-#endif
 }
 
 static gboolean

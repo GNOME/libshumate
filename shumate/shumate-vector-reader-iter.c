@@ -17,10 +17,7 @@
 
 #include "shumate-vector-reader-private.h"
 #include "shumate-vector-reader-iter-private.h"
-
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include "vector/shumate-vector-utils-private.h"
-#endif
 
 /**
  * ShumateVectorReaderIter:
@@ -57,11 +54,9 @@ struct _ShumateVectorReaderIter
 
   ShumateVectorReader *reader;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   VectorTile__Tile__Layer *layer;
   VectorTile__Tile__Feature *feature;
   int feature_index;
-#endif
 };
 
 enum {
@@ -183,11 +178,7 @@ shumate_vector_reader_iter_get_layer_count (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   return self->reader->tile->n_layers;
-#else
-  return 0;
-#endif
 }
 
 /**
@@ -204,13 +195,11 @@ shumate_vector_reader_iter_read_layer (ShumateVectorReaderIter *self, int index)
 {
   g_return_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self));
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_if_fail (index >= 0);
   g_return_if_fail (index < self->reader->tile->n_layers);
 
   self->layer = self->reader->tile->layers[index];
   self->feature = NULL;
-#endif
 }
 
 /**
@@ -237,7 +226,6 @@ shumate_vector_reader_iter_read_layer_by_name (ShumateVectorReaderIter *self,
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->layer = NULL;
   self->feature = NULL;
 
@@ -250,7 +238,6 @@ shumate_vector_reader_iter_read_layer_by_name (ShumateVectorReaderIter *self,
           return TRUE;
         }
     }
-#endif
 
   return FALSE;
 }
@@ -270,7 +257,6 @@ shumate_vector_reader_iter_get_layer_index (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), -1);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   for (int i = 0; i < self->reader->tile->n_layers; i++)
   {
     if (self->layer == self->reader->tile->layers[i])
@@ -278,7 +264,6 @@ shumate_vector_reader_iter_get_layer_index (ShumateVectorReaderIter *self)
       return i;
     }
   }
-#endif
 
   return -1;
 }
@@ -298,12 +283,8 @@ shumate_vector_reader_iter_get_layer_name (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), NULL);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->layer != NULL, NULL);
   return self->layer->name;
-#else
-  return NULL;
-#endif
 }
 
 /**
@@ -326,12 +307,8 @@ shumate_vector_reader_iter_get_layer_feature_count (ShumateVectorReaderIter *sel
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->layer != NULL, 0);
   return self->layer->n_features;
-#else
-  return 0;
-#endif
 }
 
 /**
@@ -357,12 +334,8 @@ shumate_vector_reader_iter_get_layer_extent (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->layer != NULL, 0);
   return self->layer->extent;
-#else
-  return 0;
-#endif
 }
 
 /**
@@ -383,14 +356,12 @@ shumate_vector_reader_iter_read_feature (ShumateVectorReaderIter *self,
 {
   g_return_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self));
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_if_fail (index >= 0);
   g_return_if_fail (self->layer != NULL);
   g_return_if_fail (index < self->layer->n_features);
 
   self->feature = self->layer->features[index];
   self->feature_index = index;
-#endif
 }
 
 /**
@@ -410,7 +381,6 @@ shumate_vector_reader_iter_next_feature (ShumateVectorReaderIter *self)
 
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->layer != NULL, FALSE);
 
   if (self->feature == NULL)
@@ -426,9 +396,6 @@ shumate_vector_reader_iter_next_feature (ShumateVectorReaderIter *self)
     }
   else
     return FALSE;
-#else
-  return FALSE;
-#endif
 }
 
 /*< private >
@@ -446,11 +413,7 @@ shumate_vector_reader_iter_get_feature_index (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   return self->feature_index;
-#else
-  return 0;
-#endif
 }
 
 /**
@@ -468,12 +431,8 @@ shumate_vector_reader_iter_get_feature_id (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), 0);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->feature != NULL, 0);
   return self->feature->id;
-#else
-  return 0;
-#endif
 }
 
 /**
@@ -495,7 +454,6 @@ shumate_vector_reader_iter_get_feature_tag (ShumateVectorReaderIter *self,
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->feature != NULL, FALSE);
 
   if (key == NULL)
@@ -548,7 +506,6 @@ shumate_vector_reader_iter_get_feature_tag (ShumateVectorReaderIter *self,
           return TRUE;
         }
     }
-#endif
 
   return FALSE;
 }
@@ -568,7 +525,6 @@ shumate_vector_reader_iter_get_feature_keys (ShumateVectorReaderIter *self)
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), NULL);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   const char **keys;
   uint32_t n_keys;
 
@@ -581,9 +537,6 @@ shumate_vector_reader_iter_get_feature_keys (ShumateVectorReaderIter *self)
   keys[n_keys] = NULL;
 
   return keys;
-#else
-  return NULL;
-#endif
 }
 
 /**
@@ -605,7 +558,6 @@ shumate_vector_reader_iter_get_feature_geometry_type (ShumateVectorReaderIter *s
 
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), SHUMATE_GEOMETRY_TYPE_UNKNOWN);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->feature != NULL, SHUMATE_GEOMETRY_TYPE_UNKNOWN);
 
   switch (self->feature->type)
@@ -674,9 +626,6 @@ shumate_vector_reader_iter_get_feature_geometry_type (ShumateVectorReaderIter *s
     default:
       return SHUMATE_GEOMETRY_TYPE_UNKNOWN;
     }
-#else
-  return SHUMATE_GEOMETRY_TYPE_UNKNOWN;
-#endif
 }
 
 static int
@@ -712,7 +661,6 @@ shumate_vector_reader_iter_get_feature_point (ShumateVectorReaderIter *self,
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_return_val_if_fail (self->feature != NULL, FALSE);
   g_return_val_if_fail (self->feature->type == VECTOR_TILE__TILE__GEOM_TYPE__POINT, FALSE);
   g_return_val_if_fail (self->feature->n_geometry == 3, FALSE);
@@ -723,9 +671,6 @@ shumate_vector_reader_iter_get_feature_point (ShumateVectorReaderIter *self,
     *y = zigzag (self->feature->geometry[2]);
 
   return TRUE;
-#else
-  return FALSE;
-#endif
 }
 
 /**
@@ -755,7 +700,6 @@ shumate_vector_reader_iter_feature_contains_point (ShumateVectorReaderIter *self
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), FALSE);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorGeometryIter iter = {0};
   int prev_x = 0, prev_y = 0;
   int winding_number = 0;
@@ -796,9 +740,6 @@ shumate_vector_reader_iter_feature_contains_point (ShumateVectorReaderIter *self
     }
 
   return winding_number != 0;
-#else
-  return FALSE;
-#endif
 }
 
 /*< private >
@@ -820,8 +761,6 @@ shumate_vector_reader_iter_new (ShumateVectorReader *reader)
                        "reader", reader,
                        NULL);
 }
-
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 
 /*< private >
  * shumate_vector_reader_iter_get_layer_struct:
@@ -851,5 +790,3 @@ shumate_vector_reader_iter_get_feature_struct (ShumateVectorReaderIter *self)
   g_return_val_if_fail (SHUMATE_IS_VECTOR_READER_ITER (self), NULL);
   return self->feature;
 }
-
-#endif

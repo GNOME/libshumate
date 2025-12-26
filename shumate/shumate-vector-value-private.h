@@ -18,12 +18,10 @@
 #pragma once
 
 #include <gtk/gtk.h>
+#include <json-glib/json-glib.h>
+
 #include "shumate-vector-sprite.h"
 #include "shumate-vector-value.h"
-
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-#include <json-glib/json-glib.h>
-#endif
 
 #define SHUMATE_VECTOR_COLOR_BLACK ((GdkRGBA) {.red=0, .green=0, .blue=0, .alpha=1})
 
@@ -65,9 +63,7 @@ struct _ShumateVectorValue {
 #define SHUMATE_VECTOR_VALUE_INIT ((ShumateVectorValue) {.type = 0})
 
 gboolean shumate_vector_value_set_from_g_value (ShumateVectorValue *self, const GValue *value);
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 gboolean shumate_vector_value_set_from_json_literal (ShumateVectorValue *self, JsonNode *node, GError **error);
-#endif
 
 void shumate_vector_value_free (ShumateVectorValue *self);
 void shumate_vector_value_copy (ShumateVectorValue *self, ShumateVectorValue *out);

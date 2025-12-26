@@ -8,6 +8,10 @@ project(
   ]
 )
 
+if not get_option('vector_renderer')
+  warning('As of libshumate 1.6, the vector renderer is no longer optional. It will be built even though -Dvector_renderer=false was specified.')
+endif
+
 gnome = import('gnome')
 pkg = import('pkgconfig')
 
@@ -62,10 +66,14 @@ cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
 gtk_dep = dependency('gtk4')
 libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
+json_glib_dep = dependency('json-glib-1.0', version: json_glib_req)
+libprotobuf_dep = dependency('libprotobuf-c')
 
 gi_scanner_dep = find_program('g-ir-scanner', required: false)
 introspection_dep = dependency('gobject-introspection-1.0', version: introspection_req, required: false)
 vapigen_dep = find_program('vapigen', version: vala_req, native: true, required: false)
+
+gperf = find_program('gperf')
 
 libsysprof_capture_dep = dependency('sysprof-capture-4',
   required: get_option('sysprof'),

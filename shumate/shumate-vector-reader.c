@@ -16,9 +16,7 @@
  */
 
 #include "shumate-vector-reader-private.h"
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include "vector/vector_tile.pb-c.h"
-#endif
 
 /**
  * ShumateVectorReader:
@@ -41,10 +39,8 @@ shumate_vector_reader_finalize (GObject *object)
 {
   ShumateVectorReader *self = SHUMATE_VECTOR_READER (object);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   vector_tile__tile__free_unpacked (self->tile, NULL);
   self->tile = NULL;
-#endif
 
   G_OBJECT_CLASS (shumate_vector_reader_parent_class)->finalize (object);
 }
@@ -75,7 +71,6 @@ shumate_vector_reader_init (ShumateVectorReader *self)
 ShumateVectorReader *
 shumate_vector_reader_new (GBytes *bytes)
 {
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_autoptr(ShumateVectorReader) self = g_object_new(SHUMATE_TYPE_VECTOR_READER, NULL);
   gconstpointer data;
   gsize len;
@@ -87,10 +82,6 @@ shumate_vector_reader_new (GBytes *bytes)
     return NULL;
 
   return g_steal_pointer (&self);
-#else
-  g_warning ("Vector tile support is not enabled");
-  return NULL;
-#endif
 }
 
 /**
@@ -106,10 +97,5 @@ shumate_vector_reader_new (GBytes *bytes)
 ShumateVectorReaderIter *
 shumate_vector_reader_iterate (ShumateVectorReader *self)
 {
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   return shumate_vector_reader_iter_new (self);
-#else
-  g_warning ("Vector tile support is not enabled");
-  return NULL;
-#endif
 }

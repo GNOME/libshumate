@@ -101,6 +101,23 @@ libshumate_sources = [
   'shumate-vector-sprite-sheet.c',
   'shumate-vector-value.c',
   'shumate-viewport.c',
+
+  'vector/shumate-vector-background-layer.c',
+  'vector/shumate-vector-collision.c',
+  'vector/shumate-vector-expression.c',
+  'vector/shumate-vector-expression-interpolate.c',
+  'vector/shumate-vector-expression-filter.c',
+  'vector/shumate-vector-fill-layer.c',
+  'vector/shumate-vector-index.c',
+  'vector/shumate-vector-layer.c',
+  'vector/shumate-vector-line-layer.c',
+  'vector/shumate-vector-render-scope.c',
+  'vector/shumate-vector-symbol.c',
+  'vector/shumate-vector-symbol-container.c',
+  'vector/shumate-vector-symbol-info.c',
+  'vector/shumate-vector-symbol-layer.c',
+  'vector/shumate-vector-utils.c',
+  'vector/vector_tile.pb-c.c',
 ]
 
 libshumate_deps = [
@@ -113,7 +130,27 @@ libshumate_deps = [
   sqlite_dep,
   libsoup_dep,
   libsysprof_capture_dep,
+  json_glib_dep,
+  libprotobuf_dep,
 ]
+
+libshumate_expr_gperf = custom_target (
+  'shumate-vector-expression-gperf',
+  output: 'shumate-vector-expression-gperf.c',
+  input: 'vector/shumate-vector-expression-type.gperf',
+  command: [
+    gperf,
+    '--readonly-tables',
+    '--includes',
+    '--struct-type',
+    '--omit-struct-type',
+    '--lookup-function-name=shumate_vector_expression_type_lookup',
+    '--hash-function-name=shumate_vector_expression_type_hash',
+    '--output-file=@OUTPUT@',
+    '@INPUT@'
+  ],
+)
+libshumate_sources += [libshumate_expr_gperf]
 
 libshumate_c_args = [
   '-DHAVE_CONFIG_H',
@@ -186,10 +223,6 @@ install_headers(
     'shumate',
   )
 )
-
-if get_option('vector_renderer')
-  subdir('vector')
-endif
 
 libshumate_lib = library(
   package_string,

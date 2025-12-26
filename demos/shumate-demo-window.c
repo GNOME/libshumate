@@ -187,6 +187,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   GtkExpression *expression;
   g_autoptr(GBytes) bytes = NULL;
   g_autoptr(GSimpleActionGroup) action_map = NULL;
+  g_autoptr(ShumateVectorRenderer) renderer = NULL;
   const char *style_json;
   GError *error = NULL;
   const GActionEntry action_entries[] = {
@@ -211,54 +212,51 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   gtk_drop_down_set_expression (self->layers_dropdown, expression);
   gtk_drop_down_set_model (self->layers_dropdown, G_LIST_MODEL (self->registry));
 
-  if (shumate_vector_renderer_is_supported ())
+  bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+  style_json = g_bytes_get_data (bytes, NULL);
+
+  renderer = shumate_vector_renderer_new (
+    "vector-tiles",
+    style_json,
+    &error
+  );
+
+  if (error)
     {
-      bytes = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/style.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-      style_json = g_bytes_get_data (bytes, NULL);
+      g_warning ("Failed to create vector map style: %s", error->message);
+      g_clear_error (&error);
+    }
+  else
+    {
+      g_autoptr(GdkTexture) sprites_texture = NULL;
+      g_autoptr(GBytes) sprites_json = NULL;
+      g_autoptr(GdkTexture) sprites_2x_texture = NULL;
+      g_autoptr(GBytes) sprites_2x_json = NULL;
+      ShumateVectorSpriteSheet *sprites = NULL;
 
-      ShumateVectorRenderer *renderer = shumate_vector_renderer_new (
-        "vector-tiles",
-        style_json,
-        &error
-      );
+      sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+      sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.png");
+      sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
+      sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.png");
 
+      sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
+      shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);
       if (error)
         {
-          g_warning ("Failed to create vector map style: %s", error->message);
+          g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
           g_clear_error (&error);
         }
-      else
+
+      shumate_vector_sprite_sheet_add_page (sprites, sprites_2x_texture, g_bytes_get_data (sprites_2x_json, NULL), 2, &error);
+      if (error)
         {
-          g_autoptr(GdkTexture) sprites_texture = NULL;
-          g_autoptr(GBytes) sprites_json = NULL;
-          g_autoptr(GdkTexture) sprites_2x_texture = NULL;
-          g_autoptr(GBytes) sprites_2x_json = NULL;
-          ShumateVectorSpriteSheet *sprites = NULL;
-
-          sprites_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites.png");
-          sprites_2x_json = g_resources_lookup_data ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.json", G_RESOURCE_LOOKUP_FLAGS_NONE, NULL);
-          sprites_2x_texture = gdk_texture_new_from_resource ("/org/gnome/Shumate/Demo/Devel/osm-liberty/sprites@2x.png");
-
-          sprites = shumate_vector_renderer_get_sprite_sheet (renderer);
-          shumate_vector_sprite_sheet_add_page (sprites, sprites_texture, g_bytes_get_data (sprites_json, NULL), 1, &error);
-          if (error)
-            {
-              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
-              g_clear_error (&error);
-            }
-
-          shumate_vector_sprite_sheet_add_page (sprites, sprites_2x_texture, g_bytes_get_data (sprites_2x_json, NULL), 2, &error);
-          if (error)
-            {
-              g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
-              g_clear_error (&error);
-            }
-
-          shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
-          shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
-          shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (renderer));
+          g_warning ("Failed to create spritesheet for vector map style: %s", error->message);
+          g_clear_error (&error);
         }
+
+      shumate_map_source_set_max_zoom_level (SHUMATE_MAP_SOURCE (renderer), 22);
+      shumate_map_source_set_license (SHUMATE_MAP_SOURCE (renderer), "© OpenMapTiles © OpenStreetMap contributors");
+      shumate_map_source_registry_add (self->registry, SHUMATE_MAP_SOURCE (g_steal_pointer (&renderer)));
     }
 
   viewport = shumate_simple_map_get_viewport (self->map);

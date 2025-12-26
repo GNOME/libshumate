@@ -15,20 +15,15 @@ tests = {
   'marker': { 'suite': 'no-valgrind' },
   'marker-layer': { 'suite': 'no-valgrind' },
   'memory-cache': {},
+  'vector-expression': {},
+  'vector-index': {},
+  'vector-reader': {},
+  'vector-renderer': {},
+  'vector-sprite-sheet': {},
+  'vector-style': {},
+  'vector-value': {},
   'viewport': {},
 }
-
-if get_option('vector_renderer')
-  tests += {
-    'vector-expression': {},
-    'vector-index': {},
-    'vector-reader': {},
-    'vector-renderer': {},
-    'vector-sprite-sheet': {},
-    'vector-style': {},
-    'vector-value': {},
-  }
-endif
 
 subdir('data')
 

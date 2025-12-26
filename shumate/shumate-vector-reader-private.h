@@ -18,9 +18,7 @@
 #pragma once
 
 #include "shumate-vector-reader.h"
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 #include "vector/vector_tile.pb-c.h"
-#endif
 
 G_BEGIN_DECLS
 
@@ -28,9 +26,7 @@ struct _ShumateVectorReader
 {
   GObject parent_instance;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   VectorTile__Tile *tile;
-#endif
 };
 
 ShumateVectorReaderIter *shumate_vector_reader_iter_new (ShumateVectorReader *reader);

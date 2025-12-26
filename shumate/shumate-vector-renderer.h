@@ -73,7 +73,7 @@ GQuark shumate_style_error_quark (void);
  * @SHUMATE_STYLE_ERROR_MALFORMED_STYLE: A JSON node in the style has the wrong type (e.g. an object where there should be an array).
  * @SHUMATE_STYLE_ERROR_UNSUPPORTED_LAYER: An unsupported layer type was encountered.
  * @SHUMATE_STYLE_ERROR_INVALID_EXPRESSION: An invalid or unrecognized expression was encountered.
- * @SHUMATE_STYLE_ERROR_SUPPORT_OMITTED: Libshumate was compiled without vector tile support.
+ * @SHUMATE_STYLE_ERROR_SUPPORT_OMITTED: Libshumate was compiled without vector tile support. As of 1.6, vector tile support is always enabled and this error never occurs.
  * @SHUMATE_STYLE_ERROR_UNSUPPORTED: An unsupported style spec feature was encountered.
  *
  * Error codes that occurs while parsing the style in [class@VectorRenderer].

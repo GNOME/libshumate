@@ -25,10 +25,7 @@
 #include "shumate-profiling-private.h"
 #include "shumate-utils-private.h"
 #include "shumate-inspector-settings-private.h"
-
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-#  include "vector/shumate-vector-symbol-container-private.h"
-#endif
+#include "vector/shumate-vector-symbol-container-private.h"
 
 /**
  * ShumateMapLayer:
@@ -63,9 +60,7 @@ struct _ShumateMapLayer
   gint64 defer_frame_time;
   gboolean deferring;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   ShumateVectorSymbolContainer *symbols;
-#endif
 };
 
 G_DEFINE_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE_TYPE_LAYER)
@@ -139,7 +134,6 @@ add_symbols (ShumateMapLayer     *self,
              ShumateTile         *tile,
              ShumateGridPosition *pos)
 {
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   GPtrArray *symbols;
 
   g_assert (SHUMATE_IS_MAP_LAYER (self));
@@ -151,7 +145,6 @@ add_symbols (ShumateMapLayer     *self,
                                                  pos->x,
                                                  pos->y,
                                                  pos->zoom);
-#endif
 }
 
 static void recompute_grid (ShumateMapLayer *self);
@@ -241,9 +234,7 @@ remove_tile (ShumateMapLayer     *self,
 {
   g_cancellable_cancel (tile_child->cancellable);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   shumate_vector_symbol_container_remove_symbols (self->symbols, pos->x, pos->y, pos->zoom);
-#endif
 
   g_signal_handlers_disconnect_by_func (tile_child->tile, on_tile_notify_state, self);
 }
@@ -567,7 +558,6 @@ shumate_map_layer_dispose (GObject *object)
   G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
 }
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
 static void
 on_symbol_clicked (ShumateMapLayer              *self,
                    ShumateSymbolEvent           *event,
@@ -575,7 +565,6 @@ on_symbol_clicked (ShumateMapLayer              *self,
 {
   g_signal_emit (self, signals[SYMBOL_CLICKED], 0, event);
 }
-#endif
 
 static void
 shumate_map_layer_constructed (GObject *object)
@@ -591,11 +580,9 @@ shumate_map_layer_constructed (GObject *object)
 
   g_signal_connect_object (settings, "notify::show-tile-bounds", G_CALLBACK (queue_recompute_grid_in_idle), self, G_CONNECT_SWAPPED);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   self->symbols = shumate_vector_symbol_container_new (self->map_source, viewport);
   g_signal_connect_object (self->symbols, "symbol-clicked", G_CALLBACK (on_symbol_clicked), self, G_CONNECT_SWAPPED);
   gtk_widget_set_parent (GTK_WIDGET (self->symbols), GTK_WIDGET (self));
-#endif
 }
 
 static void
@@ -607,7 +594,6 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
   GtkAllocation child_allocation;
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   /* gtk_widget_measure needs to be called during size_allocate, but we don't
    * care about the result here--the symbol container always gets the same
    * size as the map layer */
@@ -618,7 +604,6 @@ shumate_map_layer_size_allocate (GtkWidget *widget,
   child_allocation.width = width;
   child_allocation.height = height;
   gtk_widget_size_allocate (GTK_WIDGET (self->symbols), &child_allocation, baseline);
-#endif
 
   /* Make sure the tile grid is up to date */
   queue_recompute_grid_in_idle (self);
@@ -760,9 +745,7 @@ shumate_map_layer_snapshot (GtkWidget *widget, GtkSnapshot *snapshot)
 
   gtk_snapshot_restore (snapshot);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   gtk_widget_snapshot_child (widget, GTK_WIDGET (self->symbols), snapshot);
-#endif
 }
 
 static char *
@@ -773,6 +756,7 @@ shumate_map_layer_get_debug_text (ShumateLayer *layer)
   int n_loading = 0;
   GHashTableIter iter;
   TileChild *tile_child;
+  g_autofree char *symbol_debug = NULL;
 
   g_hash_table_iter_init (&iter, self->tile_children);
   while (g_hash_table_iter_next (&iter, NULL, (gpointer *)&tile_child))
@@ -786,12 +770,8 @@ shumate_map_layer_get_debug_text (ShumateLayer *layer)
                           g_hash_table_size (self->tile_children),
                           n_loading);
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-  {
-    g_autofree char *symbol_debug = shumate_vector_symbol_container_get_debug_text (self->symbols);
-    g_string_append (string, symbol_debug);
-  }
-#endif
+  symbol_debug = shumate_vector_symbol_container_get_debug_text (self->symbols);
+  g_string_append (string, symbol_debug);
 
   if (self->deferring)
     g_string_append (string, "deferring\n");

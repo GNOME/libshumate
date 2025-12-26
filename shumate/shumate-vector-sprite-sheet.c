@@ -15,13 +15,10 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <json-glib/json-glib.h>
 #include "shumate-vector-sprite-sheet.h"
 #include "shumate-vector-renderer.h"
-
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
-#include <json-glib/json-glib.h>
 #include "vector/shumate-vector-utils-private.h"
-#endif
 
 /**
  * ShumateVectorSpriteSheet:
@@ -214,7 +211,6 @@ shumate_vector_sprite_sheet_add_page (ShumateVectorSpriteSheet *self,
   /* No mutex lock is needed for this function because it only references @self
      via shumate_vector_sprite_sheet_add_sprite(), which has its own lock. */
 
-#ifdef SHUMATE_HAS_VECTOR_RENDERER
   g_autoptr(JsonNode) json_node = NULL;
   JsonObject *sprites;
   JsonObjectIter iter;
@@ -265,13 +261,6 @@ shumate_vector_sprite_sheet_add_page (ShumateVectorSpriteSheet *self,
     }
 
   return TRUE;
-#else
-  g_set_error (error,
-               SHUMATE_STYLE_ERROR,
-               SHUMATE_STYLE_ERROR_SUPPORT_OMITTED,
-               "Libshumate was compiled without support for vector tiles.");
-  return FALSE;
-#endif
 }
 
 static ShumateVectorSprite *

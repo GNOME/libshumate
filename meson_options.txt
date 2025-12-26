@@ -15,7 +15,7 @@ option('demos',
 
 option('vector_renderer',
        type: 'boolean', value: true,
-       description: 'Build the vector tile renderer')
+       description: 'Does nothing. As of 1.6, the vector renderer is always enabled.')
 
 option('sysprof',
        type: 'feature', value: 'auto',
