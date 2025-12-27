@@ -441,6 +441,7 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
     {
       JsonObject *state_values;
       JsonObjectIter iter;
+      JsonNode *state_value_node;
       const char *key;
 
       if (!shumate_vector_json_get_object (state_node, &state_values, error))
@@ -453,12 +454,12 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
       self->global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
 
       json_object_iter_init (&iter, state_values);
-      while (json_object_iter_next (&iter, &key, &node))
+      while (json_object_iter_next (&iter, &key, &state_value_node))
         {
           JsonObject *state_value_object;
           g_auto(ShumateVectorValue) value = SHUMATE_VECTOR_VALUE_INIT;
 
-          if (!shumate_vector_json_get_object (node, &state_value_object, error))
+          if (!shumate_vector_json_get_object (state_value_node, &state_value_object, error))
             {
               g_prefix_error (error, "state '%s': ", key);
               return FALSE;
@@ -993,6 +994,7 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   g_autofree char *profile_desc = NULL;
   g_autoptr(ShumateVectorSpriteSheet) sprites = NULL;
   g_autoptr(ShumateVectorReader) reader = NULL;
+  g_autoptr(GHashTable) global_state = NULL;
 
   g_assert (SHUMATE_IS_VECTOR_RENDERER (self));
   g_assert (SHUMATE_IS_TILE (tile));
@@ -1010,14 +1012,12 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
       const char *key;
       ShumateVectorValue *value;
 
-      scope.global_state = g_hash_table_new_similar (self->global_state);
+      global_state = g_hash_table_new_similar (self->global_state);
 
       g_hash_table_iter_init (&iter, self->global_state);
       while (g_hash_table_iter_next (&iter, (gpointer *)&key, (gpointer *)&value))
-        g_hash_table_insert (scope.global_state, g_strdup (key), shumate_vector_value_dup (value));
+        g_hash_table_insert (global_state, g_strdup (key), shumate_vector_value_dup (value));
     }
-  else
-    scope.global_state = NULL;
   g_mutex_unlock (&self->global_state_mutex);
 
   texture_size = shumate_tile_get_size (tile);
@@ -1030,6 +1030,7 @@ shumate_vector_renderer_render (ShumateVectorRenderer  *self,
   scope.sprites = sprites;
   scope.index = NULL;
   scope.index_description = self->index_description;
+  scope.global_state = global_state;
 
   if (scope.zoom_level > source_position->zoom)
     {
