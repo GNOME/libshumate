@@ -2084,7 +2084,7 @@ shumate_vector_expression_filter_eval_bitset (ShumateVectorExpression  *expr,
               shumate_vector_index_bitset_or (bitset, current_bitset);
             }
 
-          switch (self->fast_geometry_type & GEOM_POLYGON)
+          if (self->fast_geometry_type & GEOM_POLYGON)
             {
               current_bitset = shumate_vector_index_get_bitset_broad_geometry_type (scope->index, scope->source_layer_idx, SHUMATE_GEOMETRY_TYPE_POLYGON);
               shumate_vector_index_bitset_or (bitset, current_bitset);
