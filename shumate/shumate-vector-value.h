@@ -35,6 +35,8 @@ G_BEGIN_DECLS
  * @SHUMATE_VECTOR_VALUE_TYPE_COLLATOR: Collator value
  *
  * Type of a [struct@VectorValue].
+ *
+ * Since: 1.6
  */
 typedef enum {
   SHUMATE_VECTOR_VALUE_TYPE_NULL,
