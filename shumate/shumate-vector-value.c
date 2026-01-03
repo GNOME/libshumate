@@ -466,7 +466,7 @@ shumate_vector_value_set_string (ShumateVectorValue *self, const char *string)
 /**
  * shumate_vector_value_get_string:
  * @self: a [struct@VectorValue]
- * @string: (out): a location to store the string value
+ * @string: (out) (transfer none) (nullable): a location to store the string value
  *
  * Gets the string value of @self.
  *
