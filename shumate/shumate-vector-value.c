@@ -54,17 +54,23 @@ shumate_vector_value_new (void)
  * shumate_vector_value_new_from_value:
  * @value: a [struct@GObject.Value]
  *
- * Creates a new [struct@VectorValue] from a [struct@GObject.Value].
+ * Creates a new [struct@VectorValue] from a [struct@GObject.Value]. Returns
+ * `NULL` if the GValue does not contain a compatible value.
  *
- * Returns: (transfer full): a new [struct@VectorValue] with the value from @value
+ * Returns: (transfer full) (nullable): a new [struct@VectorValue] with the value from @value
  * Since: 1.6
  */
 ShumateVectorValue *
 shumate_vector_value_new_from_value (const GValue *value)
 {
   ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
-  shumate_vector_value_set_from_g_value (self, value);
-  return self;
+  if (shumate_vector_value_set_from_g_value (self, value))
+      return self;
+  else
+    {
+      g_free (self);
+      return NULL;
+    }
 }
 
 /**

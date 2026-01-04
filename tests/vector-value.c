@@ -94,6 +94,34 @@ test_vector_value_get_color (void)
 
 
 static void
+test_vector_new_from_value (void)
+{
+  ShumateVectorValue *value1;
+  ShumateVectorValue *value2;
+  double number;
+  g_auto(GValue) gvalue1 = G_VALUE_INIT;
+  g_auto(GValue) gvalue2 = G_VALUE_INIT;
+
+  g_value_init (&gvalue1, G_TYPE_DOUBLE);
+  g_value_set_double (&gvalue1, 3.1415);
+
+  // G_TYPE_OBJECT is not supported by new_from_value
+  g_value_init (&gvalue2, G_TYPE_OBJECT);
+  g_value_set_object (&gvalue2, NULL);
+
+  value1 = shumate_vector_value_new_from_value (&gvalue1);
+  value2 = shumate_vector_value_new_from_value (&gvalue2);
+
+  g_assert_true (shumate_vector_value_get_number (value1, &number));
+  g_assert_cmpfloat (3.1415, ==, number);
+
+  g_assert_null (value2);
+
+  shumate_vector_value_free (value1);
+}
+
+
+static void
 test_vector_value_equal (void)
 {
   g_auto(ShumateVectorValue) value1 = SHUMATE_VECTOR_VALUE_INIT;
@@ -181,6 +209,7 @@ main (int argc, char *argv[])
   g_test_add_func ("/vector/value/get-color", test_vector_value_get_color);
   g_test_add_func ("/vector/value/equal", test_vector_value_equal);
   g_test_add_func ("/vector/value/copy", test_vector_value_copy);
+  g_test_add_func ("/vector/value/new-from-value", test_vector_new_from_value);
 
   return g_test_run ();
 }
