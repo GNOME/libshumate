@@ -60,7 +60,7 @@ shumate_vector_value_new (void)
  * Since: 1.6
  */
 ShumateVectorValue *
-shumate_vector_value_new_from_value (GValue *value)
+shumate_vector_value_new_from_value (const GValue *value)
 {
   ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
   shumate_vector_value_set_from_g_value (self, value);
@@ -128,7 +128,7 @@ shumate_vector_value_new_boolean (gboolean boolean)
  * Since: 1.6
  */
 ShumateVectorValue *
-shumate_vector_value_new_color (GdkRGBA *color)
+shumate_vector_value_new_color (const GdkRGBA *color)
 {
   ShumateVectorValue *self = g_new0 (ShumateVectorValue, 1);
   shumate_vector_value_set_color (self, color);
@@ -494,7 +494,7 @@ shumate_vector_value_get_string (ShumateVectorValue *self, const char **string)
  * Since: 1.6
  */
 void
-shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color)
+shumate_vector_value_set_color (ShumateVectorValue *self, const GdkRGBA *color)
 {
   shumate_vector_value_unset (self);
   self->type = SHUMATE_VECTOR_VALUE_TYPE_COLOR;

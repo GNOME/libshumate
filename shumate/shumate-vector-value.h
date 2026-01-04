@@ -57,11 +57,11 @@ typedef struct _ShumateVectorValue ShumateVectorValue;
 GType shumate_vector_value_get_type (void) G_GNUC_CONST;
 
 ShumateVectorValue *shumate_vector_value_new (void);
-ShumateVectorValue *shumate_vector_value_new_from_value (GValue *value);
+ShumateVectorValue *shumate_vector_value_new_from_value (const GValue *value);
 ShumateVectorValue *shumate_vector_value_new_string (const char *string);
 ShumateVectorValue *shumate_vector_value_new_number (double number);
 ShumateVectorValue *shumate_vector_value_new_boolean (gboolean boolean);
-ShumateVectorValue *shumate_vector_value_new_color (GdkRGBA *color);
+ShumateVectorValue *shumate_vector_value_new_color (const GdkRGBA *color);
 
 void shumate_vector_value_free (ShumateVectorValue *self);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorValue, shumate_vector_value_free)
@@ -82,7 +82,7 @@ gboolean shumate_vector_value_get_string (ShumateVectorValue *self, const char *
 void shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean);
 gboolean shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean);
 
-void shumate_vector_value_set_color (ShumateVectorValue *self, GdkRGBA *color);
+void shumate_vector_value_set_color (ShumateVectorValue *self, const GdkRGBA *color);
 gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color);
 
 void shumate_vector_value_start_array (ShumateVectorValue *self);
