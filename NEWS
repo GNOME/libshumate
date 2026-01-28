@@ -1,4 +1,10 @@
 ===================
+Version 1.6.beta
+===================
+ - Fixes to the vector renderer, added missing @since annotations,
+   add get_type function, add transfer=none to annotation, mark agument as const
+
+===================
 Version 1.6.alpha
 ===================
  - Use 'find_program' instead of 'dependency' for vapigen
