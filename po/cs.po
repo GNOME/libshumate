@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
 "POT-Creation-Date: 2025-12-28 21:17+0000\n"
-"PO-Revision-Date: 2026-02-07 23:28+0100\n"
+"PO-Revision-Date: 2026-02-12 01:42+0100\n"
 "Last-Translator: Daniel Rusek <mail@asciiwolf.com>\n"
 "Language-Team: Czech <gnome-cs-list@gnome.org>\n"
 "Language: cs\n"
@@ -21,15 +21,15 @@ msgstr ""
 
 #: data/shumate-inspector-page.ui:32
 msgid "Show Debug Overlay"
-msgstr ""
+msgstr "Zobrazit ladicí překryv"
 
 #: data/shumate-inspector-page.ui:62
 msgid "Show Tile Bounds"
-msgstr ""
+msgstr "Zobrazit hranice dlaždic"
 
 #: data/shumate-inspector-page.ui:92
 msgid "Show Collision Boxes"
-msgstr ""
+msgstr "Zobrazit kolizní boxy"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
