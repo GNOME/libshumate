@@ -6,16 +6,28 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
-"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues\n"
-"POT-Creation-Date: 2023-05-05 13:38+0000\n"
-"PO-Revision-Date: 2023-08-19 22:09+0600\n"
-"Last-Translator: \n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2025-11-13 22:11+0000\n"
+"PO-Revision-Date: 2026-01-11 12:36+0500\n"
+"Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
 "Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
 "Language: kk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.8\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr "Жөндеу қабатын көрсету"
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr "Плитка шектерін көрсету"
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr "Соқтығысу аймақтарын көрсету"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
@@ -48,3 +60,7 @@ msgstr "%d фут"
 #, c-format
 msgid "%d mi"
 msgstr "%d миля"
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr "Shumate"
