@@ -19,7 +19,7 @@ languages are provided using GObject Introspection.</description>
   <maintainer>
     <foaf:Person>
       <foaf:name>Marcus Lundblad</foaf:name>
-      <foaf:mbox rdf:resource="mailto:ml@update.uu.se" />
+      <foaf:mbox rdf:resource="mailto:ml@dfupdate.se" />
       <gnome:userid>mlundblad</gnome:userid>
     </foaf:Person>
   </maintainer>
