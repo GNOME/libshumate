@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libshumate main\n"
 "Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
-"POT-Creation-Date: 2025-12-28 21:17+0000\n"
-"PO-Revision-Date: 2026-01-26 13:48+0000\n"
+"POT-Creation-Date: 2026-04-23 21:39+0000\n"
+"PO-Revision-Date: 2026-05-11 22:19+0100\n"
 "Last-Translator: Flynn Peck <cirilla@tuta.io>\n"
 "Language-Team: kw\n"
 "Language: kw\n"
@@ -23,7 +23,7 @@ msgstr ""
 "X-DL-Domain: po\n"
 "X-DL-State: Translating\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Gtranslator 49.0\n"
+"X-Generator: Gtranslator 50.0\n"
 
 #: data/shumate-inspector-page.ui:32
 msgid "Show Debug Overlay"
@@ -35,7 +35,7 @@ msgstr "Diskwedhes Oryon Prileghen"
 
 #: data/shumate-inspector-page.ui:92
 msgid "Show Collision Boxes"
-msgstr "Diskwedhes Boksys Kesskwat"
+msgstr "Diskwedhes Boksys Gesskwat"
 
 #: data/shumate-simple-map.ui:39
 msgid "Zoom In"
