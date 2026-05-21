@@ -66,6 +66,7 @@
 
 #define DECELERATION_FRICTION 4.0
 #define ZOOM_ANIMATION_MS 200
+#define ZOOM_COOLDOWN_MS 100
 #define SCROLL_PIXELS_PER_LEVEL 50
 
 enum
@@ -145,6 +146,8 @@ struct _ShumateMap
   double gesture_begin_lon;
   double drag_begin_x;
   double drag_begin_y;
+
+  gint64 last_zoom_update_time;
 };
 
 G_DEFINE_TYPE (ShumateMap, shumate_map, GTK_TYPE_WIDGET);
@@ -437,6 +440,10 @@ on_drag_gesture_drag_begin (ShumateMap     *self,
                             double          start_y,
                             GtkGestureDrag *gesture)
 {
+
+  if (g_get_monotonic_time() - self-> last_zoom_update_time < ZOOM_COOLDOWN_MS * 1000)
+    return;
+
   g_assert (SHUMATE_IS_MAP (self));
 
   cancel_deceleration (self);
@@ -458,6 +465,10 @@ on_drag_gesture_drag_update (ShumateMap     *self,
                              double          offset_y,
                              GtkGestureDrag *gesture)
 {
+
+  if (g_get_monotonic_time() - self-> last_zoom_update_time < ZOOM_COOLDOWN_MS * 1000)
+    return;
+
   move_location_to_coords (self,
                            self->gesture_begin_lat,
                            self->gesture_begin_lon,
@@ -584,6 +595,8 @@ on_zoom_gesture_begin (ShumateMap       *self,
   double zoom_level = shumate_viewport_get_zoom_level (self->viewport);
   double x, y;
 
+  self->last_zoom_update_time = g_get_monotonic_time();
+
   gtk_gesture_set_state (GTK_GESTURE (zoom), GTK_EVENT_SEQUENCE_CLAIMED);
   cancel_deceleration (self);
 
@@ -607,6 +620,8 @@ on_zoom_gesture_update (ShumateMap       *self,
   gtk_gesture_get_bounding_box_center (GTK_GESTURE (zoom), &x, &y);
   shumate_viewport_set_zoom_level (self->viewport, self->zoom_level_begin + log (scale) / G_LN2);
   move_location_to_coords (self, self->gesture_begin_lat, self->gesture_begin_lon, x, y);
+
+  self->last_zoom_update_time = g_get_monotonic_time();
 }
 
 static void
