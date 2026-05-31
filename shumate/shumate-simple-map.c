@@ -342,7 +342,15 @@ buildable_interface_init (GtkBuildableIface *iface)
 static void
 shumate_simple_map_init (ShumateSimpleMap *self)
 {
+  ShumateViewport *viewport;
+
   gtk_widget_init_template (GTK_WIDGET (self));
+
+  viewport = shumate_simple_map_get_viewport (self);
+
+  self->map_layer = shumate_map_layer_new (NULL, viewport);
+  shumate_map_add_layer (self->map, SHUMATE_LAYER (self->map_layer));
+  g_signal_connect_object (self->map_layer, "symbol-clicked", (GCallback)on_symbol_clicked, self, G_CONNECT_SWAPPED);
 }
 
 
@@ -391,7 +399,6 @@ shumate_simple_map_set_map_source (ShumateSimpleMap *self,
                                    ShumateMapSource *map_source)
 {
   ShumateViewport *viewport;
-  ShumateMapLayer *map_layer;
 
   g_return_if_fail (SHUMATE_IS_SIMPLE_MAP (self));
   g_return_if_fail (map_source == NULL || SHUMATE_IS_MAP_SOURCE (map_source));
@@ -409,17 +416,7 @@ shumate_simple_map_set_map_source (ShumateSimpleMap *self,
 
   shumate_viewport_set_reference_map_source (viewport, map_source);
   shumate_map_set_map_source (self->map, map_source);
-
-  map_layer = shumate_map_layer_new (map_source, viewport);
-  shumate_map_insert_layer_behind (self->map, SHUMATE_LAYER (map_layer), SHUMATE_LAYER (self->map_layer));
-  g_signal_connect_object (map_layer, "symbol-clicked", (GCallback)on_symbol_clicked, self, G_CONNECT_SWAPPED);
-
-  if (self->map_layer) {
-    g_signal_handlers_disconnect_by_func (self->map_layer, on_symbol_clicked, self);
-    shumate_map_remove_layer (self->map, SHUMATE_LAYER (self->map_layer));
-  }
-  self->map_layer = map_layer;
-
+  shumate_map_layer_set_map_source (self->map_layer, map_source);
   shumate_license_append_map_source (self->license, map_source);
 
   g_object_notify_by_pspec (G_OBJECT (self), properties[PROP_MAP_SOURCE]);
