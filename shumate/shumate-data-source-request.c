@@ -405,19 +405,19 @@ shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
   g_return_if_fail (data != NULL);
   g_return_if_fail (!priv->completed);
 
-  if (priv->bytes != NULL && g_bytes_equal (data, priv->bytes))
-    return;
-
-  g_clear_pointer (&priv->bytes, g_bytes_unref);
-  priv->bytes = g_bytes_ref (data);
-
   if (complete)
     priv->completed = TRUE;
 
-  profiling_desc = g_strdup_printf ("(%d, %d) @ %d", priv->pos.x, priv->pos.y, priv->pos.zoom);
-  SHUMATE_PROFILE_START_NAMED (emit_data);
-  g_object_notify_by_pspec ((GObject *)self, properties[PROP_DATA]);
-  SHUMATE_PROFILE_END_NAMED (emit_data, profiling_desc);
+  if (priv->bytes == NULL || !g_bytes_equal (data, priv->bytes))
+    {
+      g_clear_pointer (&priv->bytes, g_bytes_unref);
+      priv->bytes = g_bytes_ref (data);
+
+      profiling_desc = g_strdup_printf ("(%d, %d) @ %d", priv->pos.x, priv->pos.y, priv->pos.zoom);
+      SHUMATE_PROFILE_START_NAMED (emit_data);
+      g_object_notify_by_pspec ((GObject *)self, properties[PROP_DATA]);
+      SHUMATE_PROFILE_END_NAMED (emit_data, profiling_desc);
+    }
 
   if (complete)
     g_object_notify_by_pspec ((GObject *)self, properties[PROP_COMPLETED]);
