@@ -35,6 +35,13 @@ G_DECLARE_FINAL_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE, MAP_LAYER, Sh
 ShumateMapLayer *shumate_map_layer_new (ShumateMapSource *map_source,
                                         ShumateViewport  *viewport);
 
+ShumateMapSource *shumate_map_layer_get_map_source (ShumateMapLayer *self);
+void shumate_map_layer_set_map_source (ShumateMapLayer *self,
+                                       ShumateMapSource *map_source);
+
+void shumate_map_layer_refresh (ShumateMapLayer *self);
+void shumate_map_layer_retry_failed (ShumateMapLayer *self);
+
 G_END_DECLS
 
 #endif /* __SHUMATE_MAP_LAYER_H__ */

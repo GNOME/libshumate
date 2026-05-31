@@ -42,6 +42,8 @@ void shumate_vector_symbol_container_remove_symbols (ShumateVectorSymbolContaine
                                                      int                           zoom);
 
 ShumateMapSource *shumate_vector_symbol_container_get_map_source (ShumateVectorSymbolContainer *self);
+void shumate_vector_symbol_container_set_map_source (ShumateVectorSymbolContainer *self,
+                                                     ShumateMapSource             *map_source);
 
 ShumateVectorCollision *shumate_vector_symbol_container_get_collision (ShumateVectorSymbolContainer *self);
 

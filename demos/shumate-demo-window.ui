@@ -13,6 +13,16 @@
         </child>
         <child type="end">
           <object class="GtkMenuButton">
+            <property name="label" translatable="true">Actions</property>
+            <property name="popover">
+              <object class="GtkPopoverMenu">
+                <property name="menu-model">actions_menu</property>
+              </object>
+            </property>
+          </object>
+        </child>
+        <child type="end">
+          <object class="GtkMenuButton">
             <property name="label" translatable="true">Go To</property>
             <property name="popover">
               <object class="GtkPopoverMenu">
@@ -43,6 +53,16 @@
     <item>
       <attribute name="label" translatable="true">Eiffel Tower</attribute>
       <attribute name="action">win.goto-eiffel-tower</attribute>
+    </item>
+  </menu>
+  <menu id="actions_menu">
+    <item>
+      <attribute name="label" translatable="true">Refresh</attribute>
+      <attribute name="action">win.refresh</attribute>
+    </item>
+    <item>
+      <attribute name="label" translatable="true">Retry Failed</attribute>
+      <attribute name="action">win.retry-failed</attribute>
     </item>
   </menu>
 </interface>

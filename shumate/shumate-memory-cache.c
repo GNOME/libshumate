@@ -255,8 +255,8 @@ shumate_memory_cache_try_fill_tile (ShumateMemoryCache *self,
 
   move_queue_member_to_head (self->queue, link);
 
-  shumate_tile_set_paintable (tile, member->paintable);
   shumate_tile_set_symbols (tile, member->symbols);
+  shumate_tile_set_paintable (tile, member->paintable);
   shumate_tile_set_fade_in (tile, FALSE);
   shumate_tile_set_state (tile, SHUMATE_STATE_DONE);
   return TRUE;

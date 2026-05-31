@@ -239,8 +239,7 @@ shumate_vector_symbol_container_set_property (GObject      *object,
   switch (property_id)
     {
     case PROP_MAP_SOURCE:
-      g_set_object (&self->map_source, g_value_get_object (value));
-      gtk_widget_queue_allocate (GTK_WIDGET (self));
+      shumate_vector_symbol_container_set_map_source (self, g_value_get_object (value));
       break;
 
     default:
@@ -305,18 +304,29 @@ shumate_vector_symbol_container_size_allocate (GtkWidget *widget,
 
   ShumateVectorSymbolContainer *self = SHUMATE_VECTOR_SYMBOL_CONTAINER (widget);
   GtkAllocation alloc;
-  double tile_size = shumate_map_source_get_tile_size (self->map_source);
-  ShumateViewport *viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
-  double zoom_level = get_effective_zoom_level (self->map_source, viewport);
-  double rotation = shumate_viewport_get_rotation (viewport);
-  double center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
-  double center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+  double tile_size;
+  ShumateViewport *viewport;
+  double zoom_level;
+  double rotation;
+  double center_x, center_y;
 
-  gboolean recalc = self->labels_changed
-                    || self->last_zoom != zoom_level
-                    || self->last_rotation != rotation
-                    || self->last_width != width
-                    || self->last_height != height;
+  gboolean recalc;
+
+  if (self->map_source == NULL)
+    return;
+
+  tile_size = shumate_map_source_get_tile_size (self->map_source);
+  viewport = shumate_layer_get_viewport (SHUMATE_LAYER (self));
+  zoom_level = get_effective_zoom_level (self->map_source, viewport);
+  rotation = shumate_viewport_get_rotation (viewport);
+  center_x = shumate_map_source_get_x (self->map_source, zoom_level, shumate_location_get_longitude (SHUMATE_LOCATION (viewport)));
+  center_y = shumate_map_source_get_y (self->map_source, zoom_level, shumate_location_get_latitude (SHUMATE_LOCATION (viewport)));
+
+  recalc = self->labels_changed
+            || self->last_zoom != zoom_level
+            || self->last_rotation != rotation
+            || self->last_width != width
+            || self->last_height != height;
 
   if (recalc)
     {
@@ -590,6 +600,18 @@ shumate_vector_symbol_container_get_map_source (ShumateVectorSymbolContainer *se
 {
   g_return_val_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self), NULL);
   return self->map_source;
+}
+
+
+void
+shumate_vector_symbol_container_set_map_source (ShumateVectorSymbolContainer *self,
+                                                ShumateMapSource             *map_source)
+{
+  g_return_if_fail (SHUMATE_IS_VECTOR_SYMBOL_CONTAINER (self));
+  g_return_if_fail (map_source == NULL || SHUMATE_IS_MAP_SOURCE (map_source));
+
+  if (g_set_object (&self->map_source, map_source))
+    gtk_widget_queue_allocate (GTK_WIDGET (self));
 }
 
 

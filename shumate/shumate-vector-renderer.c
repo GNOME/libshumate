@@ -1054,8 +1054,10 @@ render_job_finish (RenderJob *job)
 
   if (!g_cancellable_is_cancelled (job->cancellable))
     {
-      shumate_tile_set_paintable (data->tile, job->paintable);
+      /* Note: The order of these is important, because ShumateMapLayer relies on notify::paintable to refresh everything
+         (since symbols isn't a property) */
       shumate_tile_set_symbols (data->tile, job->symbols);
+      shumate_tile_set_paintable (data->tile, job->paintable);
     }
 
   if (data->current_job == job)

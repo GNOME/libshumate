@@ -161,7 +161,7 @@ activate_goto_europe (GSimpleAction *simple,
                       GVariant      *parameter,
                       gpointer       user_data)
 {
-  shumate_map_go_to_full (SHUMATE_MAP (user_data), 49.531565, 17.532806, 4.5);
+  shumate_map_go_to_full (shumate_simple_map_get_map (SHUMATE_SIMPLE_MAP (user_data)), 49.531565, 17.532806, 4.5);
 }
 
 static void
@@ -169,7 +169,7 @@ activate_goto_nyc (GSimpleAction *simple,
                    GVariant      *parameter,
                    gpointer       user_data)
 {
-  shumate_map_go_to_full (SHUMATE_MAP (user_data), 40.718820, -74.001605, 9);
+  shumate_map_go_to_full (shumate_simple_map_get_map (SHUMATE_SIMPLE_MAP (user_data)), 40.718820, -74.001605, 9);
 }
 
 static void
@@ -177,7 +177,23 @@ activate_goto_eiffel_tower (GSimpleAction *simple,
                             GVariant      *parameter,
                             gpointer       user_data)
 {
-  shumate_map_go_to_full (SHUMATE_MAP (user_data), 48.858279, 2.294486, 18);
+  shumate_map_go_to_full (shumate_simple_map_get_map (SHUMATE_SIMPLE_MAP (user_data)), 48.858279, 2.294486, 18);
+}
+
+static void
+activate_refresh (GSimpleAction *simple,
+                  GVariant      *parameter,
+                  gpointer       user_data)
+{
+  shumate_map_layer_refresh (shumate_simple_map_get_base_map_layer (SHUMATE_SIMPLE_MAP (user_data)));
+}
+
+static void
+activate_retry_failed (GSimpleAction *simple,
+                       GVariant      *parameter,
+                       gpointer       user_data)
+{
+  shumate_map_layer_retry_failed (shumate_simple_map_get_base_map_layer (SHUMATE_SIMPLE_MAP (user_data)));
 }
 
 static void
@@ -194,6 +210,8 @@ shumate_demo_window_init (ShumateDemoWindow *self)
     { "goto-europe", activate_goto_europe },
     { "goto-nyc", activate_goto_nyc },
     { "goto-eiffel-tower", activate_goto_eiffel_tower },
+    { "refresh", activate_refresh },
+    { "retry-failed", activate_retry_failed },
   };
 
   gtk_widget_init_template (GTK_WIDGET (self));
@@ -202,7 +220,7 @@ shumate_demo_window_init (ShumateDemoWindow *self)
   g_action_map_add_action_entries (G_ACTION_MAP (action_map),
                                    action_entries,
                                    G_N_ELEMENTS (action_entries),
-                                   shumate_simple_map_get_map (self->map));
+                                   self->map);
   gtk_widget_insert_action_group (GTK_WIDGET (self), "win", G_ACTION_GROUP (action_map));
 
   self->registry = shumate_map_source_registry_new_with_defaults ();
