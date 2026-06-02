@@ -631,6 +631,8 @@ on_rotate_gesture_begin (ShumateMap *self,
 {
   double rotation = shumate_viewport_get_rotation (self->viewport);
 
+  self->last_zoom_update_time = g_get_monotonic_time();
+
   gtk_gesture_set_state (GTK_GESTURE (rotate), GTK_EVENT_SEQUENCE_CLAIMED);
   cancel_deceleration (self);
 
@@ -654,6 +656,8 @@ on_rotate_gesture_update (ShumateMap *self,
   shumate_viewport_set_rotation (self->viewport, rotation);
   gtk_gesture_get_bounding_box_center (GTK_GESTURE (rotate), &x, &y);
   move_location_to_coords (self, self->gesture_begin_lat, self->gesture_begin_lon, x, y);
+
+  self->last_zoom_update_time = g_get_monotonic_time();
 }
 
 static void
