@@ -63,6 +63,8 @@ struct _ShumateMapLayer
   gboolean refreshing;
   gboolean retrying_failed;
 
+  GSignalGroup *source_signal_group;
+
   ShumateVectorSymbolContainer *symbols;
 };
 
@@ -619,6 +621,7 @@ shumate_map_layer_dispose (GObject *object)
   g_clear_pointer (&self->tile_children, g_hash_table_unref);
   g_clear_object (&self->map_source);
   g_clear_object (&self->memcache);
+  g_clear_object (&self->source_signal_group);
 
   G_OBJECT_CLASS (shumate_map_layer_parent_class)->dispose (object);
 }
@@ -957,6 +960,13 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
 }
 
 static void
+on_source_modified (ShumateMapLayer *self,
+                    G_GNUC_UNUSED ShumateMapSource *source)
+{
+  shumate_map_layer_refresh (self);
+}
+
+static void
 shumate_map_layer_init (ShumateMapLayer *self)
 {
   self->tile_children = g_hash_table_new_full (
@@ -966,6 +976,10 @@ shumate_map_layer_init (ShumateMapLayer *self)
     (GDestroyNotify)tile_child_free
   );
   self->memcache = shumate_memory_cache_new_full (100);
+
+  self->source_signal_group = g_signal_group_new (SHUMATE_TYPE_MAP_SOURCE);
+  g_signal_group_connect_object (self->source_signal_group, "modified", G_CALLBACK (on_source_modified), self, G_CONNECT_SWAPPED);
+  g_object_bind_property (self, "map-source", self->source_signal_group, "target", G_BINDING_SYNC_CREATE);
 }
 
 ShumateMapLayer *

@@ -666,7 +666,10 @@ shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
   g_return_if_fail (SHUMATE_IS_DATA_SOURCE (data_source));
 
   if (g_strcmp0 (name, self->source_name) == 0)
-    g_set_object (&self->data_source, data_source);
+    {
+      if (g_set_object (&self->data_source, data_source))
+        g_signal_emit_by_name (self, "modified");
+    }
 }
 
 
@@ -692,6 +695,7 @@ shumate_vector_renderer_set_global_state (ShumateVectorRenderer *self,
 {
   g_autoptr(GMutexLocker) locker = NULL;
   ShumateVectorValue *val;
+  ShumateVectorValue *current_value;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (key != NULL);
@@ -701,9 +705,15 @@ shumate_vector_renderer_set_global_state (ShumateVectorRenderer *self,
   if (self->global_state == NULL)
     self->global_state = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, (GDestroyNotify)shumate_vector_value_free);
 
+  current_value = g_hash_table_lookup (self->global_state, key);
+  if (shumate_vector_value_equal (current_value, value))
+    return;
+
   val = g_new0 (ShumateVectorValue, 1);
   shumate_vector_value_copy (value, val);
   g_hash_table_insert (self->global_state, g_strdup (key), val);
+
+  g_signal_emit_by_name (self, "modified");
 }
 
 
@@ -764,6 +774,7 @@ shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
 {
   g_autoptr(GMutexLocker) locker = NULL;
   ShumateVectorValue *default_value;
+  ShumateVectorValue *current_value;
 
   g_return_if_fail (SHUMATE_IS_VECTOR_RENDERER (self));
   g_return_if_fail (key != NULL);
@@ -775,15 +786,27 @@ shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
 
   if (self->default_global_state == NULL)
     {
-      g_hash_table_remove (self->global_state, key);
+      if (g_hash_table_remove (self->global_state, key))
+        g_signal_emit_by_name (self, "modified");
       return;
     }
 
   default_value = g_hash_table_lookup (self->default_global_state, key);
   if (default_value != NULL)
-    g_hash_table_insert (self->global_state, g_strdup (key), shumate_vector_value_dup (default_value));
+    {
+      current_value = g_hash_table_lookup (self->global_state, key);
+      if (shumate_vector_value_equal (current_value, default_value))
+        return;
+
+      g_hash_table_insert (self->global_state, g_strdup (key), shumate_vector_value_dup (default_value));
+
+      g_signal_emit_by_name (self, "modified");
+    }
   else
-    g_hash_table_remove (self->global_state, key);
+    {
+      if (g_hash_table_remove (self->global_state, key))
+        g_signal_emit_by_name (self, "modified");
+    }
 }
 
 

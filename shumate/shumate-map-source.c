@@ -62,6 +62,14 @@ enum
 
 static GParamSpec *obj_properties[N_PROPERTIES] = { NULL, };
 
+enum
+{
+  MODIFIED,
+  LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0, };
+
 static void
 shumate_map_source_finalize (GObject *object)
 {
@@ -290,6 +298,26 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
   g_object_class_install_properties (object_class,
                                      N_PROPERTIES,
                                      obj_properties);
+
+  /**
+   * ShumateMapSource::modified:
+   * @self: the [class@MapSource] emitting the signal
+   *
+   * Emitted when the source is modified in such a way that tiles previously filled by it should be refreshed.
+   *
+   * It is the [class@MapSource] implementation's responsibility to emit this signal when appropriate, such as when a
+   * data source or rendering parameter changes.
+   *
+   * Since: 1.7
+   */
+  signals[MODIFIED] =
+    g_signal_new ("modified",
+                  G_OBJECT_CLASS_TYPE (object_class),
+                  G_SIGNAL_RUN_LAST,
+                  0, NULL, NULL,
+                  g_cclosure_marshal_VOID__VOID,
+                  G_TYPE_NONE,
+                  0);
 }
 
 static double
@@ -805,7 +833,7 @@ shumate_map_source_get_latitude (ShumateMapSource *map_source,
   /* FIXME: support other projections */
   dy = 0.5 - y / map_size (map_source, zoom_level);
   latitude = 90.0 - 360.0 / G_PI * atan (exp (-dy * 2.0 * G_PI));
-  
+
   return CLAMP (latitude, SHUMATE_MIN_LATITUDE, SHUMATE_MAX_LATITUDE);
 }
 
