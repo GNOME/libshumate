@@ -176,6 +176,17 @@ test_vector_value_equal (void)
   shumate_vector_value_unset (&value1);
   shumate_vector_value_set_number (&value2, 0.0);
   g_assert_false (shumate_vector_value_equal (&value1, &value2));
+
+  shumate_vector_value_unset (&value1);
+  shumate_vector_value_unset (&value2);
+  g_assert_true (shumate_vector_value_equal (NULL, NULL));
+  g_assert_true (shumate_vector_value_equal (&value1, NULL));
+  g_assert_true (shumate_vector_value_equal (NULL, &value2));
+  g_assert_true (shumate_vector_value_equal (&value1, &value2));
+  shumate_vector_value_set_string (&value1, "Hello, world!");
+  g_assert_false (shumate_vector_value_equal (&value1, NULL));
+  g_assert_false (shumate_vector_value_equal (NULL, &value1));
+  g_assert_false (shumate_vector_value_equal (&value1, &value2));
 }
 
 

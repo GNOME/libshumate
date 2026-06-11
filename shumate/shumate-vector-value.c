@@ -718,10 +718,12 @@ shumate_vector_value_hash (ShumateVectorValue *self)
 
 /**
  * shumate_vector_value_equal:
- * @a: a [struct@VectorValue]
- * @b: a [struct@VectorValue]
+ * @a: (nullable): a [struct@VectorValue]
+ * @b: (nullable): a [struct@VectorValue]
  *
  * Compares two [struct@VectorValue]s for equality.
+ *
+ * Either argument may be `NULL`, which is treated as equal to a [struct@VectorValue] of type [enum@Shumate.VectorValueType.NULL].
  *
  * Returns: %TRUE if @a and @b are equal, %FALSE otherwise
  * Since: 1.6
@@ -729,6 +731,13 @@ shumate_vector_value_hash (ShumateVectorValue *self)
 gboolean
 shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b)
 {
+  if (a == NULL && b == NULL)
+    return TRUE;
+  else if (a == NULL)
+    return b->type == SHUMATE_VECTOR_VALUE_TYPE_NULL;
+  else if (b == NULL)
+    return a->type == SHUMATE_VECTOR_VALUE_TYPE_NULL;
+
   if (a->type != b->type)
     return FALSE;
 
