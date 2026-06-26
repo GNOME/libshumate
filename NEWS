@@ -1,4 +1,10 @@
 ===================
+Version 1.7.alpha
+===================
+ - Added new APIs to refresh and get refresh notifications for map sources
+ - Added missing translation text domains
+
+===================
 Version 1.6.0
 ===================
  - No changes since 1.6.rc
