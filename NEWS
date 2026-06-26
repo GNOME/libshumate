@@ -1,4 +1,9 @@
 ==================
+Version 1.6.2
+==================
+ - Avoid spurious drag events following pinch zoom and rotate gestures on touch
+
+==================
 Version 1.6.1
 ==================
  - Add missing gettext domains
