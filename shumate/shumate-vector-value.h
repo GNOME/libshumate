@@ -54,7 +54,7 @@ typedef struct _ShumateVectorValue ShumateVectorValue;
 
 #define SHUMATE_TYPE_VECTOR_VALUE shumate_vector_value_get_type()
 
-GType shumate_vector_value_get_type (void) G_GNUC_CONST;
+GType shumate_vector_value_get_type (void);
 
 ShumateVectorValue *shumate_vector_value_new (void);
 ShumateVectorValue *shumate_vector_value_new_from_value (const GValue *value);

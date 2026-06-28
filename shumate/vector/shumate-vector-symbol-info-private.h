@@ -138,7 +138,7 @@ void shumate_vector_symbol_info_set_line_points (ShumateVectorSymbolInfo *self,
                                                  ShumateVectorLineString *linestring,
                                                  float                    position);
 
-GType                        shumate_vector_symbol_info_get_type (void) G_GNUC_CONST;
+GType                        shumate_vector_symbol_info_get_type (void);
 ShumateVectorSymbolInfo     *shumate_vector_symbol_info_ref      (ShumateVectorSymbolInfo *self);
 void                         shumate_vector_symbol_info_unref    (ShumateVectorSymbolInfo *self);
 
