@@ -20,10 +20,25 @@ name = "GObject"
 description = "The base type system library"
 docs_url = "https://docs.gtk.org/gobject/"
 
+[dependencies."Gio-2.0"]
+name = "Gio"
+description = "GObject Interfaces and Objects, Networking, IPC, and I/O"
+docs_url = "https://docs.gtk.org/gio/"
+
+[dependencies."Gdk-4.0"]
+name = "Gdk"
+description = "The GTK windowing system abstraction"
+docs_url = "https://docs.gtk.org/gdk4/"
+
 [dependencies."Gtk-4.0"]
-name = "GTK"
+name = "Gtk"
 description = "The GTK toolkit"
 docs_url = "https://docs.gtk.org/gtk4/"
+
+[dependencies."Gdk-Pixbuf-2.0"]
+name = "GdkPixbuf"
+description = "Image loading library"
+docs_url = "https://docs.gtk.org/gdk-pixbuf/"
 
 [theme]
 name = "basic"
