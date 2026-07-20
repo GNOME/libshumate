@@ -21,6 +21,10 @@ version_arr = version.split('.')
 version_major = version_arr[0]
 version_minor = version_arr[1]
 version_micro = version_arr[2]
+if version_micro == 'alpha' or version_micro == 'beta'
+  version_micro = '0'
+  version = '.'.join([version_major, version_minor, version_micro])
+endif
 
 api_version = '1.0'
 lib_version = '1.0'
@@ -103,6 +107,8 @@ endif
 
 add_project_arguments('-DSHUMATE_VERSION="@0@"'.format(meson.project_version()), language: 'c')
 add_project_arguments('-DGETTEXT_PACKAGE="shumate1"', language: 'c')
+
+gen_visibility_macros = find_program('build-aux/gen-visibility-macros.py')
 
 # Options
 build_demos = get_option('demos')
