@@ -559,6 +559,9 @@ shumate_marker_layer_remove_all (ShumateMarkerLayer *self)
   while (child)
     {
       GtkWidget *next = gtk_widget_get_next_sibling (child);
+      if (shumate_marker_is_selected (SHUMATE_MARKER (child))) {
+        shumate_marker_layer_unselect_marker (self, SHUMATE_MARKER (child));
+      }
 
       g_signal_handlers_disconnect_by_data (child, self);
       gtk_widget_unparent (child);
