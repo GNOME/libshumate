@@ -170,20 +170,16 @@ version_h.set('SHUMATE_MINOR_VERSION', version_minor)
 version_h.set('SHUMATE_MICRO_VERSION', version_micro)
 version_h.set('SHUMATE_VERSION', version)
 
-libshumate_version_h = configure_file(
+libshumate_version_h = custom_target(
   input: 'shumate-version.h.in',
   output: 'shumate-version.h',
-  configuration: version_h,
+  command: [gen_visibility_macros, version, 'SHUMATE', '@INPUT@', '@OUTPUT@'],
   install: true,
   install_dir: join_paths(
     pkgincludedir,
     'shumate',
   )
 )
-
-libshumate_public_h += [
-  libshumate_version_h,
-]
 
 libshumate_marshals = gnome.genmarshal(
   'shumate-marshal',
@@ -214,6 +210,7 @@ libshumate_enums_h = libshumate_enums.get(1)
 libshumate_sources += [
   libshumate_marshals,
   libshumate_enums,
+  libshumate_version_h,
 ]
 
 install_headers(
