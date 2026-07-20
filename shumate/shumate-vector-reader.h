@@ -17,16 +17,22 @@
 
 #pragma once
 
-#include "shumate-vector-reader-iter.h"
+#include <glib-object.h>
+#include <shumate/shumate-vector-reader-iter.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
+SHUMATE_AVAILABLE_MACRO_IN_1_2
 #define SHUMATE_TYPE_VECTOR_READER (shumate_vector_reader_get_type ())
 G_DECLARE_FINAL_TYPE (ShumateVectorReader, shumate_vector_reader, SHUMATE, VECTOR_READER, GObject)
 
+SHUMATE_AVAILABLE_IN_1_2
 ShumateVectorReader *shumate_vector_reader_new (GBytes *bytes);
+SHUMATE_AVAILABLE_IN_1_2
 ShumateVectorReaderIter *shumate_vector_reader_iterate (ShumateVectorReader *self);
 
+SHUMATE_AVAILABLE_IN_1_2
 ShumateVectorReader *shumate_vector_reader_iter_get_reader (ShumateVectorReaderIter *self);
 
 G_END_DECLS

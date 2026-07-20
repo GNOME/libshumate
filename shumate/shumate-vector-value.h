@@ -18,6 +18,8 @@
 #pragma once
 
 #include <glib-object.h>
+#include <gdk/gdk.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -38,6 +40,7 @@ G_BEGIN_DECLS
  *
  * Since: 1.6
  */
+SHUMATE_AVAILABLE_TYPE_IN_1_6
 typedef enum {
   SHUMATE_VECTOR_VALUE_TYPE_NULL,
   SHUMATE_VECTOR_VALUE_TYPE_NUMBER,
@@ -50,45 +53,71 @@ typedef enum {
   SHUMATE_VECTOR_VALUE_TYPE_COLLATOR,
 } ShumateVectorValueType;
 
+SHUMATE_AVAILABLE_TYPE_IN_1_6
 typedef struct _ShumateVectorValue ShumateVectorValue;
 
+SHUMATE_AVAILABLE_MACRO_IN_1_6
 #define SHUMATE_TYPE_VECTOR_VALUE shumate_vector_value_get_type()
 
+SHUMATE_AVAILABLE_IN_1_6
 GType shumate_vector_value_get_type (void);
 
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new (void);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new_from_value (const GValue *value);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new_string (const char *string);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new_number (double number);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new_boolean (gboolean boolean);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_new_color (const GdkRGBA *color);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_free (ShumateVectorValue *self);
 G_DEFINE_AUTOPTR_CLEANUP_FUNC (ShumateVectorValue, shumate_vector_value_free)
 
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_value_dup (ShumateVectorValue *self);
 
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValueType shumate_vector_value_get_value_type (ShumateVectorValue *self);
 
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_is_null (ShumateVectorValue *self);
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_unset (ShumateVectorValue *self);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_set_number (ShumateVectorValue *self, double number);
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_get_number (ShumateVectorValue *self, double *number);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_set_string (ShumateVectorValue *self, const char *string);
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_get_string (ShumateVectorValue *self, const char **string);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_set_boolean (ShumateVectorValue *self, gboolean boolean);
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_get_boolean (ShumateVectorValue *self, gboolean *boolean);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_set_color (ShumateVectorValue *self, const GdkRGBA *color);
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_get_color (ShumateVectorValue *self, GdkRGBA *color);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_start_array (ShumateVectorValue *self);
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_value_array_append (ShumateVectorValue *self, ShumateVectorValue *element);
 
+SHUMATE_AVAILABLE_IN_1_6
 gboolean shumate_vector_value_equal (ShumateVectorValue *a, ShumateVectorValue *b);
+SHUMATE_AVAILABLE_IN_1_6
 gint shumate_vector_value_hash (ShumateVectorValue *self);
 
 G_END_DECLS

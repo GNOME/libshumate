@@ -22,6 +22,7 @@
 #include <shumate/shumate-map-source.h>
 #include <shumate/shumate-vector-sprite-sheet.h>
 #include <shumate/shumate-vector-value.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -42,19 +43,24 @@ gboolean shumate_vector_renderer_set_sprite_sheet_data (ShumateVectorRenderer  *
                                                         const char             *sprites_json,
                                                         GError                **error);
 
+SHUMATE_AVAILABLE_IN_1_1
 ShumateVectorSpriteSheet *shumate_vector_renderer_get_sprite_sheet (ShumateVectorRenderer *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_vector_renderer_set_sprite_sheet (ShumateVectorRenderer    *self,
                                                ShumateVectorSpriteSheet *sprites);
-
+SHUMATE_AVAILABLE_IN_1_2
 void shumate_vector_renderer_set_data_source (ShumateVectorRenderer *self,
                                               const char            *name,
                                               ShumateDataSource     *data_source);
 
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_renderer_set_global_state (ShumateVectorRenderer *self,
                                                const char            *key,
                                                ShumateVectorValue    *value);
+SHUMATE_AVAILABLE_IN_1_6
 ShumateVectorValue *shumate_vector_renderer_get_global_state (ShumateVectorRenderer *self,
                                                               const char            *key);
+SHUMATE_AVAILABLE_IN_1_6
 void shumate_vector_renderer_reset_global_state (ShumateVectorRenderer *self,
                                                  const char            *key);
 

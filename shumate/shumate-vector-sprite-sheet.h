@@ -19,32 +19,37 @@
 
 #include <gdk/gdk.h>
 #include <shumate/shumate-vector-sprite.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
+SHUMATE_AVAILABLE_MACRO_IN_1_1
 #define SHUMATE_TYPE_VECTOR_SPRITE_SHEET (shumate_vector_sprite_sheet_get_type())
 G_DECLARE_FINAL_TYPE (ShumateVectorSpriteSheet, shumate_vector_sprite_sheet, SHUMATE, VECTOR_SPRITE_SHEET, GObject)
 
+SHUMATE_AVAILABLE_IN_1_1
 ShumateVectorSpriteSheet *shumate_vector_sprite_sheet_new (void);
 
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_vector_sprite_sheet_add_sprite (ShumateVectorSpriteSheet *self,
                                              const char               *name,
                                              ShumateVectorSprite      *sprite);
+SHUMATE_AVAILABLE_IN_1_1
 gboolean shumate_vector_sprite_sheet_add_page (ShumateVectorSpriteSheet  *self,
                                                GdkTexture                *texture,
                                                const char                *json,
                                                double                     default_scale,
                                                GError                   **error);
-
+SHUMATE_AVAILABLE_IN_1_1
 ShumateVectorSprite *shumate_vector_sprite_sheet_get_sprite (ShumateVectorSpriteSheet *self,
                                                              const char               *name,
                                                              double                    scale);
-
+SHUMATE_AVAILABLE_TYPE_IN_1_1
 typedef ShumateVectorSprite *(ShumateVectorSpriteFallbackFunc) (ShumateVectorSpriteSheet *sprite_sheet,
                                                                 const char               *name,
                                                                 double                    scale,
                                                                 gpointer                  user_data);
-
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_vector_sprite_sheet_set_fallback (ShumateVectorSpriteSheet        *self,
                                                ShumateVectorSpriteFallbackFunc  fallback,
                                                gpointer                         user_data,

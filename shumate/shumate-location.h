@@ -25,6 +25,7 @@
 #define __SHUMATE_LOCATION_H__
 
 #include <glib-object.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -85,7 +86,7 @@ void shumate_location_set_location (ShumateLocation *location,
     double longitude);
 double shumate_location_get_latitude (ShumateLocation *location);
 double shumate_location_get_longitude (ShumateLocation *location);
-
+SHUMATE_AVAILABLE_IN_1_2
 double shumate_location_distance (ShumateLocation *self, ShumateLocation *other);
 
 G_END_DECLS

@@ -22,9 +22,11 @@
 #endif
 
 #include <glib-object.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
+SHUMATE_AVAILABLE_MACRO_IN_1_1
 #define SHUMATE_TYPE_DATA_SOURCE_REQUEST (shumate_data_source_request_get_type())
 G_DECLARE_DERIVABLE_TYPE (ShumateDataSourceRequest, shumate_data_source_request, SHUMATE, DATA_SOURCE_REQUEST, GObject)
 
@@ -37,24 +39,30 @@ struct _ShumateDataSourceRequestClass
   gpointer padding[16];
 };
 
+SHUMATE_AVAILABLE_IN_1_1
 ShumateDataSourceRequest *shumate_data_source_request_new (int x,
                                                            int y,
                                                            int zoom_level);
-
+SHUMATE_AVAILABLE_IN_1_1
 int shumate_data_source_request_get_x (ShumateDataSourceRequest *self);
+SHUMATE_AVAILABLE_IN_1_1
 int shumate_data_source_request_get_y (ShumateDataSourceRequest *self);
+SHUMATE_AVAILABLE_IN_1_1
 int shumate_data_source_request_get_zoom_level (ShumateDataSourceRequest *self);
-
+SHUMATE_AVAILABLE_IN_1_1
 GBytes *shumate_data_source_request_get_data (ShumateDataSourceRequest *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_data_source_request_emit_data (ShumateDataSourceRequest *self,
                                             GBytes                   *data,
                                             gboolean                  complete);
-
+SHUMATE_AVAILABLE_IN_1_1
 GError *shumate_data_source_request_get_error (ShumateDataSourceRequest *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_data_source_request_emit_error (ShumateDataSourceRequest *self,
                                              const GError             *error);
-
+SHUMATE_AVAILABLE_IN_1_1
 gboolean shumate_data_source_request_is_completed (ShumateDataSourceRequest *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_data_source_request_complete (ShumateDataSourceRequest *self);
 
 G_END_DECLS

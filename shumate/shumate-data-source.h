@@ -19,7 +19,8 @@
 #pragma once
 
 #include <gio/gio.h>
-#include "shumate-data-source-request.h"
+#include <shumate/shumate-data-source-request.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -63,17 +64,20 @@ void    shumate_data_source_get_tile_data_async (ShumateDataSource   *self,
 GBytes *shumate_data_source_get_tile_data_finish (ShumateDataSource  *self,
                                                   GAsyncResult       *result,
                                                   GError            **error);
-
+SHUMATE_AVAILABLE_IN_1_1
 ShumateDataSourceRequest *shumate_data_source_start_request (ShumateDataSource *self,
                                                              int                x,
                                                              int                y,
                                                              int                zoom_level,
                                                              GCancellable      *cancellable);
-
+SHUMATE_AVAILABLE_IN_1_1
 guint shumate_data_source_get_min_zoom_level (ShumateDataSource *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_data_source_set_min_zoom_level (ShumateDataSource *self,
                                              guint              zoom_level);
+SHUMATE_AVAILABLE_IN_1_1
 guint shumate_data_source_get_max_zoom_level (ShumateDataSource *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_data_source_set_max_zoom_level (ShumateDataSource *self,
                                              guint              zoom_level);
 

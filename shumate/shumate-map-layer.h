@@ -26,6 +26,7 @@
 
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-map-source.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -35,11 +36,14 @@ G_DECLARE_FINAL_TYPE (ShumateMapLayer, shumate_map_layer, SHUMATE, MAP_LAYER, Sh
 ShumateMapLayer *shumate_map_layer_new (ShumateMapSource *map_source,
                                         ShumateViewport  *viewport);
 
+SHUMATE_AVAILABLE_IN_1_7
 ShumateMapSource *shumate_map_layer_get_map_source (ShumateMapLayer *self);
+SHUMATE_AVAILABLE_IN_1_7
 void shumate_map_layer_set_map_source (ShumateMapLayer *self,
                                        ShumateMapSource *map_source);
-
+SHUMATE_AVAILABLE_IN_1_7
 void shumate_map_layer_refresh (ShumateMapLayer *self);
+SHUMATE_AVAILABLE_IN_1_7
 void shumate_map_layer_retry_failed (ShumateMapLayer *self);
 
 G_END_DECLS
