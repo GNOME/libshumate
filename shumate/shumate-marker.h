@@ -25,11 +25,12 @@
 #ifndef SHUMATE_MARKER_H
 #define SHUMATE_MARKER_H
 
-#include <shumate/shumate-location.h>
-
 #include <gdk/gdk.h>
 #include <glib-object.h>
 #include <gtk/gtk.h>
+
+#include <shumate/shumate-location.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -66,10 +67,11 @@ void shumate_marker_animate_out_with_delay (ShumateMarker *marker,
 GtkWidget *shumate_marker_get_child (ShumateMarker *marker);
 void shumate_marker_set_child (ShumateMarker *marker,
                                GtkWidget     *child);
-
+SHUMATE_AVAILABLE_IN_1_5
 void shumate_marker_set_hotspot (ShumateMarker *marker,
                                  gdouble        x_hotspot,
                                  gdouble        y_hotspot);
+SHUMATE_AVAILABLE_IN_1_5
 void shumate_marker_get_hotspot (ShumateMarker *marker,
                                  gdouble       *x_hotspot,
                                  gdouble       *y_hotspot);

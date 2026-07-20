@@ -17,25 +17,32 @@
 
 #pragma once
 
-#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
+SHUMATE_AVAILABLE_MACRO_IN_1_1
 #define SHUMATE_TYPE_VECTOR_SPRITE shumate_vector_sprite_get_type()
 G_DECLARE_FINAL_TYPE(ShumateVectorSprite, shumate_vector_sprite, SHUMATE, VECTOR_SPRITE, GObject)
 
-
+SHUMATE_AVAILABLE_IN_1_1
 ShumateVectorSprite *shumate_vector_sprite_new (GdkPaintable *source_paintable);
+SHUMATE_AVAILABLE_IN_1_1
 ShumateVectorSprite *shumate_vector_sprite_new_full (GdkPaintable *source_paintable,
                                                      int           width,
                                                      int           height,
                                                      double        scale_factor,
                                                      GdkRectangle *source_rect);
-
+SHUMATE_AVAILABLE_IN_1_1
 GdkPaintable *shumate_vector_sprite_get_source_paintable (ShumateVectorSprite *self);
+SHUMATE_AVAILABLE_IN_1_1
 int           shumate_vector_sprite_get_width            (ShumateVectorSprite *self);
+SHUMATE_AVAILABLE_IN_1_1
 int           shumate_vector_sprite_get_height           (ShumateVectorSprite *self);
+SHUMATE_AVAILABLE_IN_1_1
 double        shumate_vector_sprite_get_scale_factor     (ShumateVectorSprite *self);
+SHUMATE_AVAILABLE_IN_1_1
 GdkRectangle *shumate_vector_sprite_get_source_rect      (ShumateVectorSprite *self);
 
 G_END_DECLS

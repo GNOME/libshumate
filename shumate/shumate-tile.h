@@ -23,7 +23,9 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gtk/gtk.h>
+#include <gdk/gdk.h>
+
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -82,7 +84,9 @@ GdkPaintable *shumate_tile_get_paintable (ShumateTile *self);
 void shumate_tile_set_paintable (ShumateTile  *self,
                                  GdkPaintable *paintable);
 
+SHUMATE_AVAILABLE_IN_1_1
 double shumate_tile_get_scale_factor (ShumateTile *self);
+SHUMATE_AVAILABLE_IN_1_1
 void shumate_tile_set_scale_factor (ShumateTile *self,
                                     double       scale_factor);
 

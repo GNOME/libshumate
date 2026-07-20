@@ -15,6 +15,8 @@
  * License along with this library; if not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <math.h>
+
 #include "shumate-vector-renderer.h"
 #include "shumate-vector-utils-private.h"
 

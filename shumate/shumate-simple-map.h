@@ -25,6 +25,7 @@
 #include <shumate/shumate-compass.h>
 #include <shumate/shumate-license.h>
 #include <shumate/shumate-scale.h>
+#include <shumate/shumate-version.h>
 
 G_BEGIN_DECLS
 
@@ -42,9 +43,11 @@ void              shumate_simple_map_set_map_source (ShumateSimpleMap *self,
 
 void              shumate_simple_map_add_overlay_layer (ShumateSimpleMap *self,
                                                         ShumateLayer     *layer);
+SHUMATE_AVAILABLE_IN_1_5
 void              shumate_simple_map_insert_overlay_layer_above (ShumateSimpleMap *self,
                                                                  ShumateLayer     *layer,
                                                                  ShumateLayer     *sibling);
+SHUMATE_AVAILABLE_IN_1_5
 void              shumate_simple_map_insert_overlay_layer_behind (ShumateSimpleMap *self,
                                                                   ShumateLayer     *layer,
                                                                   ShumateLayer     *sibling);
@@ -62,7 +65,7 @@ void              shumate_simple_map_set_show_zoom_buttons (ShumateSimpleMap *se
                                                             gboolean          show_zoom_buttons);
 
 ShumateMap *shumate_simple_map_get_map (ShumateSimpleMap *self);
-
+SHUMATE_AVAILABLE_IN_1_4
 ShumateMapLayer *shumate_simple_map_get_base_map_layer (ShumateSimpleMap *self);
 
 G_END_DECLS

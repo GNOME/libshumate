@@ -26,6 +26,7 @@
 #define __SHUMATE_VIEWPORT_H__
 
 #include <glib-object.h>
+#include <gtk/gtk.h>
 
 #include <shumate/shumate-location.h>
 #include <shumate/shumate-map-source.h>
