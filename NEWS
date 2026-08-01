@@ -1,4 +1,11 @@
 ===================
+Version 1.7.beta
+===================
+ - Deselect markers before removing from layer
+ - Stop using G_GNUC_CONST in _get_type functions
+ - gi-docgen: List more dependencies
+
+===================
 Version 1.7.alpha
 ===================
  - Added new APIs to refresh and get refresh notifications for map sources
