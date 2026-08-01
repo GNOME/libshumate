@@ -1,4 +1,9 @@
 ===================
+Version 1.5.5
+===================
+- Deselect markers before removing from layer
+
+===================
 Version 1.5.4
 ===================
  - Avoid spurious drag events following pinch zoom and rotate gestures on touch
