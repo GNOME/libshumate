@@ -62,13 +62,14 @@ sqlite_req = '>= 1.12.0'
 introspection_req = '>= 0.6.3'
 vala_req = '>= 0.11.0'
 json_glib_req = '>= 1.6'
+gtk_req = '>= 4.14'
 
 glib_dep = dependency('glib-2.0', version: glib_req)
 gobject_dep = dependency('gobject-2.0', version: glib_req)
 gio_dep = dependency('gio-2.0', version: glib_req)
 cairo_dep = dependency('cairo', version: cairo_req)
 sqlite_dep = dependency('sqlite3', version: sqlite_req)
-gtk_dep = dependency('gtk4')
+gtk_dep = dependency('gtk4', version: gtk_req)
 libsoup_dep = dependency('libsoup-3.0', version: '>= 3.0')
 json_glib_dep = dependency('json-glib-1.0', version: json_glib_req)
 libprotobuf_dep = dependency('libprotobuf-c')

@@ -34,7 +34,6 @@
 
 #include "shumate-enum-types.h"
 
-#include <cairo/cairo-gobject.h>
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <glib.h>
@@ -70,7 +69,7 @@ struct _ShumatePathLayer
   double stroke_width;
   GdkRGBA *outline_color;
   double outline_width;
-  GArray *dashes; /* double */
+  GArray *dashes; /* float */
 
   GList *nodes; /* ShumateLocation */
 };
@@ -236,8 +235,10 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
 {
   ShumatePathLayer *self = (ShumatePathLayer *)widget;
   ShumateViewport *viewport;
+  g_autoptr(GskPathBuilder) builder = NULL;
+  g_autoptr(GskPath) path = NULL;
   int width, height;
-  cairo_t *cr;
+  gboolean first = TRUE;
   GList *elem;
 
   width = gtk_widget_get_width (widget);
@@ -247,10 +248,7 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
   if (!gtk_widget_get_visible (widget) || width <= 0 || height <= 0)
     return;
 
-  cr = gtk_snapshot_append_cairo (snapshot, &GRAPHENE_RECT_INIT(0, 0, width, height));
-
-  cairo_set_line_join (cr, CAIRO_LINE_JOIN_BEVEL);
-
+  builder = gsk_path_builder_new ();
   for (elem = self->nodes; elem != NULL; elem = elem->next)
     {
       ShumateLocation *location = SHUMATE_LOCATION (elem->data);
@@ -260,16 +258,29 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
       lon = shumate_location_get_longitude (location);
       shumate_viewport_location_to_widget_coords (viewport, widget, lat, lon, &x, &y);
 
-      cairo_line_to (cr, x, y);
+      if (first)
+        {
+          gsk_path_builder_move_to (builder, x, y);
+          first = FALSE;
+        }
+      else
+        {
+          gsk_path_builder_line_to (builder, x, y);
+        }
     }
 
-  if (self->closed_path)
-    cairo_close_path (cr);
+  if (first)
+    return;
 
-  gdk_cairo_set_source_rgba (cr, self->fill_color);
+  if (self->closed_path)
+    gsk_path_builder_close (builder);
+
+  path = gsk_path_builder_free_to_path (g_steal_pointer (&builder));
 
   if (self->fill)
-    cairo_fill_preserve (cr);
+    gtk_snapshot_append_fill (snapshot, path,
+                              GSK_FILL_RULE_WINDING,
+                              self->fill_color);
 
   if (self->stroke)
     {
@@ -278,21 +289,32 @@ shumate_path_layer_snapshot (GtkWidget   *widget,
        */
       double inner_width = self->stroke_width - 2 * self->outline_width;
 
-      cairo_set_dash (cr, (const double *) self->dashes->data, self->dashes->len, 0);
-
       if (self->outline_width > 0)
         {
-          gdk_cairo_set_source_rgba (cr, self->outline_color);
-          cairo_set_line_width (cr, self->stroke_width);
-          cairo_stroke_preserve (cr);
+          g_autoptr(GskStroke) stroke = gsk_stroke_new (self->stroke_width);
+
+          gsk_stroke_set_line_join (stroke, GSK_LINE_JOIN_BEVEL);
+          gsk_stroke_set_dash (stroke,
+                               (const float *) self->dashes->data,
+                               self->dashes->len);
+
+          gtk_snapshot_append_stroke (snapshot, path, stroke,
+                                      self->outline_color);
         }
 
-      gdk_cairo_set_source_rgba (cr, self->stroke_color);
-      cairo_set_line_width (cr, inner_width);
-      cairo_stroke (cr);
-    }
+      if (inner_width > 0)
+        {
+          g_autoptr(GskStroke) stroke = gsk_stroke_new (inner_width);
 
-  cairo_destroy (cr);
+          gsk_stroke_set_line_join (stroke, GSK_LINE_JOIN_BEVEL);
+          gsk_stroke_set_dash (stroke,
+                               (const float *) self->dashes->data,
+                               self->dashes->len);
+
+          gtk_snapshot_append_stroke (snapshot, path, stroke,
+                                      self->stroke_color);
+        }
+    }
 }
 
 static char *
@@ -432,7 +454,7 @@ shumate_path_layer_init (ShumatePathLayer *self)
   self->stroke_width = 2.0;
   self->outline_width = 0.0;
   self->nodes = NULL;
-  self->dashes = g_array_new (FALSE, TRUE, sizeof(double));
+  self->dashes = g_array_new (FALSE, TRUE, sizeof(float));
 
   self->fill_color = gdk_rgba_copy (&DEFAULT_FILL_COLOR);
   self->stroke_color = gdk_rgba_copy (&DEFAULT_STROKE_COLOR);
@@ -902,10 +924,10 @@ shumate_path_layer_get_closed (ShumatePathLayer *self)
 /**
  * shumate_path_layer_set_dash:
  * @self: a [class@PathLayer]
- * @dash_pattern: (element-type guint): list of integer values representing lengths
- *     of dashes/spaces (see cairo documentation of cairo_set_dash())
+ * @dash_pattern: (element-type guint) (nullable): list of integer values
+ *     representing lengths of dashes/spaces
  *
- * Sets dashed line pattern in a way similar to cairo_set_dash() of cairo. This
+ * Sets dashed line pattern in a way similar to gsk_stroke_set_dash(). This
  * method supports only integer values for segment lengths. The values have to be
  * passed inside the data pointer of the list (using the %GUINT_TO_POINTER conversion)
  *
@@ -925,7 +947,7 @@ shumate_path_layer_set_dash (ShumatePathLayer *self,
 
   for (iter = dash_pattern; iter != NULL; iter = iter->next)
     {
-      double val = (double) GPOINTER_TO_UINT (iter->data);
+      float val = (float) GPOINTER_TO_UINT (iter->data);
       g_array_append_val (self->dashes, val);
     }
 }
@@ -937,7 +959,7 @@ shumate_path_layer_set_dash (ShumatePathLayer *self,
  *
  * Returns the list of dash segment lengths.
  *
- * Returns: (transfer full) (element-type guint): the list
+ * Returns: (transfer full) (element-type guint) (nullable): the list
  */
 GList *
 shumate_path_layer_get_dash (ShumatePathLayer *self)
@@ -948,7 +970,7 @@ shumate_path_layer_get_dash (ShumatePathLayer *self)
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
   for (i = 0; i < self->dashes->len; i++)
-    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (self->dashes, double, i)));
+    list = g_list_append (list, GUINT_TO_POINTER ((guint) g_array_index (self->dashes, float, i)));
 
   return list;
 }
