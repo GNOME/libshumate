@@ -311,9 +311,7 @@ shumate_vector_sprite_class_init (ShumateVectorSpriteClass *klass)
    * Since: 1.1
    */
   properties[PROP_SOURCE_PAINTABLE] =
-    g_param_spec_object ("source-paintable",
-                         "source-paintable",
-                         "source-paintable",
+    g_param_spec_object ("source-paintable", NULL, NULL,
                          GDK_TYPE_PAINTABLE,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
@@ -325,9 +323,7 @@ shumate_vector_sprite_class_init (ShumateVectorSpriteClass *klass)
    * Since: 1.1
    */
   properties[PROP_WIDTH] =
-    g_param_spec_int ("width",
-                      "width",
-                      "width",
+    g_param_spec_int ("width", NULL, NULL,
                       0, G_MAXINT, 0,
                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
@@ -339,9 +335,7 @@ shumate_vector_sprite_class_init (ShumateVectorSpriteClass *klass)
    * Since: 1.1
    */
   properties[PROP_HEIGHT] =
-    g_param_spec_int ("height",
-                      "height",
-                      "height",
+    g_param_spec_int ("height", NULL, NULL,
                       0, G_MAXINT, 0,
                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
@@ -353,9 +347,7 @@ shumate_vector_sprite_class_init (ShumateVectorSpriteClass *klass)
    * Since: 1.1
    */
   properties[PROP_SCALE_FACTOR] =
-    g_param_spec_double ("scale-factor",
-                         "scale-factor",
-                         "scale-factor",
+    g_param_spec_double ("scale-factor", NULL, NULL,
                          1, G_MAXDOUBLE, 1,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 
@@ -367,9 +359,7 @@ shumate_vector_sprite_class_init (ShumateVectorSpriteClass *klass)
    * Since: 1.1
    */
   properties[PROP_SOURCE_RECT] =
-    g_param_spec_boxed ("source-rect",
-                        "source-rect",
-                        "source-rect",
+    g_param_spec_boxed ("source-rect", NULL, NULL,
                         GDK_TYPE_RECTANGLE,
                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 

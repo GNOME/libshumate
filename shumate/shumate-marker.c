@@ -264,9 +264,7 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
    * The child widget of the marker
    */
   obj_properties[PROP_CHILD] =
-    g_param_spec_object ("child",
-                         "Child",
-                          "The child widget of the marker",
+    g_param_spec_object ("child", NULL, NULL,
                           GTK_TYPE_WIDGET,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -276,9 +274,7 @@ shumate_marker_class_init (ShumateMarkerClass *klass)
    * The selectable state of the marker
    */
   obj_properties[PROP_SELECTABLE] =
-    g_param_spec_boolean ("selectable",
-                          "Selectable",
-                          "The draggable state of the marker",
+    g_param_spec_boolean ("selectable", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

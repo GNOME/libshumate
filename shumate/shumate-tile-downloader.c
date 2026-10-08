@@ -180,7 +180,7 @@ shumate_tile_downloader_class_init (ShumateTileDownloaderClass *klass)
    * the bottom, rather than top, of the map)
    */
   properties[PROP_URL_TEMPLATE] =
-    g_param_spec_string ("url-template", "URL template", "URL template",
+    g_param_spec_string ("url-template", NULL, NULL,
                          NULL,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 

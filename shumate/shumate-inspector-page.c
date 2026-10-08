@@ -127,23 +127,17 @@ shumate_inspector_page_class_init (ShumateInspectorPageClass *klass)
   object_class->set_property = shumate_inspector_set_property;
 
   props[PROP_TITLE] =
-    g_param_spec_string ("title",
-                         "title",
-                         "title",
+    g_param_spec_string ("title", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   props[PROP_OBJECT] =
-    g_param_spec_object ("object",
-                         "object",
-                         "object",
+    g_param_spec_object ("object", NULL, NULL,
                          G_TYPE_OBJECT,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   props[PROP_SETTINGS] =
-    g_param_spec_object ("settings",
-                         "settings",
-                         "settings",
+    g_param_spec_object ("settings", NULL, NULL,
                          SHUMATE_TYPE_INSPECTOR_SETTINGS,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 

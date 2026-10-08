@@ -867,9 +867,7 @@ shumate_map_class_init (ShumateMapClass *klass)
    * Should the view zoom in and recenter when the user double click on the map.
    */
   obj_properties[PROP_ZOOM_ON_DOUBLE_CLICK] =
-    g_param_spec_boolean ("zoom-on-double-click",
-                          "Zoom in on double click",
-                          "Zoom in and recenter on double click on the map",
+    g_param_spec_boolean ("zoom-on-double-click", NULL, NULL,
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -879,9 +877,7 @@ shumate_map_class_init (ShumateMapClass *klass)
    * Animate zoom change when zooming in/out.
    */
   obj_properties[PROP_ANIMATE_ZOOM] =
-    g_param_spec_boolean ("animate-zoom",
-                          "Animate zoom level change",
-                          "Animate zoom change when zooming in/out",
+    g_param_spec_boolean ("animate-zoom", NULL, NULL,
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -892,9 +888,7 @@ shumate_map_class_init (ShumateMapClass *klass)
    * tiles or not.
    */
   obj_properties[PROP_STATE] =
-    g_param_spec_enum ("state",
-                       "View's state",
-                       "View's global state",
+    g_param_spec_enum ("state", NULL, NULL,
                        SHUMATE_TYPE_STATE,
                        SHUMATE_STATE_NONE,
                        G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
@@ -910,9 +904,7 @@ shumate_map_class_init (ShumateMapClass *klass)
    *
    */
   obj_properties[PROP_GO_TO_DURATION] =
-    g_param_spec_uint ("go-to-duration",
-                       "Go to animation duration",
-                       "The duration of an animation when going to a location",
+    g_param_spec_uint ("go-to-duration", NULL, NULL,
                        0, G_MAXUINT, 0,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -923,9 +915,7 @@ shumate_map_class_init (ShumateMapClass *klass)
    * etc. of the map.
    */
   obj_properties[PROP_VIEWPORT] =
-    g_param_spec_object ("viewport",
-                         "Viewport",
-                         "Viewport",
+    g_param_spec_object ("viewport", NULL, NULL,
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 

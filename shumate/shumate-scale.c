@@ -306,9 +306,7 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    * The size of the map scale on screen in pixels.
    */
   obj_properties[PROP_MAX_SCALE_WIDTH] =
-    g_param_spec_uint ("max-width",
-                       "The width of the scale",
-                       "The max width of the scale on screen",
+    g_param_spec_uint ("max-width", NULL, NULL,
                        1, G_MAXUINT, 150,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -318,9 +316,7 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    * The scale's units.
    */
   obj_properties[PROP_UNIT] =
-    g_param_spec_enum ("unit",
-                       "The scale's unit",
-                       "The map scale's unit",
+    g_param_spec_enum ("unit", NULL, NULL,
                        SHUMATE_TYPE_UNIT,
                        SHUMATE_UNIT_BOTH,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
@@ -331,9 +327,7 @@ shumate_scale_class_init (ShumateScaleClass *klass)
    * The viewport to use.
    */
   obj_properties[PROP_VIEWPORT] =
-    g_param_spec_object ("viewport",
-                         "The viewport",
-                         "The viewport",
+    g_param_spec_object ("viewport", NULL, NULL,
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

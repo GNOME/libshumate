@@ -251,9 +251,7 @@ shumate_raster_renderer_class_init (ShumateRasterRendererClass *klass)
    * a [class@TileDownloader] is sufficient.
    */
   properties[PROP_DATA_SOURCE] =
-    g_param_spec_object ("data-source",
-                         "Data source",
-                         "Data source",
+    g_param_spec_object ("data-source", NULL, NULL,
                          SHUMATE_TYPE_DATA_SOURCE,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 

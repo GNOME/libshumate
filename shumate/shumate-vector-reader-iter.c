@@ -132,9 +132,7 @@ shumate_vector_reader_iter_class_init (ShumateVectorReaderIterClass *klass)
    * Since: 1.2
    */
   properties[PROP_READER] =
-    g_param_spec_object ("reader",
-                         "reader",
-                         "reader",
+    g_param_spec_object ("reader", NULL, NULL,
                          SHUMATE_TYPE_VECTOR_READER,
                          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

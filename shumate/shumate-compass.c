@@ -165,9 +165,7 @@ shumate_compass_class_init (ShumateCompassClass *klass)
    * The viewport to use.
    */
   obj_properties[PROP_VIEWPORT] =
-    g_param_spec_object ("viewport",
-                         "The viewport",
-                         "The viewport",
+    g_param_spec_object ("viewport", NULL, NULL,
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

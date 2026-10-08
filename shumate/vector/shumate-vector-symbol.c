@@ -781,10 +781,13 @@ shumate_vector_symbol_class_init (ShumateVectorSymbolClass *klass)
   widget_class->snapshot = shumate_vector_symbol_snapshot;
   widget_class->measure = shumate_vector_symbol_measure;
 
+  /**
+   * ShumateVectorSymbol:symbol-info:
+   *
+   * The vector symbol information.
+   */
   obj_properties[PROP_SYMBOL_INFO] =
-    g_param_spec_boxed ("symbol-info",
-                        "Symbol info",
-                        "Symbol info",
+    g_param_spec_boxed ("symbol-info", NULL, NULL,
                         SHUMATE_TYPE_VECTOR_SYMBOL_INFO,
                         G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 

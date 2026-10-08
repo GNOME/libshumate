@@ -39,12 +39,10 @@ shumate_location_default_init (ShumateLocationInterface *iface)
   /**
    * ShumateLocation:longitude:
    *
-   * The longitude coordonate in degrees
+   * The longitude coordinate in degrees
    */
   g_object_interface_install_property (iface,
-      g_param_spec_double ("longitude",
-          "Longitude",
-          "The longitude coordonate in degrees",
+      g_param_spec_double ("longitude", NULL, NULL,
           -180.0f,
           180.0f,
           0.0f,
@@ -53,12 +51,10 @@ shumate_location_default_init (ShumateLocationInterface *iface)
   /**
    * ShumateLocation:latitude:
    *
-   * The latitude coordonate in degrees
+   * The latitude coordinate in degrees
    */
   g_object_interface_install_property (iface,
-      g_param_spec_double ("latitude",
-          "Latitude",
-          "The latitude coordonate in degrees",
+      g_param_spec_double ("latitude", NULL, NULL,
           -90.0f,
           90.0f,
           0.0f,

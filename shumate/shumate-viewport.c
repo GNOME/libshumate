@@ -233,9 +233,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The level of zoom of the content.
    */
   obj_properties[PROP_ZOOM_LEVEL] =
-    g_param_spec_double ("zoom-level",
-                         "Zoom level",
-                         "The level of zoom of the map",
+    g_param_spec_double ("zoom-level", NULL, NULL,
                          0, 30, 3,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -245,9 +243,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The lowest allowed level of zoom of the content.
    */
   obj_properties[PROP_MIN_ZOOM_LEVEL] =
-    g_param_spec_uint ("min-zoom-level",
-                       "Min zoom level",
-                       "The lowest allowed level of zoom",
+    g_param_spec_uint ("min-zoom-level", NULL, NULL,
                        0, 20, DEFAULT_MIN_ZOOM,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -257,9 +253,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The highest allowed level of zoom of the content.
    */
   obj_properties[PROP_MAX_ZOOM_LEVEL] =
-    g_param_spec_uint ("max-zoom-level",
-                       "Max zoom level",
-                       "The highest allowed level of zoom",
+    g_param_spec_uint ("max-zoom-level", NULL, NULL,
                        0, 30, DEFAULT_MAX_ZOOM,
                        G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -269,9 +263,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The reference #ShumateMapSource being displayed
    */
   obj_properties[PROP_REFERENCE_MAP_SOURCE] =
-    g_param_spec_object ("reference-map-source",
-                         "Reference Map Source",
-                         "The reference map source being displayed",
+    g_param_spec_object ("reference-map-source", NULL, NULL,
                          SHUMATE_TYPE_MAP_SOURCE,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -281,9 +273,7 @@ shumate_viewport_class_init (ShumateViewportClass *klass)
    * The rotation of the map view, in radians clockwise from up being due north
    */
   obj_properties[PROP_ROTATION] =
-    g_param_spec_double ("rotation",
-                         "Rotation",
-                         "The rotation of the map view in radians",
+    g_param_spec_double ("rotation", NULL, NULL,
                          0, G_PI * 2.0, 0,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 

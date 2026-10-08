@@ -151,9 +151,7 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    * Since: 1.1
    */
   properties[PROP_LAYER] =
-    g_param_spec_string ("layer",
-                         "layer",
-                         "layer",
+    g_param_spec_string ("layer", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
@@ -163,9 +161,7 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    * The ID of the source layer of the symbol that this event pertains to.
    */
   properties[PROP_SOURCE_LAYER] =
-    g_param_spec_string ("source-layer",
-                         "source-layer",
-                         "source-layer",
+    g_param_spec_string ("source-layer", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
@@ -178,9 +174,7 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    * Since: 1.1
    */
   properties[PROP_FEATURE_ID] =
-    g_param_spec_string ("feature-id",
-                         "Feature ID",
-                         "Feature ID",
+    g_param_spec_string ("feature-id", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
@@ -192,9 +186,7 @@ shumate_symbol_event_class_init (ShumateSymbolEventClass *klass)
    * Since: 1.5
    */
   properties[PROP_N_PRESS] =
-    g_param_spec_uint ("n-press",
-                       "Number of presses",
-                       "Number of presses",
+    g_param_spec_uint ("n-press", NULL, NULL,
                        1,
                        INT_MAX,
                        1,

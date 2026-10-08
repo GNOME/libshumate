@@ -381,9 +381,7 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
    * Determines the type of selection that will be performed.
    */
   obj_properties[PROP_SELECTION_MODE] =
-    g_param_spec_enum ("selection-mode",
-                       "Selection Mode",
-                       "Determines the type of selection that will be performed.",
+    g_param_spec_enum ("selection-mode", NULL, NULL,
                        GTK_TYPE_SELECTION_MODE,
                        GTK_SELECTION_NONE,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);

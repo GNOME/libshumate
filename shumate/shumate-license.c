@@ -149,9 +149,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
    * "\n" in between.
    */
   obj_properties[PROP_EXTRA_TEXT] =
-    g_param_spec_string ("extra-text",
-                         "Additional license",
-                         "Additional license text",
+    g_param_spec_string ("extra-text", NULL, NULL,
                          NULL,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -161,9 +159,7 @@ shumate_license_class_init (ShumateLicenseClass *klass)
    * The license's horizontal alignment
    */
   obj_properties[PROP_XALIGN] =
-    g_param_spec_float ("xalign",
-                        "Horizontal Alignment",
-                        "X alignment of the child",
+    g_param_spec_float ("xalign", NULL, NULL,
                         0.0, 1.0, 0.5,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

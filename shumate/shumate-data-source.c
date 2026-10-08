@@ -161,9 +161,7 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
    * Since: 1.1
    */
   properties[PROP_MIN_ZOOM_LEVEL] =
-    g_param_spec_uint ("min-zoom-level",
-                       "min-zoom-level",
-                       "min-zoom-level",
+    g_param_spec_uint ("min-zoom-level", NULL, NULL,
                        0, 30, 0,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -175,9 +173,7 @@ shumate_data_source_class_init (ShumateDataSourceClass *klass)
    * Since: 1.1
    */
   properties[PROP_MAX_ZOOM_LEVEL] =
-    g_param_spec_uint ("max-zoom-level",
-                       "max-zoom-level",
-                       "max-zoom-level",
+    g_param_spec_uint ("max-zoom-level", NULL, NULL,
                        0, 30, 30,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 

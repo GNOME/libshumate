@@ -204,9 +204,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The id of the map source
    */
   obj_properties[PROP_ID] =
-    g_param_spec_string ("id",
-                         "Id",
-                         "The id of the map source",
+    g_param_spec_string ("id", NULL, NULL,
                          NULL,
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -216,9 +214,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The name of the map source
    */
   obj_properties[PROP_NAME] =
-    g_param_spec_string ("name",
-                         "Name",
-                         "The name of the map source",
+    g_param_spec_string ("name", NULL, NULL,
                          NULL,
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -228,9 +224,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The usage license of the map source
    */
   obj_properties[PROP_LICENSE] =
-    g_param_spec_string ("license",
-                         "License",
-                         "The usage license of the map source",
+    g_param_spec_string ("license", NULL, NULL,
                          NULL,
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -240,9 +234,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The usage license's uri for more information
    */
   obj_properties[PROP_LICENSE_URI] =
-    g_param_spec_string ("license-uri",
-                         "License-uri",
-                         "The usage license's uri for more information",
+    g_param_spec_string ("license-uri", NULL, NULL,
                          NULL,
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -252,9 +244,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The minimum zoom level
    */
   obj_properties[PROP_MIN_ZOOM_LEVEL] =
-    g_param_spec_uint ("min-zoom-level",
-                       "Minimum Zoom Level",
-                       "The minimum zoom level",
+    g_param_spec_uint ("min-zoom-level", NULL, NULL,
                        0, 50, 0,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -264,9 +254,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The maximum zoom level
    */
   obj_properties[PROP_MAX_ZOOM_LEVEL] =
-    g_param_spec_uint ("max-zoom-level",
-                       "Maximum Zoom Level",
-                       "The maximum zoom level",
+    g_param_spec_uint ("max-zoom-level", NULL, NULL,
                        0, 50, 18,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -276,9 +264,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The tile size of the map source
    */
   obj_properties[PROP_TILE_SIZE] =
-    g_param_spec_uint ("tile-size",
-                       "Tile Size",
-                       "The map size",
+    g_param_spec_uint ("tile-size", NULL, NULL,
                        0, 2048, 256,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -288,9 +274,7 @@ shumate_map_source_class_init (ShumateMapSourceClass *klass)
    * The map projection of the map source
    */
   obj_properties[PROP_PROJECTION] =
-    g_param_spec_enum ("projection",
-                       "Projection",
-                       "The map projection",
+    g_param_spec_enum ("projection", NULL, NULL,
                        SHUMATE_TYPE_MAP_PROJECTION,
                        SHUMATE_MAP_PROJECTION_MERCATOR,
                        G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_EXPLICIT_NOTIFY);

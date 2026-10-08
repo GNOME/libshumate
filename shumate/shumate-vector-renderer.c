@@ -230,9 +230,7 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
    * Note that not all features of the specification are supported.
    */
   properties[PROP_STYLE_JSON] =
-    g_param_spec_string ("style-json",
-                         "Style JSON",
-                         "Style JSON",
+    g_param_spec_string ("style-json", NULL, NULL,
                          NULL,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
@@ -244,9 +242,7 @@ shumate_vector_renderer_class_init (ShumateVectorRendererClass *klass)
    * Since: 1.1
    */
   properties[PROP_SPRITE_SHEET] =
-    g_param_spec_object ("sprite-sheet",
-                         "sprite-sheet",
-                         "sprite-sheet",
+    g_param_spec_object ("sprite-sheet", NULL, NULL,
                          SHUMATE_TYPE_VECTOR_SPRITE_SHEET,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
