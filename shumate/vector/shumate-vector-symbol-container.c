@@ -466,10 +466,13 @@ shumate_vector_symbol_container_class_init (ShumateVectorSymbolContainerClass *k
   widget_class->size_allocate = shumate_vector_symbol_container_size_allocate;
   widget_class->snapshot = shumate_vector_symbol_container_snapshot;
 
+  /**
+   * ShumateVectorSymbolContainer:map-source:
+   *
+   * The source of the tiles this container displays.
+   */
   obj_properties[PROP_MAP_SOURCE] =
-    g_param_spec_object ("map-source",
-                         "Map source",
-                         "Map source",
+    g_param_spec_object ("map-source", NULL, NULL,
                          SHUMATE_TYPE_MAP_SOURCE,
                          G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 

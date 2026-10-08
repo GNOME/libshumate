@@ -234,52 +234,73 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
   object_class->get_property = shumate_simple_map_get_property;
   object_class->set_property = shumate_simple_map_set_property;
 
+  /**
+   * ShumateSimpleMap:viewport:
+   *
+   * The viewport to use.
+   */
   properties[PROP_VIEWPORT] =
-    g_param_spec_object ("viewport",
-                         "Viewport",
-                         "Viewport",
+    g_param_spec_object ("viewport", NULL, NULL,
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateSimpleMap:map-source:
+   *
+   * The source of the tiles this simple map displays.
+   */
   properties[PROP_MAP_SOURCE] =
-    g_param_spec_object ("map-source",
-                         "Map source",
-                         "Map source",
+    g_param_spec_object ("map-source", NULL, NULL,
                          SHUMATE_TYPE_MAP_SOURCE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
+  /**
+   * ShumateSimpleMap:compass:
+   *
+   * The compass widget.
+   */
   properties[PROP_COMPASS] =
-    g_param_spec_object ("compass",
-                         "Compass",
-                         "Compass",
+    g_param_spec_object ("compass", NULL, NULL,
                          SHUMATE_TYPE_COMPASS,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateSimpleMap:license:
+   *
+   * The license widget.
+   */
   properties[PROP_LICENSE] =
-    g_param_spec_object ("license",
-                         "License",
-                         "License",
+    g_param_spec_object ("license", NULL, NULL,
                          SHUMATE_TYPE_LICENSE,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateSimpleMap:scale:
+   *
+   * The scale widget.
+   */
   properties[PROP_SCALE] =
-    g_param_spec_object ("scale",
-                         "Scale",
-                         "Scale",
+    g_param_spec_object ("scale", NULL, NULL,
                          SHUMATE_TYPE_SCALE,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateSimpleMap:map:
+   *
+   * The map widget.
+   */
   properties[PROP_MAP] =
-    g_param_spec_object ("map",
-                         "Map",
-                         "Map",
+    g_param_spec_object ("map", NULL, NULL,
                          SHUMATE_TYPE_MAP,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  /**
+   * ShumateSimpleMap:show-zoom-buttons:
+   *
+   * Whether zoom buttons are shown.
+   */
   properties[PROP_SHOW_ZOOM_BUTTONS] =
-    g_param_spec_boolean ("show-zoom-buttons",
-                          "Show zoom buttons",
-                          "Show zoom buttons",
+    g_param_spec_boolean ("show-zoom-buttons", NULL, NULL,
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -294,9 +315,7 @@ shumate_simple_map_class_init (ShumateSimpleMapClass *klass)
    * Since: 1.4
    */
   properties[PROP_BASE_MAP_LAYER] =
-    g_param_spec_object ("base-map-layer",
-                         "Base map layer",
-                         "Base map layer",
+    g_param_spec_object ("base-map-layer", NULL, NULL,
                          SHUMATE_TYPE_MAP_LAYER,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 

@@ -130,10 +130,13 @@ shumate_layer_class_init (ShumateLayerClass *klass)
 
   widget_class->contains = shumate_layer_contains;
 
+  /**
+   * ShumateLayer:viewport:
+   *
+   * The viewport to use.
+   */
   obj_properties[PROP_VIEWPORT] =
-    g_param_spec_object ("viewport",
-                         "Viewport",
-                         "The viewport used to display the layer",
+    g_param_spec_object ("viewport", NULL, NULL,
                          SHUMATE_TYPE_VIEWPORT,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_STATIC_STRINGS);
 

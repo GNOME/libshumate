@@ -887,9 +887,7 @@ shumate_map_layer_class_init (ShumateMapLayerClass *klass)
    * The source of the tiles this map layer displays.
    */
   obj_properties[PROP_MAP_SOURCE] =
-    g_param_spec_object ("map-source",
-                         "Map Source",
-                         "The Map Source",
+    g_param_spec_object ("map-source", NULL, NULL,
                          SHUMATE_TYPE_MAP_SOURCE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | G_PARAM_EXPLICIT_NOTIFY);
 

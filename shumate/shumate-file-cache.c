@@ -312,13 +312,11 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * Note: this new value will not be applied until you call shumate_file_cache_purge()
    */
   properties[PROP_SIZE_LIMIT] =
-    g_param_spec_uint ("size-limit",
-                       "Size Limit",
-                       "The cache's size limit (Mb)",
+    g_param_spec_uint ("size-limit", NULL, NULL,
                        1,
                        G_MAXINT,
                        100000000,
-                       G_PARAM_CONSTRUCT | G_PARAM_READWRITE);
+                       G_PARAM_CONSTRUCT | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateFileCache:cache-dir:
@@ -326,11 +324,9 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * The directory where the tile database is stored.
    */
   properties[PROP_CACHE_DIR] =
-    g_param_spec_string ("cache-dir",
-                         "Cache Directory",
-                         "The directory of the cache",
+    g_param_spec_string ("cache-dir", NULL, NULL,
                          NULL,
-                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE);
+                         G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
   /**
    * ShumateFileCache:cache-key:
@@ -339,9 +335,7 @@ shumate_file_cache_class_init (ShumateFileCacheClass *klass)
    * can be used to store multiple tilesets in the same cache directory.
    */
   properties[PROP_CACHE_KEY] =
-    g_param_spec_string ("cache-key",
-                         "Cache Key",
-                         "The key used when storing and retrieving tiles",
+    g_param_spec_string ("cache-key", NULL, NULL,
                          NULL,
                          G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 

@@ -347,9 +347,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The shape is a closed path
    */
   obj_properties[PROP_CLOSED_PATH] =
-    g_param_spec_boolean ("closed",
-                          "Closed Path",
-                          "The Path is Closed",
+    g_param_spec_boolean ("closed", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -359,9 +357,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The shape should be filled
    */
   obj_properties[PROP_FILL] =
-    g_param_spec_boolean ("fill",
-                          "Fill",
-                          "The shape is filled",
+    g_param_spec_boolean ("fill", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -371,9 +367,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The shape should be stroked
    */
   obj_properties[PROP_STROKE] =
-    g_param_spec_boolean ("stroke",
-                          "Stroke",
-                          "The shape is stroked",
+    g_param_spec_boolean ("stroke", NULL, NULL,
                           TRUE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -383,9 +377,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The path's stroke color
    */
   obj_properties[PROP_STROKE_COLOR] =
-    g_param_spec_boxed ("stroke-color",
-                        "Stroke Color",
-                        "The path's stroke color",
+    g_param_spec_boxed ("stroke-color", NULL, NULL,
                         GDK_TYPE_RGBA,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -395,9 +387,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The path's fill color
    */
   obj_properties[PROP_FILL_COLOR] =
-    g_param_spec_boxed ("fill-color",
-                        "Fill Color",
-                        "The path's fill color",
+    g_param_spec_boxed ("fill-color", NULL, NULL,
                         GDK_TYPE_RGBA,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -407,9 +397,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The path's stroke width (in pixels)
    */
   obj_properties[PROP_STROKE_WIDTH] =
-    g_param_spec_double ("stroke-width",
-                         "Stroke Width",
-                         "The path's stroke width",
+    g_param_spec_double ("stroke-width", NULL, NULL,
                          0,
                          100.0,
                          2.0,
@@ -421,9 +409,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The path's outline color
    */
   obj_properties[PROP_OUTLINE_COLOR] =
-    g_param_spec_boxed ("outline-color",
-                        "Outline Color",
-                        "The path's outline color",
+    g_param_spec_boxed ("outline-color", NULL, NULL,
                         GDK_TYPE_RGBA,
                         G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -433,9 +419,7 @@ shumate_path_layer_class_init (ShumatePathLayerClass *klass)
    * The path's outline width (in pixels)
    */
   obj_properties[PROP_OUTLINE_WIDTH] =
-    g_param_spec_double ("outline-width",
-                         "Outline Width",
-                         "The path's outline width",
+    g_param_spec_double ("outline-width", NULL, NULL,
                          0,
                          50.0,
                          0.0,

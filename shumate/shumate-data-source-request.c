@@ -168,7 +168,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_X] =
-    g_param_spec_int ("x", "x", "x",
+    g_param_spec_int ("x", NULL, NULL,
                       G_MININT, G_MAXINT, 0,
                       G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -180,7 +180,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_Y] =
-    g_param_spec_int ("y", "y", "y",
+    g_param_spec_int ("y", NULL, NULL,
                       G_MININT, G_MAXINT, 0,
                       G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -192,7 +192,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_ZOOM_LEVEL] =
-    g_param_spec_int ("zoom-level", "zoom-level", "zoom-level",
+    g_param_spec_int ("zoom-level", NULL, NULL,
                       G_MININT, G_MAXINT, 0,
                       G_PARAM_STATIC_STRINGS | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -205,7 +205,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_DATA] =
-    g_param_spec_boxed ("data", "data", "data",
+    g_param_spec_boxed ("data", NULL, NULL,
                         G_TYPE_BYTES,
                         G_PARAM_STATIC_STRINGS | G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -217,7 +217,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_ERROR] =
-    g_param_spec_boxed ("error", "error", "error",
+    g_param_spec_boxed ("error", NULL, NULL,
                         G_TYPE_ERROR,
                         G_PARAM_STATIC_STRINGS | G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
 
@@ -231,7 +231,7 @@ shumate_data_source_request_class_init (ShumateDataSourceRequestClass *klass)
    * Since: 1.1
    */
   properties[PROP_COMPLETED] =
-    g_param_spec_boolean ("completed", "completed", "completed",
+    g_param_spec_boolean ("completed", NULL, NULL,
                           FALSE,
                           G_PARAM_STATIC_STRINGS | G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY);
 

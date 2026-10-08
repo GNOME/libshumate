@@ -105,23 +105,17 @@ shumate_inspector_settings_class_init (ShumateInspectorSettingsClass *klass)
   object_class->set_property = shumate_inspector_settings_set_property;
 
   properties[PROP_SHOW_DEBUG_OVERLAY] =
-    g_param_spec_boolean ("show-debug-overlay",
-                          "show-debug-overlay",
-                          "show-debug-overlay",
+    g_param_spec_boolean ("show-debug-overlay", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_SHOW_TILE_BOUNDS] =
-    g_param_spec_boolean ("show-tile-bounds",
-                          "show-tile-bounds",
-                          "show-tile-bounds",
+    g_param_spec_boolean ("show-tile-bounds", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   properties[PROP_SHOW_COLLISION_BOXES] =
-    g_param_spec_boolean ("show-collision-boxes",
-                          "show-collision-boxes",
-                          "show-collision-boxes",
+    g_param_spec_boolean ("show-collision-boxes", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 

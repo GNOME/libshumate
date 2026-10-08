@@ -193,9 +193,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The x position of the tile
    */
   obj_properties[PROP_X] =
-    g_param_spec_uint ("x",
-                       "x",
-                       "The X position of the tile",
+    g_param_spec_uint ("x", NULL, NULL,
                        0,
                        G_MAXUINT,
                        0,
@@ -207,9 +205,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The y position of the tile
    */
   obj_properties[PROP_Y] =
-    g_param_spec_uint ("y",
-                       "y",
-                       "The Y position of the tile",
+    g_param_spec_uint ("y", NULL, NULL,
                        0,
                        G_MAXUINT,
                        0,
@@ -221,9 +217,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The zoom level of the tile
    */
   obj_properties[PROP_ZOOM_LEVEL] =
-    g_param_spec_uint ("zoom-level",
-                       "Zoom Level",
-                       "The zoom level of the tile",
+    g_param_spec_uint ("zoom-level", NULL, NULL,
                        0,
                        G_MAXUINT,
                        0,
@@ -235,9 +229,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The size of the tile in pixels
    */
   obj_properties[PROP_SIZE] =
-    g_param_spec_uint ("size",
-                       "Size",
-                       "The size of the tile",
+    g_param_spec_uint ("size", NULL, NULL,
                        0,
                        G_MAXUINT,
                        256,
@@ -249,9 +241,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The state of the tile
    */
   obj_properties[PROP_STATE] =
-    g_param_spec_enum ("state",
-                       "State",
-                       "The state of the tile",
+    g_param_spec_enum ("state", NULL, NULL,
                        SHUMATE_TYPE_STATE,
                        SHUMATE_STATE_NONE,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
@@ -262,9 +252,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * Specifies whether the tile should fade in when loading
    */
   obj_properties[PROP_FADE_IN] =
-    g_param_spec_boolean ("fade-in",
-                          "Fade In",
-                          "Tile should fade in",
+    g_param_spec_boolean ("fade-in", NULL, NULL,
                           FALSE,
                           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -274,9 +262,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * The [iface@Gdk.Paintable] backing the tile
    */
   obj_properties[PROP_PAINTABLE] =
-    g_param_spec_object ("paintable",
-                         "Paintable",
-                         "Paintable",
+    g_param_spec_object ("paintable", NULL, NULL,
                          GDK_TYPE_PAINTABLE,
                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
 
@@ -288,9 +274,7 @@ shumate_tile_class_init (ShumateTileClass *klass)
    * Since: 1.1
    */
   obj_properties[PROP_SCALE_FACTOR] =
-    g_param_spec_double ("scale-factor",
-                         "scale-factor",
-                         "scale-factor",
+    g_param_spec_double ("scale-factor", NULL, NULL,
                          G_MINDOUBLE, G_MAXDOUBLE, 1.0,
                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 

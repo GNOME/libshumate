@@ -120,10 +120,13 @@ shumate_memory_cache_class_init (ShumateMemoryCacheClass *klass)
   object_class->get_property = shumate_memory_cache_get_property;
   object_class->set_property = shumate_memory_cache_set_property;
 
+  /**
+   * ShumateMemoryCache:size-limit:
+   *
+   * The maximal number of stored tiles
+   */
   properties[PROP_SIZE_LIMIT] =
-    g_param_spec_uint ("size-limit",
-                       "Size Limit",
-                       "Maximal number of stored tiles",
+    g_param_spec_uint ("size-limit", NULL, NULL,
                        1,
                        G_MAXINT,
                        100,
