@@ -449,9 +449,10 @@ recompute_grid (ShumateMapLayer *self)
     }
 
   /* Next, make sure every visible tile position has a matching ShumateTile. */
-  for (int x = tile_initial_column; x < tile_initial_column + required_columns; x ++)
+  for (gint64 x = tile_initial_column; x < tile_initial_column + required_columns; x ++)
     {
-      for (int y = tile_initial_row; y < tile_initial_row + required_rows; y ++)
+      /* The latitude don't physically wrap */
+      for (gint64 y = MAX(tile_initial_row, 0); y < tile_initial_row + required_rows && y < source_rows; y ++)
         {
           g_autoptr(ShumateGridPosition) pos = shumate_grid_position_new (x, y, zoom_level);
           TileChild *tile_child = g_hash_table_lookup (self->tile_children, pos);
