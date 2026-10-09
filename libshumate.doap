@@ -12,7 +12,7 @@ to draw custom overlays, markers and lines on top of the maps. Bindings to other
 languages are provided using GObject Introspection.</description>
   <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
   <programming-language>C</programming-language>
-  <homepage rdf:resource="https://wiki.gnome.org/Projects/libshumate" />
+  <homepage rdf:resource="https://gitlab.gnome.org/GNOME/libshumate" />
   <download-page rdf:resource="http://download.gnome.org/sources/libshumate/" />
   <bug-database rdf:resource="https://gitlab.gnome.org/GNOME/libshumate/issues/" />
 

@@ -18,7 +18,7 @@ libshumate requires:
 Building is done with [Meson](https://mesonbuild.com).
 
 The official website is:
-   https://wiki.gnome.org/Projects/libshumate
+   https://gitlab.gnome.org/GNOME/libshumate
 
 Documentation:
    https://gnome.pages.gitlab.gnome.org/libshumate/
