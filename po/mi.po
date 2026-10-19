@@ -1,0 +1,67 @@
+# Māori translation of libshumate.
+# Copyright (C) 2026 the libshumate authors.
+# This file is distributed under the same licence as the libshumate package.
+# Arlewatyerre Tuhoro-Bell <aidan@ursa.nz>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libshumate main\n"
+"Report-Msgid-Bugs-To: https://gitlab.gnome.org/GNOME/libshumate/issues/\n"
+"POT-Creation-Date: 2026-10-08 19:03+0000\n"
+"PO-Revision-Date: 2026-10-19 10:59+1300\n"
+"Last-Translator: Arlewatyerre Tuhoro-Bell <aidan@ursa.nz>\n"
+"Language-Team: Māori <https://gitlab.gnome.org/Teams/Translation/mi>\n"
+"Language: mi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: gnomi\n"
+
+#: data/shumate-inspector-page.ui:32
+msgid "Show Debug Overlay"
+msgstr ""
+
+#: data/shumate-inspector-page.ui:62
+msgid "Show Tile Bounds"
+msgstr ""
+
+#: data/shumate-inspector-page.ui:92
+msgid "Show Collision Boxes"
+msgstr ""
+
+#: data/shumate-simple-map.ui:39
+msgid "Zoom In"
+msgstr "Topa mai"
+
+#: data/shumate-simple-map.ui:53
+msgid "Zoom Out"
+msgstr "Topa atu"
+
+#. m is the unit for meters
+#: shumate/shumate-scale.c:197
+#, c-format
+msgid "%d m"
+msgstr ""
+
+#. km is the unit for kilometers
+#: shumate/shumate-scale.c:200
+#, c-format
+msgid "%d km"
+msgstr ""
+
+#. ft is the unit for feet
+#: shumate/shumate-scale.c:206
+#, c-format
+msgid "%d ft"
+msgstr ""
+
+#. mi is the unit for miles
+#: shumate/shumate-scale.c:209
+#, c-format
+msgid "%d mi"
+msgstr ""
+
+#: shumate/shumate-inspector-page.c:61
+msgid "Shumate"
+msgstr ""
