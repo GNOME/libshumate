@@ -326,7 +326,11 @@ start_deceleration (ShumateMap *self,
   KineticScrollData *data;
   graphene_vec2_t velocity;
 
-  g_assert (self->deceleration_tick_id == 0);
+  /* A new swipe can arrive while the previous kinetic scroll is active.
+   * Remove its tick callback and free its data before replacing it.
+   */
+  cancel_deceleration (self);
+
 
   frame_clock = gtk_widget_get_frame_clock (GTK_WIDGET (self));
 
