@@ -301,9 +301,15 @@ defer_tick_callback (GtkWidget     *widget,
                      gpointer       user_data)
 {
   ShumateMapLayer *self = SHUMATE_MAP_LAYER (widget);
-  self->defer_callback_id = 0;
 
   recompute_grid (self);
+
+  // don't remove the source if we're still deferring
+  if (self->deferring)
+    return G_SOURCE_CONTINUE;
+
+  self->defer_callback_id = 0;
+
   return G_SOURCE_REMOVE;
 }
 
