@@ -627,7 +627,7 @@ shumate_path_layer_get_fill_color (ShumatePathLayer *self)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  return self->fill_color;
+  return gdk_rgba_copy (self->fill_color);
 }
 
 
@@ -671,7 +671,7 @@ shumate_path_layer_get_stroke_color (ShumatePathLayer *self)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  return self->stroke_color;
+  return gdk_rgba_copy (self->stroke_color);
 }
 
 /**
@@ -713,7 +713,7 @@ shumate_path_layer_get_outline_color (ShumatePathLayer *self)
 {
   g_return_val_if_fail (SHUMATE_IS_PATH_LAYER (self), NULL);
 
-  return self->outline_color;
+  return gdk_rgba_copy (self->outline_color);
 }
 
 /**
