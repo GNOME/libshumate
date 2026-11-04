@@ -107,9 +107,11 @@ shumate_vector_renderer_new (const char  *id,
   g_return_val_if_fail (id != NULL, NULL);
   g_return_val_if_fail (style_json != NULL, NULL);
 
+  /* According to the style spec, tile size is not configurable for vector tiles */
   return g_initable_new (SHUMATE_TYPE_VECTOR_RENDERER, NULL, error,
                          "id", id,
                          "style-json", style_json,
+                         "tile-size", 512,
                          NULL);
 }
 
@@ -460,9 +462,6 @@ shumate_vector_renderer_initable_init (GInitable     *initable,
           g_hash_table_insert (self->global_state, g_strdup (key), shumate_vector_value_dup (&value));
         }
     }
-
-  /* According to the style spec, this is not configurable for vector tiles */
-  shumate_map_source_set_tile_size (SHUMATE_MAP_SOURCE (self), 512);
 
   return TRUE;
 }
