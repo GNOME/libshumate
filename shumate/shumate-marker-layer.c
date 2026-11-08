@@ -28,6 +28,7 @@
 #include "shumate-marker-layer.h"
 #include "shumate-marker-private.h"
 #include "shumate-inspector-settings-private.h"
+#include "shumate-marker-item-factory-private.h"
 
 #include "shumate-enum-types.h"
 
@@ -37,6 +38,8 @@
 enum
 {
   PROP_SELECTION_MODE = 1,
+  PROP_FACTORY,
+  PROP_MODEL,
   N_PROPERTIES
 };
 
@@ -60,6 +63,9 @@ struct _ShumateMarkerLayer
   GList *selected;
 
   int n_children;
+
+  ShumateMarkerItemFactory *factory;
+  GtkSelectionModel  *model;
 };
 
 G_DEFINE_TYPE (ShumateMarkerLayer, shumate_marker_layer, SHUMATE_TYPE_LAYER);
@@ -325,6 +331,8 @@ shumate_marker_layer_dispose (GObject *object)
   while ((child = gtk_widget_get_first_child (GTK_WIDGET (object))))
     gtk_widget_unparent (child);
 
+  g_clear_object (&self->factory);
+
   G_OBJECT_CLASS (shumate_marker_layer_parent_class)->dispose (object);
 }
 
@@ -385,6 +393,28 @@ shumate_marker_layer_class_init (ShumateMarkerLayerClass *klass)
                        GTK_TYPE_SELECTION_MODE,
                        GTK_SELECTION_NONE,
                        G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateMarkerLayer:factory:
+   *
+   * Factory for populating list items.
+   *
+   * The factory must be for configuring [class@Gtk.ListItem] objects.
+   */
+  obj_properties[PROP_FACTORY] =
+    g_param_spec_object ("factory", NULL, NULL,
+                         GTK_TYPE_LIST_ITEM_FACTORY,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+  /**
+   * ShumateMarkerLayer:model:
+   *
+   * Model for the items displayed.
+   */
+  obj_properties[PROP_MODEL] =
+    g_param_spec_object ("model", NULL, NULL,
+                         GTK_TYPE_SELECTION_MODEL,
+                         G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (object_class, N_PROPERTIES, obj_properties);
 
@@ -816,4 +846,74 @@ shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *self)
   g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), GTK_SELECTION_NONE);
 
   return self->mode;
+}
+
+/**
+ * shumate_marker_layer_set_factory:
+ * @self: a [class@MarkerLayer]
+ * @factory: (nullable) (transfer none): the factory to use
+ *
+ * Sets the `ShumateMarkerItemFactory` to use for populating marker items.
+ */
+void
+shumate_marker_layer_set_factory (ShumateMarkerLayer       *self,
+                                  ShumateMarkerItemFactory *factory)
+{
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
+
+  if (g_set_object (&self->factory, factory)) {
+    g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_FACTORY]);
+  }
+}
+
+/**
+ * shumate_marker_layer_get_factory:
+ * @self: a [class@MarkerLayer]
+ *
+ * Gets the factory that's currently used to populatemarker items.
+ *
+ * Returns: (nullable) (transfer none): The factory in use
+ */
+ShumateMarkerItemFactory *
+shumate_marker_layer_get_factory (ShumateMarkerLayer* self)
+{
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), NULL);
+
+  return self->factory;
+}
+
+/**
+ * shumate_marker_layer_set_model:
+ * @self: a [class@MarkerLayer]
+ * @model: (nullable) (transfer none): the model to use
+ *
+ * Sets the model to use.
+ *
+ * This must be a [iface@Gtk.SelectionModel] to use.
+ */
+void
+shumate_marker_layer_set_model (ShumateMarkerLayer *self,
+                                GtkSelectionModel  *model)
+{
+  g_return_if_fail (SHUMATE_IS_MARKER_LAYER (self));
+
+  if (g_set_object (&self->model, model)) {
+    g_object_notify_by_pspec (G_OBJECT (self), obj_properties[PROP_MODEL]);
+  }
+}
+
+/**
+ * shumate_marker_layer_get_model:
+ * @self: a [class@MarkerLayer]
+ *
+ * Gets the model that's currently used to read the items displayed.
+ *
+ * Returns: (nullable) (transfer none): The model in use
+ */
+GtkSelectionModel *
+shumate_marker_layer_get_model (ShumateMarkerLayer *self)
+{
+  g_return_val_if_fail (SHUMATE_IS_MARKER_LAYER (self), NULL);
+
+  return self->model;
 }

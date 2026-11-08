@@ -28,6 +28,7 @@
 #include <shumate/shumate-marker.h>
 #include <shumate/shumate-layer.h>
 #include <shumate/shumate-viewport.h>
+#include <shumate/shumate-marker-item-factory.h>
 
 #include <gtk/gtk.h>
 #include <glib-object.h>
@@ -57,6 +58,17 @@ void shumate_marker_layer_unselect_all_markers (ShumateMarkerLayer *self);
 void shumate_marker_layer_set_selection_mode (ShumateMarkerLayer *self,
                                               GtkSelectionMode    mode);
 GtkSelectionMode shumate_marker_layer_get_selection_mode (ShumateMarkerLayer *self);
+
+SHUMATE_AVAILABLE_IN_1_8
+void shumate_marker_layer_set_factory (ShumateMarkerLayer       *self,
+                                       ShumateMarkerItemFactory *factory);
+SHUMATE_AVAILABLE_IN_1_8
+ShumateMarkerItemFactory *shumate_marker_layer_get_factory (ShumateMarkerLayer* self);
+SHUMATE_AVAILABLE_IN_1_8
+void shumate_marker_layer_set_model (ShumateMarkerLayer *self,
+                                     GtkSelectionModel  *model);
+SHUMATE_AVAILABLE_IN_1_8
+GtkSelectionModel *shumate_marker_layer_get_model (ShumateMarkerLayer *self);
 
 G_END_DECLS
 
