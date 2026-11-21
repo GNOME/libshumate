@@ -1,4 +1,12 @@
 ==================
+Version 1.6.4
+==================
+ - Don't remove map layer source when already deferring, avoids a crash
+ - Copy returned color for path layers, fixes bindings getting layer colors
+   (avoid double-freeing)
+ - Allow new swipes already coasting, fixes some crashes
+
+==================
 Version 1.6.3
 ==================
  - Deselect markers before removing from layer
